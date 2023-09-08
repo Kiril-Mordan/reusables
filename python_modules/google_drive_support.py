@@ -5,6 +5,8 @@ This module provides a set of functions for interacting with the Google Drive AP
 It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
 """
 
+import io
+import logging
 import pickle
 import os.path
 from google.auth.transport.requests import Request
@@ -14,8 +16,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
-import io
-import logging
+
 
 
 def authenticate_google_drive(SCOPES : list = ['https://www.googleapis.com/auth/drive'],
@@ -206,10 +207,8 @@ def download_file(service,
 
         logger.error("Error occured during attempt to download file!")
 
-        if throw_error:
-            raise e
-        else:
-            print("The error:", e)
+        if throw_error: raise e
+        else: print("The error:", e)
 
 
 
@@ -373,5 +372,3 @@ def delete_google_drive_item(service,
         logger.debug(f"Item with ID {file_id} deleted successfully.")
     except Exception as e:
         logger.debug(f"An error occurred while deleting item with ID {file_id}: {e}")
-
-
