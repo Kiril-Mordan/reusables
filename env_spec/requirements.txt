@@ -1,0 +1,12 @@
+numpy
+pandas
+attrs>=22.2.0
+unidecode
+datetime
+jupyter
+requests
+beautifulsoup4
+dill==0.3.7
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib

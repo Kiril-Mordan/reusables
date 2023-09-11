@@ -5,21 +5,17 @@ This module provides a set of functions for interacting with the Google Drive AP
 It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
 """
 
-import io
 import logging
 import pickle
 import os.path
-from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
-from google.oauth2.credentials import Credentials
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 
 
 
-def authenticate_google_drive(SCOPES : list = ['https://www.googleapis.com/auth/drive'],
+def authenticate_google_drive(SCOPES : list = 'https://www.googleapis.com/auth/drive',
                               token_path : str = 'token.pickle',
                               credentials_path : str = 'credentials.json',
                               service_credentials_path : str = 'service_credentials.json') -> None:
@@ -29,8 +25,8 @@ def authenticate_google_drive(SCOPES : list = ['https://www.googleapis.com/auth/
 
     Parameters
     ----------
-    SCOPES : list, optional
-        List of OAuth 2.0 scope URLs for the desired access level. Default is ['https://www.googleapis.com/auth/drive'].
+    SCOPES : str, optional
+        OAuth 2.0 scope URLs for the desired access level. Default is 'https://www.googleapis.com/auth/drive'.
     token_path : str, optional
         Path to the token pickle file used to store authentication credentials. Default is 'token.pickle'.
     credentials_path : str, optional
@@ -53,7 +49,7 @@ def authenticate_google_drive(SCOPES : list = ['https://www.googleapis.com/auth/
     Example
     -------
     >>> drive_service = authenticate_google_drive(
-    ...     SCOPES=['https://www.googleapis.com/auth/drive'],
+    ...     SCOPES='https://www.googleapis.com/auth/drive',
     ...     token_path='token.pickle',
     ...     credentials_path='credentials.json',
     ...     service_credentials_path='service_credentials.json'
@@ -69,11 +65,11 @@ def authenticate_google_drive(SCOPES : list = ['https://www.googleapis.com/auth/
 
         if os.path.exists(service_credentials_path):
             creds = service_account.Credentials.from_service_account_file(service_credentials_path,
-                                                                                scopes=SCOPES)
+                                                                                scopes=[SCOPES])
 
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                credentials_path, SCOPES)
+                credentials_path, [SCOPES])
             creds = flow.run_local_server(port=0)
             with open(token_path , 'wb') as token:
                 pickle.dump(creds, token)
@@ -207,8 +203,10 @@ def download_file(service,
 
         logger.error("Error occured during attempt to download file!")
 
-        if throw_error: raise e
-        else: print("The error:", e)
+        if throw_error:
+            raise e
+
+        print("The error:", e)
 
 
 
@@ -318,9 +316,8 @@ def get_google_drive_file_id(service,
 
         if throw_error:
             raise e
-        else:
-            print("The error:", e)
 
+        print("The error:", e)
         file_id = None
 
     return file_id
