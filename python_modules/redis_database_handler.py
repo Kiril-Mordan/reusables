@@ -5,14 +5,11 @@ A handler class for managing interactions with a Redis database. This class prov
 establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
 """
 
-
 # Imports
 ## essential
 import numpy as np
 import attr
 import logging
-# ## switching path to main lvl
-# sys.path.append(os.path.dirname(sys.path[0]))
 ## requests
 import redis
 ## embeddings
