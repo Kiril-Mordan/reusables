@@ -53,3 +53,14 @@ from google_drive_support import get_google_drive_file_id, download_file, servic
 This module provides a set of functions for interacting with the Google Drive API.
 It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
 
+[redis_mock_handler.py](python_modules/redis_mock_handler.py) - Redis Mock Handler
+
+A mock handler class for simulating interactions with a Redis database, using local file storage.
+This class provides methods for initializing a logger, establishing a connection by loading data from a file,
+saving data back to a file, performing CRUD operations, and searching within the stored data based on embeddings.
+
+[redis_database_handler.py](python_modules/redis_database_handler.py) - Redis Database Handler
+
+A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
+establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
+
