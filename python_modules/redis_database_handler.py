@@ -7,9 +7,9 @@ establishing a connection with the Redis server, performing CRUD operations, and
 
 # Imports
 ## essential
+import logging
 import numpy as np
 import attr
-import logging
 ## requests
 import redis
 ## embeddings
@@ -17,6 +17,16 @@ from sentence_transformers import SentenceTransformer
 
 @attr.s
 class RedisHandler:
+    # pylint: disable=too-many-instance-attributes
+
+    """
+    A handler class for establishing and managing interactions with a Redis database.
+
+    This class provides functionalities to connect to a Redis server, insert and retrieve data,
+    and perform advanced operations like filtering keys based on specific criteria and searching
+    the database with embeddings. It utilizes the sentence-transformers library for generating
+    embeddings from text, which are then used in search operations.
+    """
 
     # inputs with defaults
     embedder = attr.ib(default=SentenceTransformer('msmarco-distilbert-base-v4'))
@@ -30,7 +40,9 @@ class RedisHandler:
     loggerLvl = attr.ib(default=logging.INFO)
 
     # outputs
-    conn = attr.ib(default=None, init = False)
+    client = attr.ib(default=None, init = False)
+    keys_list = attr.ib(default=None, init = False)
+    results_keys = attr.ib(default=None, init = False)
 
     def __attrs_post_init__(self):
         self.initialize_logger()
@@ -51,17 +63,25 @@ class RedisHandler:
 
     def establish_connection(self):
 
+        """
+        Establishes a connection to the Redis server.
+        """
+
         self.client = redis.Redis(host=self.host, port=self.port, db = self.db)
 
         try:
             if not self.client.ping():
-                raise("Connection to redis server was not established")
+                raise Exception("Connection to redis server was not established")
 
         except Exception as e:
             self.logger.error("Problem during connecting to Redis server!")
             print(e)
 
     def insert_values_dict(self, values_dict):
+
+        """
+        Inserts key-value pairs into the Redis database.
+        """
 
         try:
             for key in values_dict:
@@ -74,6 +94,10 @@ class RedisHandler:
 
     def flush_database(self):
 
+        """
+        Clears all keys in the current database.
+        """
+
         try:
             self.client.flushall()
 
@@ -83,6 +107,10 @@ class RedisHandler:
             print(e)
 
     def filter_keys(self, subkey = None, subvalue = None):
+
+        """
+        Filters keys in the Redis database based on specific criteria.
+        """
 
         # initial keys filter
         filtered_keys = [key for key in self.client.keys() if self.client.type(key) == b'hash']
@@ -97,6 +125,10 @@ class RedisHandler:
                         query : str,
                         similarity_metric,
                         search_results_n : int = 3) -> list:
+
+        """
+        Searches the database using embeddings and returns a list of keys that match the query.
+        """
 
         # encoding search embedding
         try:
@@ -132,8 +164,11 @@ class RedisHandler:
 
     def get_dict_results(self, return_keys_list):
 
+        """
+        Retrieves specified fields from the search results in the Redis database.
+        """
+
         results = [dict(zip(return_keys_list, self.client.hmget(searched_doc, return_keys_list))) \
             for searched_doc in self.results_keys]
 
         return results
-
