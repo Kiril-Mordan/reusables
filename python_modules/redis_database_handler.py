@@ -8,6 +8,7 @@ establishing a connection with the Redis server, performing CRUD operations, and
 # Imports
 ## essential
 import logging
+import json
 import numpy as np
 import attr
 ## requests
@@ -77,6 +78,48 @@ class RedisHandler:
             self.logger.error("Problem during connecting to Redis server!")
             print(e)
 
+    def prepare_for_redis(self,data_dict):
+
+        """
+        Prepare a dictionary for storage in Redis by serializing all its values to strings.
+        """
+
+
+        def serialize_value(value):
+            """
+            Serialize a value to a JSON-compatible format.
+            Handles standard types using JSON and ndarrays by conversion to lists.
+            """
+            if isinstance(value, np.ndarray):
+                # Convert ndarray to list
+                return json.dumps(value.tolist())
+            elif isinstance(value, dict):
+                # Recursively serialize dictionary
+                return json.dumps({k: serialize_value(v) for k, v in value.items()})
+            elif isinstance(value, (list, tuple)):
+                # Convert lists and tuples to lists, then serialize
+                return json.dumps([serialize_value(item) for item in value])
+            else:
+                # For standard types, use default serialization
+                return json.dumps(value)
+
+
+        serialized_dict = {}
+        for key, value in data_dict.items():
+            serialized_dict[key] = {}
+            for subkey, subvalue in value.items():
+                serialized_dict[key][subkey] = serialize_value(subvalue)
+        return serialized_dict
+
+    def decode_redis(self,data_dict):
+        """
+        Prepare a dictionary for storage in Redis by serializing all its values to strings.
+        """
+        serialized_dict = {}
+        for key, value in data_dict.items():
+            serialized_dict[key] = json.loads(value)
+        return serialized_dict
+
     def insert_values_dict(self, values_dict):
 
         """
@@ -84,6 +127,9 @@ class RedisHandler:
         """
 
         try:
+
+            values_dict = self.prepare_for_redis(values_dict)
+
             for key in values_dict:
                 self.client.hset(key, mapping=values_dict[key])
 
@@ -144,7 +190,7 @@ class RedisHandler:
 
         # extracting embeddings
         try:
-            data_embeddings = np.array([eval(self.client.hmget(key, ['embedding'])[0]) for key in self.keys_list])
+            data_embeddings = np.array([json.loads(self.client.hmget(key, ['embedding'])[0]) for key in self.keys_list])
 
         except Exception as e:
             self.logger.error("Problem during extracting search pool embeddings!")
@@ -168,7 +214,7 @@ class RedisHandler:
         Retrieves specified fields from the search results in the Redis database.
         """
 
-        results = [dict(zip(return_keys_list, self.client.hmget(searched_doc, return_keys_list))) \
+        results = [self.decode_redis(dict(zip(return_keys_list, self.client.hmget(searched_doc, return_keys_list)))) \
             for searched_doc in self.results_keys]
 
         return results
