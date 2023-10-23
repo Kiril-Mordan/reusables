@@ -8,8 +8,6 @@ on:
 jobs:
   pr_script:
     runs-on: ubuntu-latest
-    # Check if the 'python_modules' directory has changes
-    if: contains(github.event.pull_request.labels.*.name, 'python_modules')
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
