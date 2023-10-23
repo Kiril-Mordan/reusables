@@ -48,6 +48,14 @@ from google_drive_support import get_google_drive_file_id, download_file, servic
 
 ## Content:
  
+[comperison_frame.py](python_modules/comperison_frame.py) - Comparison Frame
+
+Designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
+such as character and word count, punctuation usage, and semantic similarity.
+It's particularly useful for scenarios where consistent text analysis is required,
+such as evaluating the performance of natural language processing models, monitoring content quality,
+or tracking changes in textual data over time using manual evaluation.
+
 [google_drive_support.py](python_modules/google_drive_support.py) - Google Drive API Utilities Module
 
 This module provides a set of functions for interacting with the Google Drive API.
