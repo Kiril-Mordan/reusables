@@ -81,6 +81,8 @@ class ComparisonFrame:
         Computes the difference in punctuation usage between two texts.
     compare_semantic_similarity(exp_text, prov_text)
         Computes the semantic similarity between two texts.
+    reset_record_statuses(record_ids=None)
+        Resets the 'tested' status of specific queries or all queries in the record file, making them available for re-testing. Accepts an optional list of record IDs to reset; otherwise, resets all records.
     """
 
     embedder = attr.ib(default=SentenceTransformer('all-mpnet-base-v2'))
@@ -98,8 +100,9 @@ class ComparisonFrame:
         if not os.path.isfile(self.record_file):
             with open(self.record_file, mode='w', newline='', encoding='utf-8') as file:
                 writer = csv.writer(file)
-                # Write the headers for the CSV file
-                writer.writerow(['id', 'timestamp', 'query', 'expected_text', 'tested', 'test_status'])
+                # Include 'test_status' in the headers from the beginning
+                writer.writerow(['id', 'timestamp', 'query', 'expected_text', 'tested', 'test_status'])  # Added 'test_status'
+
 
     def record_query(self, query, expected_text, overwrite=True):
 
@@ -125,12 +128,12 @@ class ComparisonFrame:
         if overwrite:
             for index, row in enumerate(rows):
                 if len(row) > 2 and row[2] == query:  # queries are in the third column
-                    rows[index] = [str(new_id), current_time, query, expected_text, 'no']  # 'no' indicates untested
+                    rows[index] = [str(new_id), current_time, query, expected_text, 'no', '']  # 'no' indicates untested, '' for empty test_status
                     break
             else:
-                rows.append([str(new_id), current_time, query, expected_text, 'no'])  # 'no' indicates untested
+                rows.append([str(new_id), current_time, query, expected_text, 'no', ''])  # 'no' indicates untested, '' for empty test_status
         else:
-            rows.append([str(new_id), current_time, query, expected_text, 'no'])  # 'no' indicates untested
+            rows.append([str(new_id), current_time, query, expected_text, 'no', ''])  # 'no' indicates untested, '' for empty test_status
 
         self.save_embeddings(query=query,
                              expected_text=expected_text)
@@ -141,18 +144,23 @@ class ComparisonFrame:
             writer.writerows(rows)
 
     def mark_query_as_tested(self, query, test_status):
-
         """
         Updates the 'tested' status and 'test_status' of a specific query in the record file.
         """
 
         # Read the existing data
+        rows = []
         with open(self.record_file, mode='r', encoding='utf-8') as file:
             reader = csv.reader(file)
             rows = list(reader)
 
+        headers = rows[0]  # Extract the headers
+        # Check if 'test_status' is in headers, if not, add it
+        if 'test_status' not in headers:
+            headers.append('test_status')
+
         # Find the query and mark it as tested, and update the test status
-        for row in rows:
+        for row in rows[1:]:  # Skip the header row
             if row[2] == query:  # if the query matches
                 row[4] = 'yes'  # 'yes' indicates tested
                 if len(row) >= 6:  # if 'test_status' column exists
@@ -160,11 +168,49 @@ class ComparisonFrame:
                 else:
                     row.append(test_status)  # if 'test_status' column doesn't exist, append the status
 
-        # Write the updated data back to the file
+        # Write the updated data back to the file, including the headers
         with open(self.record_file, mode='w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
-            writer.writerows(rows)
+            writer.writerow(headers)  # Write the headers first
+            writer.writerows(rows[1:])  # Write the data rows
 
+
+    def reset_record_statuses(self, record_ids=None):
+        """
+        Resets the 'tested' status of specific queries or all queries in the record file, making them available for re-testing.
+
+        Parameters:
+        record_ids (list of int): Optional. A list of record IDs for which to reset the statuses. If None, all records are reset.
+        """
+
+        # Read the existing data
+        with open(self.record_file, mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            rows = list(reader)
+
+        # Check for the right headers and adjust the data rows
+        headers = rows[0]  # Extract the headers
+        if 'test_status' not in headers:
+            headers.append('test_status')  # Add 'test_status' to headers if it's missing
+
+        new_rows = [headers]  # Include the headers as the first row
+
+        for row in rows[1:]:  # Skip the header row
+            if record_ids is None or int(row[0]) in record_ids:  # Check if resetting all or specific IDs
+                new_row = row[:5]  # Select columns 'id' through 'tested'
+                new_row[4] = 'no'  # 'no' indicates untested
+                if len(row) == 6:  # if 'test_status' column exists
+                    new_row.append('')  # reset 'test_status' to an empty string
+                else:
+                    new_row.append('')  # if 'test_status' column doesn't exist, still add an empty string placeholder
+                new_rows.append(new_row)
+            else:
+                new_rows.append(row)  # If the ID is not in the list, keep the row unchanged
+
+        # Write the updated data back to the file, including the headers
+        with open(self.record_file, mode='w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerows(new_rows)  # Write the updated rows back to CSV, including headers
 
     def save_embeddings(self, query, expected_text):
 
@@ -269,7 +315,7 @@ class ComparisonFrame:
         # Open the file in write mode to clear it, then write back only the headers
         with open(self.record_file, mode='w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
-            writer.writerow(['id', 'timestamp', 'query', 'expected_text', 'tested'])  # column headers
+            writer.writerow(['id', 'timestamp', 'query', 'expected_text', 'tested', 'test_status'])  # column headers
 
     def flush_comparison_results(self):
 
