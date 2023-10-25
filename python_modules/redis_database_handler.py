@@ -78,7 +78,7 @@ class RedisHandler:
             self.logger.error("Problem during connecting to Redis server!")
             print(e)
 
-    def prepare_for_redis(self,data_dict):
+    def _prepare_for_redis(self, data_dict, var_for_embedding_name):
 
         """
         Prepare a dictionary for storage in Redis by serializing all its values to strings.
@@ -104,14 +104,21 @@ class RedisHandler:
                 return json.dumps(value)
 
 
+
+
         serialized_dict = {}
         for key, value in data_dict.items():
             serialized_dict[key] = {}
             for subkey, subvalue in value.items():
                 serialized_dict[key][subkey] = serialize_value(subvalue)
+
+            embedding = self.embedder.encode(data_dict[key][var_for_embedding_name])
+
+            serialized_dict[key]['embedding'] = json.dumps(embedding.tolist())
+
         return serialized_dict
 
-    def decode_redis(self,data_dict):
+    def _decode_redis(self,data_dict):
         """
         Prepare a dictionary for storage in Redis by serializing all its values to strings.
         """
@@ -120,7 +127,7 @@ class RedisHandler:
             serialized_dict[key] = json.loads(value)
         return serialized_dict
 
-    def insert_values_dict(self, values_dict):
+    def insert_values_dict(self, values_dict, var_for_embedding_name):
 
         """
         Inserts key-value pairs into the Redis database.
@@ -128,7 +135,8 @@ class RedisHandler:
 
         try:
 
-            values_dict = self.prepare_for_redis(values_dict)
+            values_dict = self._prepare_for_redis(values_dict,
+                                                  var_for_embedding_name = var_for_embedding_name)
 
             for key in values_dict:
                 self.client.hset(key, mapping=values_dict[key])
@@ -214,7 +222,7 @@ class RedisHandler:
         Retrieves specified fields from the search results in the Redis database.
         """
 
-        results = [self.decode_redis(dict(zip(return_keys_list, self.client.hmget(searched_doc, return_keys_list)))) \
+        results = [self._decode_redis(dict(zip(return_keys_list, self.client.hmget(searched_doc, return_keys_list)))) \
             for searched_doc in self.results_keys]
 
         return results
