@@ -178,7 +178,7 @@ class RedisHandler:
 
         # encoding search embedding
         try:
-            query_embedding = self.embedder.encode(query).reshape(1, -1)
+            query_embedding = self.embedder.encode([query]).reshape(1, -1)
 
         except Exception as e:
             self.logger.error("Problem during embedding search query!")
