@@ -1,5 +1,7 @@
 # Reusables
 
+<a><img src="https://github.com/Kiril-Mordan/reusables/blob/main/docs/reuse_logo.png" width="35%" height="35%" align="right" /></a>
+
 Contains pieces of code that were generalized to a point where they can be reused in other projects, but due to their nature, do not deserve their own package.
 
 ## Usage
