@@ -50,6 +50,17 @@ from google_drive_support import get_google_drive_file_id, download_file, servic
 
 ## Content:
  
+[redis_database_handler.py](python_modules/redis_database_handler.py) - Redis Database Handler
+
+A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
+establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
+
+[search_based_extractor.py](python_modules/search_based_extractor.py) - Search Based Extractor
+
+Utility to simplify webscraping by taking advantave of search and assumptions about html structure.
+Extractor allows to find parent html element that contains searched term, record path to it in a file
+and reuse that to scrape data with same html structure.
+
 [comperison_frame.py](python_modules/comperison_frame.py) - Comparison Frame
 
 Designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
@@ -68,9 +79,4 @@ It allows you to authenticate with the API, upload, download, and manage files a
 A mock handler class for simulating interactions with a Redis database, using local file storage.
 This class provides methods for initializing a logger, establishing a connection by loading data from a file,
 saving data back to a file, performing CRUD operations, and searching within the stored data based on embeddings.
-
-[redis_database_handler.py](python_modules/redis_database_handler.py) - Redis Database Handler
-
-A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
-establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
 
