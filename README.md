@@ -55,7 +55,7 @@ from google_drive_support import get_google_drive_file_id, download_file, servic
 A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
 establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
 
-[search_based_extractor.py](python_modules/search_based_extractor.py) - Search Based Extractor
+[search_based_extractor.py](python_modules/search_based_extractor.py) | [search_based_extractor.ipynb](example_notebooks/search_based_extractor.ipynb) - Search Based Extractor
 
 Utility to simplify webscraping by taking advantave of search and assumptions about html structure.
 Extractor allows to find parent html element that contains searched term, record path to it in a file
