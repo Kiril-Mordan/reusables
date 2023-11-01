@@ -47,6 +47,7 @@ class SearchBasedExtractor:
     link = attr.ib(default=None, init=False)
     found_element = attr.ib(default=None, init=False)
     path = attr.ib(default=[], init=False)
+    extracted_visible_text = attr.ib(default=None, init=False)
     searched_text = attr.ib(default='', init=False)
 
 
@@ -67,7 +68,7 @@ class SearchBasedExtractor:
 
             self.logger = logger
 
-    def initialize_soup(self, link : str, reset : bool = False):
+    def initialize_soup(self, link : str, reset : bool = True):
 
         """
         Initialize a soup for the class instance based on the specified link.
@@ -96,20 +97,26 @@ class SearchBasedExtractor:
         """
         Extracts visible text from a BeautifulSoup object.
         """
-        texts = []
 
-        for element in self.soup.recursiveChildGenerator():
-            if isinstance(element, Comment):  # Skip comments
-                continue
-            if isinstance(element, Tag):
-                if element.name in ["script", "style"]:  # Skip script/style tags
+        if self.extracted_visible_text:
+            self.logger.warning("Visibile text was already extracted, returning extracted text!")
+        else:
+            texts = []
+
+            for element in self.soup.recursiveChildGenerator():
+                if isinstance(element, Comment):  # Skip comments
                     continue
-            if isinstance(element, str):  # NavigableString
-                stripped = element.strip()
-                if stripped:
-                    texts.append(stripped + new_line_separator)
+                if isinstance(element, Tag):
+                    if element.name in ["script", "style"]:  # Skip script/style tags
+                        continue
+                if isinstance(element, str):  # NavigableString
+                    stripped = element.strip()
+                    if stripped:
+                        texts.append(stripped + new_line_separator)
 
-        return ' '.join(texts)
+            self.extracted_visible_text = ' '.join(texts)
+
+        return self.extracted_visible_text
 
     def find_path_with_text(self, search_text : str):
         """
@@ -151,11 +158,15 @@ class SearchBasedExtractor:
         else:
             self.logger.warning("Provided search term was not found in the connected soup!")
 
-    def save_recorded_sbe(self):
+    def save_recorded_sbe(self, filename : str = None):
 
         """
         Saves the path, link, and searched_text to a JSON file.
         """
+
+        if filename is None:
+            filename = self.filename
+
         data = {
             "path": self.path,
             "link": self.link,
@@ -165,11 +176,15 @@ class SearchBasedExtractor:
             json.dump(data, f)
         self.logger.info(f"Data saved to '{self.filename}'")
 
-    def load_recorded_sbe(self):
+    def load_recorded_sbe(self, filename : str = None):
 
         """
         Loads only the path from a JSON file.
         """
+
+        if filename is None:
+            filename = self.filename
+
         with open(self.filename, 'r') as f:
             data = json.load(f)
         self.path = data["path"]
@@ -180,6 +195,7 @@ class SearchBasedExtractor:
         """
         Displays the link, searched_text, and path from a JSON file.
         """
+
         if filename is None:
             filename = self.filename
 
