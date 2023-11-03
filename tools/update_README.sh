@@ -22,12 +22,12 @@ find "$module_directory" -type f -name "*.py" | while read -r file; do
 
     if [ -n "$docstring" ]; then
         module_path="python_modules/$module_name.py"
-        module_link="[${module_name}.py]($module_path)"
+        module_link="[module]($module_path)"
 
         # Check if notebook with the same name exists
         notebook_path="$notebook_directory/$module_name.ipynb"
         if [ -f "$notebook_path" ]; then
-            notebook_link=" | [${module_name}.ipynb]($notebook_path)"
+            notebook_link=" | [usage]($notebook_path)"
             echo "$module_link$notebook_link - $docstring" >> "$output_file"
         else
             echo "$module_link - $docstring" >> "$output_file"
