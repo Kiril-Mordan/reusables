@@ -50,33 +50,33 @@ from google_drive_support import get_google_drive_file_id, download_file, servic
 
 ## Content:
  
-[redis_database_handler.py](python_modules/redis_database_handler.py) - Redis Database Handler
+[module](python_modules/google_drive_support.py) - Google Drive API Utilities Module
 
-A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
-establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
+This module provides a set of functions for interacting with the Google Drive API.
+It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
 
-[search_based_extractor.py](python_modules/search_based_extractor.py) | [search_based_extractor.ipynb](example_notebooks/search_based_extractor.ipynb) - Search Based Extractor
+[module](python_modules/redis_mock_handler.py) - Redis Mock Handler
+
+A mock handler class for simulating interactions with a Redis database, using local file storage.
+This class provides methods for initializing a logger, establishing a connection by loading data from a file,
+saving data back to a file, performing CRUD operations, and searching within the stored data based on embeddings.
+
+[module](python_modules/search_based_extractor.py) | [usage](example_notebooks/search_based_extractor.ipynb) - Search Based Extractor
 
 Utility to simplify webscraping by taking advantave of search and assumptions about html structure.
 Extractor allows to find parent html element that contains searched term, record path to it in a file
 and reuse that to scrape data with same html structure.
 
-[comperison_frame.py](python_modules/comperison_frame.py) - Comparison Frame
+[module](python_modules/redis_database_handler.py) - Redis Database Handler
+
+A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
+establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
+
+[module](python_modules/comparisonframe.py) | [usage](example_notebooks/comparisonframe.ipynb) - Comparison Frame
 
 Designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
 such as character and word count, punctuation usage, and semantic similarity.
 It's particularly useful for scenarios where consistent text analysis is required,
 such as evaluating the performance of natural language processing models, monitoring content quality,
 or tracking changes in textual data over time using manual evaluation.
-
-[google_drive_support.py](python_modules/google_drive_support.py) - Google Drive API Utilities Module
-
-This module provides a set of functions for interacting with the Google Drive API.
-It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
-
-[redis_mock_handler.py](python_modules/redis_mock_handler.py) - Redis Mock Handler
-
-A mock handler class for simulating interactions with a Redis database, using local file storage.
-This class provides methods for initializing a logger, establishing a connection by loading data from a file,
-saving data back to a file, performing CRUD operations, and searching within the stored data based on embeddings.
 
