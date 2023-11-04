@@ -348,7 +348,7 @@ class ComparisonFrame:
 
         return queries
 
-    def get_comparison_results(self):
+    def get_comparison_results(self, throw_error : bool = False):
 
         """
         Retrieves the comparison results as a DataFrame from the stored file.
@@ -356,12 +356,17 @@ class ComparisonFrame:
 
         # Check if the results file exists
         if not os.path.isfile(self.results_file):
-            raise FileNotFoundError("No results file found. Please perform some comparisons first.")
+            error_mess = "No results file found. Please perform some comparisons first."
+            if throw_error:
+                raise FileNotFoundError(error_mess)
+            else:
+                self.logger.error(error_mess)
 
-        # Read the CSV file into a pandas DataFrame
-        df = pd.read_csv(self.results_file)
+        else:
+            # Read the CSV file into a pandas DataFrame
+            df = pd.read_csv(self.results_file)
 
-        return df
+            return df
 
     def get_all_records(self):
 
@@ -401,7 +406,11 @@ class ComparisonFrame:
         else:
             raise FileNotFoundError("No results file found. There's nothing to flush.")
 
-    def compare_with_record(self, query, provided_text, mark_as_tested=True):
+    def compare_with_record(self,
+                            query : str,
+                            provided_text : str,
+                            mark_as_tested : bool = True,
+                            return_results : bool = False):
 
         """
         Compares the provided text with all recorded expected results for a specific query and stores the comparison results.
@@ -453,10 +462,10 @@ class ComparisonFrame:
         # 'header=not os.path.isfile(self.results_file)' will write headers only if the file doesn't already exist
         results_df.to_csv(self.results_file, mode='a', header=not os.path.isfile(self.results_file), index=False)
 
+        if return_results:
+            return results_df
 
-        return results_df
-
-    def compare(self, exp_text, prov_text, query = ''):
+    def compare(self, exp_text : str, prov_text : str, query : str = ''):
 
         """
         Performs a detailed comparison between two texts, providing metrics like character count, word count, semantic similarity, etc.
