@@ -9,6 +9,7 @@ or tracking changes in textual data over time using manual evaluation.
 """
 
 import string
+import logging
 import os
 import csv
 from datetime import datetime
@@ -85,7 +86,10 @@ class ComparisonFrame:
         Resets the 'tested' status of specific queries or all queries in the record file, making them available for re-testing. Accepts an optional list of record IDs to reset; otherwise, resets all records.
     """
 
-    embedder = attr.ib(default=SentenceTransformer('all-mpnet-base-v2'))
+    embedder = attr.ib(default=None)
+    model_name = attr.ib(default='all-mpnet-base-v2')
+
+    # Files saved to persist
     record_file = attr.ib(default="record_file.csv")  # file where queries and expected results are stored
     results_file = attr.ib(default="comparison_results.csv") # file where comparison results will be stored
     embeddings_file = attr.ib(default="embeddings.dill")
@@ -95,13 +99,75 @@ class ComparisonFrame:
     margin_word_count_diff = attr.ib(default=5)
     margin_semantic_similarity = attr.ib(default=0.95)
 
+    # Logger settings
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='ComparisonFrame')
+    loggerLvl = attr.ib(default=logging.DEBUG)
+
     def __attrs_post_init__(self):
+        self.initialize_logger()
+        self.initialize_record_file()
+        self.initialize_embedder()
+
+
+    def initialize_logger(self):
+
+        """
+        Initialize a logger for the class instance based on
+        the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    def initialize_record_file(self):
+
+        """
+        Initialize empty records file and saves it locally
+        if it was not found in specified location.
+        """
+
         # Create a new file with headers if it doesn't exist
         if not os.path.isfile(self.record_file):
             with open(self.record_file, mode='w', newline='', encoding='utf-8') as file:
                 writer = csv.writer(file)
                 # Include 'test_status' in the headers from the beginning
                 writer.writerow(['id', 'timestamp', 'query', 'expected_text', 'tested', 'test_status'])  # Added 'test_status'
+
+
+    def initialize_embedder(self, model_name : str = None, reset : bool = True):
+
+        """
+        Initialize embedder for the class instance for a chosen model from sentence_transformer.
+        """
+
+        if model_name is None:
+            model_name = self.model_name
+
+        if (self.embedder is None) or reset:
+
+            if model_name:
+                try:
+                    self.embedder = SentenceTransformer(model_name)
+                    self.model_name = model_name
+                except Exception as e:
+                    self.logger.error("Provided model name was not loaded!")
+                    print(e)
+
+            else:
+                self.logger.error("Model name is missing!")
+                self.logger.error("Either provide 'embedder' parameter or 'model_name' parameter!")
+                raise ValueError("Missing 'model_name' parameter!")
+        else:
+
+            # check if embedder is from sentence transformer
+            if not isinstance(embedder, SentenceTransformer):
+                self.logger.warning("Provided embedder should be from sentence_transformer package!")
+                raise TypeError("embedder is not an instance of SentenceTransformer")
 
 
     def record_query(self, query, expected_text, overwrite=True):
@@ -232,8 +298,12 @@ class ComparisonFrame:
         data[query] = embeddings
 
         # Save data
+
+        embeddings_with_model_name = {'model_name' : self.model_name,
+                                      'embeddings' : data}
+
         with open(self.embeddings_file, 'wb') as file:
-            dill.dump(data, file)
+            dill.dump(embeddings_with_model_name, file)
 
     def load_embeddings(self, query):
 
@@ -247,10 +317,12 @@ class ComparisonFrame:
 
         # Load data
         with open(self.embeddings_file, 'rb') as file:
-            data = dill.load(file)
+            embeddings_with_model_name = dill.load(file)
+
+        self.logger.debug(f"Model name for the loaded embeddings: {embeddings_with_model_name['model_name']}")
 
         # Retrieve embeddings for the given query
-        embeddings = data.get(query)
+        embeddings = embeddings_with_model_name['embeddings'].get(query)
 
         if embeddings is None:
             raise ValueError(f"No embeddings found for query: {query}")
@@ -276,7 +348,7 @@ class ComparisonFrame:
 
         return queries
 
-    def get_comparison_results(self):
+    def get_comparison_results(self, throw_error : bool = False):
 
         """
         Retrieves the comparison results as a DataFrame from the stored file.
@@ -284,12 +356,17 @@ class ComparisonFrame:
 
         # Check if the results file exists
         if not os.path.isfile(self.results_file):
-            raise FileNotFoundError("No results file found. Please perform some comparisons first.")
+            error_mess = "No results file found. Please perform some comparisons first."
+            if throw_error:
+                raise FileNotFoundError(error_mess)
+            else:
+                self.logger.error(error_mess)
 
-        # Read the CSV file into a pandas DataFrame
-        df = pd.read_csv(self.results_file)
+        else:
+            # Read the CSV file into a pandas DataFrame
+            df = pd.read_csv(self.results_file)
 
-        return df
+            return df
 
     def get_all_records(self):
 
@@ -329,7 +406,11 @@ class ComparisonFrame:
         else:
             raise FileNotFoundError("No results file found. There's nothing to flush.")
 
-    def compare_with_record(self, query, provided_text, mark_as_tested=True):
+    def compare_with_record(self,
+                            query : str,
+                            provided_text : str,
+                            mark_as_tested : bool = True,
+                            return_results : bool = False):
 
         """
         Compares the provided text with all recorded expected results for a specific query and stores the comparison results.
@@ -381,10 +462,10 @@ class ComparisonFrame:
         # 'header=not os.path.isfile(self.results_file)' will write headers only if the file doesn't already exist
         results_df.to_csv(self.results_file, mode='a', header=not os.path.isfile(self.results_file), index=False)
 
+        if return_results:
+            return results_df
 
-        return results_df
-
-    def compare(self, exp_text, prov_text, query = ''):
+    def compare(self, exp_text : str, prov_text : str, query : str = ''):
 
         """
         Performs a detailed comparison between two texts, providing metrics like character count, word count, semantic similarity, etc.
