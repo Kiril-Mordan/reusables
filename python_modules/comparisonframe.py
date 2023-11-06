@@ -102,7 +102,7 @@ class ComparisonFrame:
     # Logger settings
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='ComparisonFrame')
-    loggerLvl = attr.ib(default=logging.DEBUG)
+    loggerLvl = attr.ib(default=logging.INFO)
 
     def __attrs_post_init__(self):
         self.initialize_logger()
