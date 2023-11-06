@@ -13,7 +13,7 @@ from python_modules.search_based_extractor import SearchBasedExtractor
 
 ## Usage examples
 
-The example contains: 
+The examples contain: 
 1. recording path the parent \<div> element on the page [review_id=7207](https://metalstorm.net/pub/review.php?review_id=7207) based on some text from that element;
 2. using recorded path to scrape content of the [review_id=16350](https://metalstorm.net/pub/review.php?review_id=16350).
 
@@ -47,53 +47,14 @@ sbe.find_path_with_text(search_text = "I'm not a huge fan of nu-metal right now"
 
 ```python
 # first 500 lines of visible text on a given page
-print(sbe.extract_visible_text(new_line_separator = '\n')[0:500])
+sbe.extract_visible_text(new_line_separator = '\n')[0:500]
 ```
 
-    html
-     Korn - See You On The Other Side review - Metal Storm
-     Login
-     Register
-     Toggle navigation
-     band
-     style
-     album
-     video
-     musician
-     event
-     forum
-     user
-     Metal Storm
-     Metal Storm
-     Home
-     About us
-     Metal Storm Awards
-     Site tour
-     FAQ
-     Promo media
-     Community
-     Community
-     Forum
-     Members
-     Top lists
-     Tradelist
-     Staff
-     Bands
-     Bands
-     Bands
-     Albums
-     Album charts
-     Top 200 albums
-     Videos
-     Musicians
-     News & events
-     News & events
-     Combined updates
-     News
-     New releases
-     Upcoming releases
-     Events
-     Metal locations
+
+
+
+    'html\n Korn - See You On The Other Side review - Metal Storm\n Login\n Register\n Toggle navigation\n band\n style\n album\n video\n musician\n event\n forum\n user\n Metal Storm\n Metal Storm\n Home\n About us\n Metal Storm Awards\n Site tour\n FAQ\n Promo media\n Community\n Community\n Forum\n Members\n Top lists\n Tradelist\n Staff\n Bands\n Bands\n Bands\n Albums\n Album charts\n Top 200 albums\n Videos\n Musicians\n News & events\n News & events\n Combined updates\n News\n New releases\n Upcoming releases\n Events\n Metal locations'
+
 
 
 

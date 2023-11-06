@@ -39,177 +39,64 @@ comparer = ComparisonFrame(
 ```
 
     INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: all-mpnet-base-v2
-    DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): huggingface.co:443
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /api/models/sentence-transformers/all-mpnet-base-v2 HTTP/1.1" 200 11716
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/.gitattributes HTTP/1.1" 200 0
-    DEBUG:filelock:Attempting to acquire lock 139909127738560 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/.gitattributes.lock
-    DEBUG:filelock:Lock 139909127738560 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/.gitattributes.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/.gitattributes HTTP/1.1" 200 1175
 
 
 
     Downloading (…)99753/.gitattributes:   0%|          | 0.00/1.18k [00:00<?, ?B/s]
 
 
-    DEBUG:filelock:Attempting to release lock 139909127738560 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/.gitattributes.lock
-    DEBUG:filelock:Lock 139909127738560 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/.gitattributes.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/1_Pooling/config.json HTTP/1.1" 200 0
-    DEBUG:filelock:Attempting to acquire lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/1_Pooling/config.json.lock
-    DEBUG:filelock:Lock 139905264131520 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/1_Pooling/config.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/1_Pooling/config.json HTTP/1.1" 200 190
-
-
 
     Downloading (…)_Pooling/config.json:   0%|          | 0.00/190 [00:00<?, ?B/s]
-
-
-    DEBUG:filelock:Attempting to release lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/1_Pooling/config.json.lock
-    DEBUG:filelock:Lock 139905264131520 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/1_Pooling/config.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/README.md HTTP/1.1" 200 0
-    DEBUG:filelock:Attempting to acquire lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/README.md.lock
-    DEBUG:filelock:Lock 139905264131520 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/README.md.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/README.md HTTP/1.1" 200 10571
 
 
 
     Downloading (…)0cdb299753/README.md:   0%|          | 0.00/10.6k [00:00<?, ?B/s]
 
 
-    DEBUG:filelock:Attempting to release lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/README.md.lock
-    DEBUG:filelock:Lock 139905264131520 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/README.md.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/config.json HTTP/1.1" 200 0
-    DEBUG:filelock:Attempting to acquire lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/config.json.lock
-    DEBUG:filelock:Lock 139905264131520 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/config.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/config.json HTTP/1.1" 200 571
-
-
 
     Downloading (…)db299753/config.json:   0%|          | 0.00/571 [00:00<?, ?B/s]
-
-
-    DEBUG:filelock:Attempting to release lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/config.json.lock
-    DEBUG:filelock:Lock 139905264131520 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/config.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/config_sentence_transformers.json HTTP/1.1" 200 0
-    DEBUG:filelock:Attempting to acquire lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/config_sentence_transformers.json.lock
-    DEBUG:filelock:Lock 139905264131520 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/config_sentence_transformers.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/config_sentence_transformers.json HTTP/1.1" 200 116
 
 
 
     Downloading (…)ce_transformers.json:   0%|          | 0.00/116 [00:00<?, ?B/s]
 
 
-    DEBUG:filelock:Attempting to release lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/config_sentence_transformers.json.lock
-    DEBUG:filelock:Lock 139905264131520 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/config_sentence_transformers.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/data_config.json HTTP/1.1" 200 0
-    DEBUG:filelock:Attempting to acquire lock 139905264131376 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/data_config.json.lock
-    DEBUG:filelock:Lock 139905264131376 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/data_config.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/data_config.json HTTP/1.1" 200 39265
-
-
 
     Downloading (…)753/data_config.json:   0%|          | 0.00/39.3k [00:00<?, ?B/s]
-
-
-    DEBUG:filelock:Attempting to release lock 139905264131376 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/data_config.json.lock
-    DEBUG:filelock:Lock 139905264131376 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/data_config.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/pytorch_model.bin HTTP/1.1" 302 0
-    DEBUG:filelock:Attempting to acquire lock 139905263603280 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/pytorch_model.bin.lock
-    DEBUG:filelock:Lock 139905263603280 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/pytorch_model.bin.lock
-    DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cdn-lfs.huggingface.co:443
-    DEBUG:urllib3.connectionpool:https://cdn-lfs.huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/a8fd120b1a0032e70ff3d4b8ab8e46a6d01c2cb08ffe7c007a021c1788928146?response-content-disposition=attachment%3B+filename*%3DUTF-8%27%27pytorch_model.bin%3B+filename%3D%22pytorch_model.bin%22%3B&response-content-type=application%2Foctet-stream&Expires=1699490577&Policy=eyJTdGF0ZW1lbnQiOlt7IkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTY5OTQ5MDU3N319LCJSZXNvdXJjZSI6Imh0dHBzOi8vY2RuLWxmcy5odWdnaW5nZmFjZS5jby9zZW50ZW5jZS10cmFuc2Zvcm1lcnMvYWxsLW1wbmV0LWJhc2UtdjIvYThmZDEyMGIxYTAwMzJlNzBmZjNkNGI4YWI4ZTQ2YTZkMDFjMmNiMDhmZmU3YzAwN2EwMjFjMTc4ODkyODE0Nj9yZXNwb25zZS1jb250ZW50LWRpc3Bvc2l0aW9uPSomcmVzcG9uc2UtY29udGVudC10eXBlPSoifV19&Signature=ZKzLlVqdeNjcsewJUYy8RAcQnyFhYXYHk6yaEER4ywZKePPwMYzSduEzxn5UDw1aD2QAtcSyL9CxtpLHTEpxq2yJ2lWkqC4XNAvJLrtWJ1iwuy0SpdFwcVCjbaVk0-7dzg8tXcXzweoL8GIF6LImUWmB4Zybe1kvvVJHAvWnHebLLlubxEhxez~BxGf9~GdnCuUXbmvAoZfABGFk2YsqV7b3jhaAneHMbeG5~MMCmxAL3h1h~QHjE0ytR5wc4WyfM79iKYNukj3M68oh3XdBN-FJ5yiL37hlxMuSakmmJhDCuBestjLcW6WpxcgZ3erBxaajxvu6FHh1PE3VoSw4vw__&Key-Pair-Id=KVTP0A1DKRTAX HTTP/1.1" 200 438011953
 
 
 
     Downloading pytorch_model.bin:   0%|          | 0.00/438M [00:00<?, ?B/s]
 
 
-    DEBUG:filelock:Attempting to release lock 139905263603280 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/pytorch_model.bin.lock
-    DEBUG:filelock:Lock 139905263603280 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/pytorch_model.bin.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/sentence_bert_config.json HTTP/1.1" 200 0
-    DEBUG:filelock:Attempting to acquire lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/sentence_bert_config.json.lock
-    DEBUG:filelock:Lock 139905264131520 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/sentence_bert_config.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/sentence_bert_config.json HTTP/1.1" 200 53
-
-
 
     Downloading (…)nce_bert_config.json:   0%|          | 0.00/53.0 [00:00<?, ?B/s]
-
-
-    DEBUG:filelock:Attempting to release lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/sentence_bert_config.json.lock
-    DEBUG:filelock:Lock 139905264131520 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/sentence_bert_config.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/special_tokens_map.json HTTP/1.1" 200 0
-    DEBUG:filelock:Attempting to acquire lock 139905263725728 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/special_tokens_map.json.lock
-    DEBUG:filelock:Lock 139905263725728 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/special_tokens_map.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/special_tokens_map.json HTTP/1.1" 200 239
 
 
 
     Downloading (…)cial_tokens_map.json:   0%|          | 0.00/239 [00:00<?, ?B/s]
 
 
-    DEBUG:filelock:Attempting to release lock 139905263725728 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/special_tokens_map.json.lock
-    DEBUG:filelock:Lock 139905263725728 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/special_tokens_map.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/tokenizer.json HTTP/1.1" 200 0
-    DEBUG:filelock:Attempting to acquire lock 139905263723856 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/tokenizer.json.lock
-    DEBUG:filelock:Lock 139905263723856 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/tokenizer.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/tokenizer.json HTTP/1.1" 200 466021
-
-
 
     Downloading (…)99753/tokenizer.json:   0%|          | 0.00/466k [00:00<?, ?B/s]
-
-
-    DEBUG:filelock:Attempting to release lock 139905263723856 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/tokenizer.json.lock
-    DEBUG:filelock:Lock 139905263723856 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/tokenizer.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/tokenizer_config.json HTTP/1.1" 200 0
-    DEBUG:filelock:Attempting to acquire lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/tokenizer_config.json.lock
-    DEBUG:filelock:Lock 139905264131520 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/tokenizer_config.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/tokenizer_config.json HTTP/1.1" 200 363
 
 
 
     Downloading (…)okenizer_config.json:   0%|          | 0.00/363 [00:00<?, ?B/s]
 
 
-    DEBUG:filelock:Attempting to release lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/tokenizer_config.json.lock
-    DEBUG:filelock:Lock 139905264131520 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/tokenizer_config.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/train_script.py HTTP/1.1" 200 0
-    DEBUG:filelock:Attempting to acquire lock 139905263725728 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/train_script.py.lock
-    DEBUG:filelock:Lock 139905263725728 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/train_script.py.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/train_script.py HTTP/1.1" 200 13123
-
-
 
     Downloading (…)9753/train_script.py:   0%|          | 0.00/13.1k [00:00<?, ?B/s]
-
-
-    DEBUG:filelock:Attempting to release lock 139905263725728 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/train_script.py.lock
-    DEBUG:filelock:Lock 139905263725728 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/train_script.py.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/vocab.txt HTTP/1.1" 200 0
-    DEBUG:filelock:Attempting to acquire lock 139905263936800 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/vocab.txt.lock
-    DEBUG:filelock:Lock 139905263936800 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/vocab.txt.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/vocab.txt HTTP/1.1" 200 231536
 
 
 
     Downloading (…)0cdb299753/vocab.txt:   0%|          | 0.00/232k [00:00<?, ?B/s]
 
 
-    DEBUG:filelock:Attempting to release lock 139905263936800 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/vocab.txt.lock
-    DEBUG:filelock:Lock 139905263936800 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/vocab.txt.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/modules.json HTTP/1.1" 200 0
-    DEBUG:filelock:Attempting to acquire lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/modules.json.lock
-    DEBUG:filelock:Lock 139905264131520 acquired on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/modules.json.lock
-    DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /sentence-transformers/all-mpnet-base-v2/resolve/5681fe04da6e48e851d5dd1af673670cdb299753/modules.json HTTP/1.1" 200 349
-
-
 
     Downloading (…)b299753/modules.json:   0%|          | 0.00/349 [00:00<?, ?B/s]
 
 
-    DEBUG:filelock:Attempting to release lock 139905264131520 on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/modules.json.lock
-    DEBUG:filelock:Lock 139905264131520 released on /home/runner/.cache/torch/sentence_transformers/sentence-transformers_all-mpnet-base-v2/modules.json.lock
     INFO:sentence_transformers.SentenceTransformer:Use pytorch device: cpu
 
 
@@ -295,7 +182,7 @@ comparer.get_all_records()
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>2023-11-06 00:49:46</td>
+      <td>2023-11-06 23:27:46</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>no</td>
@@ -304,7 +191,7 @@ comparer.get_all_records()
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>2023-11-06 00:49:47</td>
+      <td>2023-11-06 23:27:46</td>
       <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
       <td>no</td>
@@ -500,7 +387,7 @@ comparer.get_all_records()
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>2023-11-06 00:49:46</td>
+      <td>2023-11-06 23:27:46</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>yes</td>
@@ -509,7 +396,7 @@ comparer.get_all_records()
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>2023-11-06 00:49:47</td>
+      <td>2023-11-06 23:27:46</td>
       <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
       <td>no</td>
@@ -571,7 +458,7 @@ comparer.get_all_records()
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>2023-11-06 00:49:46</td>
+      <td>2023-11-06 23:27:46</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>no</td>
@@ -580,7 +467,7 @@ comparer.get_all_records()
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>2023-11-06 00:49:47</td>
+      <td>2023-11-06 23:27:46</td>
       <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
       <td>no</td>
