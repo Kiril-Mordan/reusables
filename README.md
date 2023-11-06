@@ -61,7 +61,7 @@ A mock handler class for simulating interactions with a Redis database, using lo
 This class provides methods for initializing a logger, establishing a connection by loading data from a file,
 saving data back to a file, performing CRUD operations, and searching within the stored data based on embeddings.
 
-[module](python_modules/search_based_extractor.py) | [usage](example_notebooks/search_based_extractor.ipynb) - Search Based Extractor
+[module](python_modules/search_based_extractor.py) | [usage](docs/search_based_extractor.md) - Search Based Extractor
 
 Utility to simplify webscraping by taking advantave of search and assumptions about html structure.
 Extractor allows to find parent html element that contains searched term, record path to it in a file
@@ -72,7 +72,7 @@ and reuse that to scrape data with same html structure.
 A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
 establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
 
-[module](python_modules/comparisonframe.py) | [usage](example_notebooks/comparisonframe.ipynb) - Comparison Frame
+[module](python_modules/comparisonframe.py) | [usage](docs/comparisonframe.md) - Comparison Frame
 
 Designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
 such as character and word count, punctuation usage, and semantic similarity.
