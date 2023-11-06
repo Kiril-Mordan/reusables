@@ -2,7 +2,7 @@
 
 # Define the directory containing your Python modules
 module_directory="python_modules"
-notebook_directory="example_notebooks"
+notebook_directory="docs"
 
 # Create the Markdown documentation file
 output_file="documentation.md"
@@ -25,7 +25,7 @@ find "$module_directory" -type f -name "*.py" | while read -r file; do
         module_link="[module]($module_path)"
 
         # Check if notebook with the same name exists
-        notebook_path="$notebook_directory/$module_name.ipynb"
+        notebook_path="$notebook_directory/$module_name.md"
         if [ -f "$notebook_path" ]; then
             notebook_link=" | [usage]($notebook_path)"
             echo "$module_link$notebook_link - $docstring" >> "$output_file"
