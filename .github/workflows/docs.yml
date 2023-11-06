@@ -13,6 +13,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install python dependencies
+        run: pip install -r env_spec/requirements.txt
+
       - name: Generate md files from jupyter
         run: |
           ./tools/convert_ipynb_to_markdown.sh
