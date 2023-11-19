@@ -13,6 +13,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Set up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+
+      - name: Install Graphviz
+        run: sudo apt-get install graphviz
+
+      - name: Download PlantUML
+        run: wget http://sourceforge.net/projects/plantuml/files/plantuml.jar/download -O plantuml.jar
+
+      - name: Generate UML Diagrams
+        run: |
+          ./tools/generate_uml_diagrams.sh
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -24,6 +39,10 @@ jobs:
       - name: Generate md files from jupyter
         run: |
           ./tools/convert_ipynb_to_markdown.sh
+
+      - name: Generate html files from png
+        run: |
+          ./tools/convert_png_to_html.sh
 
       - name: Update README.md
         run: |
