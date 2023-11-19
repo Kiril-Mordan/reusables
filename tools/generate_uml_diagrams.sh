@@ -15,8 +15,12 @@ for file in "${PLANTUML_DIR}"/*.txt; do
     filename=$(basename -- "$file")
     filename="${filename%.*}"
 
-    # Generate PNG diagram and save it in the docs directory
-    java -jar plantuml.jar -tpng "$file" -o "${DOCS_DIR}"
+    # Generate PNG diagram
+    java -jar plantuml.jar -tpng "$file"
+
+    # Move the generated PNG to the docs directory
+    # Assuming PlantUML creates the PNG in the same directory as the .txt file
+    mv "${PLANTUML_DIR}/${filename}.png" "${DOCS_DIR}/"
 
 done
 

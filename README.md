@@ -1,0 +1,82 @@
+# Reusables
+
+<a><img src="https://github.com/Kiril-Mordan/reusables/blob/main/docs/reuse_logo.png" width="35%" height="35%" align="right" /></a>
+
+Contains pieces of code that were generalized to a point where they can be reused in other projects, but due to their nature, do not deserve their own package.
+
+## Usage
+
+The most straight forward way to use the code without a need to either make a package or manually coping is to import from repository.
+
+First define funtion for importing and then use it to import data with url to a particular point.
+
+``` python
+import requests
+import importlib.util
+import sys
+
+def import_module_from_url(github_raw_url : str,
+                           module_name : str) -> None:
+
+    try:
+        # Download the raw file
+        response = requests.get(github_raw_url)
+        response.raise_for_status()
+
+        # Create a temporary module
+        spec = importlib.util.spec_from_loader(module_name, loader=None)
+        module = importlib.util.module_from_spec(spec)
+
+        # Load the code into the module
+        exec(response.text, module.__dict__)
+
+        # Add the module to the current script's namespace
+        sys.modules[module_name] = module
+
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to download module from GitHub: {e}")
+```
+
+Find raw url to the python module and follow the example:
+
+``` python
+url = 'https://raw.githubusercontent.com/Kiril-Mordan/reusables/main/python_modules/google_drive_support.py'
+
+import_module_from_url(github_raw_url=url,
+                       module_name='google_drive_support')
+
+from google_drive_support import get_google_drive_file_id, download_file, service_account, build
+```
+
+## Content:
+ 
+[module](python_modules/google_drive_support.py) - Google Drive API Utilities Module
+
+This module provides a set of functions for interacting with the Google Drive API.
+It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
+
+[module](python_modules/search_based_extractor.py) | [usage](docs/search_based_extractor.md) - Search Based Extractor
+
+Utility to simplify webscraping by taking advantave of search and assumptions about html structure.
+Extractor allows to find parent html element that contains searched term, record path to it in a file
+and reuse that to scrape data with same html structure.
+
+[module](python_modules/redis_database_handler.py) - Redis Database Handler
+
+A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
+establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
+
+[module](python_modules/comparisonframe.py) | [usage](docs/comparisonframe.md) - Comparison Frame
+
+Designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
+such as character and word count, punctuation usage, and semantic similarity.
+It's particularly useful for scenarios where consistent text analysis is required,
+such as evaluating the performance of natural language processing models, monitoring content quality,
+or tracking changes in textual data over time using manual evaluation.
+
+[module](python_modules/redis_mock_handler.py) - Redis Mock Handler
+
+A mock handler class for simulating interactions with a Redis database, using local file storage.
+This class provides methods for initializing a logger, establishing a connection by loading data from a file,
+saving data back to a file, performing CRUD operations, and searching within the stored data based on embeddings.
+
