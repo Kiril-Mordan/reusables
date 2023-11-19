@@ -1,0 +1,36 @@
+@startuml
+class ComparisonFrame {
+    -embedder: SentenceTransformer
+    -model_name: str
+    -record_file: str
+    -results_file: str
+    -embeddings_file: str
+    -margin_char_count_diff: int
+    -margin_word_count_diff: int
+    -margin_semantic_similarity: float
+    -logger: Logger
+    -logger_name: str
+    -loggerLvl: int
+    +__attrs_post_init__()
+    +initialize_logger()
+    +initialize_record_file()
+    +initialize_embedder(model_name: str, reset: bool)
+    +record_query(query: str, expected_text: str, overwrite: bool)
+    +mark_query_as_tested(query: str, test_status: str)
+    +reset_record_statuses(record_ids: list)
+    +save_embeddings(query: str, expected_text: str)
+    +load_embeddings(query: str)
+    +get_all_queries(untested_only: bool)
+    +get_comparison_results(throw_error: bool)
+    +get_all_records()
+    +flush_records()
+    +flush_comparison_results()
+    +compare_with_record(query: str, provided_text: str, mark_as_tested: bool, return_results: bool)
+    +compare(exp_text: str, prov_text: str, query: str)
+    +compare_char_count(exp_text: str, prov_text: str)
+    +compare_word_count(exp_text: str, prov_text: str)
+    +compare_line_count(exp_text: str, prov_text: str)
+    +compare_punctuation(exp_text: str, prov_text: str)
+    +compare_semantic_similarity(exp_text: str, prov_text: str)
+}
+@enduml
