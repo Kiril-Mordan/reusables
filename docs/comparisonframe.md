@@ -42,59 +42,59 @@ comparer = ComparisonFrame(
 
 
 
-    Downloading (…)99753/.gitattributes:   0%|          | 0.00/1.18k [00:00<?, ?B/s]
+    .gitattributes:   0%|          | 0.00/1.18k [00:00<?, ?B/s]
 
 
 
-    Downloading (…)_Pooling/config.json:   0%|          | 0.00/190 [00:00<?, ?B/s]
+    1_Pooling/config.json:   0%|          | 0.00/190 [00:00<?, ?B/s]
 
 
 
-    Downloading (…)0cdb299753/README.md:   0%|          | 0.00/10.6k [00:00<?, ?B/s]
+    README.md:   0%|          | 0.00/10.6k [00:00<?, ?B/s]
 
 
 
-    Downloading (…)db299753/config.json:   0%|          | 0.00/571 [00:00<?, ?B/s]
+    config.json:   0%|          | 0.00/571 [00:00<?, ?B/s]
 
 
 
-    Downloading (…)ce_transformers.json:   0%|          | 0.00/116 [00:00<?, ?B/s]
+    config_sentence_transformers.json:   0%|          | 0.00/116 [00:00<?, ?B/s]
 
 
 
-    Downloading (…)753/data_config.json:   0%|          | 0.00/39.3k [00:00<?, ?B/s]
+    data_config.json:   0%|          | 0.00/39.3k [00:00<?, ?B/s]
 
 
 
-    Downloading pytorch_model.bin:   0%|          | 0.00/438M [00:00<?, ?B/s]
+    pytorch_model.bin:   0%|          | 0.00/438M [00:00<?, ?B/s]
 
 
 
-    Downloading (…)nce_bert_config.json:   0%|          | 0.00/53.0 [00:00<?, ?B/s]
+    sentence_bert_config.json:   0%|          | 0.00/53.0 [00:00<?, ?B/s]
 
 
 
-    Downloading (…)cial_tokens_map.json:   0%|          | 0.00/239 [00:00<?, ?B/s]
+    special_tokens_map.json:   0%|          | 0.00/239 [00:00<?, ?B/s]
 
 
 
-    Downloading (…)99753/tokenizer.json:   0%|          | 0.00/466k [00:00<?, ?B/s]
+    tokenizer.json:   0%|          | 0.00/466k [00:00<?, ?B/s]
 
 
 
-    Downloading (…)okenizer_config.json:   0%|          | 0.00/363 [00:00<?, ?B/s]
+    tokenizer_config.json:   0%|          | 0.00/363 [00:00<?, ?B/s]
 
 
 
-    Downloading (…)9753/train_script.py:   0%|          | 0.00/13.1k [00:00<?, ?B/s]
+    train_script.py:   0%|          | 0.00/13.1k [00:00<?, ?B/s]
 
 
 
-    Downloading (…)0cdb299753/vocab.txt:   0%|          | 0.00/232k [00:00<?, ?B/s]
+    vocab.txt:   0%|          | 0.00/232k [00:00<?, ?B/s]
 
 
 
-    Downloading (…)b299753/modules.json:   0%|          | 0.00/349 [00:00<?, ?B/s]
+    modules.json:   0%|          | 0.00/349 [00:00<?, ?B/s]
 
 
     INFO:sentence_transformers.SentenceTransformer:Use pytorch device: cpu
@@ -182,7 +182,7 @@ comparer.get_all_records()
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>2023-11-06 23:27:46</td>
+      <td>2023-11-19 23:20:51</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>no</td>
@@ -191,7 +191,7 @@ comparer.get_all_records()
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>2023-11-06 23:27:46</td>
+      <td>2023-11-19 23:20:51</td>
       <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
       <td>no</td>
@@ -387,7 +387,7 @@ comparer.get_all_records()
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>2023-11-06 23:27:46</td>
+      <td>2023-11-19 23:20:51</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>yes</td>
@@ -396,7 +396,7 @@ comparer.get_all_records()
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>2023-11-06 23:27:46</td>
+      <td>2023-11-19 23:20:51</td>
       <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
       <td>no</td>
@@ -458,7 +458,7 @@ comparer.get_all_records()
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>2023-11-06 23:27:46</td>
+      <td>2023-11-19 23:20:51</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>no</td>
@@ -467,7 +467,7 @@ comparer.get_all_records()
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>2023-11-06 23:27:46</td>
+      <td>2023-11-19 23:20:51</td>
       <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
       <td>no</td>
