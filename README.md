@@ -66,7 +66,7 @@ and reuse that to scrape data with same html structure.
 A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
 establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
 
-[module](python_modules/comparisonframe.py) | [usage](docs/comparisonframe.md) - Comparison Frame
+[module](python_modules/comparisonframe.py) | [usage](docs/comparisonframe.md) | [diagram](docs/comparisonframe.png) - Comparison Frame
 
 Designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
 such as character and word count, punctuation usage, and semantic similarity.
