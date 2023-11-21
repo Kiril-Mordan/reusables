@@ -9,11 +9,11 @@ and basic data management within a simulated environment resembling a vector dat
 # Imports
 ## essential
 import logging
+import json
+import time
 import numpy as np
 import dill
 import attr
-import json
-import time
 ## for search
 import requests
 import hnswlib
@@ -25,14 +25,17 @@ class MockVecDbHandler:
     # pylint: disable=too-many-instance-attributes
 
     """
-    This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios. It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search, and basic data management within a simulated environment resembling a vector database.
+    This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
+    It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
+    and basic data management within a simulated environment resembling a vector database.
 
     Parameters:
     - embeddings_url (str): The URL to access OpenAI models for generating embeddings, essential for text analysis and comparison.
     - godID (str): A unique identifier used for authentication when interacting with the embedding service, ensuring secure access.
     - headers (dict): HTTP headers required for making requests to the embedding service, crucial for successful API interactions.
     - file_path (str, optional): The local file path used for storing and simulating the database, with a default value for quick setup.
-    - logger (logging.Logger, optional): An optional logger instance to log activities and events within the class, aiding in debugging and monitoring.
+    - logger (logging.Logger, optional): An optional logger instance to log activities and events within the class,
+    aiding in debugging and monitoring.
     - logger_name (str, optional): The designated name for the logger, allowing for easy identification in logs.
     - loggerLvl (int, optional): The logging level, determining the verbosity of log messages, set to INFO by default for balanced logging.
 
@@ -43,12 +46,14 @@ class MockVecDbHandler:
 
     Key Methods:
     - initialize_logger(): Sets up a logging mechanism for the class, enhancing traceability and debugging.
-    - hnsw_search(): Implements the HNSW algorithm to efficiently search in high-dimensional spaces, crucial for vector database operations.
+    - hnsw_search(): Implements the HNSW algorithm to efficiently search in high-dimensional spaces,
+    crucial for vector database operations.
     - establish_connection(): Simulates the process of establishing a connection to a database by loading data from a file.
     - save_data(): Persists the current state of the 'data' attribute to a file, mimicking the data persistence in a database.
     - embed(): Generates embeddings for given text inputs using an external API, a fundamental operation for text-based vector databases.
 
-    The class also includes additional methods for simulating database insertions, updates, filtering, and searching, providing a comprehensive tool for testing vector database interactions in a controlled environment.
+    The class also includes additional methods for simulating database insertions, updates, filtering, and searching, providing a
+    comprehensive tool for testing vector database interactions in a controlled environment.
     """
 
     ## for accessing openAI models
@@ -149,6 +154,10 @@ class MockVecDbHandler:
 
     def embed(self, text):
 
+        """
+        Embeds single query with openAI embedder.
+        """
+
         api_url = self.embeddings_url
 
         payload = json.dumps({
@@ -157,11 +166,11 @@ class MockVecDbHandler:
         })
 
         try:
-            response = requests.post(api_url, headers=self.headers, data=payload)
+            response = requests.post(api_url, headers=self.headers, data=payload, timeout=10)
 
             if response.status_code == 429:
                 time.sleep(1)
-                response = requests.post(api_url, headers=self.headers, data=payload)
+                response = requests.post(api_url, headers=self.headers, data=payload, timeout=10)
 
             if response.status_code > 200:
                 print(f"Request to '{api_url}' failed: {response}")
@@ -171,8 +180,7 @@ class MockVecDbHandler:
             embedding = response.json()['data'][0]['embedding']
 
         except:
-            print("An exception has occurred. \n")
-            print("Error Message:", embedding['error']['message'])
+            print("An exception has occurred during embedding!")
             return None
         # with open('embeddings_backup.p' , 'rb')  as f:
         #     embeddings = pickle.load(f)
@@ -184,7 +192,7 @@ class MockVecDbHandler:
         Prepare a dictionary for storage in Redis by serializing all its values to strings.
         """
 
-        for key, value in data_dict.items():
+        for key, _ in data_dict.items():
 
             embedding = self.embed(data_dict[key][var_for_embedding_name])
             data_dict[key]['embedding'] = embedding
@@ -246,7 +254,7 @@ class MockVecDbHandler:
             self.keys_list = [key for key in self.data]
 
         try:
-            data_embeddings = np.array([(self.data[d]['embedding']) for d in self.keys_list]) # np.array([json.loads(self.data[d]['embedding']) for d in self.keys_list])
+            data_embeddings = np.array([(self.data[d]['embedding']) for d in self.keys_list])
         except Exception as e:
             self.logger.error("Problem during extracting search pool embeddings!", e)
 
