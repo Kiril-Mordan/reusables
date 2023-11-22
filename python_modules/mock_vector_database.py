@@ -61,6 +61,12 @@ class MockVecDbHandler:
     godID = attr.ib()
     headers = attr.ib()
 
+    ## for similarity search
+    return_keys_list = attr.ib(type = list)
+    search_results_n = attr.ib(default=3, type = int)
+    similarity_search_type = attr.ib(default='hnsw', type = str)
+    similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
+
     ## inputs with defaults
     file_path = attr.ib(default="../redis_mock", type=str)
 
@@ -125,6 +131,45 @@ class MockVecDbHandler:
         labels, distances = p.knn_query(search_emb, k=k)
 
         return labels[0], distances[0]
+
+    def linear_search(self, search_emb, doc_embs, k=1, space='cosine'):
+        """
+        Perform a linear (brute force) search.
+
+        Args:
+        - search_emb (numpy array): The query embedding. Shape (1, dim).
+        - doc_embs (numpy array): Array of reference embeddings. Shape (num_elements, dim).
+        - k (int): Number of nearest neighbors to return.
+        - space (str): Space type for the distance calculation ('cosine' or 'l2').
+
+        Returns:
+        - labels (numpy array): Indices of the k nearest embeddings from doc_embs to search_emb.
+        - distances (numpy array): Distances of the k nearest embeddings.
+        """
+        # Calculate distances from the query to all document embeddings
+        if space == 'cosine':
+            # Normalize embeddings for cosine similarity
+            search_emb_norm = search_emb / np.linalg.norm(search_emb)
+            doc_embs_norm = doc_embs / np.linalg.norm(doc_embs, axis=1)[:, np.newaxis]
+
+            # Compute cosine distances
+            distances = np.dot(doc_embs_norm, search_emb_norm.T).flatten()
+        elif space == 'l2':
+            # Compute L2 distances
+            distances = np.linalg.norm(doc_embs - search_emb, axis=1)
+
+        # Get the indices of the top k closest embeddings
+        if space == 'cosine':
+            # For cosine, larger values mean closer distance
+            labels = np.argsort(-distances)[:k]
+        else:
+            # For L2, smaller values mean closer distance
+            labels = np.argsort(distances)[:k]
+
+        # Get the distances of the top k closest embeddings
+        top_distances = distances[labels]
+
+        return labels, top_distances
 
     def establish_connection(self):
 
@@ -239,10 +284,14 @@ class MockVecDbHandler:
         else:
             self.keys_list = self.data
 
-    def search_database_keys(self, query: str, search_results_n: int = 3):
+    def search_database_keys(self,
+        query: str,
+        search_results_n: int = None,
+        similarity_search_type: str = None,
+        similarity_params: dict = None):
 
         """
-        Searches the mock database using embeddings and returns a list of entries that match the query.
+        Searches the mock database using embeddings and saves a list of entries that match the query.
         """
 
         try:
@@ -253,6 +302,15 @@ class MockVecDbHandler:
         if self.keys_list is None:
             self.keys_list = [key for key in self.data]
 
+        if search_results_n is None:
+            search_results_n = self.search_results_n
+
+        if similarity_search_type is None:
+            similarity_search_type = self.similarity_search_type
+
+        if similarity_params is None:
+            similarity_params = self.similarity_params
+
         try:
             data_embeddings = np.array([(self.data[d]['embedding']) for d in self.keys_list])
         except Exception as e:
@@ -262,20 +320,54 @@ class MockVecDbHandler:
         # self.logger.info(data_embeddings)
 
         try:
-            labels, _ = self.hnsw_search(query_embedding, data_embeddings, k=search_results_n)
+            if similarity_search_type == 'linear':
+                labels, _ = self.linear_search(query_embedding,
+                data_embeddings,
+                k=search_results_n,
+                **similarity_params)
+            else:
+                labels, _ = self.hnsw_search(query_embedding,
+                data_embeddings,
+                k=search_results_n,
+                **similarity_params)
+
             self.results_keys = [self.keys_list[i] for i in labels]
         except Exception as e:
             self.logger.error("Problem during extracting results from the mock database!", e)
 
-    def get_dict_results(self, return_keys_list) -> dict:
+    def get_dict_results(self, return_keys_list : list = None) -> list:
 
         """
         Retrieves specified fields from the search results in the mock database.
         """
 
+        if return_keys_list is None:
+            return_keys_list = self.return_keys_list
+
         # This method mimics the behavior of the original 'get_dict_results' method
-        results = {}
+        results = []
         for searched_doc in self.results_keys:
             result = {key: self.data[searched_doc].get(key) for key in return_keys_list}
-            results.update(result)
+            results.append(result)
         return results
+
+    def search_database(self,
+        query: str,
+        search_results_n: int = None,
+        similarity_search_type: str = None,
+        similarity_params: dict = None,
+        return_keys_list : list = None) ->list:
+
+        """
+        Searches through keys and retrieves specified fields from the search results in the mock database.
+        """
+
+        self.search_database_keys(query = query,
+                                    search_results_n = search_results_n,
+                                    similarity_search_type = similarity_search_type,
+                                    similarity_params = similarity_params)
+
+        results = self.get_dict_results(return_keys_list = return_keys_list)
+
+        return results
+
