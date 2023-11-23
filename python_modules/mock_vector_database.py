@@ -62,13 +62,16 @@ class MockVecDbHandler:
     headers = attr.ib()
 
     ## for similarity search
-    return_keys_list = attr.ib(type = list)
+    return_keys_list = attr.ib(default=[], type = list)
     search_results_n = attr.ib(default=3, type = int)
     similarity_search_type = attr.ib(default='hnsw', type = str)
     similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
 
     ## inputs with defaults
     file_path = attr.ib(default="../redis_mock", type=str)
+    persist = attr.ib(default=False, type=bool)
+
+    embedder_error_tolerance = attr.ib(default=0.0, type=float)
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Mock handler')
@@ -225,8 +228,12 @@ class MockVecDbHandler:
             embedding = response.json()['data'][0]['embedding']
 
         except:
-            print("An exception has occurred during embedding!")
-            return None
+            error_mess = "An exception has occurred during embedding!"
+            if self.embedder_error_tolerance == 0.0:
+                raise ValueError(error_mess)
+            else:
+                print(error_mess)
+                return None
         # with open('embeddings_backup.p' , 'rb')  as f:
         #     embeddings = pickle.load(f)
         return embedding
@@ -269,7 +276,8 @@ class MockVecDbHandler:
 
         try:
             self.data = {}
-            self.save_data()
+            if self.persist:
+                self.save_data()
         except Exception as e:
             self.logger.error("Problem during flushing mock database", e)
 
@@ -370,4 +378,3 @@ class MockVecDbHandler:
         results = self.get_dict_results(return_keys_list = return_keys_list)
 
         return results
-
