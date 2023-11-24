@@ -80,9 +80,3 @@ It's particularly useful for scenarios where consistent text analysis is require
 such as evaluating the performance of natural language processing models, monitoring content quality,
 or tracking changes in textual data over time using manual evaluation.
 
-[module](python_modules/redis_mock_handler.py) - Redis Mock Handler
-
-A mock handler class for simulating interactions with a Redis database, using local file storage.
-This class provides methods for initializing a logger, establishing a connection by loading data from a file,
-saving data back to a file, performing CRUD operations, and searching within the stored data based on embeddings.
-
