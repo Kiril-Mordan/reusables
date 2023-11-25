@@ -24,36 +24,78 @@ import hnswlib
 class MockVecDbHandler:
     # pylint: disable=too-many-instance-attributes
 
-    """
-    This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
-    It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
-    and basic data management within a simulated environment resembling a vector database.
+   """
+    The MockVecDbHandler class simulates a vector database environment, primarily for testing and development purposes.
+    It integrates various functionalities such as text embedding, Hierarchical Navigable Small World (HNSW) search,
+    and basic data management, mimicking operations in a real vector database.
 
     Parameters:
-    - embeddings_url (str): The URL to access OpenAI models for generating embeddings, essential for text analysis and comparison.
-    - godID (str): A unique identifier used for authentication when interacting with the embedding service, ensuring secure access.
-    - headers (dict): HTTP headers required for making requests to the embedding service, crucial for successful API interactions.
-    - file_path (str, optional): The local file path used for storing and simulating the database, with a default value for quick setup.
-    - logger (logging.Logger, optional): An optional logger instance to log activities and events within the class,
-    aiding in debugging and monitoring.
-    - logger_name (str, optional): The designated name for the logger, allowing for easy identification in logs.
-    - loggerLvl (int, optional): The logging level, determining the verbosity of log messages, set to INFO by default for balanced logging.
+        embeddings_url (str): URL to access OpenAI models for generating embeddings, crucial for text analysis.
+        godID (str): Unique identifier for authentication with the embedding service.
+        headers (dict): HTTP headers for API interactions with the embedding service.
+        file_path (str): Local file path for storing and simulating the database; defaults to "../redis_mock".
+        persist (bool): Flag to persist data changes; defaults to False.
+        embedder_error_tolerance (float): Tolerance level for embedding errors; defaults to 0.0.
+        logger (logging.Logger): Logger instance for activity logging.
+        logger_name (str): Name for the logger; defaults to 'Mock handler'.
+        loggerLvl (int): Logging level, set to logging.INFO by default.
+        return_keys_list (list): Fields to return in search results; defaults to an empty list.
+        search_results_n (int): Number of results to return in searches; defaults to 3.
+        similarity_search_type (str): Type of similarity search to use; defaults to 'hnsw'.
+        similarity_params (dict): Parameters for similarity search; defaults to {'space':'cosine'}.
 
-    Instance Variables:
-    - data (dict): A simulated in-memory representation of the database contents, used for testing data retrieval and storage operations.
-    - keys_list (list): A dynamically generated list of keys present in the simulated database, useful for search and retrieval operations.
-    - results_keys (list): A list of keys that match specific search criteria, updated after each search operation.
+    Attributes:
+        data (dict): In-memory representation of database contents.
+        filtered_data (dict): Stores filtered database entries based on criteria.
+        keys_list (list): List of keys in the database.
+        results_keys (list): Keys matching specific search criteria.
 
-    Key Methods:
-    - initialize_logger(): Sets up a logging mechanism for the class, enhancing traceability and debugging.
-    - hnsw_search(): Implements the HNSW algorithm to efficiently search in high-dimensional spaces,
-    crucial for vector database operations.
-    - establish_connection(): Simulates the process of establishing a connection to a database by loading data from a file.
-    - save_data(): Persists the current state of the 'data' attribute to a file, mimicking the data persistence in a database.
-    - embed(): Generates embeddings for given text inputs using an external API, a fundamental operation for text-based vector databases.
+    Methods:
+        initialize_logger()
+            Sets up logging for the class instance.
 
-    The class also includes additional methods for simulating database insertions, updates, filtering, and searching, providing a
-    comprehensive tool for testing vector database interactions in a controlled environment.
+        hnsw_search(search_emb, doc_embs, k=1, space='cosine', ef_search=50, M=16, ef_construction=200)
+            Performs HNSW algorithm-based search.
+
+        linear_search(search_emb, doc_embs, k=1, space='cosine')
+            Conducts a linear search.
+
+        establish_connection(file_path=None)
+            Simulates establishing a database connection.
+
+        save_data()
+            Saves the current state of the 'data' attribute to a file.
+
+        embed(text)
+            Generates embeddings for text inputs.
+
+        _prepare_for_redis(data_dict, var_for_embedding_name)
+            Prepares data for storage in Redis.
+
+        insert_values_dict(values_dict, var_for_embedding_name)
+            Simulates insertion of key-value pairs into the database.
+
+        flush_database()
+            Clears all data in the mock database.
+
+        filter_keys(subkey=None, subvalue=None)
+            Filters data entries based on a specific subkey and subvalue.
+
+        filter_database(filter_criteria=None)
+            Filters a dictionary based on multiple field criteria.
+
+        remove_from_database(filter_criteria=None)
+            Removes key-value pairs from a dictionary based on filter criteria.
+
+        search_database_keys(query, search_results_n=None, similarity_search_type=None, similarity_params=None)
+            Searches the database using embeddings and saves a list of entries that match the query.
+
+        get_dict_results(return_keys_list=None)
+            Retrieves specified fields from the search results.
+
+        search_database(query, search_results_n=None, filter_criteria=None, similarity_search_type=None,
+                        similarity_params=None, return_keys_list=None)
+            Searches and retrieves fields from the database for a given filter.
     """
 
     ## for accessing openAI models
@@ -79,6 +121,7 @@ class MockVecDbHandler:
 
     ## outputs
     data = attr.ib(default=None, init=False)
+    filtered_data = attr.ib(default=None, init=False)
     keys_list = attr.ib(default=None, init = False)
     results_keys = attr.ib(default=None, init = False)
 
@@ -174,14 +217,17 @@ class MockVecDbHandler:
 
         return labels, top_distances
 
-    def establish_connection(self):
+    def establish_connection(self, file_path : str = None):
 
         """
         Simulates establishing a connection by loading data from a local file into the 'data' attribute.
         """
 
+        if file_path is None:
+            file_path = self.file_path
+
         try:
-            with open(self.file_path, 'rb') as file:
+            with open(file_path, 'rb') as file:
                 self.data = dill.load(file)
         except FileNotFoundError:
             self.data = {}
@@ -234,8 +280,7 @@ class MockVecDbHandler:
             else:
                 print(error_mess)
                 return None
-        # with open('embeddings_backup.p' , 'rb')  as f:
-        #     embeddings = pickle.load(f)
+
         return embedding
 
     def _prepare_for_redis(self, data_dict, var_for_embedding_name):
@@ -292,6 +337,27 @@ class MockVecDbHandler:
         else:
             self.keys_list = self.data
 
+    def filter_database(self, filter_criteria : dict = None):
+
+        """
+        Filters a dictionary based on multiple field criteria.
+        """
+
+        self.filtered_data = {
+            key: value for key, value in self.data.items()
+            if all(value.get(k) == v for k, v in filter_criteria.items())
+        }
+
+    def remove_from_database(self, filter_criteria : dict = None):
+        """
+        Removes key-value pairs from a dictionary based on filter criteria.
+        """
+
+        self.data = {
+            key: value for key, value in self.data.items()
+            if not all(value.get(k) == v for k, v in filter_criteria.items())
+        }
+
     def search_database_keys(self,
         query: str,
         search_results_n: int = None,
@@ -307,8 +373,6 @@ class MockVecDbHandler:
         except Exception as e:
             self.logger.error("Problem during embedding search query!", e)
 
-        if self.keys_list is None:
-            self.keys_list = [key for key in self.data]
 
         if search_results_n is None:
             search_results_n = self.search_results_n
@@ -319,13 +383,16 @@ class MockVecDbHandler:
         if similarity_params is None:
             similarity_params = self.similarity_params
 
+        if self.filtered_data is None:
+            self.filtered_data = self.data
+
+        if self.keys_list is None:
+            self.keys_list = [key for key in self.filtered_data]
+
         try:
-            data_embeddings = np.array([(self.data[d]['embedding']) for d in self.keys_list])
+            data_embeddings = np.array([(self.filtered_data[d]['embedding']) for d in self.keys_list])
         except Exception as e:
             self.logger.error("Problem during extracting search pool embeddings!", e)
-
-        # self.logger.info(self.keys_list)
-        # self.logger.info(data_embeddings)
 
         try:
             if similarity_search_type == 'linear':
@@ -362,13 +429,18 @@ class MockVecDbHandler:
     def search_database(self,
         query: str,
         search_results_n: int = None,
+        filter_criteria : dict = None,
         similarity_search_type: str = None,
         similarity_params: dict = None,
         return_keys_list : list = None) ->list:
 
         """
-        Searches through keys and retrieves specified fields from the search results in the mock database.
+        Searches through keys and retrieves specified fields from the search results
+        in the mock database for a given filter.
         """
+
+        if filter_criteria:
+            self.filter_database(filter_criteria=filter_criteria)
 
         self.search_database_keys(query = query,
                                     search_results_n = search_results_n,
