@@ -66,7 +66,7 @@ and reuse that to scrape data with same html structure.
 A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
 establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
 
-[module](python_modules/mock_vector_database.py) - Mock Vector Db Handler
+[module](python_modules/mock_vector_database.py) | [diagram](docs/mock_vector_database.png) - Mock Vector Db Handler
 
 This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
 It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
