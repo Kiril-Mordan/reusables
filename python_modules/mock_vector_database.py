@@ -24,7 +24,7 @@ import hnswlib
 class MockVecDbHandler:
     # pylint: disable=too-many-instance-attributes
 
-   """
+    """
     The MockVecDbHandler class simulates a vector database environment, primarily for testing and development purposes.
     It integrates various functionalities such as text embedding, Hierarchical Navigable Small World (HNSW) search,
     and basic data management, mimicking operations in a real vector database.
