@@ -18,6 +18,17 @@ jobs:
         with:
           java-version: '11'
 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install python dependencies
+        run: pip install -r env_spec/requirements.txt
+
+      - name: Generate Plantuml
+        run: ./tools/generate_uml_diagrams.sh
+
       - name: Install Graphviz
         run: sudo apt-get install graphviz
 
@@ -27,14 +38,6 @@ jobs:
       - name: Generate UML Diagrams
         run: |
           ./tools/generate_uml_diagrams.sh
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-
-      - name: Install python dependencies
-        run: pip install -r env_spec/requirements.txt
 
       - name: Generate md files from jupyter
         run: |
