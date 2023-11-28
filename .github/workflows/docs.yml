@@ -26,8 +26,10 @@ jobs:
       - name: Install python dependencies
         run: pip install -r env_spec/requirements.txt
 
-      - name: Generate Plantuml
-        run: ./tools/generate_uml_diagrams.sh
+      - name: Create Plantuml Code
+        run: ./tools/create_plantuml_code.sh
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Install Graphviz
         run: sudo apt-get install graphviz
@@ -51,7 +53,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add docs README.md
+          git add docs README.md plantuml
           # Check if there are any changes in the working directory
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "Update README"
