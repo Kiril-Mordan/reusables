@@ -179,6 +179,7 @@ class MockVecDbHandler:
         return labels[0], distances[0]
 
     def linear_search(self, search_emb, doc_embs, k=1, space='cosine'):
+
         """
         Perform a linear (brute force) search.
 
@@ -192,6 +193,7 @@ class MockVecDbHandler:
         - labels (numpy array): Indices of the k nearest embeddings from doc_embs to search_emb.
         - distances (numpy array): Distances of the k nearest embeddings.
         """
+
         # Calculate distances from the query to all document embeddings
         if space == 'cosine':
             # Normalize embeddings for cosine similarity

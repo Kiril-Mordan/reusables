@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+  workflow_run:
+      workflows: ["Generate PlantUML Diagrams"]
+      types:
+        - completed
 
 jobs:
   documentation:
@@ -13,11 +17,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Java
-        uses: actions/setup-java@v1
-        with:
-          java-version: '11'
-
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -25,21 +24,6 @@ jobs:
 
       - name: Install python dependencies
         run: pip install -r env_spec/requirements.txt
-
-      - name: Create Plantuml Code
-        run: ./tools/create_plantuml_code.sh
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
-      - name: Install Graphviz
-        run: sudo apt-get install graphviz
-
-      - name: Download PlantUML
-        run: wget http://sourceforge.net/projects/plantuml/files/plantuml.jar/download -O plantuml.jar
-
-      - name: Generate UML Diagrams
-        run: |
-          ./tools/generate_uml_diagrams.sh
 
       - name: Generate md files from jupyter
         run: |
@@ -53,7 +37,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add docs README.md plantuml
+          git add docs README.md
           # Check if there are any changes in the working directory
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "Update README"

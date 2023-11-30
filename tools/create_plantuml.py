@@ -1,9 +1,17 @@
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
+import argparse
 
-# input
-module_name = "mock_vector_database"
+
+# Set up argument parser
+parser = argparse.ArgumentParser(description='Generate PlantUML code from module.')
+parser.add_argument('module_name', type=str, help='Name of the module')
+args = parser.parse_args()
+
+# Use the argument
+module_name = args.module_name
+#module_name = "mock_vector_database"
 
 # parameters
 
