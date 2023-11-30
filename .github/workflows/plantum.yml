@@ -1,0 +1,72 @@
+name: Generate PlantUML Diagrams
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - './python_modules/**'
+
+jobs:
+  generate-plantuml:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Java
+      uses: actions/setup-java@v1
+      with:
+        java-version: '11'
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Install Dependencies
+      run: |
+        pip install -r env_spec/requirements.txt
+
+    - name: Find Changed Modules
+      id: changed-modules
+      run: |
+        echo "Changed files:"
+        changed_files=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'path/to/modules/')
+        echo $changed_files
+        echo "::set-output name=files::${changed_files}"
+
+    - name: Run Script for Each Changed Module
+      run: |
+        for file in ${{ steps.changed-modules.outputs.files }}
+        do
+          module_name=$(basename $file .py)  # Assuming the file names are the module names
+          echo "Processing module: $module_name"
+          python3 ./tools/create_plantuml.py $module_name
+        done
+      env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+    - name: Install Graphviz
+        run: sudo apt-get install graphviz
+
+    - name: Download PlantUML
+      run: wget http://sourceforge.net/projects/plantuml/files/plantuml.jar/download -O plantuml.jar
+
+    - name: Generate UML Diagrams
+      run: |
+        ./tools/generate_uml_diagrams.sh
+
+    - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add docs plantuml
+          # Check if there are any changes in the working directory
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Update plantuml diagrams"
+            git push
+          else
+            echo "No changes to commit"
+          fi
