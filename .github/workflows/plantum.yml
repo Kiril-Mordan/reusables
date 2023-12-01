@@ -26,21 +26,21 @@ jobs:
       with:
         python-version: 3.9
 
+    - name: Check git log
+      run: |
+        git log
+
+
     - name: Install Dependencies
       run: |
         pip install -r env_spec/requirements.txt
 
-    - name: Find Changed Modules
-      id: changed-modules
-      run: |
-        echo "Changed files:"
-        changed_files=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'path/to/modules/')
-        echo $changed_files
-        echo "::set-output name=files::${changed_files}"
-
     - name: Run Script for Each Changed Module
       run: |
-        for file in ${{ steps.changed-modules.outputs.files }}
+        echo "Changed files:"
+        changed_files=$(git diff --name-only aa9f749264c1e03e6ed656ea4991fcadfdfe8f50 ${{ github.sha}} | grep 'python_modules/')
+        echo "$changed_files"
+        for file in $changed_files
         do
           module_name=$(basename $file .py)  # Assuming the file names are the module names
           echo "Processing module: $module_name"
@@ -63,6 +63,7 @@ jobs:
       run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git pull origin HEAD:main
           git add docs plantuml
           # Check if there are any changes in the working directory
           if [ -n "$(git status --porcelain)" ]; then

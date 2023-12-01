@@ -1,9 +1,9 @@
 name: Update README
 
 on:
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
   workflow_run:
       workflows: ["Generate PlantUML Diagrams"]
       types:
@@ -37,6 +37,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git pull origin HEAD:main
           git add docs README.md
           # Check if there are any changes in the working directory
           if [ -n "$(git status --porcelain)" ]; then

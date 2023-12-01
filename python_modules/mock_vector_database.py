@@ -19,6 +19,7 @@ import requests
 import hnswlib
 
 
+
 @attr.s
 class MockVecDbHandler:
     # pylint: disable=too-many-instance-attributes
