@@ -4,8 +4,11 @@ on:
   push:
     branches:
       - main
-    paths:
-      - './python_modules/**'
+  pull_request:
+    branches:
+      - main
+  paths:
+    - './python_modules/**'
 
 jobs:
   generate-plantuml:
