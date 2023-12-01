@@ -49,7 +49,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     - name: Install Graphviz
-        run: sudo apt-get install graphviz
+      run: sudo apt-get install graphviz
 
     - name: Download PlantUML
       run: wget http://sourceforge.net/projects/plantuml/files/plantuml.jar/download -O plantuml.jar
@@ -59,7 +59,7 @@ jobs:
         ./tools/generate_uml_diagrams.sh
 
     - name: Commit changes
-        run: |
+      run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add docs plantuml
