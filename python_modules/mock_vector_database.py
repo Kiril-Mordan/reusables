@@ -140,7 +140,6 @@ class MockVecDbHandler:
 
             self.logger = logger
 
-
     def hnsw_search(self, search_emb, doc_embs, k=1, space='cosine', ef_search=50, M=16, ef_construction=200):
         """
         Perform Hierarchical Navigable Small World search.

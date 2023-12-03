@@ -16,7 +16,7 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
       with:
-        fetch-depth: 5  # Fetches prev commits
+        fetch-depth: 2  # Fetches prev commits
 
     - name: Set up Java
       uses: actions/setup-java@v1
@@ -32,16 +32,13 @@ jobs:
       run: |
         git log
 
-    - name: Check changed files
+    - name: Find Changed Modules
+      id: changed-modules
       run: |
         echo "Changed files:"
         changed_files=$(git diff --name-only HEAD~ HEAD | grep 'python_modules/')
-        echo "$changed_files"
-        for file in $changed_files
-        do
-          module_name=$(basename $file .py)  # Assuming the file names are the module names
-          echo "Processing module: $module_name"
-        done
+        echo $changed_files
+        echo "::set-output name=files::${changed_files}"
 
     - name: Install Dependencies
       run: |
@@ -49,7 +46,7 @@ jobs:
 
     - name: Run Script for Each Changed Module
       run: |
-        for file in $changed_files
+        for file in ${{ steps.changed-modules.outputs.files }}
         do
           module_name=$(basename $file .py)  # Assuming the file names are the module names
           echo "Processing module: $module_name"
@@ -72,7 +69,6 @@ jobs:
       run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git pull origin HEAD:main
           git add docs plantuml
           # Check if there are any changes in the working directory
           if [ -n "$(git status --porcelain)" ]; then
