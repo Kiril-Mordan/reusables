@@ -1,36 +1,31 @@
 @startuml
-[*] --> MockVecDbHandler
+[*] --> EstablishConnection
 
-MockVecDbHandler --> establish_connection : establish_connection()
-establish_connection --> [*]
+EstablishConnection --> Idle
+EstablishConnection --> Error
 
-MockVecDbHandler --> save_data : save_data()
-save_data --> [*]
+Idle --> Search
+Idle --> Insert
+Idle --> Filter
+Idle --> Remove
+Idle --> Flush
+Idle --> Save
+Idle --> Exit
 
-MockVecDbHandler --> embed : embed()
-embed --> [*]
+Search --> SearchResults
+SearchResults --> Idle
 
-MockVecDbHandler --> insert_values_dict : insert_values_dict()
-insert_values_dict --> [*]
+Insert --> Idle
 
-MockVecDbHandler --> flush_database : flush_database()
-flush_database --> [*]
+Filter --> FilteredResults
+FilteredResults --> Idle
 
-MockVecDbHandler --> filter_keys : filter_keys()
-filter_keys --> [*]
+Remove --> Idle
 
-MockVecDbHandler --> filter_database : filter_database()
-filter_database --> [*]
+Flush --> Idle
 
-MockVecDbHandler --> remove_from_database : remove_from_database()
-remove_from_database --> [*]
+Save --> Idle
 
-MockVecDbHandler --> search_database_keys : search_database_keys()
-search_database_keys --> [*]
-
-MockVecDbHandler --> get_dict_results : get_dict_results()
-get_dict_results --> [*]
-
-MockVecDbHandler --> search_database : search_database()
-search_database --> [*]
+Exit --> [*]
+Error --> [*]
 @enduml
