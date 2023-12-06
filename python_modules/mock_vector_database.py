@@ -17,6 +17,7 @@ import attr
 ## for search
 import requests
 import hnswlib
+from sentence_transformers import SentenceTransformer
 
 
 @attr.s
@@ -98,14 +99,20 @@ class MockVecDbHandler:
     """
 
     ## for accessing openAI models
-    embeddings_url = attr.ib()
-    godID = attr.ib()
-    headers = attr.ib()
+    embeddings_url = attr.ib(default=None)
+    godID = attr.ib(default=None)
+    headers = attr.ib(default=None)
+
+    ## for embeddings
+    model_type = attr.ib(default='sentence_transformer', type=str)
+    st_model_name = attr.ib(default='all-MiniLM-L6-v2', type=str)
+    st_model = attr.ib(default=None, init=False)
+
 
     ## for similarity search
     return_keys_list = attr.ib(default=[], type = list)
     search_results_n = attr.ib(default=3, type = int)
-    similarity_search_type = attr.ib(default='hnsw', type = str)
+    similarity_search_type = attr.ib(default='linear', type = str)
     similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
 
     ## inputs with defaults
@@ -126,6 +133,8 @@ class MockVecDbHandler:
 
     def __attrs_post_init__(self):
         self.initialize_logger()
+        if self.model_type != 'openAI':
+            self.st_model = SentenceTransformer(self.st_model_name)
 
     def initialize_logger(self):
 
@@ -246,7 +255,31 @@ class MockVecDbHandler:
         except Exception as e:
             self.logger.error("Error saving data to file: ", e)
 
-    def embed(self, text):
+    def embed(self, text, model_type : str =  None ):
+
+        """
+        Embeds single query with sentence with selected embedder.
+        """
+
+        if model_type is None:
+            model_type = self.model_type
+
+        if model_type == 'openAI':
+            return self.embed_openAI(text = text)
+
+        if model_type == 'sentence_transformer':
+            return self.embed_sentence_transformer(text = text)
+
+
+    def embed_sentence_transformer(self, text):
+
+        """
+        Embeds single query with sentence tranformer embedder.
+        """
+
+        return self.st_model.encode(text)
+
+    def embed_openAI(self, text):
 
         """
         Embeds single query with openAI embedder.
