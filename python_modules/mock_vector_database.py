@@ -106,14 +106,14 @@ class MockVecDbHandler:
 
     ## for embeddings
     model_type = attr.ib(default='sentence_transformer', type=str)
-    model_name = attr.ib(default='all-MiniLM-L6-v2', type=str)
+    st_model_name = attr.ib(default='all-MiniLM-L6-v2', type=str)
     st_model = attr.ib(default=None, init=False)
 
 
     ## for similarity search
     return_keys_list = attr.ib(default=[], type = list)
     search_results_n = attr.ib(default=3, type = int)
-    similarity_search_type = attr.ib(default='hnsw', type = str)
+    similarity_search_type = attr.ib(default='linear', type = str)
     similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
 
     ## inputs with defaults
