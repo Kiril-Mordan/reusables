@@ -20,7 +20,6 @@ import hnswlib
 from sentence_transformers import SentenceTransformer
 
 
-
 @attr.s
 class MockVecDbHandler:
     # pylint: disable=too-many-instance-attributes
