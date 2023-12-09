@@ -1,0 +1,10 @@
+@startuml
+[*] --> Shouter
+
+state Shouter {
+  [*] --> Initialized
+  Initialized --> Logged
+  Logged --> Shouted
+  Shouted --> [*]
+}
+@enduml
