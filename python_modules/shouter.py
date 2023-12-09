@@ -52,7 +52,7 @@ class Shouter:
     def shout(self,
               mess : str = None,
               dotline_length : int = None,
-              output_type : str = "dline",
+              output_type : str = None,
               logger : logging.Logger = None) -> None:
         """
         Prints a formatted line or message to the log with various styling options.
@@ -84,6 +84,13 @@ class Shouter:
             shouter_instance.shout("HEAD1", mess="Important Header", dotline_length=50)
             shouter_instance.shout(output_type="warning", mess="Caution!", dotline_length=30)
         """
+
+        if output_type is None:
+
+            if mess is not None:
+                output_type = 'subtitle'
+            else:
+                output_type = 'dline'
 
         if dotline_length is None:
             dotline_length = self.dotline_length
