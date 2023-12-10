@@ -55,22 +55,28 @@ from google_drive_support import get_google_drive_file_id, download_file, servic
 This module provides a set of functions for interacting with the Google Drive API.
 It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
 
+[module](python_modules/mock_vector_database.py) | [diagram](docs/mock_vector_database.png) - Mock Vector Db Handler
+
+This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
+It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
+and basic data management within a simulated environment resembling a vector database.
+
 [module](python_modules/search_based_extractor.py) | [usage](docs/search_based_extractor.md) - Search Based Extractor
 
 Utility to simplify webscraping by taking advantave of search and assumptions about html structure.
 Extractor allows to find parent html element that contains searched term, record path to it in a file
 and reuse that to scrape data with same html structure.
 
+[module](python_modules/shouter.py) | [usage](docs/shouter.md) | [diagram](docs/shouter.png) - Shouter
+
+This class uses the logging module to create and manage a logger for displaying formatted messages.
+It provides a method to output various types of lines and headers, with customizable message and line lengths.
+The purpose is to be integrated into other classes that also use logger.
+
 [module](python_modules/redis_database_handler.py) - Redis Database Handler
 
 A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
 establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
-
-[module](python_modules/mock_vector_database.py) | [diagram](docs/mock_vector_database.png) - Mock Vector Db Handler
-
-This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
-It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
-and basic data management within a simulated environment resembling a vector database.
 
 [module](python_modules/comparisonframe.py) | [usage](docs/comparisonframe.md) | [diagram](docs/comparisonframe.png) - Comparison Frame
 
