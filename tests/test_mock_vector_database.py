@@ -35,6 +35,25 @@ def test_searching():
     results = handler.search_database("Sample")
     assert len(results) > 0, "Search should return at least one result"
 
+def test_searching_with_filtering():
+    handler = MockVecDbHandler()
+    handler.establish_connection()
+    test_data = {"key1": {"text": "Sample text"}, "key2": {"text": "Another sample"}}
+    handler.insert_values_dict(test_data, "text")
+    results = handler.search_database("Sample",filter_criteria={'text' : 'Sample text'}, return_keys_list=['text'])
+    assert results == [{"text": "Sample text"}]
+
+
+def test_multiple_searching():
+    handler = MockVecDbHandler()
+    handler.establish_connection()
+    test_data = {"key1": {"text": "Sample text"}, "key2": {"text": "Another sample"}}
+    handler.insert_values_dict(test_data, "text")
+    results_1 = handler.search_database("Sample",filter_criteria={'text' : 'Sample text'}, return_keys_list=['text'])
+    results_2 = handler.search_database("Sample",filter_criteria={'text' : 'Another sample'}, return_keys_list=['text'])
+    assert results_1 == [{"text": "Sample text"}]
+    assert results_2 == [{"text": "Another sample"}]
+
 def test_filtering():
     handler = MockVecDbHandler()
     handler.establish_connection()
