@@ -124,6 +124,7 @@ class MockVecDbHandler:
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Mock handler')
     loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
 
     ## outputs
     data = attr.ib(default=None, init=False)
@@ -132,18 +133,18 @@ class MockVecDbHandler:
     results_keys = attr.ib(default=None, init = False)
 
     def __attrs_post_init__(self):
-        self.initialize_logger()
+        self._initialize_logger()
         if self.model_type != 'openAI':
             self.st_model = SentenceTransformer(self.st_model_name)
 
-    def initialize_logger(self):
+    def _initialize_logger(self):
 
         """
         Initialize a logger for the class instance based on the specified logging level and logger name.
         """
 
         if self.logger is None:
-            logging.basicConfig(level=self.loggerLvl)
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
             logger = logging.getLogger(self.logger_name)
             logger.setLevel(self.loggerLvl)
 
@@ -481,5 +482,9 @@ class MockVecDbHandler:
                                     similarity_params = similarity_params)
 
         results = self.get_dict_results(return_keys_list = return_keys_list)
+
+        # resetting search
+        self.filtered_data = None
+        self.keys_list = None
 
         return results
