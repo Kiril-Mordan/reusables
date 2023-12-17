@@ -182,7 +182,7 @@ comparer.get_all_records()
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>2023-12-12 21:08:09</td>
+      <td>2023-12-17 22:03:14</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>no</td>
@@ -191,7 +191,7 @@ comparer.get_all_records()
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>2023-12-12 21:08:10</td>
+      <td>2023-12-17 22:03:15</td>
       <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
       <td>no</td>
@@ -387,7 +387,7 @@ comparer.get_all_records()
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>2023-12-12 21:08:09</td>
+      <td>2023-12-17 22:03:14</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>yes</td>
@@ -396,7 +396,7 @@ comparer.get_all_records()
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>2023-12-12 21:08:10</td>
+      <td>2023-12-17 22:03:15</td>
       <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
       <td>no</td>
@@ -458,7 +458,7 @@ comparer.get_all_records()
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>2023-12-12 21:08:09</td>
+      <td>2023-12-17 22:03:14</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>no</td>
@@ -467,7 +467,7 @@ comparer.get_all_records()
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>2023-12-12 21:08:10</td>
+      <td>2023-12-17 22:03:15</td>
       <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
       <td>no</td>

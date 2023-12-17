@@ -50,17 +50,6 @@ from google_drive_support import get_google_drive_file_id, download_file, servic
 
 ## Content:
  
-[module](python_modules/google_drive_support.py) - Google Drive API Utilities Module
-
-This module provides a set of functions for interacting with the Google Drive API.
-It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
-
-[module](python_modules/mock_vector_database.py) | [diagram](docs/mock_vector_database.png) - Mock Vector Db Handler
-
-This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
-It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
-and basic data management within a simulated environment resembling a vector database.
-
 [module](python_modules/search_based_extractor.py) | [usage](docs/search_based_extractor.md) - Search Based Extractor
 
 Utility to simplify webscraping by taking advantave of search and assumptions about html structure.
@@ -73,10 +62,16 @@ This class uses the logging module to create and manage a logger for displaying 
 It provides a method to output various types of lines and headers, with customizable message and line lengths.
 The purpose is to be integrated into other classes that also use logger.
 
-[module](python_modules/redis_database_handler.py) - Redis Database Handler
+[module](python_modules/google_drive_support.py) - Google Drive API Utilities Module
 
-A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
-establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
+This module provides a set of functions for interacting with the Google Drive API.
+It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
+
+[module](python_modules/mock_vector_database.py) | [usage](docs/mock_vector_database.md) | [diagram](docs/mock_vector_database.png) - Mock Vector Db Handler
+
+This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
+It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
+and basic data management within a simulated environment resembling a vector database.
 
 [module](python_modules/comparisonframe.py) | [usage](docs/comparisonframe.md) | [diagram](docs/comparisonframe.png) - Comparison Frame
 
@@ -85,4 +80,9 @@ such as character and word count, punctuation usage, and semantic similarity.
 It's particularly useful for scenarios where consistent text analysis is required,
 such as evaluating the performance of natural language processing models, monitoring content quality,
 or tracking changes in textual data over time using manual evaluation.
+
+[module](python_modules/redis_database_handler.py) - Redis Database Handler
+
+A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
+establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
 
