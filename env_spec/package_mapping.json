@@ -1,0 +1,11 @@
+{
+    "PIL": "Pillow",
+    "bs4": "beautifulsoup4",
+    "fitz": "PyMuPDF",
+    "attr": "attrs",
+    "dotenv": "python-dotenv",
+    "googleapiclient": "google-api-python-client",
+    "sentence_transformers": "sentence-transformers",
+    "flask": "Flask",
+    "stdlib_list": "stdlib-list"
+}

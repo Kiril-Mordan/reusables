@@ -11,13 +11,13 @@ and basic data management within a simulated environment resembling a vector dat
 import logging
 import json
 import time
-import numpy as np
-import dill
-import attr
+import numpy as np #==1.26.0
+import dill #==0.3.7
+import attr #>=22.2.0
 ## for search
-import requests
-import hnswlib
-from sentence_transformers import SentenceTransformer
+import requests #==2.31.0
+import hnswlib #0.7.0
+from sentence_transformers import SentenceTransformer #==2.2.2
 
 
 @attr.s
