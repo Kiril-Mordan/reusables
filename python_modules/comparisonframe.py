@@ -12,13 +12,13 @@ import string
 import logging
 import os
 import csv
-from datetime import datetime
 from collections import Counter
-import dill
-import pandas as pd
-import attr
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
+from datetime import datetime #==5.2
+import dill #==5.0.1
+import pandas as pd #==2.1.1
+import attr #>=22.2.0
+from sentence_transformers import SentenceTransformer #==2.2.2
+from sklearn.metrics.pairwise import cosine_similarity #==1.3.1
 
 
 
