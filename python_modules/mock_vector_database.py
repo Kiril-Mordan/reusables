@@ -19,6 +19,15 @@ import requests #==2.31.0
 import hnswlib #0.7.0
 from sentence_transformers import SentenceTransformer #==2.2.2
 
+# Metadata for package creation
+__package_metadata__ = {
+    "author": "Kyrylo Mordan",
+    "author_email": "parachute.repo@gmail.com",
+    "version": "0.1.0",
+    "description": "A mock handler for simulating a vector database.",
+    # Add other metadata as needed
+}
+
 
 @attr.s
 class MockVecDbHandler:
