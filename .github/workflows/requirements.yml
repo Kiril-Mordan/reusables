@@ -46,14 +46,14 @@ jobs:
 
 
     - name: Commit changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add env_spec/*
-          # Check if there are any changes in the working directory
-          if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "Update requirements"
-            git push
-          else
-            echo "No changes to commit"
-          fi
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add env_spec/*
+        # Check if there are any changes in the working directory
+        if [ -n "$(git status --porcelain)" ]; then
+          git commit -m "Update requirements"
+          git push
+        else
+          echo "No changes to commit"
+        fi
