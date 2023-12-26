@@ -2,6 +2,30 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 import argparse
+import ast
+
+# funtion for removing docstrings from module code
+def remove_docstrings(module_content):
+
+        class DocstringRemover(ast.NodeTransformer):
+            def visit_FunctionDef(self, node):
+                """Strip docstring from a function definition."""
+                self.generic_visit(node)
+                if ast.get_docstring(node):
+                    node.body = node.body[1:]
+                return node
+
+            def visit_ClassDef(self, node):
+                """Strip docstring from a class definition."""
+                self.generic_visit(node)
+                if ast.get_docstring(node):
+                    node.body = node.body[1:]
+                return node
+
+        parsed_tree = ast.parse(module_content)
+        docstring_remover = DocstringRemover()
+        modified_tree = docstring_remover.visit(parsed_tree)
+        return ast.unparse(modified_tree)
 
 
 # Set up argument parser
@@ -11,7 +35,6 @@ args = parser.parse_args()
 
 # Use the argument
 module_name = args.module_name
-#module_name = "mock_vector_database"
 
 # parameters
 
@@ -48,9 +71,11 @@ module_file_path = f'python_modules/{module_name}.py'
 with open(module_file_path, 'r') as file:
         code_content = file.read()
 
+# clean code content to shrink size
+cleaned_code_content = remove_docstrings(code_content)
 
 # compose input for completion
-prompt_for_chat = prompt_shell.format(code = code_content)
+prompt_for_chat = prompt_shell.format(code = cleaned_code_content)
 messages = [
     {"role": "system", "content": system_meessage},
     {"role": "user", "content": prompt_for_chat}
