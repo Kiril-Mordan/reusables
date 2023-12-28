@@ -1,16 +1,28 @@
-import re
+"""
+Package Auto Assembler
+
+This tool is meant to streamline creation of single module packages.
+Its purpose is to automate as many aspects of python package creation as possible,
+to shorten a development cycle of reusable components, maintain certain standard of quality
+for reusable code. It provides tool to simplify the process of package creatrion
+to a point that it can be triggered automatically within ci/cd pipelines,
+with minimal preparations and requirements for new modules.
+"""
+
+# Imports
+## essential
+import logging
 import os
+import attr
+## working with files
+import yaml
 import json
+import csv
+## other
+from datetime import datetime
+import re
 import importlib.util
 from stdlib_list import stdlib_list
-import attr
-
-import yaml
-import os
-import logging
-from datetime import datetime
-import csv
-
 import subprocess
 
 
@@ -151,42 +163,72 @@ class VersionHandler:
     def _format_version(self, major, minor, patch):
         return f"{major}.{minor}.{patch}"
 
-    def increment_major(self, package_name):
+
+    def increment_version(self,
+                          package_name : str,
+                          type : str = None,
+                          default_version : str = None):
+
+        if default_version is None:
+            default_version = self.default_version
+
+        if type is None:
+            type = 'patch'
+
         if package_name in self.versions:
             prev_version = self.versions[package_name]
             major, minor, patch = self._parse_version(prev_version)
-            major += 1
-            # Reset minor and patch versions when major is incremented
-            new_version = self._format_version(major, 0, 0)
-            self.update_version(package_name, new_version)
 
-            self.logger.debug(f"Incremented major of {package_name} \
-                from {prev_version} to {new_version}")
+            if type == 'patch':
+                patch += 1
+            if type == 'minor':
+                minor += 1
+            if type == 'major':
+                major += 1
 
-    def increment_minor(self, package_name):
-        if package_name in self.versions:
-            prev_version = self.versions[package_name]
-            major, minor, patch = self._parse_version(prev_version)
-            minor += 1
-            # Reset patch version when minor is incremented
-            new_version = self._format_version(major, minor, 0)
-            self.update_version(package_name, new_version)
-
-            self.logger.debug(f"Incremented minor of {package_name} \
-                from {prev_version} to {new_version}")
-
-    def increment_patch(self, package_name):
-        if package_name in self.versions:
-            prev_version = self.versions[package_name]
-            major, minor, patch = self._parse_version(prev_version)
-            patch += 1
             new_version = self._format_version(major, minor, patch)
             self.update_version(package_name, new_version)
 
-            self.logger.debug(f"Incremented patch of {package_name} \
+            self.logger.debug(f"Incremented {type} of {package_name} \
                 from {prev_version} to {new_version}")
         else:
-            self.logger.warning(f{})
+            self.logger.warning(f"There are no known versions of '{package_name}', \
+                {default_version} will be used!")
+
+
+
+    def increment_major(self,
+                        package_name : str,
+                        default_version : str = None):
+
+        if default_version is None:
+            default_version = self.default_version
+
+        self.increment_version(package_name = package_name,
+                             default_version = default_version,
+                             type = 'major')
+
+    def increment_minor(self,
+                        package_name : str,
+                        default_version : str = None):
+
+        if default_version is None:
+            default_version = self.default_version
+
+        self.increment_version(package_name = package_name,
+                             default_version = default_version,
+                             type = 'minor')
+
+    def increment_patch(self,
+                        package_name : str,
+                        default_version : str = None):
+
+        if default_version is None:
+            default_version = self.default_version
+
+        self.increment_version(package_name = package_name,
+                             default_version = default_version,
+                             type = 'minor')
 
 @attr.s
 class ImportMappingHandler:
