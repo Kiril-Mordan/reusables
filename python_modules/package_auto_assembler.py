@@ -24,31 +24,58 @@ import re
 import importlib.util
 from stdlib_list import stdlib_list
 import subprocess
+import shutil
+
 
 
 @attr.s
-class PackageAutoAssembler:
-    # pylint: disable=too-many-instance-attributes
+class SetupDirHandler:
 
-
-    versions_filepath = attr.ib(default='./lsts_package_versions.yml')
-    log_filepath = attr.ib(default='./version_logs.csv')
-
+    metadata = attr.ib(default={}, type=dict)
     setup_dir = attr.ib(default='./setup_dir')
 
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='Package Setup Dir Handler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
 
-    package_result = attr.ib(init=False)
+    def __attrs_post_init__(self):
+        self._initialize_logger()
 
-    def add_or_update_version(self,
-                              version : str = None,
-                              versions_filepath : str = None,
-                              log_filepath : str = None):
 
-        if versions_filepath is None:
-            versions_filepath = self.versions_filepath
+    def _initialize_logger(self):
 
-        if log_filepath is None:
-            log_filepath = self.log_filepath
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    def flush_n_make_setup_dir(self, setup_directory):
+
+        # Flushing setup directory
+        if os.path.exists(setup_directory):
+            shutil.rmtree(setup_directory)
+        os.makedirs(setup_directory)
+
+
+    def copy_module_to_setup_dir(self, module_file, modules_directory, setup_directory):
+
+        # Copying module to setup directory
+        shutil.copy(os.path.join(modules_directory, module_file), setup_directory)
+
+
+    def create_init_file(self, module_name, setup_directory):
+
+        # Creating temporary __init__.py file
+        init_file_path = os.path.join(setup_directory, '__init__.py')
+        with open(init_file_path, 'w') as init_file:
+            init_file.write(f"from .{module_name} import *\n")
 
     def write_setup_file(self,
                          module_name,
@@ -74,13 +101,24 @@ class PackageAutoAssembler:
         with open('setup_dir/setup.py', 'w') as file:
             file.write(setup_content)
 
-    def make_package(self):
 
-        # Define the command as a list of arguments
-        command = ["python", "setup_dir/setup.py", "sdist", "bdist_wheel"]
+    # def prep_module_setup_dir(self, module_file, modules_directory, setup_directory):
+    #     module_name = os.path.splitext(os.path.basename(module_file))[0]
+    #     print(f"Preparing dir structure for module: {module_name}")
 
-        # Execute the command
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    #     # Flushing setup directory
+    #     if os.path.exists(setup_directory):
+    #         shutil.rmtree(setup_directory)
+    #     os.makedirs(setup_directory)
+
+    #     # Copying module to setup directory
+    #     shutil.copy(os.path.join(modules_directory, module_file), setup_directory)
+
+    #     # Creating temporary __init__.py file
+    #     init_file_path = os.path.join(setup_directory, '__init__.py')
+    #     with open(init_file_path, 'w') as init_file:
+    #         init_file.write(f"from .{module_name} import *\n")
+
 
 
 @attr.s
@@ -235,6 +273,28 @@ class ImportMappingHandler:
 
     mapping_filepath = attr.ib()
 
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='Package Import Mapping Handler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+
+    def _initialize_logger(self):
+
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+
     def load_package_mappings(self,
                               mapping_filepath : str = None):
         """
@@ -254,6 +314,28 @@ class RequirementsHandler:
 
     custom_modules_filepath = attr.ib()
     python_version = attr.ib(default='3.8')
+
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='Package Requirements Handler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+
+
+    def _initialize_logger(self):
+
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
 
 
     def list_custom_modules(self,
@@ -356,6 +438,29 @@ class RequirementsHandler:
 class MetadataHandler:
 
 
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='Package Metadata Handler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+
+
+    def _initialize_logger(self):
+
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    # check if metadata is available
     def get_package_metadata(self, module_name, modules_path):
         module_path = os.path.join(modules_path, module_name + '.py')
         spec = importlib.util.spec_from_file_location(module_name, module_path)
@@ -364,5 +469,105 @@ class MetadataHandler:
         return module.__package_metadata__
 
 
+@attr.s
+class PackageAutoAssembler:
+    # pylint: disable=too-many-instance-attributes
+
+    ## handlers
+    setupdir = attr.ib(default=SetupDirHandler)
+
+
+    versions_filepath = attr.ib(default='./lsts_package_versions.yml')
+    log_filepath = attr.ib(default='./version_logs.csv')
+
+    setup_dir = attr.ib(default='./setup_dir')
+
+
+    package_result = attr.ib(init=False)
+
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='Package Auto Assembler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+
+
+    def _initialize_logger(self):
+
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    def add_or_update_version(self,
+                              version : str = None,
+                              versions_filepath : str = None,
+                              log_filepath : str = None):
+
+        if versions_filepath is None:
+            versions_filepath = self.versions_filepath
+
+        if log_filepath is None:
+            log_filepath = self.log_filepath
+
+
+    def prep_module_setup_dir(self, module_file, modules_directory, setup_directory):
+        module_name = os.path.splitext(os.path.basename(module_file))[0]
+        print(f"Preparing dir structure for module: {module_name}")
+
+        # Flushing setup directory
+        if os.path.exists(setup_directory):
+            shutil.rmtree(setup_directory)
+        os.makedirs(setup_directory)
+
+        # Copying module to setup directory
+        shutil.copy(os.path.join(modules_directory, module_file), setup_directory)
+
+        # Creating temporary __init__.py file
+        init_file_path = os.path.join(setup_directory, '__init__.py')
+        with open(init_file_path, 'w') as init_file:
+            init_file.write(f"from .{module_name} import *\n")
+
+    def write_setup_file(self,
+                         module_name,
+                         metadata,
+                         install_requires,
+                         classifiers,
+                         setup_dir : str = None):
+
+        if setup_dir is None:
+            setup_dir = self.setup_dir
+
+        metadata_str = ', '.join([f'{key}="{value}"' for key, value in metadata.items()])
+        setup_content = f"""from setuptools import setup
+
+    setup(
+        name="{module_name}",
+        packages=["{module_name}"],
+        install_requires={install_requires},
+        classifiers={classifiers},
+        {metadata_str}
+    )
+        """
+        with open('setup_dir/setup.py', 'w') as file:
+            file.write(setup_content)
+
+    def make_package(self):
+
+        # Define the command as a list of arguments
+        command = ["python", "setup_dir/setup.py", "sdist", "bdist_wheel"]
+
+        # Execute the command
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        return result
 
 
