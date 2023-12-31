@@ -423,6 +423,8 @@ class RequirementsHandler:
 class MetadataHandler:
 
 
+    module_filepath = attr.ib()
+
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Package Metadata Handler')
     loggerLvl = attr.ib(default=logging.INFO)
@@ -446,9 +448,13 @@ class MetadataHandler:
             self.logger = logger
 
     # check if metadata is available
-    def get_package_metadata(self, module_name, modules_path):
-        module_path = os.path.join(modules_path, module_name + '.py')
-        spec = importlib.util.spec_from_file_location(module_name, module_path)
+    def get_package_metadata(self, module_filepath : str = None):
+
+        if module_filepath is None:
+            module_filepath = self.module_filepath
+
+        module_name =  os.path.basename(module_filepath)
+        spec = importlib.util.spec_from_file_location(module_name, module_filepath)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         return module.__package_metadata__
@@ -612,6 +618,7 @@ class PackageAutoAssembler:
 
     ## output
     package_result = attr.ib(init=False)
+    metadata = attr.ib(init=False)
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Package Auto Assembler')
@@ -646,6 +653,8 @@ class PackageAutoAssembler:
                          module_filepath = self.module_filepath,
                          logger = self.logger)
 
+        self.metadata_h(module_filepath = self.module_filepath)
+
     def add_or_update_version(self,
                               version : str = None,
                               versions_filepath : str = None,
@@ -657,47 +666,40 @@ class PackageAutoAssembler:
         if log_filepath is None:
             log_filepath = self.log_filepath
 
+    def prep_metadata(self, module_filepath : str = None):
 
-    def prep_module_setup_dir(self, module_file, modules_directory, setup_directory):
-        module_name = os.path.splitext(os.path.basename(module_file))[0]
-        print(f"Preparing dir structure for module: {module_name}")
+        if module_filepath is None:
+            module_filepath = self,module_filepath
 
-        # Flushing setup directory
-        if os.path.exists(setup_directory):
-            shutil.rmtree(setup_directory)
-        os.makedirs(setup_directory)
+        # extracting package metadata
+        self.metadata = self.metadata_h.get_package_metadata(module_filepath = module_filepath)
 
-        # Copying module to setup directory
-        shutil.copy(os.path.join(modules_directory, module_file), setup_directory)
 
-        # Creating temporary __init__.py file
-        init_file_path = os.path.join(setup_directory, '__init__.py')
-        with open(init_file_path, 'w') as init_file:
-            init_file.write(f"from .{module_name} import *\n")
 
-    def write_setup_file(self,
-                         module_name,
-                         metadata,
-                         install_requires,
-                         classifiers,
-                         setup_dir : str = None):
+    def prep_setup_dir(self,
+                       metadata : dict = None,
+                         requirements : str = None,
+                         classifiers : list = None):
 
-        if setup_dir is None:
-            setup_dir = self.setup_dir
+        if metadata is None:
+            metadata = self.metadata
 
-        metadata_str = ', '.join([f'{key}="{value}"' for key, value in metadata.items()])
-        setup_content = f"""from setuptools import setup
+        if requirements is None:
+            requirements = self.requirements
 
-    setup(
-        name="{module_name}",
-        packages=["{module_name}"],
-        install_requires={install_requires},
-        classifiers={classifiers},
-        {metadata_str}
-    )
-        """
-        with open('setup_dir/setup.py', 'w') as file:
-            file.write(setup_content)
+        if classifiers is None:
+            classifiers = self.classifiers
+
+        # create empty dir for setup
+        self.setup_dir_h.flush_n_make_setup_dir()
+        # copy module to dir
+        self.setup_dir_h.copy_module_to_setup_dir()
+        # create init file for new package
+        self.setup_dir_h.create_init_file()
+        # create setup.py
+        self.setup_dir_h.write_setup_file(metadata = metadata,
+                                          requirements = requirements,
+                                          classifiers = classifiers)
 
     def make_package(self):
 
