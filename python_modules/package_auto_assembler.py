@@ -15,6 +15,7 @@ import logging
 import os
 import attr
 ## working with files
+import pandas as pd
 import yaml
 import json
 import csv
@@ -43,7 +44,11 @@ class VersionHandler:
 
     def __attrs_post_init__(self):
         self._initialize_logger()
-        self.versions = self._read_versions()
+        try:
+            self.versions = self._read_versions()
+        except Exception as e:
+            self._create_versions()
+            self.versions = {}
         self._setup_logging()
 
 
@@ -67,34 +72,16 @@ class VersionHandler:
         if os.stat(self.log_filepath).st_size == 0:
             self.csv_writer.writerow(['Timestamp', 'Package', 'Version'])
 
-    def log_version_update(self, package_name, new_version):
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.csv_writer.writerow([timestamp, package_name, new_version])
-        self.log_file.flush()  # Ensure data is written to the file
-
-    # Remember to close the log file when done
-    def close_log_file(self):
-        self.log_file.close()
-
     def _read_versions(self):
         with open(self.versions_filepath, 'r') as file:
             return yaml.safe_load(file) or {}
 
-    def get_version(self, package_name):
-        return self.versions.get(package_name)
+    def _create_versions(self):
+        self.logger.debug(f"Versions file was not found in location '{self.versions_filepath}', creating file!")
+        with open(self.versions_filepath, 'w') as file:
+            pass
 
-    def update_version(self, package_name, new_version):
-        self.versions[package_name] = new_version
-        self._save()
-        self.log_version_update(package_name, new_version)
-
-    def add_package(self, package_name, version):
-        if package_name not in self.versions:
-            self.versions[package_name] = version
-            self._save()
-            self.log_version_update(package_name, version)
-
-    def _save(self):
+    def _save_versions(self):
         with open(self.versions_filepath, 'w') as file:
             yaml.safe_dump(self.versions, file)
 
@@ -107,6 +94,77 @@ class VersionHandler:
 
     def _format_version(self, major, minor, patch):
         return f"{major}.{minor}.{patch}"
+
+    def flush_versions(self):
+        with open(self.versions_filepath, 'w') as file:
+            yaml.safe_dump({}, file)
+
+    def flush_logs(self):
+        # Close connection
+        self._close_log_file()
+        # Open the file in write mode to clear it, then write back only the headers
+        with open(self.log_filepath, mode='w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerow(['Timestamp', 'Package', 'Version'])  # column headers
+        # Reopen connection
+        self._setup_logging()
+
+
+    def log_version_update(self, package_name, new_version):
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.csv_writer.writerow([timestamp, package_name, new_version])
+        self.log_file.flush()  # Ensure data is written to the file
+        self._close_log_file()
+        self._setup_logging()
+
+    def get_logs(self,
+                 log_filepath : str = None):
+
+        if log_filepath is None:
+            log_filepath = self.log_filepath
+
+        return(pd.read_csv(log_filepath))
+
+    def get_version(self, package_name : str = None):
+
+        return self.versions.get(package_name)
+
+    def get_versions(self,
+                     versions_filepath : str = None):
+
+        if versions_filepath is None:
+            versions_filepath = self.versions_filepath
+
+        # Open the YAML file
+        with open(versions_filepath, 'r') as file:
+            # Load the contents of the file
+            versions = yaml.safe_load(file)
+
+
+        return(versions)
+
+    # Remember to close the log file when done
+    def _close_log_file(self):
+        self.log_file.close()
+
+
+    def update_version(self, package_name, new_version):
+        self.versions[package_name] = new_version
+        self._save_versions()
+        self.log_version_update(package_name, new_version)
+
+    def add_package(self,
+                    package_name : str,
+                    version : str = None):
+
+        if version is None:
+            version = self.default_version
+
+        if package_name not in self.versions:
+            self.versions[package_name] = version
+            self._save_versions()
+            self.log_version_update(package_name, version)
+
 
 
     def increment_version(self,
@@ -137,8 +195,8 @@ class VersionHandler:
             self.logger.debug(f"Incremented {type} of {package_name} \
                 from {prev_version} to {new_version}")
         else:
-            self.logger.warning(f"There are no known versions of '{package_name}', \
-                {default_version} will be used!")
+            self.logger.warning(f"There are no known versions of '{package_name}', {default_version} will be used!")
+            self.update_version(package_name, default_version)
 
 
 
@@ -173,7 +231,7 @@ class VersionHandler:
 
         self.increment_version(package_name = package_name,
                              default_version = default_version,
-                             type = 'minor')
+                             type = 'patch')
 
 @attr.s
 class ImportMappingHandler:
