@@ -272,6 +272,234 @@ class ImportMappingHandler:
         with open(mapping_filepath, 'r') as file:
             return json.load(file)
 
+
+@attr.s
+class RequirementsHandler:
+
+    module_filepath = attr.ib(default=None)
+
+    package_mappings = attr.ib(default={}, type = dict)
+    requirements_output_path  = attr.ib(default='./')
+    output_requirements_prefix = attr.ib(default="requirements_")
+    custom_modules_filepath = attr.ib(default=None)
+    python_version = attr.ib(default='3.8')
+
+    # output
+    module_name = attr.ib(init=False)
+    requirements_list = attr.ib(init=False)
+
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='Package Requirements Handler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+
+
+    def _initialize_logger(self):
+
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+
+    def list_custom_modules(self,
+                            custom_modules_filepath : str = None):
+        """
+        List all custom module names in the specified directory.
+        """
+
+        if custom_modules_filepath is None:
+            custom_modules_filepath = self.custom_modules_filepath
+
+        custom_modules = set()
+
+        if custom_modules_filepath is None:
+            self.logger.warning("No custom modules path was provided! Returning empty list!")
+        else:
+            for filename in os.listdir(custom_modules_filepath):
+                if filename.endswith('.py') and not filename.startswith('__'):
+                    module_name = filename.rsplit('.', 1)[0]
+                    custom_modules.add(module_name)
+        return list(custom_modules)
+
+    def is_standard_library(self,
+                            module_name : str,
+                            python_version : str = None):
+
+        """
+        Check if a module is part of the standard library for the given Python version.
+        """
+
+        if python_version is None:
+            python_version = self.python_version
+
+        return module_name in stdlib_list(python_version)
+
+
+    def read_requirements_file(self,
+                               requirements_filepath : str) -> list:
+
+        """
+        Read requirements file and output a list.
+        """
+
+
+        with open(requirements_filepath, 'r') as file:
+            requirements = [line.strip() for line in file if line.strip() and not line.startswith('#')]
+
+        return requirements
+
+    def extract_requirements(self,
+                             module_filepath : str = None,
+                             custom_modules : list = None,
+                             package_mappings : dict = None,
+                             python_version : str = None):
+
+        """
+        Extract requirements from the module.
+        """
+
+        if module_filepath is None:
+
+            if self.module_filepath is None:
+                raise ValueError("Parameter 'module_filepath' was not probided!")
+            else:
+                module_filepath = self.module_filepath
+
+        if custom_modules is None:
+            custom_modules = self.list_custom_modules()
+
+        if package_mappings is None:
+            package_mappings = self.package_mappings
+
+        if python_version is None:
+            python_version = self.python_version
+
+        file_path = module_filepath
+        module_name = os.path.basename(module_filepath)
+
+        self.module_name = module_name
+
+        # Separate regex patterns for 'import' and 'from ... import ...' statements
+        import_pattern = re.compile(r"import (\S+)(?:\s+#(?:\s*(==|>=|<=|>|<)\s*([0-9.]+)))?")
+        from_import_pattern = re.compile(r"from (\S+) import [^#]+#\s*(==|>=|<=|>|<)\s*([0-9.]+)")
+
+
+        requirements = [f'### {module_name}']
+
+        with open(file_path, 'r') as file:
+            for line in file:
+                import_match = import_pattern.match(line)
+                from_import_match = from_import_pattern.match(line)
+
+                if import_match:
+                    module, version_constraint, version = import_match.groups()
+                elif from_import_match:
+                    module, version_constraint, version = from_import_match.groups()
+                else:
+                    continue
+
+                # Extract the base package name
+                module_root = module.split('.')[0]
+                # Extracting package import leaf
+                module_leaf = module.split('.')[-1]
+
+                # Skip standard library and custom modules
+                if self.is_standard_library(module_root, python_version) or module_root in custom_modules \
+                    or self.is_standard_library(module_leaf, python_version) or module_leaf in custom_modules:
+                    continue
+
+                # Use the mapping to get the correct package name
+                module = package_mappings.get(module_root, module_root)
+
+                version_info = f"{version_constraint}{version}" if version_constraint and version else ""
+
+                if version_info:
+                    requirements.append(f"{module}{version_info}")
+                else:
+                    requirements.append(module)
+
+        self.requirements_list = requirements
+
+        return requirements
+
+    def write_requirements_file(self,
+                                module_name : str = None,
+                                requirements : list = None,
+                                output_path : str = None,
+                                prefix : str = None):
+
+        """
+        Save extracted requirements.
+        """
+
+        if module_name is None:
+            module_name = self.module_name
+
+        if requirements is None:
+            requirements = self.requirements_list
+
+        if output_path is None:
+            output_path = os.path.dirname(self.requirements_output_path)
+
+        if prefix is None:
+            prefix = self.output_requirements_prefix
+
+        output_file = os.path.join(output_path, f"{prefix}{module_name}.txt")
+
+        with open(output_file, 'w') as file:
+            for req in requirements:
+                file.write(req + '\n')
+
+@attr.s
+class MetadataHandler:
+
+
+    module_filepath = attr.ib()
+
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='Package Metadata Handler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+
+
+    def _initialize_logger(self):
+
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    # check if metadata is available
+    def get_package_metadata(self, module_filepath : str = None):
+
+        if module_filepath is None:
+            module_filepath = self.module_filepath
+
+        module_name =  os.path.basename(module_filepath)
+        spec = importlib.util.spec_from_file_location(module_name, module_filepath)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.__package_metadata__
+
 @attr.s
 class LocalDependaciesHandler:
 
@@ -351,171 +579,6 @@ class LocalDependaciesHandler:
         combined_module = main_module_docstring + "\n\n" + '\n'.join(unique_imports) + "\n\n" + combined_content + main_module_content
         return combined_module
 
-
-@attr.s
-class RequirementsHandler:
-
-    custom_modules_filepath = attr.ib()
-    python_version = attr.ib(default='3.8')
-
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Package Requirements Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
-
-    def __attrs_post_init__(self):
-        self._initialize_logger()
-
-
-    def _initialize_logger(self):
-
-        """
-        Initialize a logger for the class instance based on the specified logging level and logger name.
-        """
-
-        if self.logger is None:
-            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
-            logger = logging.getLogger(self.logger_name)
-            logger.setLevel(self.loggerLvl)
-
-            self.logger = logger
-
-
-    def list_custom_modules(self,
-                            custom_modules_filepath : str = None):
-        """
-        List all custom module names in the specified directory.
-        """
-
-        if custom_modules_filepath is None:
-            custom_modules_filepath = self.custom_modules_filepath
-
-        custom_modules = set()
-        for filename in os.listdir(custom_modules_filepath):
-            if filename.endswith('.py') and not filename.startswith('__'):
-                module_name = filename.rsplit('.', 1)[0]
-                custom_modules.add(module_name)
-        return custom_modules
-
-    def is_standard_library(self,
-                            module_name : str,
-                            python_version : str = None):
-
-        """
-        Check if a module is part of the standard library for the given Python version.
-        """
-
-        if python_version is None:
-            python_version = self.python_version
-
-        return module_name in stdlib_list(python_version)
-
-
-    def read_requirements_file(self,
-                               filename):
-        with open(filename, 'r') as file:
-            return [line.strip() for line in file if line.strip() and not line.startswith('#')]
-
-    def extract_requirements(self,
-                             path_to_module,
-                             module_name,
-                             custom_modules,
-                             package_mappings = {},
-                             python_version='3.8'):
-
-        file_path = f"{path_to_module}/{module_name}.py"
-
-        # Separate regex patterns for 'import' and 'from ... import ...' statements
-        import_pattern = re.compile(r"import (\S+)(?:\s+#(?:\s*(==|>=|<=|>|<)\s*([0-9.]+)))?")
-        from_import_pattern = re.compile(r"from (\S+) import.*(?:\s+#(?:\s*(==|>=|<=|>|<)\s*([0-9.]+)))?")
-
-        requirements = [f'### {module_name}']
-
-        with open(file_path, 'r') as file:
-            for line in file:
-                import_match = import_pattern.match(line)
-                from_import_match = from_import_pattern.match(line)
-
-                if import_match:
-                    module, version_constraint, version = import_match.groups()
-                elif from_import_match:
-                    module, version_constraint, version = from_import_match.groups()
-                else:
-                    continue
-
-                # Extract the base package name
-                module = module.split('.')[0]
-
-                # Skip standard library and custom modules
-                if self.is_standard_library(module, python_version) or module in custom_modules or module == path_to_module:
-                    continue
-
-                # Use the mapping to get the correct package name
-                module = package_mappings.get(module, module)
-
-                version_info = f"{version_constraint}{version}" if version_constraint and version else ""
-
-                # Print for debugging
-                # print(f"Matched line: {line.strip()}, Module: {module}, Version: {version_info}")
-
-                if version_info:
-                    requirements.append(f"{module}{version_info}")
-                else:
-                    requirements.append(module)
-
-        return requirements
-
-    def write_requirements_file(self,
-                                requirements,
-                                module_name,
-                                output_path,
-                                prefix = "requirements_"):
-
-        output_file = f"{output_path}/{prefix}{module_name}.txt"
-
-        with open(output_file, 'w') as file:
-            for req in requirements:
-                file.write(req + '\n')
-
-@attr.s
-class MetadataHandler:
-
-
-    module_filepath = attr.ib()
-
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Package Metadata Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
-
-    def __attrs_post_init__(self):
-        self._initialize_logger()
-
-
-    def _initialize_logger(self):
-
-        """
-        Initialize a logger for the class instance based on the specified logging level and logger name.
-        """
-
-        if self.logger is None:
-            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
-            logger = logging.getLogger(self.logger_name)
-            logger.setLevel(self.loggerLvl)
-
-            self.logger = logger
-
-    # check if metadata is available
-    def get_package_metadata(self, module_filepath : str = None):
-
-        if module_filepath is None:
-            module_filepath = self.module_filepath
-
-        module_name =  os.path.basename(module_filepath)
-        spec = importlib.util.spec_from_file_location(module_name, module_filepath)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module.__package_metadata__
 
 
 @attr.s
