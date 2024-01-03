@@ -552,56 +552,98 @@ class LocalDependaciesHandler:
     main_module_filepath = attr.ib()
     dependencies_dir = attr.ib()
 
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='Local Dependacies Handler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
 
-    def read_module(self,
-                    filepath : str = None) -> str:
+    def __attrs_post_init__(self):
+        self._initialize_logger()
 
-        if filepath is None:
-            filepath = self.main_module_filepath
+
+    def _initialize_logger(self):
+
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    def _read_module(self,
+                    filepath : str) -> str:
 
         with open(filepath, 'r') as file:
             return file.read()
 
-    def extract_module_docstring(self,
+    def _extract_module_docstring(self,
                                  module_content : str) -> str:
+
 
         match = re.match(r'(""".*?"""|\'\'\'.*?\'\'\')', module_content, re.DOTALL)
         return match.group(0) if match else ''
 
-    def extract_imports(self,
+    def _extract_imports(self,
                         module_content : str) -> str:
 
         return re.findall(r'^(?:from\s+.+\s+)?import\s+.+$', module_content, re.MULTILINE)
 
 
-    def remove_module_docstring(self,
+    def _remove_module_docstring(self,
                                 module_content : str) -> str:
 
         return re.sub(r'^(""".*?"""|\'\'\'.*?\'\'\')', '', module_content, flags=re.DOTALL).strip()
 
-    def remove_imports(self,
+    def _remove_imports(self,
                        module_content : str) -> str:
 
         module_content = re.sub(r'^(?:from\s+.+\s+)?import\s+.+$', '', module_content, flags=re.MULTILINE)
         return module_content.strip()
 
+    def _remove_metadata(self,
+                       module_content : str) -> str:
+
+
+        lines = module_content.split('\n')
+
+        new_lines = []
+        inside_metadata = False
+
+        for line in lines:
+            if line.strip().startswith("__package_metadata__ = {"):
+                inside_metadata = True
+            elif inside_metadata and '}' in line:
+                inside_metadata = False
+                continue  # Skip adding this line to new_lines
+
+            if not inside_metadata:
+                new_lines.append(line)
+
+        return '\n'.join(new_lines)
+
+
+
     def combine_modules(self,
-                        main_module_path : str = None,
+                        main_module_filepath : str = None,
                         dependencies_dir : str = None) -> str:
 
-        if main_module_path is None:
-            main_module_path = self.main_module_filepath
+        if main_module_filepath is None:
+            main_module_filepath = self.main_module_filepath
 
         if dependencies_dir is None:
             dependencies_dir = self.dependencies_dir
 
 
         # Read main module
-        main_module_content = self.read_module(main_module_path)
+        main_module_content = self._read_module(main_module_filepath)
 
         # Extract and preserve the main module's docstring and imports
-        main_module_docstring = self.extract_module_docstring(main_module_content)
-        main_module_imports = self.extract_imports(main_module_content)
+        main_module_docstring = self._extract_module_docstring(main_module_content)
+        main_module_imports = self._extract_imports(main_module_content)
 
         # List of dependency module names
         dependencies = [os.path.splitext(f)[0] for f in os.listdir(dependencies_dir) if f.endswith('.py')]
@@ -609,20 +651,23 @@ class LocalDependaciesHandler:
         # Remove specific dependency imports from the main module
         for dep in dependencies:
             main_module_imports = [imp for imp in main_module_imports if f'.{dep} import *' not in imp]
-        main_module_content = self.remove_imports(main_module_content)
+        main_module_content = self._remove_imports(main_module_content)
 
         # Process dependency modules
         combined_content = ""
         for filename in dependencies:
-            dep_content = self.read_module(os.path.join(dependencies_dir, f"{filename}.py"))
-            dep_content = self.remove_module_docstring(dep_content)
-            dep_imports = self.extract_imports(dep_content)
+            dep_content = self._read_module(os.path.join(dependencies_dir, f"{filename}.py"))
+            dep_content = self._remove_module_docstring(dep_content)
+            dep_content = self._remove_metadata(dep_content)
+            dep_imports = self._extract_imports(dep_content)
             main_module_imports.extend(dep_imports)
-            combined_content += self.remove_module_docstring(self.remove_imports(dep_content)) + "\n\n"
+            combined_content += self._remove_module_docstring(self._remove_imports(dep_content)) + "\n\n"
 
         # Combine everything
         unique_imports = sorted(set(main_module_imports), key=lambda x: main_module_imports.index(x))
-        combined_module = main_module_docstring + "\n\n" + '\n'.join(unique_imports) + "\n\n" + combined_content + main_module_content
+        combined_module = main_module_docstring + "\n\n" + '\n'.join(unique_imports) + \
+            "\n\n" + combined_content + main_module_content
+
         return combined_module
 
 
