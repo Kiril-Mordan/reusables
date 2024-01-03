@@ -551,6 +551,10 @@ class LocalDependaciesHandler:
 
     main_module_filepath = attr.ib()
     dependencies_dir = attr.ib()
+    save_filepath = attr.ib(default="./combined_module.py")
+
+    # output
+    combined_module = attr.ib(init=False)
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Local Dependacies Handler')
@@ -626,7 +630,6 @@ class LocalDependaciesHandler:
         return '\n'.join(new_lines)
 
 
-
     def combine_modules(self,
                         main_module_filepath : str = None,
                         dependencies_dir : str = None) -> str:
@@ -668,7 +671,22 @@ class LocalDependaciesHandler:
         combined_module = main_module_docstring + "\n\n" + '\n'.join(unique_imports) + \
             "\n\n" + combined_content + main_module_content
 
+        self.combined_module = combined_module
+
         return combined_module
+
+    def save_combined_modules(self,
+                              combined_module : str = None,
+                              save_filepath : str = None):
+
+        if combined_module is None:
+            combined_module = self.combine_modules
+
+        if save_filepath is None:
+            save_filepath = self.save_filepath
+
+        with open(save_filepath, 'w') as file:
+            file.write(combined_module)
 
 
 
@@ -777,15 +795,15 @@ class SetupDirHandler:
         metadata_str = ', '.join([f'{key}="{value}"' for key, value in metadata.items()])
         setup_content = f"""from setuptools import setup
 
-    setup(
-        name="{module_name}",
-        packages=["{module_name}"],
-        install_requires={requirements},
-        classifiers={classifiers},
-        {metadata_str}
-    )
+setup(
+    name="{module_name}",
+    packages=["{module_name}"],
+    install_requires={requirements},
+    classifiers={classifiers},
+    {metadata_str}
+)
         """
-        with open('setup_dir/setup.py', 'w') as file:
+        with open(os.path.join(setup_directory, 'setup.py'), 'w') as file:
             file.write(setup_content)
 
 
