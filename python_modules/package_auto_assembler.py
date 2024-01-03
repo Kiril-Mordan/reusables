@@ -15,6 +15,7 @@ import logging
 import os
 import attr
 ## working with files
+import ast
 import pandas as pd
 import yaml
 import json
@@ -464,7 +465,7 @@ class RequirementsHandler:
 class MetadataHandler:
 
 
-    module_filepath = attr.ib()
+    module_filepath = attr.ib(default=None)
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Package Metadata Handler')
@@ -488,17 +489,62 @@ class MetadataHandler:
 
             self.logger = logger
 
-    # check if metadata is available
+
+    def is_metadata_available(self, module_filepath : str = None):
+
+        if module_filepath is None:
+            module_filepath = self.module_filepath
+
+        if module_filepath is None:
+            self.logger.error("Provide module_filepath!")
+            raise ValueError("module_filepath is None")
+
+        try:
+            with open(module_filepath, 'r') as file:
+                for line in file:
+                    # Check if the line defines __package_metadata__
+                    if line.strip().startswith("__package_metadata__ ="):
+                        return True
+            return False
+        except FileNotFoundError:
+            return False
+
     def get_package_metadata(self, module_filepath : str = None):
 
         if module_filepath is None:
             module_filepath = self.module_filepath
 
-        module_name =  os.path.basename(module_filepath)
-        spec = importlib.util.spec_from_file_location(module_name, module_filepath)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module.__package_metadata__
+        if module_filepath is None:
+            self.logger.error("Provide module_filepath!")
+            raise ValueError("module_filepath is None")
+
+        metadata_str = ""
+        inside_metadata = False
+
+        try:
+            with open(module_filepath, 'r') as file:
+                for line in file:
+                    if '__package_metadata__ =' in line:
+                        inside_metadata = True
+                        metadata_str = line.split('#')[0]  # Ignore comments
+                    elif inside_metadata:
+                        metadata_str += line.split('#')[0]  # Ignore comments
+                        if '}' in line:
+                            break
+
+            if metadata_str:
+                try:
+                    metadata = ast.literal_eval(metadata_str.split('=', 1)[1].strip())
+                    return metadata
+                except SyntaxError as e:
+                    return f"Error parsing metadata: {e}"
+            else:
+                return "No metadata found in the file."
+
+        except FileNotFoundError:
+            return "File not found."
+        except Exception as e:
+            return f"An error occurred: {e}"
 
 @attr.s
 class LocalDependaciesHandler:
