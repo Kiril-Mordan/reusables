@@ -20,6 +20,10 @@ import pandas as pd
 import yaml
 import json
 import csv
+import nbformat
+from nbconvert import MarkdownExporter
+from nbconvert.preprocessors import ExecutePreprocessor
+import codecs
 ## other
 from datetime import datetime
 import re
@@ -689,6 +693,104 @@ class LocalDependaciesHandler:
             file.write(combined_module)
 
 
+@attr.s
+class LongDocHandler:
+
+    notebook_path = attr.ib(default = None)
+    markdown_filepath = attr.ib(default = None)
+    timeout = attr.ib(default = 600, type = int)
+
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='README Handler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+
+    def _initialize_logger(self):
+
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+
+    def convert_notebook_to_md(self,
+                               notebook_path : str = None,
+                               output_path : str = None):
+
+        if notebook_path is None:
+            notebook_path = self.notebook_path
+
+        if output_path is None:
+            output_path = self.output_path
+
+        # Load the notebook
+        with open(notebook_path) as fh:
+            notebook_node = nbformat.read(fh, as_version=4)
+
+        # Create a Markdown exporter
+        md_exporter = MarkdownExporter()
+
+        # Process the notebook we loaded earlier
+        (body, _) = md_exporter.from_notebook_node(notebook_node)
+
+        # Write to the output markdown file
+        with open(output_path, 'w', encoding='utf-8') as fh:
+            fh.write(body)
+
+        self.logger.debug(f"Converted {notebook_path} to {output_path}")
+
+    def convert_and_execute_notebook_to_md(self,
+                                           notebook_path : str = None,
+                                           output_path : str = None,
+                                           timeout : int = None):
+
+        if notebook_path is None:
+            notebook_path = self.notebook_path
+
+        if output_path is None:
+            output_path = self.markdown_filepath
+
+        if timeout is None:
+            timeout = self.timeout
+
+        # Load the notebook
+        with open(notebook_path) as fh:
+            notebook_node = nbformat.read(fh, as_version=4)
+
+        # Execute the notebook
+        execute_preprocessor = ExecutePreprocessor(timeout=timeout)
+        execute_preprocessor.preprocess(notebook_node, {'metadata': {'path': './'}})
+
+        # Convert the notebook to Markdown
+        md_exporter = MarkdownExporter()
+        (body, _) = md_exporter.from_notebook_node(notebook_node)
+
+        # Write to the output markdown file
+        with open(output_path, 'w', encoding='utf-8') as fh:
+            fh.write(body)
+
+        self.logger.debug(f"Converted and executed {notebook_path} to {output_path}")
+
+    def return_long_description(self,
+                                markdown_filepath : str = None):
+
+        if markdown_filepath is None:
+            markdown_filepath = self.markdown_filepath
+
+        with codecs.open(markdown_filepath, encoding="utf-8") as fh:
+            long_description = "\n" + fh.read()
+
+        return long_description
+
 
 @attr.s
 class SetupDirHandler:
@@ -806,23 +908,6 @@ setup(
         with open(os.path.join(setup_directory, 'setup.py'), 'w') as file:
             file.write(setup_content)
 
-
-    # def prep_module_setup_dir(self, module_file, modules_directory, setup_directory):
-    #     module_name = os.path.splitext(os.path.basename(module_file))[0]
-    #     print(f"Preparing dir structure for module: {module_name}")
-
-    #     # Flushing setup directory
-    #     if os.path.exists(setup_directory):
-    #         shutil.rmtree(setup_directory)
-    #     os.makedirs(setup_directory)
-
-    #     # Copying module to setup directory
-    #     shutil.copy(os.path.join(modules_directory, module_file), setup_directory)
-
-    #     # Creating temporary __init__.py file
-    #     init_file_path = os.path.join(setup_directory, '__init__.py')
-    #     with open(init_file_path, 'w') as init_file:
-    #         init_file.write(f"from .{module_name} import *\n")
 
 
 @attr.s
