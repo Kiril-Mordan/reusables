@@ -25,6 +25,9 @@ jobs:
       - name: Install python dependencies
         run: pip install -r env_spec/requirements.txt
 
+      - name: Add Python Kernel
+        run: python -m ipykernel install --user --name python3
+
       - name: Generate md files from jupyter
         run: |
           ./tools/convert_ipynb_to_markdown.sh
