@@ -1,14 +1,15 @@
 name: Extract requirements
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
     paths:
-      - './python_modules/**'
-      - '.tools/extract_requirements.py'
-      - '.tools/update_requirements.sh'
-      - '.tools/update_module_requirements.sh'
+      - 'python_modules/**'
+      - 'tools/extract_requirements.py'
+      - 'tools/update_requirements.sh'
+      - 'tools/update_module_requirements.sh'
 
 
 
