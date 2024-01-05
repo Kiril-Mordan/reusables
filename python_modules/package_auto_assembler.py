@@ -325,6 +325,9 @@ class RequirementsHandler:
         if custom_modules_filepath is None:
             custom_modules_filepath = self.custom_modules_filepath
 
+        if custom_modules_filepath is None:
+            return []
+
         custom_modules = set()
 
         if custom_modules_filepath is None:
@@ -896,12 +899,24 @@ class SetupDirHandler:
 
         metadata_str = ', '.join([f'{key}="{value}"' for key, value in metadata.items()])
         setup_content = f"""from setuptools import setup
+import codecs
+import os
+
+here = os.path.abspath(os.path.dirname(__file__))
+path_to_readme = os.path.join(here, "README.md")
+
+if os.path.exists(path_to_readme):
+  with codecs.open(path_to_readme, encoding="utf-8") as fh:
+      long_description = fh.read()
+else:
+  long_description = ''
 
 setup(
     name="{module_name}",
     packages=["{module_name}"],
     install_requires={requirements},
     classifiers={classifiers},
+    long_description=long_description,
     {metadata_str}
 )
         """
@@ -918,10 +933,28 @@ class PackageAutoAssembler:
     module_name = attr.ib(type=str)
 
     ## paths
-    module_filepath  = attr.ib(type=str)
+    module_filepath = attr.ib(type=str)
+    mapping_filepath = attr.ib(default=None)
+    dependencies_dir = attr.ib(default=None)
+    example_notebook_path = attr.ib(default=None)
     versions_filepath = attr.ib(default='./lsts_package_versions.yml')
     log_filepath = attr.ib(default='./version_logs.csv')
     setup_directory = attr.ib(default='./setup_dir')
+
+    # optional parameters
+    classifiers = attr.ib(default=['Development Status :: 3 - Alpha',
+                                    'Intended Audience :: Developers',
+                                    'Intended Audience :: Science/Research',
+                                    'Programming Language :: Python :: 3',
+                                    'Programming Language :: Python :: 3.9',
+                                    'Programming Language :: Python :: 3.10',
+                                    'Programming Language :: Python :: 3.11',
+                                    'License :: OSI Approved :: MIT License',
+                                    'Topic :: Scientific/Engineering'])
+    requirements_list = attr.ib(default=[])
+    python_version = attr.ib(default="3.8")
+    version_increment_type = attr.ib(default="patch", type = str)
+    default_version = attr.ib(default="0.0.1", type = str)
 
     ## handlers
     setup_dir_h = attr.ib(default=SetupDirHandler)
@@ -930,6 +963,7 @@ class PackageAutoAssembler:
     local_dependacies_h = attr.ib(default=LocalDependaciesHandler)
     requirements_h = attr.ib(default=RequirementsHandler)
     metadata_h = attr.ib(default=MetadataHandler)
+    long_doc_h = attr.ib(default=LongDocHandler)
 
     ## output
     package_result = attr.ib(init=False)
@@ -964,16 +998,54 @@ class PackageAutoAssembler:
         Initialize handlers with available parameters.
         """
 
-        self.setup_dir_h(module_name = self.module_name,
-                         module_filepath = self.module_filepath,
-                         logger = self.logger)
+        self.metadata_h = self.metadata_h(module_filepath = self.module_filepath)
 
-        self.metadata_h(module_filepath = self.module_filepath)
+        self.version_h = self.version_h(versions_filepath = self.versions_filepath,
+                                        log_filepath = self.log_filepath,
+                                        default_version = self.default_version)
+
+        self.import_mapping_h = self.import_mapping_h(mapping_filepath = self.mapping_filepath)
+
+        self.local_dependacies_h = self.local_dependacies_h(main_module_filepath = self.module_filepath,
+                                                            dependencies_dir = self.dependencies_dir)
+
+        self.requirements_h = self.requirements_h(module_filepath = self.module_filepath,
+                                                  custom_modules_filepath = self.dependencies_dir,
+                                                  python_version = self.python_version)
+
+        self.long_doc_h = self.long_doc_h(notebook_path = self.example_notebook_path)
+
+        self.setup_dir_h = self.setup_dir_h(module_name = self.module_name,
+                                            module_filepath = self.module_filepath,
+                                            setup_directory = self.setup_directory,
+                                            logger = self.logger)
+
+
+
+    def add_metadata_from_module(self, module_filepath : str = None):
+
+        if module_filepath is None:
+            module_filepath = self.module_filepath
+
+        # extracting package metadata
+        self.metadata = self.metadata_h.get_package_metadata(module_filepath = module_filepath)
+
 
     def add_or_update_version(self,
+                              module_name : str = None,
+                              version_increment_type : str = None,
                               version : str = None,
                               versions_filepath : str = None,
                               log_filepath : str = None):
+
+        if module_name is None:
+            module_name = self.module_name
+
+        if version_increment_type is None:
+            version_increment_type = self.version_increment_type
+
+        if version is None:
+            version = self.default_version
 
         if versions_filepath is None:
             versions_filepath = self.versions_filepath
@@ -981,29 +1053,13 @@ class PackageAutoAssembler:
         if log_filepath is None:
             log_filepath = self.log_filepath
 
-    def prep_metadata(self, module_filepath : str = None):
+        self.version_h.increment_version(package_name = module_name,
+                                         type = version_increment_type,
+                                         default_version = version)
 
-        if module_filepath is None:
-            module_filepath = self,module_filepath
+        self.metadata['version'] = self.version_h.get_version(package_name=module_name)
 
-        # extracting package metadata
-        self.metadata = self.metadata_h.get_package_metadata(module_filepath = module_filepath)
-
-
-
-    def prep_setup_dir(self,
-                       metadata : dict = None,
-                         requirements : str = None,
-                         classifiers : list = None):
-
-        if metadata is None:
-            metadata = self.metadata
-
-        if requirements is None:
-            requirements = self.requirements
-
-        if classifiers is None:
-            classifiers = self.classifiers
+    def prep_setup_dir(self):
 
         # create empty dir for setup
         self.setup_dir_h.flush_n_make_setup_dir()
@@ -1011,15 +1067,98 @@ class PackageAutoAssembler:
         self.setup_dir_h.copy_module_to_setup_dir()
         # create init file for new package
         self.setup_dir_h.create_init_file()
+
+
+    def merge_local_dependacies(self,
+                                main_module_filepath : str = None,
+                                dependencies_dir : str = None,
+                                save_filepath : str = None):
+
+        if main_module_filepath is None:
+            main_module_filepath = self.module_filepath
+
+        if dependencies_dir is None:
+            dependencies_dir = self.dependencies_dir
+
+        if save_filepath is None:
+            save_filepath = os.path.join(self.setup_directory, os.path.basename(main_module_filepath))
+
+        # combime module with its dependacies
+        self.local_dependacies_h.save_combined_modules(
+            combined_module=self.local_dependacies_h.combine_modules(),
+            save_filepath=save_filepath
+        )
+
+        # switch filepath for the combined one
+        self.module_filepath = save_filepath
+
+    def add_requirements_from_module(self,
+                                     module_filepath : str = None,
+                                     import_mappings : str = None):
+
+        if module_filepath is None:
+            module_filepath = self.module_filepath
+
+        if import_mappings is None:
+
+            if self.mapping_filepath is None:
+                import_mappings = {}
+            else:
+                import_mappings = self.import_mapping_h.load_package_mappings()
+
+        custom_modules = self.requirements_h.list_custom_modules()
+
+        # extracting package requirements
+        self.requirements_list = self.requirements_list + \
+            self.requirements_h.extract_requirements(
+                module_filepath=module_filepath,
+                custom_modules=custom_modules)
+
+    def add_readme(self,
+                    example_notebook_path : str = None,
+                    output_path : str = None):
+
+        if example_notebook_path is None:
+            example_notebook_path = self.example_notebook_path
+
+        if output_path is None:
+            output_path = os.path.join(self.setup_directory,
+                                       "README.md")
+
+        # converting example notebook to md
+        self.long_doc_h.convert_and_execute_notebook_to_md(
+            notebook_path = example_notebook_path,
+            output_path = output_path
+        )
+
+
+    def prep_setup_file(self,
+                       metadata : dict = None,
+                       requirements : str = None,
+                       classifiers : list = None):
+
+        if metadata is None:
+            metadata = self.metadata
+
+        if requirements is None:
+            requirements = self.requirements_list
+
+        if classifiers is None:
+            classifiers = self.classifiers
+
         # create setup.py
         self.setup_dir_h.write_setup_file(metadata = metadata,
                                           requirements = requirements,
                                           classifiers = classifiers)
 
-    def make_package(self):
+    def make_package(self,
+                     setup_directory : str = None):
+
+        if setup_directory is None:
+            setup_directory = self.setup_directory
 
         # Define the command as a list of arguments
-        command = ["python", "setup_dir/setup.py", "sdist", "bdist_wheel"]
+        command = ["python", os.path.join(setup_directory, "setup.py"), "sdist", "bdist_wheel"]
 
         # Execute the command
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
