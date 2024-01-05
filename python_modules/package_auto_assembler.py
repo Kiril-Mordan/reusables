@@ -29,7 +29,6 @@ import attr
 from stdlib_list import stdlib_list
 
 
-
 @attr.s
 class VersionHandler:
 
