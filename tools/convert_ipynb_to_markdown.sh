@@ -12,7 +12,7 @@ convert_to_markdown() {
   local relative_dir="${notebook_dir#$root_dir}"
 
   # Convert the notebook to markdown and save it in the output directory
-  jupyter nbconvert --to markdown --execute "$notebook_file" --output-dir="$output_directory"
+  jupyter nbconvert --to markdown --execute --ExecutePreprocessor.kernel_name=python3 "$notebook_file" --output-dir="$output_directory"
 }
 
 # Recursive function to find and convert .ipynb files in a directory
