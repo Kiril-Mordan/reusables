@@ -10,27 +10,23 @@ with minimal preparations and requirements for new modules.
 """
 
 # Imports
-## essential
 import logging
 import os
-import attr
-## working with files
 import ast
-import pandas as pd
-import yaml
 import json
 import csv
+import codecs
+from datetime import datetime
+import re
+import subprocess
+import shutil
+import pandas as pd
+import yaml
 import nbformat
 from nbconvert import MarkdownExporter
 from nbconvert.preprocessors import ExecutePreprocessor
-import codecs
-## other
-from datetime import datetime
-import re
-import importlib.util
+import attr
 from stdlib_list import stdlib_list
-import subprocess
-import shutil
 
 
 
@@ -41,6 +37,10 @@ class VersionHandler:
     log_filepath = attr.ib()
 
     default_version = attr.ib(default="0.0.1")
+
+    # output
+    versions = attr.ib(init=False)
+
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Package Version Handler')
@@ -71,7 +71,7 @@ class VersionHandler:
             self.logger = logger
 
     def _setup_logging(self):
-        self.log_file = open(self.log_filepath, 'a', newline='')
+        self.log_file = open(self.log_filepath, 'a', newline='', encoding="utf-8")
         self.csv_writer = csv.writer(self.log_file)
         # Write headers if the file is empty/new
         if os.stat(self.log_filepath).st_size == 0:
@@ -83,7 +83,7 @@ class VersionHandler:
 
     def _create_versions(self):
         self.logger.debug(f"Versions file was not found in location '{self.versions_filepath}', creating file!")
-        with open(self.versions_filepath, 'w') as file:
+        with open(self.versions_filepath, 'w'):
             pass
 
     def _save_versions(self):
@@ -101,7 +101,7 @@ class VersionHandler:
         return f"{major}.{minor}.{patch}"
 
     def flush_versions(self):
-        with open(self.versions_filepath, 'w') as file:
+        with open(self.versions_filepath, 'w', encoding='utf-8') as file:
             yaml.safe_dump({}, file)
 
     def flush_logs(self):
@@ -128,7 +128,7 @@ class VersionHandler:
         if log_filepath is None:
             log_filepath = self.log_filepath
 
-        return(pd.read_csv(log_filepath))
+        return pd.read_csv(log_filepath)
 
     def get_version(self, package_name : str = None):
 
@@ -145,8 +145,7 @@ class VersionHandler:
             # Load the contents of the file
             versions = yaml.safe_load(file)
 
-
-        return(versions)
+        return versions
 
     # Remember to close the log file when done
     def _close_log_file(self):
@@ -174,30 +173,30 @@ class VersionHandler:
 
     def increment_version(self,
                           package_name : str,
-                          type : str = None,
+                          increment_type : str = None,
                           default_version : str = None):
 
         if default_version is None:
             default_version = self.default_version
 
-        if type is None:
-            type = 'patch'
+        if increment_type is None:
+            increment_type = 'patch'
 
         if package_name in self.versions:
             prev_version = self.versions[package_name]
             major, minor, patch = self._parse_version(prev_version)
 
-            if type == 'patch':
+            if increment_type == 'patch':
                 patch += 1
-            if type == 'minor':
+            if increment_type == 'minor':
                 minor += 1
-            if type == 'major':
+            if increment_type == 'major':
                 major += 1
 
             new_version = self._format_version(major, minor, patch)
             self.update_version(package_name, new_version)
 
-            self.logger.debug(f"Incremented {type} of {package_name} \
+            self.logger.debug(f"Incremented {increment_type} of {package_name} \
                 from {prev_version} to {new_version}")
         else:
             self.logger.warning(f"There are no known versions of '{package_name}', {default_version} will be used!")
@@ -380,8 +379,8 @@ class RequirementsHandler:
 
             if self.module_filepath is None:
                 raise ValueError("Parameter 'module_filepath' was not probided!")
-            else:
-                module_filepath = self.module_filepath
+
+            module_filepath = self.module_filepath
 
         if custom_modules is None:
             custom_modules = self.list_custom_modules()
@@ -733,7 +732,7 @@ class LongDocHandler:
             notebook_path = self.notebook_path
 
         if output_path is None:
-            output_path = self.output_path
+            output_path = self.markdown_filepath
 
         # Load the notebook
         with open(notebook_path) as fh:
@@ -766,7 +765,7 @@ class LongDocHandler:
             timeout = self.timeout
 
         # Load the notebook
-        with open(notebook_path) as fh:
+        with open(notebook_path, encoding = 'utf-8') as fh:
             notebook_node = nbformat.read(fh, as_version=4)
 
         # Execute the notebook
@@ -1164,5 +1163,3 @@ class PackageAutoAssembler:
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
         return result
-
-
