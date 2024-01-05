@@ -22,6 +22,11 @@ jobs:
         with:
           python-version: 3.9
 
+      - name: Create and activate virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+
       - name: Install python dependencies
         run: pip install -r env_spec/requirements.txt
 
