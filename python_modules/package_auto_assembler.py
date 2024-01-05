@@ -49,7 +49,7 @@ class VersionHandler:
     def __attrs_post_init__(self):
         self._initialize_logger()
         try:
-            self.versions = self._read_versions()
+            self.versions = self.get_versions()
         except Exception as e:
             self._create_versions()
             self.versions = {}
@@ -70,40 +70,85 @@ class VersionHandler:
             self.logger = logger
 
     def _setup_logging(self):
+
+        """
+        Setup logging of package versions with datatime, package name and version in persistent csv file.
+        """
+
         self.log_file = open(self.log_filepath, 'a', newline='', encoding="utf-8")
         self.csv_writer = csv.writer(self.log_file)
         # Write headers if the file is empty/new
         if os.stat(self.log_filepath).st_size == 0:
             self.csv_writer.writerow(['Timestamp', 'Package', 'Version'])
 
-    def _read_versions(self):
-        with open(self.versions_filepath, 'r') as file:
-            return yaml.safe_load(file) or {}
 
     def _create_versions(self):
+
+        """
+        Create empty file where versions will be stored.
+        """
+
         self.logger.debug(f"Versions file was not found in location '{self.versions_filepath}', creating file!")
         with open(self.versions_filepath, 'w'):
             pass
 
     def _save_versions(self):
+
+        """
+        Persist versions in yaml file.
+        """
+
         with open(self.versions_filepath, 'w') as file:
             yaml.safe_dump(self.versions, file)
 
+    def _close_log_file(self):
+
+        """
+        Method for closing connection to log file, persists the changes in csv.
+        """
+
+        self.log_file.close()
+
     def __str__(self):
+
+        """
+        Method for diplaying the class.
+        """
+
         return yaml.safe_dump(self.versions)
 
     def _parse_version(self, version):
+
+        """
+        Get components from the version string.
+        """
+
         major, minor, patch = map(int, version.split('.'))
         return major, minor, patch
 
     def _format_version(self, major, minor, patch):
+
+        """
+        Form version string with components.
+        """
+
         return f"{major}.{minor}.{patch}"
 
     def flush_versions(self):
+
+        """
+        Empty persist yaml, where versions were stored.
+        """
+
         with open(self.versions_filepath, 'w', encoding='utf-8') as file:
             yaml.safe_dump({}, file)
 
     def flush_logs(self):
+
+        """
+        Empty persist csv, where version logs were stored.
+        """
+
         # Close connection
         self._close_log_file()
         # Open the file in write mode to clear it, then write back only the headers
@@ -115,6 +160,11 @@ class VersionHandler:
 
 
     def log_version_update(self, package_name, new_version):
+
+        """
+        Update version logs when change in the versions occured.
+        """
+
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.csv_writer.writerow([timestamp, package_name, new_version])
         self.log_file.flush()  # Ensure data is written to the file
@@ -124,6 +174,10 @@ class VersionHandler:
     def get_logs(self,
                  log_filepath : str = None):
 
+        """
+        Return versions logs.
+        """
+
         if log_filepath is None:
             log_filepath = self.log_filepath
 
@@ -131,10 +185,19 @@ class VersionHandler:
 
     def get_version(self, package_name : str = None):
 
+        """
+        Return specific version of the package.
+        """
+
         return self.versions.get(package_name)
+
 
     def get_versions(self,
                      versions_filepath : str = None):
+
+        """
+        Return dictionary with all versions in the yaml file.
+        """
 
         if versions_filepath is None:
             versions_filepath = self.versions_filepath
@@ -142,16 +205,14 @@ class VersionHandler:
         # Open the YAML file
         with open(versions_filepath, 'r') as file:
             # Load the contents of the file
-            versions = yaml.safe_load(file)
-
-        return versions
-
-    # Remember to close the log file when done
-    def _close_log_file(self):
-        self.log_file.close()
-
+            return yaml.safe_load(file) or {}
 
     def update_version(self, package_name, new_version):
+
+        """
+        Update version of the named package with provided value and persist change.
+        """
+
         self.versions[package_name] = new_version
         self._save_versions()
         self.log_version_update(package_name, new_version)
@@ -159,6 +220,10 @@ class VersionHandler:
     def add_package(self,
                     package_name : str,
                     version : str = None):
+
+        """
+        Add new package with provided or default version.
+        """
 
         if version is None:
             version = self.default_version
@@ -174,6 +239,10 @@ class VersionHandler:
                           package_name : str,
                           increment_type : str = None,
                           default_version : str = None):
+
+        """
+        Increment versions of the given package with 1 for a given increment type.
+        """
 
         if default_version is None:
             default_version = self.default_version
@@ -207,6 +276,10 @@ class VersionHandler:
                         package_name : str,
                         default_version : str = None):
 
+        """
+        Increment major version of the given package with 1.
+        """
+
         if default_version is None:
             default_version = self.default_version
 
@@ -218,6 +291,10 @@ class VersionHandler:
                         package_name : str,
                         default_version : str = None):
 
+        """
+        Increment minor version of the given package with 1.
+        """
+
         if default_version is None:
             default_version = self.default_version
 
@@ -228,6 +305,10 @@ class VersionHandler:
     def increment_patch(self,
                         package_name : str,
                         default_version : str = None):
+
+        """
+        Increment patch version of the given package with 1.
+        """
 
         if default_version is None:
             default_version = self.default_version
@@ -497,6 +578,10 @@ class MetadataHandler:
 
     def is_metadata_available(self, module_filepath : str = None):
 
+        """
+        Check is metadata is present in the module.
+        """
+
         if module_filepath is None:
             module_filepath = self.module_filepath
 
@@ -515,6 +600,10 @@ class MetadataHandler:
             return False
 
     def get_package_metadata(self, module_filepath : str = None):
+
+        """
+        Extract metadata from the given module if available.
+        """
 
         if module_filepath is None:
             module_filepath = self.module_filepath
@@ -586,12 +675,19 @@ class LocalDependaciesHandler:
     def _read_module(self,
                     filepath : str) -> str:
 
+        """
+        Method for reading in module.
+        """
+
         with open(filepath, 'r') as file:
             return file.read()
 
     def _extract_module_docstring(self,
                                  module_content : str) -> str:
 
+        """
+        Method for extracting title, module level docstring.
+        """
 
         match = re.match(r'(""".*?"""|\'\'\'.*?\'\'\')', module_content, re.DOTALL)
         return match.group(0) if match else ''
@@ -599,22 +695,38 @@ class LocalDependaciesHandler:
     def _extract_imports(self,
                         module_content : str) -> str:
 
+        """
+        Method for extracting import statements from the module.
+        """
+
         return re.findall(r'^(?:from\s+.+\s+)?import\s+.+$', module_content, re.MULTILINE)
 
 
     def _remove_module_docstring(self,
                                 module_content : str) -> str:
 
+        """
+        Method for removing title, module level docstring.
+        """
+
         return re.sub(r'^(""".*?"""|\'\'\'.*?\'\'\')', '', module_content, flags=re.DOTALL).strip()
 
     def _remove_imports(self,
                        module_content : str) -> str:
+
+        """
+        Method for removing import statements from the module.
+        """
 
         module_content = re.sub(r'^(?:from\s+.+\s+)?import\s+.+$', '', module_content, flags=re.MULTILINE)
         return module_content.strip()
 
     def _remove_metadata(self,
                        module_content : str) -> str:
+
+        """
+        Method for removing metadata from the module.
+        """
 
 
         lines = module_content.split('\n')
@@ -638,6 +750,10 @@ class LocalDependaciesHandler:
     def combine_modules(self,
                         main_module_filepath : str = None,
                         dependencies_dir : str = None) -> str:
+
+        """
+        Combining main module with its local dependancies.
+        """
 
         if main_module_filepath is None:
             main_module_filepath = self.main_module_filepath
@@ -684,6 +800,10 @@ class LocalDependaciesHandler:
                               combined_module : str = None,
                               save_filepath : str = None):
 
+        """
+        Save combined module to .py file.
+        """
+
         if combined_module is None:
             combined_module = self.combine_modules
 
@@ -727,6 +847,10 @@ class LongDocHandler:
                                notebook_path : str = None,
                                output_path : str = None):
 
+        """
+        Convert example notebook to md without executing.
+        """
+
         if notebook_path is None:
             notebook_path = self.notebook_path
 
@@ -753,6 +877,10 @@ class LongDocHandler:
                                            notebook_path : str = None,
                                            output_path : str = None,
                                            timeout : int = None):
+
+        """
+        Convert example notebook to md with executing.
+        """
 
         if notebook_path is None:
             notebook_path = self.notebook_path
@@ -783,6 +911,10 @@ class LongDocHandler:
 
     def return_long_description(self,
                                 markdown_filepath : str = None):
+
+        """
+        Return long descrition for review as txt.
+        """
 
         if markdown_filepath is None:
             markdown_filepath = self.markdown_filepath
@@ -828,6 +960,10 @@ class SetupDirHandler:
     def flush_n_make_setup_dir(self,
                                setup_directory : str = None):
 
+        """
+        Remove everything from a given directory or create a new one if doesn't exists already.
+        """
+
         if setup_directory is None:
             setup_directory = self.setup_directory
 
@@ -840,6 +976,10 @@ class SetupDirHandler:
     def copy_module_to_setup_dir(self,
                                  module_filepath : str = None,
                                  setup_directory : str = None):
+
+        """
+        Copy module to new setup directory.
+        """
 
 
         if module_filepath is None:
@@ -855,6 +995,10 @@ class SetupDirHandler:
     def create_init_file(self,
                          module_name : str = None,
                          setup_directory : str = None):
+
+        """
+        Create __init__.py for the package.
+        """
 
         if module_name is None:
             if self.module_name == '':
@@ -876,6 +1020,10 @@ class SetupDirHandler:
                          requirements : str = None,
                          classifiers : list = None,
                          setup_directory : str = None):
+
+        """
+        Create setup.py for the package.
+        """
 
         if module_name is None:
             if self.module_name == '':
@@ -1022,6 +1170,10 @@ class PackageAutoAssembler:
 
     def add_metadata_from_module(self, module_filepath : str = None):
 
+        """
+        Add metadata extracted from the module.
+        """
+
         if module_filepath is None:
             module_filepath = self.module_filepath
 
@@ -1035,6 +1187,10 @@ class PackageAutoAssembler:
                               version : str = None,
                               versions_filepath : str = None,
                               log_filepath : str = None):
+
+        """
+        Increment version and creates entry in version logs.
+        """
 
         if module_name is None:
             module_name = self.module_name
@@ -1059,6 +1215,10 @@ class PackageAutoAssembler:
 
     def prep_setup_dir(self):
 
+        """
+        Prepare setup directory.
+        """
+
         # create empty dir for setup
         self.setup_dir_h.flush_n_make_setup_dir()
         # copy module to dir
@@ -1071,6 +1231,10 @@ class PackageAutoAssembler:
                                 main_module_filepath : str = None,
                                 dependencies_dir : str = None,
                                 save_filepath : str = None):
+
+        """
+        Combine local dependacies and main module into one file.
+        """
 
         if main_module_filepath is None:
             main_module_filepath = self.module_filepath
@@ -1094,6 +1258,10 @@ class PackageAutoAssembler:
                                      module_filepath : str = None,
                                      import_mappings : str = None):
 
+        """
+        Extract and add requirements from the module.
+        """
+
         if module_filepath is None:
             module_filepath = self.module_filepath
 
@@ -1116,6 +1284,10 @@ class PackageAutoAssembler:
                     example_notebook_path : str = None,
                     output_path : str = None):
 
+        """
+        Make README file based on usage example.
+        """
+
         if example_notebook_path is None:
             example_notebook_path = self.example_notebook_path
 
@@ -1135,6 +1307,10 @@ class PackageAutoAssembler:
                        requirements : str = None,
                        classifiers : list = None):
 
+        """
+        Assemble setup.py file.
+        """
+
         if metadata is None:
             metadata = self.metadata
 
@@ -1151,6 +1327,10 @@ class PackageAutoAssembler:
 
     def make_package(self,
                      setup_directory : str = None):
+
+        """
+        Create a package.
+        """
 
         if setup_directory is None:
             setup_directory = self.setup_directory
