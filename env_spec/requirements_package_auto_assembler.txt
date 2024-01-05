@@ -1,0 +1,8 @@
+### package_auto_assembler
+pandas
+pyyaml
+nbformat
+nbconvert
+nbconvert
+attrs
+stdlib-list
