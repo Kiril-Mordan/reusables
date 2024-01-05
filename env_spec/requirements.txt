@@ -8,3 +8,5 @@ pyyaml
 nbconvert
 pylint
 python-dotenv
+jupyter
+ipykernel
