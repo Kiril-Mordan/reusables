@@ -86,3 +86,12 @@ or tracking changes in textual data over time using manual evaluation.
 A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
 establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
 
+[module](python_modules/package_auto_assembler.py) - Package Auto Assembler
+
+This tool is meant to streamline creation of single module packages.
+Its purpose is to automate as many aspects of python package creation as possible,
+to shorten a development cycle of reusable components, maintain certain standard of quality
+for reusable code. It provides tool to simplify the process of package creatrion
+to a point that it can be triggered automatically within ci/cd pipelines,
+with minimal preparations and requirements for new modules.
+
