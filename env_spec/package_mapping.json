@@ -8,5 +8,7 @@
     "sentence_transformers": "sentence-transformers",
     "flask": "Flask",
     "stdlib_list": "stdlib-list",
-    "sklearn": "scikit-learn"
+    "sklearn" : "scikit-learn",
+    "yaml" : "pyyaml"
 }
+
