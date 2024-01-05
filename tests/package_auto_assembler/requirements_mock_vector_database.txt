@@ -1,7 +1,0 @@
-### mock_vector_database.py
-numpy
-dill==0.3.7
-attrs>=22.2.0
-requests==2.31.0
-hnswlib==0.7.0
-sentence-transformers==2.2.2
