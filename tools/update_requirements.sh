@@ -49,3 +49,5 @@ keep_highest_version "$temp_combined" > "$requirements_directory/$combined_requi
 rm "$temp_combined"
 
 echo "Combined requirements file created at $requirements_directory/$combined_requirements"
+
+cat "$requirements_directory/$combined_requirements"

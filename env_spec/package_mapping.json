@@ -5,6 +5,7 @@
     "attr": "attrs",
     "dotenv": "python-dotenv",
     "googleapiclient": "google-api-python-client",
+    "google_auth_oauthlib" : "google-auth-oauthlib",
     "sentence_transformers": "sentence-transformers",
     "flask": "Flask",
     "stdlib_list": "stdlib-list",

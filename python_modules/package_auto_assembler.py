@@ -285,7 +285,7 @@ class VersionHandler:
 
         self.increment_version(package_name = package_name,
                              default_version = default_version,
-                             type = 'major')
+                             increment_type = 'major')
 
     def increment_minor(self,
                         package_name : str,
@@ -300,7 +300,7 @@ class VersionHandler:
 
         self.increment_version(package_name = package_name,
                              default_version = default_version,
-                             type = 'minor')
+                             increment_type = 'minor')
 
     def increment_patch(self,
                         package_name : str,
@@ -315,7 +315,7 @@ class VersionHandler:
 
         self.increment_version(package_name = package_name,
                              default_version = default_version,
-                             type = 'patch')
+                             increment_type = 'patch')
 
 @attr.s
 class ImportMappingHandler:
@@ -1208,7 +1208,7 @@ class PackageAutoAssembler:
             log_filepath = self.log_filepath
 
         self.version_h.increment_version(package_name = module_name,
-                                         type = version_increment_type,
+                                         increment_type = version_increment_type,
                                          default_version = version)
 
         self.metadata['version'] = self.version_h.get_version(package_name=module_name)
