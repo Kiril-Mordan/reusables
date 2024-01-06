@@ -1,0 +1,792 @@
+# Package Auto Assembler
+
+This tool is meant to streamline creation of single module packages.
+Its purpose is to automate as many aspects of python package creation as possible,
+to shorten a development cycle of reusable components, maintain certain standard of quality
+for reusable code. It provides tool to simplify the process of package creatrion
+to a point that it can be triggered automatically within ci/cd pipelines,
+with minimal preparations and requirements for new modules.
+
+
+
+```python
+import sys
+sys.path.append('../')
+from python_modules.package_auto_assembler import (VersionHandler, \
+    ImportMappingHandler, RequirementsHandler, MetadataHandler, \
+        LocalDependaciesHandler, LongDocHandler, SetupDirHandler, \
+            PackageAutoAssembler)
+```
+
+## Usage examples
+
+The examples contain: 
+1. package versioning
+2. import mapping
+3. extracting and merging requirements
+4. preparing metadata
+5. merging local dependacies into single module
+6. prepare README
+7. assembling setup directory
+8. making a package
+
+### 1. Package versioning
+
+#### Initialize VersionHandler
+
+
+```python
+pv = VersionHandler(
+    # required
+    versions_filepath = '../tests/package_auto_assembler/lsts_package_versions.yml',
+    log_filepath = '../tests/package_auto_assembler/version_logs.csv',
+    # optional 
+    default_version = "0.0.1")
+```
+
+#### Add new package
+
+
+```python
+pv.add_package(
+    package_name = "new_package", 
+    # optional
+    version = "0.0.1"
+)
+```
+
+#### Update package version
+
+
+```python
+pv.increment_patch(
+    package_name = "new_package"
+)
+## for not tracked package
+pv.increment_patch(
+    package_name = "another_new_package",
+    # optional
+    default_version = "0.0.1"
+)
+```
+
+    There are no known versions of 'another_new_package', 0.0.1 will be used!
+
+
+#### Display current versions and logs
+
+
+```python
+pv.get_versions(
+    # optional
+    versions_filepath = '../tests/package_auto_assembler/lsts_package_versions.yml'
+)
+```
+
+
+
+
+    {'another_new_package': '0.0.1',
+     'example_module': '0.0.1',
+     'new_package': '0.0.2'}
+
+
+
+
+```python
+pv.get_version(
+    package_name='new_package'
+)
+```
+
+
+
+
+    '0.0.2'
+
+
+
+
+```python
+pv.get_logs(
+    # optional
+    log_filepath = '../tests/package_auto_assembler/version_logs.csv'
+)
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Timestamp</th>
+      <th>Package</th>
+      <th>Version</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2024-01-06 00:54:04</td>
+      <td>example_module</td>
+      <td>0.0.1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2024-01-06 18:20:47</td>
+      <td>new_package</td>
+      <td>0.0.1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2024-01-06 18:20:47</td>
+      <td>new_package</td>
+      <td>0.0.2</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2024-01-06 18:20:47</td>
+      <td>another_new_package</td>
+      <td>0.0.1</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+#### Flush versions and logs
+
+
+```python
+pv.flush_versions()
+pv.flush_logs()
+```
+
+### 2. Import mapping
+
+#### Initialize ImportMappingHandler
+
+
+```python
+im = ImportMappingHandler(
+    # required
+    mapping_filepath = "../env_spec/package_mapping.json"
+)
+```
+
+#### Load package mappings
+
+
+```python
+im.load_package_mappings(
+    # optional
+    mapping_filepath = "../env_spec/package_mapping.json"
+)
+```
+
+
+
+
+    {'PIL': 'Pillow',
+     'bs4': 'beautifulsoup4',
+     'fitz': 'PyMuPDF',
+     'attr': 'attrs',
+     'dotenv': 'python-dotenv',
+     'googleapiclient': 'google-api-python-client',
+     'google_auth_oauthlib': 'google-auth-oauthlib',
+     'sentence_transformers': 'sentence-transformers',
+     'flask': 'Flask',
+     'stdlib_list': 'stdlib-list',
+     'sklearn': 'scikit-learn',
+     'yaml': 'pyyaml'}
+
+
+
+### 3. Extracting and merging requirements
+
+#### Initialize RequirementsHandler
+
+
+```python
+rh = RequirementsHandler(
+    # optional/required later
+    module_filepath = "../tests/package_auto_assembler/example_module.py",
+    package_mappings = {'PIL': 'Pillow',
+                        'bs4': 'beautifulsoup4',
+                        'fitz': 'PyMuPDF',
+                        'attr': 'attrs',
+                        'dotenv': 'python-dotenv',
+                        'googleapiclient': 'google-api-python-client',
+                        'sentence_transformers': 'sentence-transformers',
+                        'flask': 'Flask',
+                        'stdlib_list': 'stdlib-list',
+                        'sklearn': 'scikit-learn',
+                        'yaml': 'pyyaml'},
+    requirements_output_path = "../tests/package_auto_assembler/",
+    output_requirements_prefix = "requirements_",
+    custom_modules_filepath = "../tests/package_auto_assembler/dependancies",
+    python_version = '3.8'
+)
+```
+
+#### List custom modules for a given directory
+
+
+```python
+rh.list_custom_modules(
+    # optional
+    custom_modules_filepath="../tests/package_auto_assembler/dependancies")
+```
+
+
+
+
+    ['example_local_dependacy_1', 'example_local_dependacy_2']
+
+
+
+#### Check if module is a standard python library
+
+
+```python
+rh.is_standard_library(
+    # required
+    module_name = 'example_local_dependacy_1',
+    # optional
+    python_version = '3.8'
+)
+```
+
+
+
+
+    False
+
+
+
+
+```python
+rh.is_standard_library(
+    # required
+    module_name = 'logging',
+    # optional
+    python_version = '3.8'
+)
+```
+
+
+
+
+    True
+
+
+
+#### Extract requirements from the module file
+
+
+```python
+rh.extract_requirements(
+    # optional
+    module_filepath = "../tests/package_auto_assembler/example_module.py",
+    custom_modules = ['example_local_dependacy_2', 'example_local_dependacy_1'],
+    package_mappings = {'PIL': 'Pillow',
+                        'bs4': 'beautifulsoup4',
+                        'fitz': 'PyMuPDF',
+                        'attr': 'attrs',
+                        'dotenv': 'python-dotenv',
+                        'googleapiclient': 'google-api-python-client',
+                        'sentence_transformers': 'sentence-transformers',
+                        'flask': 'Flask',
+                        'stdlib_list': 'stdlib-list',
+                        'sklearn': 'scikit-learn',
+                        'yaml': 'pyyaml'},
+    python_version = '3.8'
+)
+```
+
+
+
+
+    ['### example_module.py', 'attrs>=22.2.0']
+
+
+
+#### Save requirements to a file
+
+
+```python
+rh.write_requirements_file(
+    # optional/required later
+    module_name = 'example_module',
+    requirements = ['### example_module.py', 'attrs>=22.2.0'],
+    output_path = "../tests/package_auto_assembler/",
+    prefix = "requirements_"
+)
+```
+
+#### Read requirements
+
+
+```python
+rh.read_requirements_file(
+    # required
+    requirements_filepath = "../tests/package_auto_assembler/requirements_example_module.txt"
+)
+```
+
+
+
+
+    ['attrs>=22.2.0']
+
+
+
+### 4. Preparing metadata
+
+#### Initializing MetadataHandler
+
+
+```python
+mh = MetadataHandler(
+    # optional/required later
+    module_filepath = "../tests/package_auto_assembler/example_module.py"
+)
+```
+
+#### Check if metadata is available
+
+
+```python
+mh.is_metadata_available(
+    # optional 
+    module_filepath = "../tests/package_auto_assembler/example_module.py"
+)
+```
+
+
+
+
+    True
+
+
+
+#### Extract metadata from module
+
+
+```python
+mh.get_package_metadata(
+    # optional 
+    module_filepath = "../tests/package_auto_assembler/example_module.py"
+)
+```
+
+
+
+
+    {'author': 'Kyrylo Mordan',
+     'author_email': 'parachute.repo@gmail.com',
+     'version': '0.0.1',
+     'description': 'A mock handler for simulating a vector database.',
+     'keywords': ['python', 'vector database', 'similarity search']}
+
+
+
+### 5. Merging local dependacies into single module
+
+#### Initializing LocalDependaciesHandler
+
+
+```python
+ldh = LocalDependaciesHandler(
+    # required
+    main_module_filepath = "../tests/package_auto_assembler/example_module.py",
+    dependencies_dir = "../tests/package_auto_assembler/dependancies/",
+    # optional
+    save_filepath = "./combined_example_module.py"
+)
+```
+
+#### Combine main module with dependacies
+
+
+```python
+print(ldh.combine_modules(
+    # optional
+    main_module_filepath = "../tests/package_auto_assembler/example_module.py",
+    dependencies_dir = "../tests/package_auto_assembler/dependancies/"
+)[0:1000])
+```
+
+    """
+    Mock Vector Db Handler
+    
+    This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
+    It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
+    and basic data management within a simulated environment resembling a vector database.
+    """
+    
+    import logging
+    import json
+    import time
+    import attr #>=22.2.0
+    import string
+    import os
+    import csv
+    
+    @attr.s
+    class Shouter:
+    
+        """
+        A class for managing and displaying formatted log messages.
+    
+        This class uses the logging module to create and manage a logger
+        for displaying formatted messages. It provides a method to output
+        various types of lines and headers, with customizable message and
+        line lengths.
+        """
+    
+        # Formatting settings
+        dotline_length = attr.ib(default=50)
+    
+        # Logger settings
+        logger = attr.ib(default=None)
+        logger_name = attr.ib(default='Shouter')
+        loggerLvl = attr.ib(default=logging.DEBUG)
+        logger_f
+
+
+#### Save combined module
+
+
+```python
+ldh.save_combined_modules(
+    # optional
+    combined_module = ldh.combine_modules(),
+    save_filepath = "./combined_example_module.py"
+)
+```
+
+### 6. Prepare README
+
+
+```python
+import logging
+ldh = LongDocHandler(
+    # optional/required later
+    notebook_path = "../tests/package_auto_assembler/example_module.ipynb",
+    markdown_filepath = "../example_module.md",
+    timeout = 600,
+    kernel_name = 'python3',
+    # logger
+    loggerLvl = logging.DEBUG
+)
+```
+
+#### Convert notebook to md without executing
+
+
+```python
+ldh.convert_notebook_to_md(
+    # optional
+    notebook_path = "../tests/package_auto_assembler/example_module.ipynb",
+    output_path = "../example_module.md"
+)
+```
+
+    Converted ../tests/package_auto_assembler/example_module.ipynb to ../example_module.md
+
+
+#### Convert notebook to md with executing
+
+
+```python
+ldh.convert_and_execute_notebook_to_md(
+    # optional
+    notebook_path = "../tests/package_auto_assembler/example_module.ipynb",
+    output_path = "../example_module.md",
+    timeout = 600,
+    kernel_name = 'python3'
+)
+```
+
+    Converted and executed ../tests/package_auto_assembler/example_module.ipynb to ../example_module.md
+
+
+#### Return long description
+
+
+```python
+long_description = ldh.return_long_description(
+    # optional
+    markdown_filepath = "../example_module.md"
+)
+```
+
+### 7. Assembling setup directory
+
+#### Initializing SetupDirHandler
+
+
+```python
+sdh = SetupDirHandler(
+    # required
+    module_filepath = "../tests/package_auto_assembler/example_module.py",
+    # optional/ required
+    module_name = "example_module",
+    metadata = {'author': 'Kyrylo Mordan',
+                'version': '0.0.1',
+                'description': 'Example module.',
+                'long_description' : long_description,
+                'keywords': ['python']},
+    requirements = ['attrs>=22.2.0'],
+    classifiers = ['Development Status :: 3 - Alpha', 
+                   'Intended Audience :: Developers', 
+                   'Intended Audience :: Science/Research', 
+                   'Programming Language :: Python :: 3', 
+                   'Programming Language :: Python :: 3.9', 
+                   'Programming Language :: Python :: 3.10', 
+                   'Programming Language :: Python :: 3.11', 
+                   'License :: OSI Approved :: MIT License', 
+                   'Topic :: Scientific/Engineering'],
+    setup_directory = "./example_setup_dir"
+)
+```
+
+#### Create empty setup dir
+
+
+```python
+sdh.flush_n_make_setup_dir(
+    # optional
+    setup_directory = "./example_setup_dir"
+)
+```
+
+#### Copy module to setup dir
+
+
+```python
+sdh.copy_module_to_setup_dir(
+    # optional
+    module_filepath = "./combined_example_module.py",
+    setup_directory = "./example_setup_dir"
+)
+```
+
+#### Create init file
+
+
+```python
+sdh.create_init_file(
+    # optional
+    module_name = "example_module",
+    setup_directory = "./example_setup_dir"
+)
+```
+
+#### Create setup file
+
+
+```python
+sdh.write_setup_file(
+    # optional
+    module_name = "example_module",
+    metadata = {'author': 'Kyrylo Mordan',
+                'version': '0.0.1',
+                'description': 'Example Module',
+                'keywords': ['python']},
+    requirements = ['attrs>=22.2.0'],
+    classifiers = ['Development Status :: 3 - Alpha', 
+                   'Intended Audience :: Developers', 
+                   'Intended Audience :: Science/Research', 
+                   'Programming Language :: Python :: 3', 
+                   'Programming Language :: Python :: 3.9', 
+                   'Programming Language :: Python :: 3.10', 
+                   'Programming Language :: Python :: 3.11', 
+                   'License :: OSI Approved :: MIT License', 
+                   'Topic :: Scientific/Engineering'],
+    setup_directory = "./example_setup_dir"
+)
+```
+
+### 8. Making a package
+
+#### Initializing PackageAutoAssembler
+
+
+```python
+paa = PackageAutoAssembler(
+    # required
+    module_name = "example_module",
+    module_filepath  = "../tests/package_auto_assembler/example_module.py",
+    # optional
+    mapping_filepath = "../env_spec/package_mapping.json",
+    dependencies_dir = "../tests/package_auto_assembler/dependancies/",
+    example_notebook_path = "./mock_vector_database.ipynb",
+    versions_filepath = '../tests/package_auto_assembler/lsts_package_versions.yml',
+    log_filepath = '../tests/package_auto_assembler/version_logs.csv',
+    setup_directory = "./example_module",
+    classifiers = ['Development Status :: 3 - Alpha',
+                    'Intended Audience :: Developers',
+                    'Intended Audience :: Science/Research',
+                    'Programming Language :: Python :: 3',
+                    'Programming Language :: Python :: 3.9',
+                    'Programming Language :: Python :: 3.10',
+                    'Programming Language :: Python :: 3.11',
+                    'License :: OSI Approved :: MIT License',
+                    'Topic :: Scientific/Engineering'],
+    requirements_list = [],
+    python_version = "3.8",
+    version_increment_type = "patch",
+    default_version = "0.0.1"
+)
+```
+
+#### Add metadata from module
+
+
+```python
+paa.add_metadata_from_module(
+    # optional
+    module_filepath  = "../tests/package_auto_assembler/example_module.py"
+)
+```
+
+#### Add or update version
+
+
+```python
+paa.add_or_update_version(
+    # optional
+    module_name = "example_module",
+    version_increment_type = "patch",
+    version = "0.0.1",
+    versions_filepath = '../tests/package_auto_assembler/lsts_package_versions.yml',
+    log_filepath = '../tests/package_auto_assembler/version_logs.csv'
+)
+```
+
+    There are no known versions of 'example_module', 0.0.1 will be used!
+
+
+#### Prepare setup directory
+
+
+```python
+paa.prep_setup_dir()
+```
+
+#### Merge local dependacies
+
+
+```python
+paa.merge_local_dependacies(
+    # optional
+    main_module_filepath = "../tests/package_auto_assembler/example_module.py",
+    dependencies_dir= "../tests/package_auto_assembler/dependancies/",
+    save_filepath = "./example_module/example_module.py"
+)
+```
+
+#### Add requirements from module
+
+
+```python
+paa.add_requirements_from_module(
+    # optional
+    module_filepath = "../tests/package_auto_assembler/example_module.py",
+    import_mappings = {'PIL': 'Pillow',
+                        'bs4': 'beautifulsoup4',
+                        'fitz': 'PyMuPDF',
+                        'attr': 'attrs',
+                        'dotenv': 'python-dotenv',
+                        'googleapiclient': 'google-api-python-client',
+                        'sentence_transformers': 'sentence-transformers',
+                        'flask': 'Flask',
+                        'stdlib_list': 'stdlib-list',
+                        'sklearn': 'scikit-learn',
+                        'yaml': 'pyyaml'}
+)
+```
+
+#### Make README out of example notebook
+
+
+```python
+paa.add_readme(
+    # optional
+    example_notebook_path = "../tests/package_auto_assembler/example_module.ipynb",
+    output_path = "./example_module/README.md"
+)
+```
+
+
+```python
+paa.requirements_list
+```
+
+
+
+
+    ['### example_module.py', 'attr>=22.2.0']
+
+
+
+#### Prepare setup file
+
+
+```python
+paa.prep_setup_file(
+    # optional
+    metadata = {'author': 'Kyrylo Mordan',
+                'version': '0.0.1',
+                'description': 'Example module',
+                'keywords': ['python']},
+    requirements = ['### example_module.py',
+                    'attr>=22.2.0'],
+    classifiers = ['Development Status :: 3 - Alpha',
+                    'Intended Audience :: Developers',
+                    'Intended Audience :: Science/Research',
+                    'Programming Language :: Python :: 3',
+                    'Programming Language :: Python :: 3.9',
+                    'Programming Language :: Python :: 3.10',
+                    'Programming Language :: Python :: 3.11',
+                    'License :: OSI Approved :: MIT License',
+                    'Topic :: Scientific/Engineering']
+    
+)
+```
+
+#### Make package
+
+
+```python
+paa.make_package(
+    # optional
+    setup_directory = "./example_module"
+)
+```
+
+
+
+
+    CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=1, stdout='', stderr="usage: setup.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]\n   or: setup.py --help [cmd1 cmd2 ...]\n   or: setup.py --help-commands\n   or: setup.py cmd --help\n\nerror: invalid command 'bdist_wheel'\n")
+
+
