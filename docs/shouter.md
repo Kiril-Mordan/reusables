@@ -49,10 +49,10 @@ shouter.shout(mess="Custom Message", dotline_length=30)
 
 ```
 
-    (2024-01-05 21:35:00,124) : Shouter : [INFO] : ==================================================
+    (2024-01-06 01:44:44,967) : Shouter : [INFO] : ==================================================
 
 
-    (2024-01-05 21:35:00,125) : Shouter : [INFO] : *** Custom Message
+    (2024-01-06 01:44:44,968) : Shouter : [INFO] : *** Custom Message
 
 
 ### 3. Using different output types
@@ -64,10 +64,10 @@ shouter.shout(output_type="dline")
 shouter.shout(output_type="HEAD1", mess="Header Message")
 ```
 
-    (2024-01-05 21:35:00,167) : Shouter : [INFO] : ==================================================
+    (2024-01-06 01:44:45,008) : Shouter : [INFO] : ==================================================
 
 
-    (2024-01-05 21:35:00,167) : Shouter : [INFO] : 
+    (2024-01-06 01:44:45,008) : Shouter : [INFO] : 
     ==================================================
     -----------------Header Message----------------- 
     ==================================================
@@ -88,5 +88,5 @@ shouter_with_custom_logger = Shouter(logger=custom_logger)
 shouter_with_custom_logger.shout(mess="Message with custom logger")
 ```
 
-    (2024-01-05 21:35:00,174) : CustomLogger : [INFO] : *** Message with custom logger
+    (2024-01-06 01:44:45,015) : CustomLogger : [INFO] : *** Message with custom logger
 
