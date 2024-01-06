@@ -820,6 +820,7 @@ class LongDocHandler:
     notebook_path = attr.ib(default = None)
     markdown_filepath = attr.ib(default = None)
     timeout = attr.ib(default = 600, type = int)
+    kernel_name = attr.ib(default = 'python', type = str)
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='README Handler')
@@ -876,7 +877,8 @@ class LongDocHandler:
     def convert_and_execute_notebook_to_md(self,
                                            notebook_path : str = None,
                                            output_path : str = None,
-                                           timeout : int = None):
+                                           timeout : int = None,
+                                           kernel_name: str = None):
 
         """
         Convert example notebook to md with executing.
@@ -891,12 +893,15 @@ class LongDocHandler:
         if timeout is None:
             timeout = self.timeout
 
+        if kernel_name is None:
+            kernel_name = self.kernel_name
+
         # Load the notebook
         with open(notebook_path, encoding = 'utf-8') as fh:
             notebook_node = nbformat.read(fh, as_version=4)
 
         # Execute the notebook
-        execute_preprocessor = ExecutePreprocessor(timeout=timeout)
+        execute_preprocessor = ExecutePreprocessor(timeout=timeout, kernel_name=kernel_name)
         execute_preprocessor.preprocess(notebook_node, {'metadata': {'path': './'}})
 
         # Convert the notebook to Markdown
@@ -1101,6 +1106,7 @@ class PackageAutoAssembler:
     python_version = attr.ib(default="3.8")
     version_increment_type = attr.ib(default="patch", type = str)
     default_version = attr.ib(default="0.0.1", type = str)
+    kernel_name = attr.ib(default = 'python', type = str)
 
     ## handlers
     setup_dir_h = attr.ib(default=SetupDirHandler)
@@ -1159,7 +1165,8 @@ class PackageAutoAssembler:
                                                   custom_modules_filepath = self.dependencies_dir,
                                                   python_version = self.python_version)
 
-        self.long_doc_h = self.long_doc_h(notebook_path = self.example_notebook_path)
+        self.long_doc_h = self.long_doc_h(notebook_path = self.example_notebook_path,
+                                          kernel_name = self.kernel_name)
 
         self.setup_dir_h = self.setup_dir_h(module_name = self.module_name,
                                             module_filepath = self.module_filepath,
