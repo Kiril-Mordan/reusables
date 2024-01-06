@@ -10,3 +10,11 @@ on:
       - 'tools/extract_requirements.py'
       - 'tools/update_requirements.sh'
       - 'tools/update_module_requirements.sh'
+
+
+jobs:
+  init_readme:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
