@@ -1,12 +1,15 @@
+google-auth-httplib2
 stdlib-list
 pandas
 attrs
+jupyter
 nbformat
+tox
 pytest
 openai
 pyyaml
+tox-gh-actions
 nbconvert
 pylint
-python-dotenv
-jupyter
 ipykernel
+python-dotenv
