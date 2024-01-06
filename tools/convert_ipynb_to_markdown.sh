@@ -15,25 +15,19 @@ convert_to_markdown() {
   jupyter nbconvert --to markdown --execute --ExecutePreprocessor.kernel_name=python3 "$notebook_file" --output-dir="$output_directory"
 }
 
-# Recursive function to find and convert .ipynb files in a directory
-convert_ipynb_files() {
-  local dir="$1"
-
-  # Loop through all files and directories in the current directory
-  for item in "$@"; do
-    if [[ -d "$item" ]]; then
-      # If it's a directory, recursively call the function
-      convert_ipynb_files "$item"
-    elif [[ -f "$item" && "${item##*.}" == "ipynb" ]]; then
-      # If it's a .ipynb file, convert it to markdown
-      convert_to_markdown "$item"
-    fi
-  done
-}
 
 # Specify the root directory to start the conversion
 root_dir="example_notebooks/"
 output_directory="docs/"
 
-# Call the function to convert .ipynb files
-convert_ipynb_files "$root_dir"
+
+# If arguments are provided, process each; otherwise, process all modules in directory
+if [ $# -gt 0 ]; then
+    for module_file in "$@"; do
+        convert_to_markdown "$module_file"
+    done
+else
+    for module_file in "$root_dir"/*.ipynb; do
+        convert_to_markdown "$module_file"
+    done
+fi
