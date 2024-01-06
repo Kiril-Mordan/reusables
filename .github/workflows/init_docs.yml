@@ -1,0 +1,16 @@
+name: Init README Update
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'example_notebooks/**'
+      - 'tools/convert_ipynb_to_markdown.sh'
+      - 'tools/update_README.sh'
+    paths-ignore:
+      - 'python_modules/**'
+      - 'tools/extract_requirements.py'
+      - 'tools/update_requirements.sh'
+      - 'tools/update_module_requirements.sh'
