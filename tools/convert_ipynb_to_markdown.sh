@@ -20,7 +20,7 @@ convert_ipynb_files() {
   local dir="$1"
 
   # Loop through all files and directories in the current directory
-  for item in "$dir"/*; do
+  for item in "$@"; do
     if [[ -d "$item" ]]; then
       # If it's a directory, recursively call the function
       convert_ipynb_files "$item"

@@ -16,11 +16,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 2  # Fetches prev commits
 
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
+
+      - name: Find Changed Modules
+        id: changed-modules
+        run: |
+          echo "Changed files:"
+          changed_files=$(git diff --name-only HEAD~ HEAD | grep 'example_notebooks/')
+          echo $changed_files
+          echo "::set-output name=files::${changed_files}"
 
       - name: Create and activate virtual environment
         run: |
@@ -33,9 +43,9 @@ jobs:
       - name: Add Python Kernel
         run: python -m ipykernel install --user --name python3
 
-      - name: Generate md files from jupyter
+      - name: Generate md files from jupyter for changed modules
         run: |
-          ./tools/convert_ipynb_to_markdown.sh
+          ./tools/convert_ipynb_to_markdown.sh ${{ steps.changed-modules.outputs.files }}
 
       - name: Update README.md
         run: |
