@@ -8,7 +8,11 @@ The purpose is to be integrated into other classes that also use logger.
 
 
 import logging
+import inspect
+from datetime import datetime
 import attr #>=22.2.0
+import threading
+import json
 
 
 @attr.s
@@ -23,9 +27,13 @@ class Shouter:
     line lengths.
     """
 
+    supported_classes = attr.ib(default=(), type = tuple)
     # Formatting settings
     dotline_length = attr.ib(default=50)
-    # Formating types
+    # For saving records
+    tears_persist_path = attr.ib(default='log_records.json')
+    datetime_format = attr.ib(default="%Y-%m-%d %H:%M:%S")
+    log_records = attr.ib(factory=list, init=False)
 
     # Logger settings
     logger = attr.ib(default=None)
@@ -35,6 +43,7 @@ class Shouter:
 
     def __attrs_post_init__(self):
         self.initialize_logger()
+        self.lock = threading.Lock()
 
     def initialize_logger(self):
 
@@ -88,6 +97,9 @@ class Shouter:
             "warning": lambda: f"!!! {mess} !!!",
         }
 
+        self._log_traceback(mess = mess,
+                            method = method)
+
         output_type = self._select_output_type(mess = mess,
                                                output_type = output_type)
 
@@ -112,13 +124,84 @@ class Shouter:
 
         return output_type
 
+    def _log_traceback(self,
+                       mess : str,
+                       method : str):
+
+        """
+        Keeps records of every use of log statement.
+        """
+
+        current_frame = inspect.currentframe().f_back
+        functions = []
+        lines = []
+
+        # Iterate through frames and capture relevant ones
+        while current_frame:
+            if 'self' in current_frame.f_locals:
+                # Instance method
+                instance = current_frame.f_locals['self']
+                class_name = instance.__class__.__name__
+                method_name = current_frame.f_code.co_name
+                full_function_name = f"{class_name}.{method_name}"
+
+                # Append only if it belongs to your application's classes
+                if isinstance(instance, self.supported_classes):  # Replace with your actual class names
+                    functions.append(full_function_name)
+                    lines.append(current_frame.f_lineno)
+
+            current_frame = current_frame.f_back
+
+        # If no relevant traceback is found, use the immediate caller
+        if not functions:
+            caller_frame = inspect.currentframe().f_back
+            functions.append(inspect.getframeinfo(caller_frame).function)
+            lines.append(caller_frame.f_lineno)
+
+        tear = {
+            'datetime' : datetime.now().strftime(self.datetime_format),
+            'level': method,
+            'function' : functions[-1],
+            'mess': mess,
+            'line' : lines[-1],
+            'lines' : lines,
+            'traceback': functions
+        }
+
+        self.log_records.append(tear)
+
+    def _persist_log_records(self):
+
+        """
+        Persists logs records into json file.
+        """
+
+        with self.lock:
+            with open(self.tears_persist_path, 'a') as file:
+                for tear in self.log_records:
+                    file.write(json.dumps(tear) + '\n')
+
+    def return_log_records(self):
+
+        """
+        Return list of dictionaries of log records.
+        """
+
+        return self.log_records
+
+
+    def _perform_action(self,
+                        method : str):
+
+        return None
 
 
     def info(self,
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
-             logger : logging.Logger = None) -> None:
+             logger : logging.Logger = None,
+             *args, **kwargs) -> None:
 
         """
         Prints info message similar to standard logger but with types of output and some additional actions.
@@ -131,17 +214,20 @@ class Shouter:
         if logger is None:
             logger = self.logger
 
-
-        logger.info(self._format_mess(mess = mess,
+        formated_mess = self._format_mess(mess = mess,
                                       dotline_length = dotline_length,
                                       output_type = output_type,
-                                      method = 'info'))
+                                      method = 'info')
+
+        logger.info(formated_mess,
+                    *args, **kwargs)
 
     def debug(self,
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
-             logger : logging.Logger = None) -> None:
+             logger : logging.Logger = None,
+             *args, **kwargs) -> None:
 
         """
         Prints debug message similar to standard logger but with types of output and some additional actions.
@@ -154,17 +240,20 @@ class Shouter:
         if logger is None:
             logger = self.logger
 
-
-        logger.debug(self._format_mess(mess = mess,
+        formated_mess = self._format_mess(mess = mess,
                                       dotline_length = dotline_length,
                                       output_type = output_type,
-                                      method = 'debug'))
+                                      method = 'debug')
+
+        logger.debug(formated_mess,
+                     *args, **kwargs)
 
     def warning(self,
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
-             logger : logging.Logger = None) -> None:
+             logger : logging.Logger = None,
+             *args, **kwargs) -> None:
 
         """
         Prints warning message similar to standard logger but with types of output and some additional actions.
@@ -177,17 +266,20 @@ class Shouter:
         if logger is None:
             logger = self.logger
 
-
-        logger.warning(self._format_mess(mess = mess,
+        formated_mess = self._format_mess(mess = mess,
                                       dotline_length = dotline_length,
                                       output_type = output_type,
-                                      method = 'warning'))
+                                      method = 'warning')
+
+        logger.warning(formated_mess,
+                       *args, **kwargs)
 
     def error(self,
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
-             logger : logging.Logger = None) -> None:
+             logger : logging.Logger = None,
+             *args, **kwargs) -> None:
 
         """
         Prints error message similar to standard logger but with types of output and some additional actions.
@@ -200,17 +292,22 @@ class Shouter:
         if logger is None:
             logger = self.logger
 
-
-        logger.error(self._format_mess(mess = mess,
+        formated_mess = self._format_mess(mess = mess,
                                       dotline_length = dotline_length,
                                       output_type = output_type,
-                                      method = 'error'))
+                                      method = 'error')
+
+        logger.error(formated_mess,
+                     *args, **kwargs)
+
+        self._persist_log_records()
 
     def fatal(self,
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
-             logger : logging.Logger = None) -> None:
+             logger : logging.Logger = None,
+             *args, **kwargs) -> None:
 
         """
         Prints fatal message similar to standard logger but with types of output and some additional actions.
@@ -223,17 +320,22 @@ class Shouter:
         if logger is None:
             logger = self.logger
 
-
-        logger.fatal(self._format_mess(mess = mess,
+        formated_mess = self._format_mess(mess = mess,
                                       dotline_length = dotline_length,
                                       output_type = output_type,
-                                      method = 'fatal'))
+                                      method = 'fatal')
+
+        logger.fatal(formated_mess,
+                     *args, **kwargs)
+
+        self._persist_log_records()
 
     def critical(self,
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
-             logger : logging.Logger = None) -> None:
+             logger : logging.Logger = None,
+             *args, **kwargs) -> None:
 
         """
         Prints critical message similar to standard logger but with types of output and some additional actions.
@@ -246,8 +348,13 @@ class Shouter:
         if logger is None:
             logger = self.logger
 
-
-        logger.critical(self._format_mess(mess = mess,
+        formated_mess = self._format_mess(mess = mess,
                                       dotline_length = dotline_length,
                                       output_type = output_type,
-                                      method = 'critical'))
+                                      method = 'critical')
+
+        logger.critical(formated_mess,
+                        *args, **kwargs)
+
+        self._persist_log_records()
+
