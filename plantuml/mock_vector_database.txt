@@ -1,3 +1,4 @@
+```plantuml
 @startuml
 [*] --> MockVecDbHandler
 
@@ -33,4 +34,6 @@ get_dict_results --> [*]
 
 MockVecDbHandler --> search_database : search_database()
 search_database --> [*]
+
 @enduml
+```
