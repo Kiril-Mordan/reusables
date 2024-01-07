@@ -16,7 +16,7 @@ def test_shout_default():
     shouter.logger.addHandler(logging.StreamHandler(log_capture_string))
     shouter.logger.setLevel(logging.DEBUG)
 
-    shouter.shout()
+    shouter.debug()
 
     log_capture_string.seek(0)
     log_output = log_capture_string.getvalue()
@@ -36,7 +36,7 @@ def test_shout_various_types(output_type, expected, mess):
     shouter.logger.addHandler(logging.StreamHandler(log_capture_string))
     shouter.logger.setLevel(logging.DEBUG)
 
-    shouter.shout(output_type=output_type, mess=mess)
+    shouter.debug(output_type=output_type, mess=mess)
 
     log_capture_string.seek(0)
     log_output = log_capture_string.getvalue()
@@ -50,7 +50,7 @@ def test_shout_custom_length():
     shouter.logger.addHandler(logging.StreamHandler(log_capture_string))
     shouter.logger.setLevel(logging.DEBUG)
 
-    shouter.shout(dotline_length=custom_length)
+    shouter.debug(dotline_length=custom_length)
 
     log_capture_string.seek(0)
     log_output = log_capture_string.getvalue()
