@@ -12,8 +12,34 @@ import inspect
 from datetime import datetime
 import attr #>=22.2.0
 import threading
+import dill
 import json
+import os
 
+
+__design_choices__ = {
+    'logger' : ['underneath shouter is a standard logging so a lot of its capabilities were preserved',
+                'custom loggers can be used within shouter, if not it will define one on its own',
+                'from normal logging only the commands to log are available'],
+    '_format_mess' : ['_format_mess is method where all the predefined custom formats are curretly implemented',
+                      '_format_mess method triggeres _select_output_type',
+                      'any parameters _select_output_type needs should be passed through class def or the method'],
+    '_select_output_type' : ['the type should be selecting automatically in the future based on tracebacks'],
+    'supported_classes' : ['supported classes is a required parameter if shouter is to be used within a class',
+                           'supported classes is a parameter where all the classes that it visits should be listed',
+                           'not listing classes would limit ability of shouter to create readable tracebacks'],
+    'debbuging_capabilities' : ['issuing error, critical or fatal will optionally allow to save local variables',
+                                'local variables will saved on the level of shouter statement',
+                                'object that would be persisted are the ones that could be serialized',
+                                'waring statement will apear for the ones that could not be save will dill'],
+    'persist_state' : ['persist state happends automatically for logger lvls: error, critical/fatal',
+                       'persist state can triggered manually with persist_state funtion',
+                       'persist state can potentially perform two things: save tears (logs) and save os.environ',
+                       'persisting tears happends in a form of json file',
+                       'persisting os.environ happends in a form of dill file',
+                       'persisting os.environ is optional and by defaul set to False'],
+    '_perform_action' : ['the method is currently does nothing but in the future could be used for user-defined actions']
+}
 
 @attr.s
 class Shouter:
@@ -32,8 +58,10 @@ class Shouter:
     dotline_length = attr.ib(default=50)
     # For saving records
     tears_persist_path = attr.ib(default='log_records.json')
+    env_persist_path = attr.ib(default='environment.dill')
     datetime_format = attr.ib(default="%Y-%m-%d %H:%M:%S")
     log_records = attr.ib(factory=list, init=False)
+    persist_env = attr.ib(default=False, type = bool)
 
     # Logger settings
     logger = attr.ib(default=None)
@@ -181,13 +209,101 @@ class Shouter:
                 for tear in self.log_records:
                     file.write(json.dumps(tear) + '\n')
 
-    def return_log_records(self):
+    def _is_serializable(self,key,obj):
+
+        """
+        Check if object from env can be saved with dill, and if not, issue warning
+        """
+
+        try:
+            dill.dumps(obj)
+            return True
+        except (TypeError, dill.PicklingError):
+            self.logger.warning(f"Object '{key}' could not have been serialized, when saving last words!")
+            return False
+
+
+    def _filter_serializable(self,locals_dict):
+        """
+        Filter the local variables dictionary, keeping only serializable objects.
+        """
+        return {k: v for k, v in locals_dict.items() if self._is_serializable(k,v)}
+
+
+    def _persist_environment(self):
+
+        """
+        Save the current environment variables using dill.
+        """
+
+        if self.persist_env:
+
+            # using double f_back to get to the level where shouter is called
+            caller_frame = inspect.currentframe().f_back.f_back
+            # extracting local vars
+            local_vars = caller_frame.f_locals
+            # filtering out local vars that cannot be saved with dill
+            serializable_local_vars = dict(self._filter_serializable(local_vars))
+
+            with self.lock:  # Ensure thread-safety if called from multiple threads
+                with open(self.env_persist_path, 'wb') as file:
+                    dill.dump(serializable_local_vars, file)
+
+    def persist_state(self,
+                      tears_persist_path : str = None,
+                      env_persist_path : str = None):
+
+        """
+        Function for persisting state inteded to be used to extract logs and manually save env.
+        """
+
+        # temporarily overwriting class persist paths
+        if tears_persist_path is not None:
+            prev_tears_persist_path = self.tears_persist_path
+            self.tears_persist_path = tears_persist_path
+        else:
+            prev_tears_persist_path = None
+
+        if env_persist_path is not None:
+            prev_env_persist_path = self.env_persist_path
+            self.env_persist_path = env_persist_path
+        else:
+            prev_env_persist_path = None
+
+        # persisting state
+        self._persist_log_records()
+        self._persist_environment()
+
+        # revert to predefined path for persisting after persist was complete
+        if prev_tears_persist_path:
+            self.tears_persist_path = prev_tears_persist_path
+        if prev_env_persist_path:
+            self.env_persist_path = prev_env_persist_path
+
+
+
+    def return_logged_tears(self):
 
         """
         Return list of dictionaries of log records.
         """
 
         return self.log_records
+
+    def return_last_words(self,
+                          env_persist_path : str = None):
+
+        """
+        Return debug environment.
+        """
+
+        if env_persist_path is None:
+            env_persist_path = self.env_persist_path
+
+        with open(env_persist_path, 'rb') as file:
+            debug_env = dill.load(file)
+
+        return debug_env
 
 
     def _perform_action(self,
@@ -301,6 +417,7 @@ class Shouter:
                      *args, **kwargs)
 
         self._persist_log_records()
+        self._persist_environment()
 
     def fatal(self,
              mess : str = None,
@@ -329,6 +446,7 @@ class Shouter:
                      *args, **kwargs)
 
         self._persist_log_records()
+        self._persist_environment()
 
     def critical(self,
              mess : str = None,
@@ -357,4 +475,5 @@ class Shouter:
                         *args, **kwargs)
 
         self._persist_log_records()
+        self._persist_environment()
 
