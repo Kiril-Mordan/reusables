@@ -12,4 +12,5 @@ tox-gh-actions
 nbconvert
 pylint
 ipykernel
+dill
 python-dotenv
