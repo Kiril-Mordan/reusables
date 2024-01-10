@@ -3,8 +3,18 @@
 
 state Shouter {
   [*] --> Initialized
-  Initialized --> Logged
-  Logged --> Shouted
-  Shouted --> [*]
+  Initialized --> Ready
+  Ready --> Logging
+  Logging --> Ready
+  Ready --> Persisting
+  Persisting --> Ready
+  Ready --> PerformingAction
+  PerformingAction --> Ready
+  Ready --> PersistingEnvironment
+  PersistingEnvironment --> Ready
+  Ready --> PersistingTears
+  PersistingTears --> Ready
+  Ready --> Exiting
+  Exiting --> [*]
 }
 @enduml
