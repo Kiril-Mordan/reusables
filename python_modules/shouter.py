@@ -55,7 +55,8 @@ class Shouter:
 
     supported_classes = attr.ib(default=(), type = tuple)
     # Formatting settings
-    dotline_length = attr.ib(default=50)
+    dotline_length = attr.ib(default = 50, type = int)
+    auto_output_type_selection = attr.ib(default = True, type = bool)
     # For saving records
     tears_persist_path = attr.ib(default='log_records.json')
     env_persist_path = attr.ib(default='environment.dill')
@@ -91,7 +92,8 @@ class Shouter:
                      mess : str,
                      dotline_length : int,
                      output_type : str,
-                     method : str):
+                     method : str,
+                     auto_output_type_selection : bool):
 
         """
         Format message before it is passed to be displayed.
@@ -120,37 +122,75 @@ class Shouter:
                                         "\\" * ((dotline_length - 10 - len(mess)) // 2 - 1)]),
             "title": lambda: f"** {mess}",
             "subtitle": lambda: f"*** {mess}",
+            "subtitle0": lambda: f"+ {mess}",
+            "subtitle1": lambda: f"++ {mess}",
             "subtitle2": lambda: f"+++ {mess}",
             "subtitle3": lambda: f"++++ {mess}",
-            "warning": lambda: f"!!! {mess} !!!",
+            "warning": lambda: f"!!! {mess}",
         }
 
         self._log_traceback(mess = mess,
                             method = method)
 
         output_type = self._select_output_type(mess = mess,
-                                               output_type = output_type)
+                                            output_type = output_type,
+                                            auto_output_type_selection = auto_output_type_selection)
 
         return switch[output_type]()
 
 
     def _select_output_type(self,
                               mess : str,
-                              output_type : str):
+                              output_type : str,
+                              auto_output_type_selection : bool):
 
         """
         Based on message and some other information, select output_type.
         """
 
+        # select output type automatically if condition is triggered
+        if auto_output_type_selection:
+
+            # determining traceback size of last tear
+            traceback_size = len(self.log_records[-1]['traceback'])
+        else:
+            # otherwise set traceback_size to one
+            traceback_size = 1
 
         if output_type is None:
 
             if mess is not None:
-                output_type = 'default'
+
+                # use traceback size to select output_type is message is available
+
+                if traceback_size > 4:
+                    return 'subtitle3'
+
+                if traceback_size > 3:
+                    return 'subtitle2'
+
+                if traceback_size > 2:
+                    return 'subtitle1'
+
+                if traceback_size > 1:
+                    return 'subtitle0'
+
+                return 'default'
+
             else:
-                output_type = 'dline'
+
+                # use traceback size to select output_type is message is not available
+
+                if traceback_size > 2:
+                    return "pline"
+
+                if traceback_size > 1:
+                    return "line"
+
+                return "dline"
 
         return output_type
+
 
     def _log_traceback(self,
                        mess : str,
@@ -316,6 +356,7 @@ class Shouter:
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
+             auto_output_type_selection : bool = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -327,13 +368,17 @@ class Shouter:
         if dotline_length is None:
             dotline_length = self.dotline_length
 
+        if auto_output_type_selection is None:
+            auto_output_type_selection = self.auto_output_type_selection
+
         if logger is None:
             logger = self.logger
 
         formated_mess = self._format_mess(mess = mess,
                                       dotline_length = dotline_length,
                                       output_type = output_type,
-                                      method = 'info')
+                                      method = 'info',
+                                      auto_output_type_selection = auto_output_type_selection)
 
         logger.info(formated_mess,
                     *args, **kwargs)
@@ -342,6 +387,7 @@ class Shouter:
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
+             auto_output_type_selection : bool = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -353,13 +399,17 @@ class Shouter:
         if dotline_length is None:
             dotline_length = self.dotline_length
 
+        if auto_output_type_selection is None:
+            auto_output_type_selection = self.auto_output_type_selection
+
         if logger is None:
             logger = self.logger
 
         formated_mess = self._format_mess(mess = mess,
                                       dotline_length = dotline_length,
                                       output_type = output_type,
-                                      method = 'debug')
+                                      method = 'debug',
+                                      auto_output_type_selection = auto_output_type_selection)
 
         logger.debug(formated_mess,
                      *args, **kwargs)
@@ -368,6 +418,7 @@ class Shouter:
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
+             auto_output_type_selection : bool = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -379,13 +430,17 @@ class Shouter:
         if dotline_length is None:
             dotline_length = self.dotline_length
 
+        if auto_output_type_selection is None:
+            auto_output_type_selection = self.auto_output_type_selection
+
         if logger is None:
             logger = self.logger
 
         formated_mess = self._format_mess(mess = mess,
                                       dotline_length = dotline_length,
                                       output_type = output_type,
-                                      method = 'warning')
+                                      method = 'warning',
+                                      auto_output_type_selection = auto_output_type_selection)
 
         logger.warning(formated_mess,
                        *args, **kwargs)
@@ -394,6 +449,7 @@ class Shouter:
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
+             auto_output_type_selection : bool = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -405,13 +461,17 @@ class Shouter:
         if dotline_length is None:
             dotline_length = self.dotline_length
 
+        if auto_output_type_selection is None:
+            auto_output_type_selection = self.auto_output_type_selection
+
         if logger is None:
             logger = self.logger
 
         formated_mess = self._format_mess(mess = mess,
                                       dotline_length = dotline_length,
                                       output_type = output_type,
-                                      method = 'error')
+                                      method = 'error',
+                                      auto_output_type_selection = auto_output_type_selection)
 
         logger.error(formated_mess,
                      *args, **kwargs)
@@ -423,6 +483,7 @@ class Shouter:
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
+             auto_output_type_selection : bool = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -434,13 +495,17 @@ class Shouter:
         if dotline_length is None:
             dotline_length = self.dotline_length
 
+        if auto_output_type_selection is None:
+            auto_output_type_selection = self.auto_output_type_selection
+
         if logger is None:
             logger = self.logger
 
         formated_mess = self._format_mess(mess = mess,
                                       dotline_length = dotline_length,
                                       output_type = output_type,
-                                      method = 'fatal')
+                                      method = 'fatal',
+                                      auto_output_type_selection = auto_output_type_selection)
 
         logger.fatal(formated_mess,
                      *args, **kwargs)
@@ -452,6 +517,7 @@ class Shouter:
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
+             auto_output_type_selection : bool = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -463,13 +529,17 @@ class Shouter:
         if dotline_length is None:
             dotline_length = self.dotline_length
 
+        if auto_output_type_selection is None:
+            auto_output_type_selection = self.auto_output_type_selection
+
         if logger is None:
             logger = self.logger
 
         formated_mess = self._format_mess(mess = mess,
                                       dotline_length = dotline_length,
                                       output_type = output_type,
-                                      method = 'critical')
+                                      method = 'critical',
+                                      auto_output_type_selection = auto_output_type_selection)
 
         logger.critical(formated_mess,
                         *args, **kwargs)
