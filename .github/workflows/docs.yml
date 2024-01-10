@@ -6,7 +6,7 @@ on:
   #     - main
   workflow_dispatch:
   workflow_run:
-      workflows: ["Init README Update", "Generate PlantUML Diagrams"]
+      workflows: ["Generate PlantUML Diagrams"]
       types:
         - completed
 
