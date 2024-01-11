@@ -16,7 +16,6 @@ import dill
 import json
 import os
 
-
 __design_choices__ = {
     'logger' : ['underneath shouter is a standard logging so a lot of its capabilities were preserved',
                 'custom loggers can be used within shouter, if not it will define one on its own',
