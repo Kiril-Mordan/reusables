@@ -29,8 +29,25 @@ jobs:
         id: changed-modules
         run: |
           echo "Changed files:"
-          changed_files=$(git diff --name-only HEAD~ HEAD | grep 'example_notebooks/')
-          echo $changed_files
+          changed_files=$(git diff --name-only HEAD~ HEAD | { grep 'python_modules/' || grep 'example_notebooks/'; })
+
+          if [ -z "$changed_files" ]; then
+              echo "No changes found between HEAD and HEAD~1. Checking between HEAD~1 and HEAD~2..."
+              changed_files=$(git diff --name-only HEAD~2 HEAD~1 | { grep 'python_modules/' || grep 'example_notebooks/'; })
+          fi
+
+          if [ -z "$changed_files" ]; then
+              echo "No changes found between HEAD~2 HEAD~1. Checking between HEAD~2 and HEAD~3..."
+              changed_files=$(git diff --name-only HEAD~3 HEAD~2 | { grep 'python_modules/' || grep 'example_notebooks/'; })
+          fi
+
+          if [ -z "$changed_files" ]; then
+              echo "No changes found."
+          else
+              echo "Changed files:"
+              echo $changed_files
+          fi
+
           echo "files=${changed_files}" >>$GITHUB_OUTPUT
 
       - name: Create and activate virtual environment
