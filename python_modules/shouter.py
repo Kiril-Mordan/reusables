@@ -41,6 +41,7 @@ __design_choices__ = {
 }
 
 
+
 @attr.s
 class Shouter:
 
