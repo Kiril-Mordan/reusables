@@ -28,7 +28,7 @@ jobs:
       - name: Find Changed Modules
         id: changed-modules
         run: |
-          ./tools/find_and_process_changes.sh 'python_modules/' 'example_notebooks/' '.ipynb'
+          ./tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' '.ipynb'
 
       - name: Create and activate virtual environment
         run: |
