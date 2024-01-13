@@ -40,6 +40,7 @@ __design_choices__ = {
     '_perform_action' : ['the method is currently does nothing but in the future could be used for user-defined actions']
 }
 
+
 @attr.s
 class Shouter:
 
