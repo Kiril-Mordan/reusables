@@ -1068,6 +1068,7 @@ setup(
     install_requires={requirements},
     classifiers={classifiers},
     long_description=long_description,
+    long_description_content_type='text/markdown',
     {metadata_str}
 )
         """
