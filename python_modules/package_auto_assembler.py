@@ -902,7 +902,7 @@ class LongDocHandler:
 
         # Execute the notebook
         execute_preprocessor = ExecutePreprocessor(timeout=timeout, kernel_name=kernel_name)
-        execute_preprocessor.preprocess(notebook_node, {'metadata': {'path': './'}})
+        execute_preprocessor.preprocess(notebook_node, {'metadata': {'path': os.path.dirname(notebook_path)}})
 
         # Convert the notebook to Markdown
         md_exporter = MarkdownExporter()
