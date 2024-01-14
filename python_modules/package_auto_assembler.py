@@ -1285,6 +1285,7 @@ class PackageAutoAssembler:
         # extracting package requirements
         self.requirements_list = self.requirements_list + \
             self.requirements_h.extract_requirements(
+                package_mappings=import_mappings,
                 module_filepath=module_filepath,
                 custom_modules=custom_modules)
 
