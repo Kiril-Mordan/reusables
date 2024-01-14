@@ -12,7 +12,7 @@ import inspect
 from datetime import datetime
 import attr #>=22.2.0
 import threading
-import dill
+import dill #==0.3.7
 import json
 import os
 
@@ -38,6 +38,15 @@ __design_choices__ = {
                        'persisting os.environ happends in a form of dill file',
                        'persisting os.environ is optional and by defaul set to False'],
     '_perform_action' : ['the method is currently does nothing but in the future could be used for user-defined actions']
+}
+
+
+# Metadata for package creation
+__package_metadata__ = {
+    "author": "Kyrylo Mordan",
+    "author_email": "parachute.repo@gmail.com",
+    "description": "A custom logging tool that expands normal logger with additional formatting and debug capabilities.",
+    "keywords" : ['python', 'logging', 'debug tool']
 }
 
 
