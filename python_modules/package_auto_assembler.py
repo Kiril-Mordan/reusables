@@ -902,7 +902,7 @@ class LongDocHandler:
 
         # Execute the notebook
         execute_preprocessor = ExecutePreprocessor(timeout=timeout, kernel_name=kernel_name)
-        execute_preprocessor.preprocess(notebook_node, {'metadata': {'path': './'}})
+        execute_preprocessor.preprocess(notebook_node, {'metadata': {'path': os.path.dirname(notebook_path)}})
 
         # Convert the notebook to Markdown
         md_exporter = MarkdownExporter()
@@ -1068,6 +1068,7 @@ setup(
     install_requires={requirements},
     classifiers={classifiers},
     long_description=long_description,
+    long_description_content_type='text/markdown',
     {metadata_str}
 )
         """
@@ -1284,6 +1285,7 @@ class PackageAutoAssembler:
         # extracting package requirements
         self.requirements_list = self.requirements_list + \
             self.requirements_h.extract_requirements(
+                package_mappings=import_mappings,
                 module_filepath=module_filepath,
                 custom_modules=custom_modules)
 

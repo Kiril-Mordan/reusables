@@ -1,5 +1,5 @@
 """
-Shouter
+Shouter Log
 
 This class uses the logging module to create and manage a logger for displaying formatted messages.
 It provides a method to output various types of lines and headers, with customizable message and line lengths.
