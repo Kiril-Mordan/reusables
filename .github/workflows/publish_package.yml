@@ -1,0 +1,52 @@
+name: Publish packages
+
+on:
+  workflow_dispatch:
+  workflow_run:
+      workflows: ["Update README"]
+      types:
+        - completed
+
+
+jobs:
+
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 4  # Fetches prev commits
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+
+      - name: Find Changed Modules
+        id: changed-modules
+        run: |
+          ./tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' 'python_modules/' '.py'
+
+      - name: Create and activate virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install setuptools wheel twine
+          pip install -r env_spec/requirements.txt
+
+      - name: Pull latest changes from the remote repository
+        run: git pull origin main
+
+      - name: Build and publish package
+        run: ./tools/make_package.sh ${{ steps.changed-modules.outputs.files }}
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME}}
+          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+        run: python -m twine upload dist/*
