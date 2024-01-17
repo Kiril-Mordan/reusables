@@ -1,5 +1,6 @@
 from python_modules.package_auto_assembler import PackageAutoAssembler
 import argparse
+import os
 
 # Set up argument parser
 parser = argparse.ArgumentParser(description='Make package for module.')
@@ -7,6 +8,8 @@ parser.add_argument('module_name', type=str, help='Name of the module')
 args = parser.parse_args()
 
 module_name = args.module_name
+
+print(os.getcwd())
 
 paa = PackageAutoAssembler(
     # required
@@ -36,6 +39,10 @@ paa = PackageAutoAssembler(
 
 if paa.metadata_h.is_metadata_available():
 
+    paa.logger.info(f"Assembling package: {module_name}")
+    paa.logger.info("Files before:")
+    print(os.listdir())
+
     paa.add_metadata_from_module()
     paa.add_or_update_version()
     paa.prep_setup_dir()
@@ -43,5 +50,8 @@ if paa.metadata_h.is_metadata_available():
     paa.add_readme()
     paa.prep_setup_file()
     paa.make_package()
+
+    paa.logger.info("Files after:")
+    print(os.listdir())
 else:
     paa.logger.info(f"Metadata condition was not fullfield for {module_name}")
