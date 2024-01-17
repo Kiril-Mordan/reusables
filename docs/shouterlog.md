@@ -64,25 +64,25 @@ shouter.fatal("This is a fatal message!")
 shouter.critical("This is a critical message!")
 ```
 
-    (2024-01-17 17:55:09,108) : Shouter : [DEBUG] : ==============================
+    (2024-01-17 18:24:36,570) : Shouter : [DEBUG] : ==============================
 
 
-    (2024-01-17 17:55:09,109) : Shouter : [DEBUG] : This is a debug message!
+    (2024-01-17 18:24:36,571) : Shouter : [DEBUG] : This is a debug message!
 
 
-    (2024-01-17 17:55:09,109) : Shouter : [INFO] : This is an info message!
+    (2024-01-17 18:24:36,572) : Shouter : [INFO] : This is an info message!
 
 
-    (2024-01-17 17:55:09,110) : Shouter : [WARNING] : This is a warning message!
+    (2024-01-17 18:24:36,573) : Shouter : [WARNING] : This is a warning message!
 
 
-    (2024-01-17 17:55:09,111) : Shouter : [ERROR] : This is an error message!
+    (2024-01-17 18:24:36,574) : Shouter : [ERROR] : This is an error message!
 
 
-    (2024-01-17 17:55:09,112) : Shouter : [CRITICAL] : This is a fatal message!
+    (2024-01-17 18:24:36,575) : Shouter : [CRITICAL] : This is a fatal message!
 
 
-    (2024-01-17 17:55:09,113) : Shouter : [CRITICAL] : This is a critical message!
+    (2024-01-17 18:24:36,576) : Shouter : [CRITICAL] : This is a critical message!
 
 
 ### 3. Using different output types
@@ -94,10 +94,10 @@ shouter.info(output_type="dline")
 shouter.info(output_type="HEAD1", mess="Header Message")
 ```
 
-    (2024-01-17 17:55:09,154) : Shouter : [INFO] : ==================================================
+    (2024-01-17 18:24:36,617) : Shouter : [INFO] : ==================================================
 
 
-    (2024-01-17 17:55:09,155) : Shouter : [INFO] : 
+    (2024-01-17 18:24:36,618) : Shouter : [INFO] : 
     ==================================================
     -----------------Header Message----------------- 
     ==================================================
@@ -118,7 +118,7 @@ shouter_with_custom_logger = Shouter(supported_classes=(), logger=custom_logger)
 shouter_with_custom_logger.info(mess="Message with custom logger")
 ```
 
-    (2024-01-17 17:55:09,161) : CustomLogger : [INFO] : Message with custom logger
+    (2024-01-17 18:24:36,624) : CustomLogger : [INFO] : Message with custom logger
 
 
 ### 5. Backwards compatibility with existing loggers
@@ -127,6 +127,7 @@ shouter_with_custom_logger.info(mess="Message with custom logger")
 ```python
 import logging
 import attr #>=22.2.0
+
 
 @attr.s
 class ExampleClass:
@@ -204,19 +205,19 @@ ec.print_error()
 ec.print_critical()
 ```
 
-    (2024-01-17 17:55:09,178) : Example Class : [DEBUG] : This is a debug message!
+    (2024-01-17 18:24:36,641) : Example Class : [DEBUG] : This is a debug message!
 
 
-    (2024-01-17 17:55:09,178) : Example Class : [INFO] : This is a info message!
+    (2024-01-17 18:24:36,641) : Example Class : [INFO] : This is a info message!
 
 
-    (2024-01-17 17:55:09,179) : Example Class : [WARNING] : This is a warning message!
+    (2024-01-17 18:24:36,642) : Example Class : [WARNING] : This is a warning message!
 
 
-    (2024-01-17 17:55:09,179) : Example Class : [ERROR] : This is a error message!
+    (2024-01-17 18:24:36,642) : Example Class : [ERROR] : This is a error message!
 
 
-    (2024-01-17 17:55:09,180) : Example Class : [CRITICAL] : This is a critical message!
+    (2024-01-17 18:24:36,643) : Example Class : [CRITICAL] : This is a critical message!
 
 
 
@@ -236,31 +237,31 @@ ec.print_critical()
 ec.perform_action_chain_1()
 ```
 
-    (2024-01-17 17:55:09,186) : Shouter : [DEBUG] : This is a debug message!
+    (2024-01-17 18:24:36,649) : Shouter : [DEBUG] : This is a debug message!
 
 
-    (2024-01-17 17:55:09,187) : Shouter : [INFO] : This is a info message!
+    (2024-01-17 18:24:36,650) : Shouter : [INFO] : This is a info message!
 
 
-    (2024-01-17 17:55:09,188) : Shouter : [WARNING] : This is a warning message!
+    (2024-01-17 18:24:36,651) : Shouter : [WARNING] : This is a warning message!
 
 
-    (2024-01-17 17:55:09,188) : Shouter : [ERROR] : This is a error message!
+    (2024-01-17 18:24:36,651) : Shouter : [ERROR] : This is a error message!
 
 
-    (2024-01-17 17:55:09,190) : Shouter : [CRITICAL] : This is a critical message!
+    (2024-01-17 18:24:36,653) : Shouter : [CRITICAL] : This is a critical message!
 
 
-    (2024-01-17 17:55:09,190) : Shouter : [DEBUG] : Action 1
+    (2024-01-17 18:24:36,653) : Shouter : [DEBUG] : Action 1
 
 
-    (2024-01-17 17:55:09,191) : Shouter : [DEBUG] : + This is a debug message!
+    (2024-01-17 18:24:36,654) : Shouter : [DEBUG] : + This is a debug message!
 
 
-    (2024-01-17 17:55:09,191) : Shouter : [DEBUG] : Action 2
+    (2024-01-17 18:24:36,654) : Shouter : [DEBUG] : Action 2
 
 
-    (2024-01-17 17:55:09,192) : Shouter : [ERROR] : + This is a error message!
+    (2024-01-17 18:24:36,655) : Shouter : [ERROR] : + This is a error message!
 
 
 ### 6. Built-in records from Shouter usage
@@ -278,19 +279,19 @@ ec.print_debug()
 ec.perform_action_chain_1()
 ```
 
-    (2024-01-17 17:55:09,198) : Shouter : [DEBUG] : This is a debug message!
+    (2024-01-17 18:24:36,661) : Shouter : [DEBUG] : This is a debug message!
 
 
-    (2024-01-17 17:55:09,199) : Shouter : [DEBUG] : Action 1
+    (2024-01-17 18:24:36,662) : Shouter : [DEBUG] : Action 1
 
 
-    (2024-01-17 17:55:09,200) : Shouter : [DEBUG] : + This is a debug message!
+    (2024-01-17 18:24:36,662) : Shouter : [DEBUG] : + This is a debug message!
 
 
-    (2024-01-17 17:55:09,200) : Shouter : [DEBUG] : Action 2
+    (2024-01-17 18:24:36,663) : Shouter : [DEBUG] : Action 2
 
 
-    (2024-01-17 17:55:09,201) : Shouter : [ERROR] : + This is a error message!
+    (2024-01-17 18:24:36,663) : Shouter : [ERROR] : + This is a error message!
 
 
 
@@ -301,41 +302,41 @@ ec.logger.return_logged_tears()
 
 
 
-    [{'datetime': '2024-01-17 17:55:09',
+    [{'datetime': '2024-01-17 18:24:36',
       'level': 'debug',
       'function': 'ExampleClass.print_debug',
       'mess': 'This is a debug message!',
-      'line': 32,
-      'lines': [32],
+      'line': 33,
+      'lines': [33],
       'traceback': ['ExampleClass.print_debug']},
-     {'datetime': '2024-01-17 17:55:09',
+     {'datetime': '2024-01-17 18:24:36',
       'level': 'debug',
       'function': 'ExampleClass.perform_action_chain_1',
       'mess': 'Action 1',
-      'line': 52,
-      'lines': [52],
+      'line': 53,
+      'lines': [53],
       'traceback': ['ExampleClass.perform_action_chain_1']},
-     {'datetime': '2024-01-17 17:55:09',
+     {'datetime': '2024-01-17 18:24:36',
       'level': 'debug',
       'function': 'ExampleClass.perform_action_chain_1',
       'mess': 'This is a debug message!',
-      'line': 53,
-      'lines': [32, 53],
+      'line': 54,
+      'lines': [33, 54],
       'traceback': ['ExampleClass.print_debug',
        'ExampleClass.perform_action_chain_1']},
-     {'datetime': '2024-01-17 17:55:09',
+     {'datetime': '2024-01-17 18:24:36',
       'level': 'debug',
       'function': 'ExampleClass.perform_action_chain_1',
       'mess': 'Action 2',
-      'line': 55,
-      'lines': [55],
+      'line': 56,
+      'lines': [56],
       'traceback': ['ExampleClass.perform_action_chain_1']},
-     {'datetime': '2024-01-17 17:55:09',
+     {'datetime': '2024-01-17 18:24:36',
       'level': 'error',
       'function': 'ExampleClass.perform_action_chain_1',
       'mess': 'This is a error message!',
-      'line': 56,
-      'lines': [44, 56],
+      'line': 57,
+      'lines': [45, 57],
       'traceback': ['ExampleClass.print_error',
        'ExampleClass.perform_action_chain_1']}]
 
@@ -381,52 +382,52 @@ pd.DataFrame(ec.logger.return_logged_tears())
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-01-17 17:55:09</td>
+      <td>2024-01-17 18:24:36</td>
       <td>debug</td>
       <td>ExampleClass.print_debug</td>
       <td>This is a debug message!</td>
-      <td>32</td>
-      <td>[32]</td>
+      <td>33</td>
+      <td>[33]</td>
       <td>[ExampleClass.print_debug]</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-01-17 17:55:09</td>
+      <td>2024-01-17 18:24:36</td>
       <td>debug</td>
       <td>ExampleClass.perform_action_chain_1</td>
       <td>Action 1</td>
-      <td>52</td>
-      <td>[52]</td>
+      <td>53</td>
+      <td>[53]</td>
       <td>[ExampleClass.perform_action_chain_1]</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-01-17 17:55:09</td>
+      <td>2024-01-17 18:24:36</td>
       <td>debug</td>
       <td>ExampleClass.perform_action_chain_1</td>
       <td>This is a debug message!</td>
-      <td>53</td>
-      <td>[32, 53]</td>
+      <td>54</td>
+      <td>[33, 54]</td>
       <td>[ExampleClass.print_debug, ExampleClass.perfor...</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-01-17 17:55:09</td>
+      <td>2024-01-17 18:24:36</td>
       <td>debug</td>
       <td>ExampleClass.perform_action_chain_1</td>
       <td>Action 2</td>
-      <td>55</td>
-      <td>[55]</td>
+      <td>56</td>
+      <td>[56]</td>
       <td>[ExampleClass.perform_action_chain_1]</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>2024-01-17 17:55:09</td>
+      <td>2024-01-17 18:24:36</td>
       <td>error</td>
       <td>ExampleClass.perform_action_chain_1</td>
       <td>This is a error message!</td>
-      <td>56</td>
-      <td>[44, 56]</td>
+      <td>57</td>
+      <td>[45, 57]</td>
       <td>[ExampleClass.print_error, ExampleClass.perfor...</td>
     </tr>
   </tbody>
@@ -452,13 +453,13 @@ ec.print_debug()
 ec.perform_action_chain_2()
 ```
 
-    (2024-01-17 17:55:09,472) : Shouter : [DEBUG] : This is a debug message!
+    (2024-01-17 18:24:36,929) : Shouter : [DEBUG] : This is a debug message!
 
 
-    (2024-01-17 17:55:09,473) : Shouter : [ERROR] : Saving env
+    (2024-01-17 18:24:36,930) : Shouter : [ERROR] : Saving env
 
 
-    (2024-01-17 17:55:09,506) : Shouter : [WARNING] : Object 'self' could not have been serialized, when saving last words!
+    (2024-01-17 18:24:36,962) : Shouter : [WARNING] : Object 'self' could not have been serialized, when saving last words!
 
 
 
