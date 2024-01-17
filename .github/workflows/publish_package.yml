@@ -50,3 +50,17 @@ jobs:
           TWINE_USERNAME: ${{ secrets.TWINE_USERNAME}}
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: python -m twine upload dist/*
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add env_spec/lsts_package_versions.yml
+          # Check if there are any changes in the working directory
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Update package version tracking file"
+            git push
+          else
+            echo "No changes to commit"
+          fi
+
