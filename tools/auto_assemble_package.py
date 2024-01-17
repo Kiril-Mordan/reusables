@@ -1,4 +1,4 @@
-from python_modules.package_auto_assembler import PackageAutoAssembler
+from .python_modules.package_auto_assembler import PackageAutoAssembler
 import argparse
 import os
 

@@ -28,7 +28,52 @@ jobs:
       - name: Find Changed Modules
         id: changed-modules
         run: |
-          ./tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' 'example_notebooks/' '.ipynb'
+          # Directories to check, passed as arguments before the last two arguments
+          directories_to_check=('python_modules/' 'example_notebooks/')
+
+          # Output directory, passed as the second-to-last argument
+          output_directory='example_notebooks/'
+
+          # File extension to add, passed as the last argument
+          extension_to_add='.ipynb'
+
+          # Function to check for changes in a given commit range
+          check_changes() {
+            local commit_range=$1
+            local changed_files=""
+            for dir in "${directories_to_check[@]}"; do
+              if [ -n "$(git diff --name-only $commit_range | grep "$dir")" ]; then
+                changed_files+=$(git diff --name-only $commit_range | grep "$dir")
+                changed_files+=$'\n'
+              fi
+            done
+            echo "$changed_files"
+          }
+
+          # Checking for changes in the last three commits
+          for i in 1 2 3; do
+            changed_files=$(check_changes "HEAD~$i HEAD~$((i-1))")
+            if [ -n "$changed_files" ]; then
+              break
+            fi
+            echo "No changes found between HEAD~$i and HEAD~$((i-1))."
+          done
+
+          if [ -z "$changed_files" ]; then
+              echo "No changes found in the last three commits."
+          else
+              echo "Changed files:"
+              echo "$changed_files"
+              # Process files
+              processed_files=$(echo "$changed_files" |
+                                sed 's/.*\///' |       # Remove directory path
+                                sed 's/\.[^.]*$//' |   # Remove file extensions
+                                sort | uniq |         # Sort and deduplicate
+                                awk -v dir="$output_directory" -v ext="$extension_to_add" '{print dir $0 ext}')  # Prepend directory and append extension
+              echo "Processed files:"
+              echo "$processed_files"
+              echo "::set-output name=files::${processed_files}"
+          fi
 
       - name: Create and activate virtual environment
         run: |

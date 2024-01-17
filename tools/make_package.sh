@@ -7,7 +7,7 @@ process_module() {
 
     echo "Assebling package for module: $module_name"
 
-    python3 ./tools/auto_assemble_package "$module_name"
+    python3 ./tools/auto_assemble_package.py "$module_name"
 }
 
 for module_file in "$@"; do
