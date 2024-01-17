@@ -43,13 +43,18 @@ jobs:
         run: git pull origin main
 
       - name: Build and publish package
-        run: ./tools/make_package.sh ${{ steps.changed-modules.outputs.files }}
+        run: |
+          ./tools/make_package.sh ${{ steps.changed-modules.outputs.files }}
+          ls -la
+          ls dist/
 
       - name: Publish to PyPI
         env:
-          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME}}
+          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-        run: python -m twine upload dist/*
+        run: |
+          ls -la
+          python -m twine upload dist/*
 
       - name: Commit changes
         run: |
