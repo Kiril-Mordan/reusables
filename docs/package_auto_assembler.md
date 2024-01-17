@@ -149,19 +149,19 @@ pv.get_logs(
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-01-13 21:41:35</td>
+      <td>2024-01-17 17:17:24</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-01-13 21:41:35</td>
+      <td>2024-01-17 17:17:24</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-01-13 21:41:35</td>
+      <td>2024-01-17 17:17:24</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -745,7 +745,7 @@ paa.requirements_list
 
 
 
-    ['### example_module.py', 'attr>=22.2.0']
+    ['### example_module.py', 'attrs>=22.2.0']
 
 
 
