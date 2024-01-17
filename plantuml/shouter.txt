@@ -1,0 +1,20 @@
+@startuml
+[*] --> Shouter
+
+state Shouter {
+  [*] --> Initialized
+  Initialized --> Ready
+  Ready --> Logging
+  Logging --> Ready
+  Ready --> Persisting
+  Persisting --> Ready
+  Ready --> PerformingAction
+  PerformingAction --> Ready
+  Ready --> PersistingEnvironment
+  PersistingEnvironment --> Ready
+  Ready --> PersistingTears
+  PersistingTears --> Ready
+  Ready --> Exiting
+  Exiting --> [*]
+}
+@enduml
