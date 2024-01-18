@@ -1,4 +1,4 @@
-from .python_modules.package_auto_assembler import PackageAutoAssembler
+from package_auto_assembler import PackageAutoAssembler
 import argparse
 import os
 
@@ -9,11 +9,9 @@ args = parser.parse_args()
 
 module_name = args.module_name
 
-print(os.getcwd())
-
 paa = PackageAutoAssembler(
     # required
-    module_name = "shouterlog",
+    module_name = f"{module_name}",
     module_filepath  = f"./python_modules/{module_name}.py",
     # optional
     mapping_filepath = "./env_spec/package_mapping.json",
@@ -21,7 +19,7 @@ paa = PackageAutoAssembler(
     example_notebook_path = f"./example_notebooks/{module_name}.ipynb",
     versions_filepath = './env_spec/lsts_package_versions.yml',
     log_filepath = './env_spec/version_logs.csv',
-    setup_directory = "./{module_name}",
+    setup_directory = f"./{module_name}",
     classifiers = ['Development Status :: 3 - Alpha',
                     'Intended Audience :: Developers',
                     'Intended Audience :: Science/Research',

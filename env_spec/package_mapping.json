@@ -10,6 +10,7 @@
     "flask": "Flask",
     "stdlib_list": "stdlib-list",
     "sklearn" : "scikit-learn",
-    "yaml" : "pyyaml"
+    "yaml" : "pyyaml",
+    "package_auto_assembler" : "package-auto-assembler"
 }
 

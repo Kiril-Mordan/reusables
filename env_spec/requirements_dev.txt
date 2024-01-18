@@ -9,3 +9,4 @@ jupyter
 ipykernel
 tox
 tox-gh-actions
+package-auto-assembler
