@@ -149,19 +149,19 @@ pv.get_logs(
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-01-17 18:24:24</td>
+      <td>2024-01-19 21:31:09</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-01-17 18:24:24</td>
+      <td>2024-01-19 21:31:09</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-01-17 18:24:24</td>
+      <td>2024-01-19 21:31:09</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -215,7 +215,8 @@ im.load_package_mappings(
      'flask': 'Flask',
      'stdlib_list': 'stdlib-list',
      'sklearn': 'scikit-learn',
-     'yaml': 'pyyaml'}
+     'yaml': 'pyyaml',
+     'package_auto_assembler': 'package-auto-assembler'}
 
 
 
@@ -258,7 +259,7 @@ rh.list_custom_modules(
 
 
 
-    ['example_local_dependacy_1', 'example_local_dependacy_2']
+    ['example_local_dependacy_2', 'example_local_dependacy_1']
 
 
 
