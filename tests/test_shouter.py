@@ -1,7 +1,7 @@
 import logging
 from io import StringIO
 import pytest
-from python_modules.shouter import Shouter  # Replace 'your_module' with the actual name of the module where Shouter is defined
+from python_modules.shouterlog import Shouter  # Replace 'your_module' with the actual name of the module where Shouter is defined
 
 def test_initialize_logger():
     # Test initializing the logger

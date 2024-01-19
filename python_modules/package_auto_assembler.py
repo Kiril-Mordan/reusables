@@ -29,6 +29,14 @@ import attr
 from stdlib_list import stdlib_list
 
 
+# Metadata for package creation
+__package_metadata__ = {
+    "author": "Kyrylo Mordan",
+    "author_email": "parachute.repo@gmail.com",
+    "description": "A tool to automate package creation within ci based on just .py and optionally .ipynb file.",
+    "keywords" : ['python', 'packaging']
+}
+
 @attr.s
 class VersionHandler:
 
