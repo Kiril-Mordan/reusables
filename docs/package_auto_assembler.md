@@ -149,19 +149,19 @@ pv.get_logs(
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-01-19 21:31:09</td>
+      <td>2024-01-20 01:28:02</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-01-19 21:31:09</td>
+      <td>2024-01-20 01:28:02</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-01-19 21:31:09</td>
+      <td>2024-01-20 01:28:02</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -253,13 +253,14 @@ rh = RequirementsHandler(
 ```python
 rh.list_custom_modules(
     # optional
-    custom_modules_filepath="../tests/package_auto_assembler/dependancies")
+    custom_modules_filepath="../tests/package_auto_assembler/dependancies"
+)
 ```
 
 
 
 
-    ['example_local_dependacy_2', 'example_local_dependacy_1']
+    ['example_local_dependacy_1', 'example_local_dependacy_2']
 
 
 
