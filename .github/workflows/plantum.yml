@@ -22,9 +22,9 @@ jobs:
         run: |
           PATH_PATTERN='python_modules/**'
           if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -qE "$PATH_PATTERN"; then
-            echo "path_changed=${true}" >>$GITHUB_OUTPUT
+            echo "::set-output name=path_changed::${true}"
           else
-            echo "path_changed=${false}" >>$GITHUB_OUTPUT
+            echo "::set-output name=path_changed::${false}"
           fi
 
   generate-plantuml:
