@@ -48,7 +48,6 @@ class VersionHandler:
     # output
     versions = attr.ib(init=False)
 
-
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Package Version Handler')
     loggerLvl = attr.ib(default=logging.INFO)
