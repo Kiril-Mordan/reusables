@@ -13,4 +13,5 @@ nbconvert
 pylint
 ipykernel
 dill
+package-auto-assembler
 python-dotenv
