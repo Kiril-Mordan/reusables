@@ -1317,7 +1317,6 @@ class PackageAutoAssembler:
             output_path = output_path
         )
 
-
     def prep_setup_file(self,
                        metadata : dict = None,
                        requirements : str = None,
