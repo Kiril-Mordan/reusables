@@ -48,7 +48,7 @@ jobs:
         echo "Changed files:"
         changed_files=$(git diff --name-only HEAD~ HEAD | grep 'python_modules/')
         echo $changed_files
-        echo "files=${changed_files}" >>$GITHUB_OUTPUT
+        echo "::set-output name=files::${changed_files}"
 
     - name: Install Dependencies
       run: |
