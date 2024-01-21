@@ -14,19 +14,77 @@ import time
 import numpy as np #==1.26.0
 import dill #==0.3.7
 import attr #>=22.2.0
+## for making keys
+import hashlib
 ## for search
-import requests #==2.31.0
 import hnswlib #0.7.0
 from sentence_transformers import SentenceTransformer #==2.2.2
+
 
 # Metadata for package creation
 __package_metadata__ = {
     "author": "Kyrylo Mordan",
     "author_email": "parachute.repo@gmail.com",
-    "version": "0.1.0",
+    "version": "0.0.1",
     "description": "A mock handler for simulating a vector database.",
     # Add other metadata as needed
 }
+
+@attr.s
+class SentenceTransformerEmbedder:
+
+    kwargs = attr.ib(factory=dict)
+
+    model = attr.ib(default=None, init=False)
+
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='Mock handler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+
+    def __init__(self, **kwargs):
+        self.__attrs_init__()
+        self._initialize_logger()
+        # Suppress SentenceTransformer logging
+        logging.getLogger('sentence_transformers').setLevel(logging.ERROR)
+        self.model = SentenceTransformer(**kwargs)
+
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+        # Suppress SentenceTransformer logging
+        logging.getLogger('sentence_transformers').setLevel(logging.ERROR)
+        self.model = SentenceTransformer(**self.kwargs)
+
+    def _initialize_logger(self):
+
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    def embed_sentence_transformer(self, text):
+
+        """
+        Embeds single query with sentence tranformer embedder.
+        """
+
+        return self.model.encode(text)
+
+    def embed(self, text):
+
+        """
+        Embeds single query with sentence with selected embedder.
+        """
+
+        return self.embed_sentence_transformer(text = text)
 
 
 @attr.s
@@ -59,52 +117,6 @@ class MockVecDbHandler:
         keys_list (list): List of keys in the database.
         results_keys (list): Keys matching specific search criteria.
 
-    Methods:
-        initialize_logger()
-            Sets up logging for the class instance.
-
-        hnsw_search(search_emb, doc_embs, k=1, space='cosine', ef_search=50, M=16, ef_construction=200)
-            Performs HNSW algorithm-based search.
-
-        linear_search(search_emb, doc_embs, k=1, space='cosine')
-            Conducts a linear search.
-
-        establish_connection(file_path=None)
-            Simulates establishing a database connection.
-
-        save_data()
-            Saves the current state of the 'data' attribute to a file.
-
-        embed(text)
-            Generates embeddings for text inputs.
-
-        _prepare_for_redis(data_dict, var_for_embedding_name)
-            Prepares data for storage in Redis.
-
-        insert_values_dict(values_dict, var_for_embedding_name)
-            Simulates insertion of key-value pairs into the database.
-
-        flush_database()
-            Clears all data in the mock database.
-
-        filter_keys(subkey=None, subvalue=None)
-            Filters data entries based on a specific subkey and subvalue.
-
-        filter_database(filter_criteria=None)
-            Filters a dictionary based on multiple field criteria.
-
-        remove_from_database(filter_criteria=None)
-            Removes key-value pairs from a dictionary based on filter criteria.
-
-        search_database_keys(query, search_results_n=None, similarity_search_type=None, similarity_params=None)
-            Searches the database using embeddings and saves a list of entries that match the query.
-
-        get_dict_results(return_keys_list=None)
-            Retrieves specified fields from the search results.
-
-        search_database(query, search_results_n=None, filter_criteria=None, similarity_search_type=None,
-                        similarity_params=None, return_keys_list=None)
-            Searches and retrieves fields from the database for a given filter.
     """
 
     ## for accessing openAI models
@@ -113,9 +125,8 @@ class MockVecDbHandler:
     headers = attr.ib(default=None)
 
     ## for embeddings
-    model_type = attr.ib(default='sentence_transformer', type=str)
-    st_model_name = attr.ib(default='all-MiniLM-L6-v2', type=str)
-    st_model = attr.ib(default=None, init=False)
+    embedder_params = attr.ib(default={'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2'})
+    embedder = attr.ib(default=SentenceTransformerEmbedder)
 
 
     ## for similarity search
@@ -125,7 +136,7 @@ class MockVecDbHandler:
     similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
 
     ## inputs with defaults
-    file_path = attr.ib(default="../redis_mock", type=str)
+    file_path = attr.ib(default="./redis_mock", type=str)
     persist = attr.ib(default=False, type=bool)
 
     embedder_error_tolerance = attr.ib(default=0.0, type=float)
@@ -140,11 +151,12 @@ class MockVecDbHandler:
     filtered_data = attr.ib(default=None, init=False)
     keys_list = attr.ib(default=None, init = False)
     results_keys = attr.ib(default=None, init = False)
+    results_dictances = attr.ib(default=None, init = False)
 
     def __attrs_post_init__(self):
         self._initialize_logger()
-        if self.model_type != 'openAI':
-            self.st_model = SentenceTransformer(self.st_model_name)
+        self.embedder = self.embedder(kwargs = self.embedder_params,
+                                      logger = self.logger)
 
     def _initialize_logger(self):
 
@@ -259,88 +271,53 @@ class MockVecDbHandler:
         Saves the current state of 'data' back into a local file.
         """
 
-        try:
-            with open(self.file_path, 'wb') as file:
-                dill.dump(self.data, file)
-        except Exception as e:
-            self.logger.error("Error saving data to file: ", e)
+        if self.persist:
+            try:
+                with open(self.file_path, 'wb') as file:
+                    dill.dump(self.data, file)
+            except Exception as e:
+                self.logger.error("Error saving data to file: ", e)
 
-    def embed(self, text, model_type : str =  None ):
+    def hash_string_sha256(self,input_string):
+        return hashlib.sha256(input_string.encode()).hexdigest()
 
-        """
-        Embeds single query with sentence with selected embedder.
-        """
+    def _make_key(self,input_string):
+        return self.hash_string_sha256(input_string)
 
-        if model_type is None:
-            model_type = self.model_type
-
-        if model_type == 'openAI':
-            return self.embed_openAI(text = text)
-
-        if model_type == 'sentence_transformer':
-            return self.embed_sentence_transformer(text = text)
-
-
-    def embed_sentence_transformer(self, text):
-
-        """
-        Embeds single query with sentence tranformer embedder.
-        """
-
-        return self.st_model.encode(text)
-
-    def embed_openAI(self, text):
-
-        """
-        Embeds single query with openAI embedder.
-        """
-
-        api_url = self.embeddings_url
-
-        payload = json.dumps({
-            "user": self.godID,
-            "input": text
-        })
-
-        try:
-            response = requests.post(api_url, headers=self.headers, data=payload, timeout=10)
-
-            if response.status_code == 429:
-                time.sleep(1)
-                response = requests.post(api_url, headers=self.headers, data=payload, timeout=10)
-
-            if response.status_code > 200:
-                print(f"Request to '{api_url}' failed: {response}")
-                print(response.text)
-                return None
-
-            embedding = response.json()['data'][0]['embedding']
-
-        except:
-            error_mess = "An exception has occurred during embedding!"
-            if self.embedder_error_tolerance == 0.0:
-                raise ValueError(error_mess)
-            else:
-                print(error_mess)
-                return None
-
-        return embedding
-
-    def _prepare_for_redis(self, data_dict, var_for_embedding_name):
+    def _prepare_for_insert(self, data_dict, var_for_embedding_name):
 
         """
         Prepare a dictionary for storage in Redis by serializing all its values to strings.
         """
 
+
         for key, _ in data_dict.items():
 
-            embedding = self.embed(data_dict[key][var_for_embedding_name])
+            embedding = self.embedder.embed(str(data_dict[key][var_for_embedding_name]))
             data_dict[key]['embedding'] = embedding
+
 
         return data_dict
 
+    def _insert_values_dict_i(self, values_dict, var_for_embedding_name, embed = True):
 
-    def insert_values_dict(self, values_dict, var_for_embedding_name):
+        """
+        Simulates inserting key-value pair into the mock database.
+        """
+
+        try:
+            if embed:
+                values_dict = self._prepare_for_insert(data_dict = values_dict,
+                                                    var_for_embedding_name = var_for_embedding_name)
+            self.data.update(values_dict)
+
+            return 0
+
+        except Exception as e:
+            return 1
+            self.logger.error("Problem during inserting list of key-values dictionaries into mock database!", e)
+
+    def insert_values_dict(self, values_dict, var_for_embedding_name, embed : bool = True):
 
         """
         Simulates inserting key-value pairs into the mock Redis database.
@@ -348,11 +325,17 @@ class MockVecDbHandler:
 
         try:
 
-            values_dict = self._prepare_for_redis(data_dict = values_dict,
-                                                  var_for_embedding_name = var_for_embedding_name)
 
-            self.data.update(values_dict)
-            self.save_data()
+            error_list = [self._insert_values_dict_i(values_dict = insd,
+                                        var_for_embedding_name = var_for_embedding_name,
+                                        embed = embed) for insd in values_dict]
+            errors = sum(error_list)
+            if errors == 0:
+                self.save_data()
+            else:
+
+                raise ValueError(f"Errors in ({[index for index, value in enumerate(error_list) if value == 1]}) during updating insertion: {errors}")
+
         except Exception as e:
             self.logger.error("Problem during inserting list of key-values dictionaries into mock database!", e)
 
@@ -364,8 +347,7 @@ class MockVecDbHandler:
 
         try:
             self.data = {}
-            if self.persist:
-                self.save_data()
+            self.save_data()
         except Exception as e:
             self.logger.error("Problem during flushing mock database", e)
 
@@ -405,14 +387,15 @@ class MockVecDbHandler:
         query: str,
         search_results_n: int = None,
         similarity_search_type: str = None,
-        similarity_params: dict = None):
+        similarity_params: dict = None,
+        perform_similarity_search: bool = None):
 
         """
         Searches the mock database using embeddings and saves a list of entries that match the query.
         """
 
         try:
-            query_embedding = self.embed(query)
+            query_embedding = self.embedder.embed(query)
         except Exception as e:
             self.logger.error("Problem during embedding search query!", e)
 
@@ -432,26 +415,45 @@ class MockVecDbHandler:
         if self.keys_list is None:
             self.keys_list = [key for key in self.filtered_data]
 
-        try:
-            data_embeddings = np.array([(self.filtered_data[d]['embedding']) for d in self.keys_list])
-        except Exception as e:
-            self.logger.error("Problem during extracting search pool embeddings!", e)
+        if perform_similarity_search is None:
+            perform_similarity_search = True
 
-        try:
-            if similarity_search_type == 'linear':
-                labels, _ = self.linear_search(query_embedding,
-                data_embeddings,
-                k=search_results_n,
-                **similarity_params)
-            else:
-                labels, _ = self.hnsw_search(query_embedding,
-                data_embeddings,
-                k=search_results_n,
-                **similarity_params)
+        if perform_similarity_search:
 
-            self.results_keys = [self.keys_list[i] for i in labels]
-        except Exception as e:
-            self.logger.error("Problem during extracting results from the mock database!", e)
+            try:
+                data_embeddings = np.array([(self.filtered_data[d]['embedding']) for d in self.keys_list])
+            except Exception as e:
+                self.logger.error("Problem during extracting search pool embeddings!", e)
+
+            try:
+                if similarity_search_type == 'linear':
+                    labels, distances = self.linear_search(query_embedding,
+                    data_embeddings,
+                    k=search_results_n,
+                    **similarity_params)
+                else:
+                    labels, distances = self.hnsw_search(query_embedding,
+                    data_embeddings,
+                    k=search_results_n,
+                    **similarity_params)
+
+                self.results_keys = [self.keys_list[i] for i in labels]
+                self.results_dictances = distances
+
+            except Exception as e:
+                self.logger.error("Problem during extracting results from the mock database!", e)
+
+
+        else:
+
+            try:
+                self.results_keys = [result_key for result_key in self.filtered_data]
+                self.results_dictances = np.array([0 for result_key in self.filtered_data])
+            except Exception as e:
+                self.logger.error("Problem during extracting search pool embeddings!", e)
+
+
+
 
     def get_dict_results(self, return_keys_list : list = None) -> list:
 
@@ -475,6 +477,7 @@ class MockVecDbHandler:
         filter_criteria : dict = None,
         similarity_search_type: str = None,
         similarity_params: dict = None,
+        perform_similarity_search: bool = None,
         return_keys_list : list = None) ->list:
 
         """
@@ -488,7 +491,8 @@ class MockVecDbHandler:
         self.search_database_keys(query = query,
                                     search_results_n = search_results_n,
                                     similarity_search_type = similarity_search_type,
-                                    similarity_params = similarity_params)
+                                    similarity_params = similarity_params,
+                                    perform_similarity_search = perform_similarity_search)
 
         results = self.get_dict_results(return_keys_list = return_keys_list)
 
