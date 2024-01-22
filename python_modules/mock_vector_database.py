@@ -18,6 +18,7 @@ import attr #>=22.2.0
 ## for making keys
 import hashlib
 ## for search
+import concurrent.futures
 import hnswlib #0.7.0
 from sentence_transformers import SentenceTransformer #==2.2.2
 
@@ -34,10 +35,12 @@ __package_metadata__ = {
 
 class SentenceTransformerEmbedder:
 
-    def __init__(self,tbatch_size = 32, *args, **kwargs):
+    def __init__(self,tbatch_size = 32, processing_type = 'batch', max_workers = 2, *args, **kwargs):
         # Suppress SentenceTransformer logging
         logging.getLogger('sentence_transformers').setLevel(logging.ERROR)
         self.tbatch_size = tbatch_size
+        self.processing_type = processing_type
+        self.max_workers = max_workers
         self.model = SentenceTransformer(*args, **kwargs)
 
     def embed_sentence_transformer(self, text):
@@ -48,11 +51,20 @@ class SentenceTransformerEmbedder:
 
         return self.model.encode(text)
 
-    def embed(self, text):
+    def embed(self, text, processing_type : str = None):
 
         """
         Embeds single query with sentence with selected embedder.
         """
+
+        if processing_type is None:
+            processing_type = self.processing_type
+
+        if processing_type == 'batch':
+           return self.embed_texts_in_batches(texts = text)
+
+        if processing_type == 'parallel':
+           return self.embed_sentences_in_batches_parallel(texts = text)
 
         return self.embed_sentence_transformer(text = str(text))
 
@@ -68,6 +80,33 @@ class SentenceTransformerEmbedder:
             batch = texts[i:i + batch_size]
             batch_embeddings = self.model.encode(batch, show_progress_bar=False)
             embeddings.extend(batch_embeddings)
+        return embeddings
+
+    def embed_sentences_in_batches_parallel(self, texts, batch_size : int = None, max_workers : int =  None):
+
+        """
+        Embeds a list of texts in batches in parallel.
+        """
+
+        if batch_size is None:
+            batch_size = self.tbatch_size
+
+        if max_workers is None:
+            max_workers = self.max_workers
+
+
+        # Split texts into batches
+        batches = [texts[i:i + batch_size] for i in range(0, len(texts), batch_size)]
+
+        # Process batches in parallel
+        embeddings = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit embedding tasks to the executor
+            future_to_batch = {executor.submit(self.embed_sentence_transformer, batch): batch for batch in batches}
+
+            for future in concurrent.futures.as_completed(future_to_batch):
+                embeddings.extend(future.result())
+
         return embeddings
 
 @attr.s
@@ -235,7 +274,8 @@ class MockerDB:
 
     ## for embeddings
     embedder_params = attr.ib(default={'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
-                                       'tbatch_size' : 32})
+                                       'processing_type' : 'batch',
+                                       'tbatch_size' : 500})
     embedder = attr.ib(default=SentenceTransformerEmbedder)
 
 
@@ -356,7 +396,13 @@ class MockerDB:
 
             list_of_text_to_embed = [values_dicts[insd][var_for_embedding_name] for insd in values_dicts]
 
-            embedded_list_of_text = self.embedder.embed_texts_in_batches(texts = list_of_text_to_embed)
+            if self.embedder.processing_type in ['parallel', 'batch']:
+
+                embedded_list_of_text = self.embedder.embed(text = list_of_text_to_embed)
+
+            else:
+
+                embedded_list_of_text = [self.embedder.embed(text = text_to_embed) for text_to_embed in list_of_text_to_embed]
 
             i = 0
             for insd in values_dicts:
@@ -454,7 +500,7 @@ class MockerDB:
         """
 
         try:
-            query_embedding = self.embedder.embed(query)
+            query_embedding = self.embedder.embed(query, processing_type='single')
         except Exception as e:
             self.logger.error("Problem during embedding search query!", e)
 
