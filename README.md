@@ -56,16 +56,16 @@ Utility to simplify webscraping by taking advantave of search and assumptions ab
 Extractor allows to find parent html element that contains searched term, record path to it in a file
 and reuse that to scrape data with same html structure.
 
-[module](python_modules/google_drive_support.py) - Google Drive API Utilities Module
-
-This module provides a set of functions for interacting with the Google Drive API.
-It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
-
-[module](python_modules/mock_vector_database.py) | [usage](docs/mock_vector_database.md) | [diagram](docs/mock_vector_database.png) - Mock Vector Db Handler
+[module](python_modules/mocker_db.py) | [usage](docs/mocker_db.md) - Mock Vector Db Handler
 
 This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
 It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
 and basic data management within a simulated environment resembling a vector database.
+
+[module](python_modules/google_drive_support.py) - Google Drive API Utilities Module
+
+This module provides a set of functions for interacting with the Google Drive API.
+It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
 
 [module](python_modules/comparisonframe.py) | [usage](docs/comparisonframe.md) | [diagram](docs/comparisonframe.png) - Comparison Frame
 
