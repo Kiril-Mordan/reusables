@@ -1,6 +1,9 @@
+sentence-transformers
+numpy
 google-auth-httplib2
 stdlib-list
 pandas
+hnswlib
 attrs
 jupyter
 nbformat
