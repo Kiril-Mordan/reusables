@@ -10,6 +10,11 @@ import numpy as np
 import random
 import logging
 import attr
+
+import plotly.graph_objs as go
+from plotly.subplots import make_subplots
+from plotly.offline import plot
+
 from mocker_db import MockerDB
 
 @attr.s
@@ -41,6 +46,11 @@ class RetrieverTunner:
                                       'prep_types' : ['correction', 'ceiling'],
                                       'ratio' : 0.6,
                                       'target_sum' : 1})
+
+    # for plotting
+    plots_params = attr.ib(default={'top_n' : 3,
+                                    'text_lim' : 10,
+                                    'save_comp_plot' : False})
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Similarity search')
@@ -79,6 +89,7 @@ class RetrieverTunner:
             self.sim_search_handlers[model_name] = self.similarity_search_h(persist=self.persist_handlers,
                                                                             file_path=f'./rt_persist_{model_name}',
                                                                             embedder_params = embedder_params)
+            self.sim_search_handlers[model_name].establish_connection()
 
     def _initialize_queries(self):
 
@@ -269,4 +280,83 @@ class RetrieverTunner:
                     compared_scores_dict[record_key]['mean' + str(n_result) + prep_type] = np.mean(comparison_list_dict[record_key])
 
         return compared_scores_dict
+
+    def show_model_comparison_plot(self,
+                                   ranking_dicts : dict,
+                                    target_model : str,
+                                    compared_model : str,
+                                    top_n : int,
+                                    text_lim : int,
+                                    plot_destination : str = None):
+
+
+        # Create a Plotly figure
+        fig = make_subplots()
+
+        # Add scatter plots for each text
+        for text in ranking_dicts[target_model]:
+            x_data = ranking_dicts[target_model][text][0:top_n]
+            y_data = ranking_dicts[compared_model][text][0:top_n]
+
+            # Ensure the lists are of the same length
+            if len(x_data) == len(y_data):
+                fig.add_trace(go.Scatter(
+                    x=x_data,
+                    y=y_data,
+                    mode='markers',
+                    name=text[0:text_lim]
+                ))
+
+        # Update layout
+        fig.update_layout(
+            title=f"Comparison of {target_model} vs {compared_model}",
+            xaxis_title=target_model,
+            yaxis_title=compared_model
+        )
+
+        if plot_destination:
+            plot(fig, filename=plot_destination, auto_open=False)
+
+        # Show plot
+        fig.show()
+
+    def show_model_comparison_plots(self,
+                                ranking_dicts : dict = None,
+                               target_model : str = None,
+                               compared_models : list = None,
+                               top_n : int = None,
+                               text_lim : int = None,
+                               plot_destinations : list = None):
+
+        if ranking_dicts is None:
+            ranking_dicts = self.ranking_dicts
+        if target_model is None:
+            target_model = self.target_ranking_name
+        if compared_models is None:
+            compared_models = [model_name for model_name in self.embedding_model_names \
+                if model_name != target_model]
+        if top_n is None:
+            top_n = self.plots_params['top_n']
+        if text_lim is None:
+            text_lim = self.plots_params['text_lim']
+        if plot_destinations is None:
+            if self.plots_params['save_comp_plot']:
+                plot_destinations = ['comp_plot_' + target_model + '|' + model_name for model_name in compared_models]
+
+        i = 0
+        for compared_model in compared_models:
+            if plot_destinations:
+                plot_destination = plot_destinations[i]
+            else:
+                plot_destination = None
+
+            i = i +1
+            self.show_model_comparison_plot(ranking_dicts = ranking_dicts,
+                                            target_model = target_model,
+                                            compared_model = compared_model,
+                                            top_n = top_n,
+                                            text_lim = text_lim,
+                                            plot_destination = plot_destination)
+
+
 
