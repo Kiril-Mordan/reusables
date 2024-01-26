@@ -10,6 +10,7 @@ import numpy as np
 import random
 import logging
 import attr
+import copy
 
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
@@ -17,11 +18,21 @@ from plotly.offline import plot
 
 from mocker_db import MockerDB
 
+__design_choices__ = {
+    'search pool and queries' : ['queries can be provided as a list and augmented with \
+        dictionary of filters for each of them',
+        "search pool could be provides as a list, at that case will converted \
+            into dict with the following keys: 'id','text'",
+        "if prepared dictionary is provided, it will be inserted into the mocker"]
+}
+
 @attr.s
 class RetrieverTunner:
 
     # search pool for calculating metrics
     queries = attr.ib(default=None)
+    queries_filters = attr.ib(default=None)
+    search_values_dicts = attr.ib(default=None)
     search_values_list = attr.ib(default=None)
 
     # rankings for calculating metrics
@@ -119,43 +130,71 @@ class RetrieverTunner:
 
         return random.sample(search_values_list, n)
 
-    def _get_ranking_i(self, handler, query, insert_size):
+    def _get_ranking_i(self,
+                       handler,
+                       query : str,
+                       insert_size : int,
+                       queries_filter : dict = None):
 
         hh = handler.search_database(query=query,
                                     return_keys_list=['id'],
-                                    search_results_n=insert_size)
+                                    search_results_n=insert_size,
+                                    filter_criteria = queries_filter)
 
-        return [ i['id'] for i in hh]
+        return [i['id'] for i in hh]
 
     def construct_ranking(self,
                           queries : list,
+                          queries_filters : dict,
                           search_values_list : list,
+                          search_values_dicts : list,
                           handler) -> dict:
 
 
         # establish size of inserts
         insert_size = len(search_values_list)
 
-        # construct insert dict
-        insert_dict = [{'id' : i, 'text' : search_values_list[i]} for i in range(insert_size)]
+        if search_values_list:
+
+
+            # construct insert dict
+            insert_dict = [{'id' : i, 'text' : search_values_list[i]} for i in range(insert_size)]
+        else:
+            insert_dict = copy.deepcopy(search_values_dicts)
+
+
 
         # insert values into handler
         handler.insert_values(values_dict_list=insert_dict,
                                         var_for_embedding_name='text')
 
 
+        # make input for _get_ranking_i
+        def fill_get_ranking_i(query,
+                               queries_filters = queries_filters,
+                               handler = handler,
+                               insert_size = insert_size):
+
+            input_dict = {'handler' : handler,
+                          'query' : query,
+                          'insert_size' : insert_size}
+
+            if queries_filters:
+                input_dict['queries_filter'] = queries_filters[query]
+
+            return input_dict
+
         # construct ranking dict
-        ranking_dict = {query : self._get_ranking_i(handler = handler,
-                                                    query=query,
-                                                    insert_size=insert_size) for query in queries}
-
-
+        ranking_dict = {query : self._get_ranking_i(**fill_get_ranking_i(query = query)) \
+            for query in queries}
 
         return ranking_dict
 
 
     def construct_rankings(self,
                            queries : list = None,
+                           queries_filters : dict = None,
+                           search_values_dicts : dict = None,
                            search_values_list : list = None,
                            model_names : list = None,
                            handlers = None):
@@ -163,8 +202,18 @@ class RetrieverTunner:
         if queries is None:
             queries = self.queries
 
-        if search_values_list is None:
-            search_values_list = self.search_values_list
+        if queries_filters is None:
+            queries_filters = self.queries_filters
+
+        if search_values_dicts is None:
+            search_values_dicts = self.search_values_dicts
+
+        if search_values_dicts is None:
+
+            if search_values_list is None:
+                search_values_list = self.search_values_list
+        else:
+            search_values_list = None
 
         if model_names is None:
             model_names = self.embedding_model_names
@@ -173,6 +222,8 @@ class RetrieverTunner:
             handlers = self.sim_search_handlers
 
         self.ranking_dicts = {model_name : self.construct_ranking(queries = queries,
+                                                search_values_dicts = search_values_dicts,
+                                                queries_filters = queries_filters,
                                                 search_values_list = search_values_list,
                                                 handler = handlers[model_name]) for model_name in model_names}
 
