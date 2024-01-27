@@ -54,9 +54,10 @@ class RetrieverTunner:
 
     # for defining metrics
     metrics_params = attr.ib(default={'n_results' : [3,5,10],
+                                      'ceilings' : [10],
                                       'prep_types' : ['correction', 'ceiling'],
-                                      'ratio' : 0.6,
-                                      'target_sum' : 1})
+                                      'weights_ratio' : 0.6,
+                                      'weights_sum' : 1})
 
     # for plotting
     plots_params = attr.ib(default={'top_n' : 3,
@@ -252,7 +253,10 @@ class RetrieverTunner:
 
     def _apply_weights_to_score(self, preped_list,weights):
 
-        dot_product = sum(a * b for a, b in zip(preped_list, weights))
+        max_preped_list = max(max(preped_list),1)
+        normalized_preped_list = [el / max_preped_list for el in preped_list]
+
+        dot_product = sum(a * b for a, b in zip(normalized_preped_list, weights))
 
         return dot_product
 
@@ -261,9 +265,10 @@ class RetrieverTunner:
                         id,
                         target_ranking_list,
                         compared_ranking_list,
-                        ratio = 0.6,
-                        target_sum=1,
+                        weights_ratio = 0.6,
+                        weights_sum=1,
                         ceiling = 10,
+                        n_result = None,
                         prep_type = 'correction'):
 
         if prep_type == 'correction':
@@ -274,28 +279,41 @@ class RetrieverTunner:
 
             preped_list = self._substruct_lists_with_ceiling(target_ranking_list[id], compared_ranking_list[id], ceiling=ceiling)
 
-        decresing_weights = self._generate_decreasing_weights(n = len(preped_list), target_sum=target_sum, ratio=ratio)
+        decresing_weights = self._generate_decreasing_weights(n = len(preped_list), target_sum=weights_sum, ratio=weights_ratio)
+
+        if n_result:
+            preped_list = preped_list[0:n_result]
+
+            sum_decresing_weights = sum(decresing_weights)
+            decresing_weights = [el / sum_decresing_weights for el in decresing_weights]
 
         score = self._apply_weights_to_score(preped_list = preped_list,weights = decresing_weights)
 
         return score
 
     def make_scores_dict(self,
-                         target_ranking = None,
-                         compared_rankings = None,
-                         n_results = None,
-                         prep_types = None,
-                         ratio = None,
-                         target_sum = None):
+                         target_ranking : dict = None,
+                         compared_rankings : dict = None,
+                         n_results : list = None,
+                         prep_types : list = None,
+                         ceilings : list = None,
+                         weights_ratio : float = None,
+                         weights_sum : float = None):
 
-        if ratio is None:
-            ratio = self.metrics_params['ratio']
-        if target_sum is None:
-            target_sum = self.metrics_params['target_sum']
+
+
         if n_results is None:
             n_results = self.metrics_params['n_results']
         if prep_types is None:
             prep_types = self.metrics_params['prep_types']
+
+        if ceilings is None:
+            ceilings = self.metrics_params['ceilings']
+        if weights_ratio is None:
+            weights_ratio = self.metrics_params['weights_ratio']
+        if weights_sum is None:
+            weights_sum = self.metrics_params['weights_sum']
+
 
         if target_ranking is None:
             target_ranking = self.ranking_dicts[self.target_ranking_name]
@@ -312,23 +330,26 @@ class RetrieverTunner:
             record_key = self.target_ranking_name + '|' + compared_ranking_name
             compared_scores_dict[record_key] = {}
 
+            ceilings.append(len(target_ranking))
             n_results.append(len(target_ranking))
 
             for n_result in n_results:
-                for prep_type in prep_types:
+                for ceiling in ceilings:
+                    for prep_type in prep_types:
 
 
-                    comparison_list_dict[record_key] = [self.calculate_score(id = ranking_id,
-                                                                                target_ranking_list = target_ranking,
-                                                                                compared_ranking_list = compared_rankings[compared_ranking_name],
-                                                                                prep_type=prep_type,
-                                                                                ceiling=n_result,
-                                                                                ratio=ratio,
-                                                                                target_sum=target_sum) \
-                                                        for ranking_id in target_ranking.keys()]
+                        comparison_list_dict[record_key] = [self.calculate_score(id = ranking_id,
+                                                                                    target_ranking_list = target_ranking,
+                                                                                    compared_ranking_list = compared_rankings[compared_ranking_name],
+                                                                                    prep_type=prep_type,
+                                                                                    ceiling=ceiling,
+                                                                                    n_result=n_result,
+                                                                                    weights_ratio=weights_ratio,
+                                                                                    weights_sum=weights_sum) \
+                                                            for ranking_id in target_ranking.keys()]
 
 
-                    compared_scores_dict[record_key]['mean' + str(n_result) + prep_type] = np.mean(comparison_list_dict[record_key])
+                        compared_scores_dict[record_key]['mean|' + str(n_result) + "|" + str(ceiling) + "|" + prep_type] = np.mean(comparison_list_dict[record_key])
 
         return compared_scores_dict
 
