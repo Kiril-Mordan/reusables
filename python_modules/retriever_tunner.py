@@ -9,21 +9,24 @@ with a use of more expensive, slower or simply no-existant method.
 import numpy as np
 import random
 import logging
-import attr
+import attr #>=22.2.0
 import copy
 
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 from plotly.offline import plot
 
-from mocker_db import MockerDB
+from mocker_db import MockerDB #==0.0.1
 
 __design_choices__ = {
     'search pool and queries' : ['queries can be provided as a list and augmented with \
         dictionary of filters for each of them',
         "search pool could be provides as a list, at that case will converted \
             into dict with the following keys: 'id','text'",
-        "if prepared dictionary is provided, it will be inserted into the mocker"]
+        "if prepared dictionary is provided, it will be inserted into the mocker"],
+    'ranking scores' : ["scores are calculated as result of comparing target ranking and one of compared rankings",
+                        "elements compared can be limited, maximum diffrence in ranks could be constrained with ceiling",
+                        "weights are applied to emphasise difference between top elements i nthe score"]
 }
 
 @attr.s
@@ -57,11 +60,13 @@ class RetrieverTunner:
                                       'ceilings' : [10],
                                       'prep_types' : ['correction', 'ceiling'],
                                       'weights_ratio' : 0.6,
-                                      'weights_sum' : 1})
+                                      'weights_sum' : 1,
+                                      'inverted' : True})
 
     # for plotting
     plots_params = attr.ib(default={'top_n' : 3,
                                     'text_lim' : 10,
+                                    'alpha' : 0.5,
                                     'save_comp_plot' : False})
 
     logger = attr.ib(default=None)
@@ -92,6 +97,10 @@ class RetrieverTunner:
 
     def _initialize_similarity_search_handlers(self):
 
+        """
+        Initialize seperate similarity handlers for each of the embedding models.
+        """
+
         for model_name in self.embedding_model_names:
 
             embedder_params = self.similarity_search_h_params
@@ -105,6 +114,10 @@ class RetrieverTunner:
 
     def _initialize_queries(self):
 
+        """
+        Runs on init to select random qureies from the list of pool for search.
+        """
+
         if self.queries is None:
             self.queries = self._select_random_queries()
 
@@ -113,6 +126,10 @@ class RetrieverTunner:
                                search_values_list : list = None,
                                n : int = None,
                                seed : int = None):
+
+        """
+        Function to select random queries from the list of pool for search.
+        """
 
         if search_values_list is None:
             search_values_list = self.search_values_list
@@ -131,11 +148,17 @@ class RetrieverTunner:
 
         return random.sample(search_values_list, n)
 
+### CONSTRUCT RANKINGS
+
     def _get_ranking_i(self,
                        handler,
                        query : str,
                        insert_size : int,
                        queries_filter : dict = None):
+
+        """
+        Accesses similarity search handler to extract ids.
+        """
 
         hh = handler.search_database(query=query,
                                     return_keys_list=['id'],
@@ -150,6 +173,10 @@ class RetrieverTunner:
                           search_values_list : list,
                           search_values_dicts : list,
                           handler) -> dict:
+
+        """
+        Constructs ranking dictionary of ids based on seached results for selected embeddings model.
+        """
 
 
         # establish size of inserts
@@ -200,6 +227,10 @@ class RetrieverTunner:
                            model_names : list = None,
                            handlers = None):
 
+        """
+        Constructs ranking dictionaries of ids based on seached results for selected embeddings models.
+        """
+
         if queries is None:
             queries = self.queries
 
@@ -230,46 +261,94 @@ class RetrieverTunner:
 
 
 
+### COMPERISON RANKING SCORES
 
+    def _substruct_lists_with_correction(self,
+                                         list1 : list,
+                                         list2 : list):
 
-    def _substruct_lists_with_correction(self, list1, list2):
+        """
+        Calculates absolute difference of ranks for provided lists of target and comparted rankings.
+        """
+
         return [abs(b - a)  for a, b in zip(list1, list2)]
 
-    def _substruct_lists_with_ceiling(self, list1, list2, ceiling = 10):
+    def _substruct_lists_with_ceiling(self,
+                                      list1 : list,
+                                      list2 : list,
+                                      ceiling : float):
+
+        """
+        Calculates absolute difference of ranks for provided lists of target and comparted rankings
+        limited by max allowed value.
+        """
+
         return [min(ceiling,abs(b - a))  for a, b in zip(list1, list2)]
 
-    def _generate_decreasing_weights(self, n, target_sum=1, ratio=0.8):
+    def _normalize_list(self,
+                        elem_list : list,
+                        norm_type : str):
+
+        """
+        Function for normalizing lists with selected method.
+        """
+
+        if norm_type == 'min_max':
+
+            max_element = max(max(elem_list),1)
+
+            # Normalize the elements with min max
+            return  [el / max_element for el in elem_list]
+
+
+        if norm_type == 'sum':
+
+            sum_elements = max(sum(elem_list),1)
+
+            # Normalize the elements to sum up to 1
+            return [el / sum_elements for el in elem_list]
+
+    def _generate_decreasing_weights(self,
+                                     n : int,
+                                     target_sum : float = 1,
+                                     ratio : float = 0.8):
+
+        """
+        Make a list of weights of certain size skewed left or right that sum up to a certain target.
+        """
 
         if n <= 0:
             return []
 
         elements = [target_sum * (ratio ** i) for i in range(n)]
-        sum_elements = sum(elements)
 
-        # Normalize the elements to sum up to 1
-        normalized_elements = [el / sum_elements for el in elements]
+        normalized_elements = self._normalize_list(elem_list=elements, norm_type='min_max')
 
         return normalized_elements
 
-    def _apply_weights_to_score(self, preped_list,weights):
+    def _apply_weights_to_score(self, preped_list, weights):
 
-        max_preped_list = max(max(preped_list),1)
-        normalized_preped_list = [el / max_preped_list for el in preped_list]
+        weighted_list = [a * b for a, b in zip(preped_list, weights)]
 
-        dot_product = sum(a * b for a, b in zip(normalized_preped_list, weights))
+        normalized_preped_list = self._normalize_list(elem_list=weighted_list, norm_type='sum')
 
-        return dot_product
+        return sum(normalized_preped_list)
 
 
     def calculate_score(self,
-                        id,
-                        target_ranking_list,
-                        compared_ranking_list,
-                        weights_ratio = 0.6,
-                        weights_sum=1,
-                        ceiling = 10,
-                        n_result = None,
-                        prep_type = 'correction'):
+                        id : str,
+                        target_ranking_list : list,
+                        compared_ranking_list : list,
+                        weights_ratio : float,
+                        weights_sum : float,
+                        ceiling : float,
+                        n_result : int,
+                        prep_type : str):
+
+        """
+        Creates a scores for selected permutation of parameter lists
+        and compared ranking.
+        """
 
         if prep_type == 'correction':
 
@@ -291,6 +370,14 @@ class RetrieverTunner:
 
         return score
 
+    def _create_key_for_scores_dict(self,
+                                    prefix : str,
+                                    n_result : int,
+                                    ceiling : float,
+                                    prep_type : str):
+
+        return prefix + str(n_result) + "|" + str(ceiling) + "|" + prep_type
+
     def make_scores_dict(self,
                          target_ranking : dict = None,
                          compared_rankings : dict = None,
@@ -298,8 +385,13 @@ class RetrieverTunner:
                          prep_types : list = None,
                          ceilings : list = None,
                          weights_ratio : float = None,
-                         weights_sum : float = None):
+                         weights_sum : float = None,
+                         inverted : bool = None):
 
+        """
+        Creates a dictiory with all of the inverted distance mean scores for different permutations
+        of parameter lists and different compared rankings.
+        """
 
 
         if n_results is None:
@@ -320,6 +412,9 @@ class RetrieverTunner:
         if compared_rankings is None:
             compared_rankings = {ranking : self.ranking_dicts[ranking] for ranking in self.embedding_model_names \
                 if ranking != self.target_ranking_name}
+
+        if inverted is None:
+            inverted = self.metrics_params['inverted']
 
 
         comparison_list_dict = {}
@@ -348,10 +443,23 @@ class RetrieverTunner:
                                                                                     weights_sum=weights_sum) \
                                                             for ranking_id in target_ranking.keys()]
 
+                        score = np.mean(comparison_list_dict[record_key])
 
-                        compared_scores_dict[record_key]['mean|' + str(n_result) + "|" + str(ceiling) + "|" + prep_type] = np.mean(comparison_list_dict[record_key])
+                        if inverted:
+                            # invert the score so that closer to one is better
+                            score = 1 - score
+
+                        # create name for inverted distance mean
+                        score_name = self._create_key_for_scores_dict(prefix = 'idm|',
+                                                                        n_result = n_result,
+                                                                        ceiling = ceiling,
+                                                                        prep_type = prep_type)
+
+                        compared_scores_dict[record_key][score_name] = score
 
         return compared_scores_dict
+
+### PLOT COMPARISON RANKINGS
 
     def show_model_comparison_plot(self,
                                    ranking_dicts : dict,
@@ -359,7 +467,12 @@ class RetrieverTunner:
                                     compared_model : str,
                                     top_n : int,
                                     text_lim : int,
+                                    alpha : float,
                                     plot_destination : str = None):
+
+        """
+        Show plotly scatter plot with target ranking ploted agains selected comparison ranking.
+        """
 
 
         # Create a Plotly figure
@@ -376,7 +489,8 @@ class RetrieverTunner:
                     x=x_data,
                     y=y_data,
                     mode='markers',
-                    name=text[0:text_lim]
+                    name=text[0:text_lim],
+                    marker=dict(opacity=alpha)
                 ))
 
         # Update layout
@@ -398,7 +512,12 @@ class RetrieverTunner:
                                compared_models : list = None,
                                top_n : int = None,
                                text_lim : int = None,
+                               alpha : float = None,
                                plot_destinations : list = None):
+
+        """
+        Show plotly scatter plots with target ranking ploted agains selected comparison rankings.
+        """
 
         if ranking_dicts is None:
             ranking_dicts = self.ranking_dicts
@@ -411,6 +530,8 @@ class RetrieverTunner:
             top_n = self.plots_params['top_n']
         if text_lim is None:
             text_lim = self.plots_params['text_lim']
+        if alpha is None:
+            alpha = self.plots_params['alpha']
         if plot_destinations is None:
             if self.plots_params['save_comp_plot']:
                 plot_destinations = ['comp_plot_' + target_model + '|' + model_name for model_name in compared_models]
@@ -428,6 +549,7 @@ class RetrieverTunner:
                                             compared_model = compared_model,
                                             top_n = top_n,
                                             text_lim = text_lim,
+                                            alpha = alpha,
                                             plot_destination = plot_destination)
 
 
