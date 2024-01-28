@@ -12,6 +12,7 @@ pytest
 openai
 pyyaml
 tox-gh-actions
+plotly
 nbconvert
 pylint
 ipykernel
