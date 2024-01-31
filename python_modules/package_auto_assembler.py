@@ -790,7 +790,7 @@ class LocalDependaciesHandler:
 
         # Remove specific dependency imports from the main module
         for dep in dependencies:
-            main_module_imports = [imp for imp in main_module_imports if f'.{dep} import *' not in imp]
+            main_module_imports = [imp for imp in main_module_imports if f'{dep} import' not in imp]
         main_module_content = self._remove_imports(main_module_content)
 
         # Process dependency modules
@@ -1271,7 +1271,8 @@ class PackageAutoAssembler:
 
         # combime module with its dependacies
         self.local_dependacies_h.save_combined_modules(
-            combined_module=self.local_dependacies_h.combine_modules(),
+            combined_module=self.local_dependacies_h.combine_modules(main_module_filepath = main_module_filepath,
+                                                                     dependencies_dir = dependencies_dir),
             save_filepath=save_filepath
         )
 
