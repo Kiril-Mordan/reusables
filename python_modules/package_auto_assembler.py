@@ -1163,6 +1163,7 @@ class PackageAutoAssembler:
                                     'License :: OSI Approved :: MIT License',
                                     'Topic :: Scientific/Engineering'])
     requirements_list = attr.ib(default=[])
+    execute_readme_notebook = attr.ib(default=True, type = bool)
     python_version = attr.ib(default="3.8")
     version_increment_type = attr.ib(default="patch", type = str)
     default_version = attr.ib(default="0.0.1", type = str)
@@ -1351,7 +1352,8 @@ class PackageAutoAssembler:
 
     def add_readme(self,
                     example_notebook_path : str = None,
-                    output_path : str = None):
+                    output_path : str = None,
+                    execute_notebook : bool = None):
 
         """
         Make README file based on usage example.
@@ -1364,11 +1366,20 @@ class PackageAutoAssembler:
             output_path = os.path.join(self.setup_directory,
                                        "README.md")
 
-        # converting example notebook to md
-        self.long_doc_h.convert_and_execute_notebook_to_md(
-            notebook_path = example_notebook_path,
-            output_path = output_path
-        )
+        if execute_notebook is None:
+            execute_notebook = self.execute_readme_notebook
+
+        if execute_notebook:
+            # converting example notebook to md
+            self.long_doc_h.convert_and_execute_notebook_to_md(
+                notebook_path = example_notebook_path,
+                output_path = output_path
+            )
+        else:
+            self.long_doc_h.convert_notebook_to_md(
+                notebook_path = example_notebook_path,
+                output_path = output_path
+            )
 
     def prep_setup_file(self,
                        metadata : dict = None,
