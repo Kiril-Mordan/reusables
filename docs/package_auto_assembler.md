@@ -149,19 +149,19 @@ pv.get_logs(
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-01-31 02:40:12</td>
+      <td>2024-02-01 05:29:16</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-01-31 02:40:12</td>
+      <td>2024-02-01 05:29:16</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-01-31 02:40:12</td>
+      <td>2024-02-01 05:29:16</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -432,7 +432,8 @@ ldh = LocalDependaciesHandler(
 print(ldh.combine_modules(
     # optional
     main_module_filepath = "../tests/package_auto_assembler/example_module.py",
-    dependencies_dir = "../tests/package_auto_assembler/dependancies/"
+    dependencies_dir = "../tests/package_auto_assembler/dependancies/",
+    add_empty_design_choices = False
 )[0:1000])
 ```
 
@@ -657,6 +658,7 @@ paa = PackageAutoAssembler(
                     'License :: OSI Approved :: MIT License',
                     'Topic :: Scientific/Engineering'],
     requirements_list = [],
+    execute_readme_notebook = True,
     python_version = "3.8",
     version_increment_type = "patch",
     default_version = "0.0.1"
@@ -737,7 +739,8 @@ paa.add_requirements_from_module(
 paa.add_readme(
     # optional
     example_notebook_path = "../tests/package_auto_assembler/example_module.ipynb",
-    output_path = "./example_module/README.md"
+    output_path = "./example_module/README.md",
+    execute_notebook=True,
 )
 ```
 

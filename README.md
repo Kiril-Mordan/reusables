@@ -50,11 +50,10 @@ from google_drive_support import get_google_drive_file_id, download_file, servic
 
 ## Content:
  
-[module](python_modules/mocker_db.py) | [usage](docs/mocker_db.md) - Mock Vector Db Handler
+[module](python_modules/redis_database_handler.py) - Redis Database Handler
 
-This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
-It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
-and basic data management within a simulated environment resembling a vector database.
+A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
+establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
 
 [module](python_modules/package_auto_assembler.py) | [usage](docs/package_auto_assembler.md) - Package Auto Assembler
 
@@ -64,30 +63,6 @@ to shorten a development cycle of reusable components, maintain certain standard
 for reusable code. It provides tool to simplify the process of package creatrion
 to a point that it can be triggered automatically within ci/cd pipelines,
 with minimal preparations and requirements for new modules.
-
-[module](python_modules/comparisonframe.py) | [usage](docs/comparisonframe.md) | [diagram](docs/comparisonframe.png) - Comparison Frame
-
-Designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
-such as character and word count, punctuation usage, and semantic similarity.
-It's particularly useful for scenarios where consistent text analysis is required,
-such as evaluating the performance of natural language processing models, monitoring content quality,
-or tracking changes in textual data over time using manual evaluation.
-
-[module](python_modules/google_drive_support.py) - Google Drive API Utilities Module
-
-This module provides a set of functions for interacting with the Google Drive API.
-It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
-
-[module](python_modules/redis_database_handler.py) - Redis Database Handler
-
-A handler class for managing interactions with a Redis database. This class provides methods for initializing a logger,
-establishing a connection with the Redis server, performing CRUD operations, and searching within the stored data based on embeddings.
-
-[module](python_modules/search_based_extractor.py) | [usage](docs/search_based_extractor.md) - Search Based Extractor
-
-Utility to simplify webscraping by taking advantave of search and assumptions about html structure.
-Extractor allows to find parent html element that contains searched term, record path to it in a file
-and reuse that to scrape data with same html structure.
 
 [module](python_modules/shouterlog.py) | [usage](docs/shouterlog.md) - Shouter Log
 
@@ -100,4 +75,29 @@ The purpose is to be integrated into other classes that also use logger.
 A simple tool to compare and tune retriever performance, given a desired ranking to strive for.
 The goal is to provide a simple metric to measure how a given retriver is close to the 'ideal', generated for example
 with a use of more expensive, slower or simply no-existant method.
+
+[module](python_modules/search_based_extractor.py) | [usage](docs/search_based_extractor.md) - Search Based Extractor
+
+Utility to simplify webscraping by taking advantave of search and assumptions about html structure.
+Extractor allows to find parent html element that contains searched term, record path to it in a file
+and reuse that to scrape data with same html structure.
+
+[module](python_modules/mocker_db.py) | [usage](docs/mocker_db.md) - Mock Vector Db Handler
+
+This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
+It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
+and basic data management within a simulated environment resembling a vector database.
+
+[module](python_modules/google_drive_support.py) - Google Drive API Utilities Module
+
+This module provides a set of functions for interacting with the Google Drive API.
+It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
+
+[module](python_modules/comparisonframe.py) | [usage](docs/comparisonframe.md) | [diagram](docs/comparisonframe.png) - Comparison Frame
+
+Designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
+such as character and word count, punctuation usage, and semantic similarity.
+It's particularly useful for scenarios where consistent text analysis is required,
+such as evaluating the performance of natural language processing models, monitoring content quality,
+or tracking changes in textual data over time using manual evaluation.
 
