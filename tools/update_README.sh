@@ -42,7 +42,7 @@ find "$module_directory" -type f -name "*.py" | while read -r file; do
         pypi_module_link="https://pypi.org/project/${module_name//_/-}/"
         pypi_link=""
         if curl -s --head  --request GET "$pypi_module_link" | grep "200 " > /dev/null; then
-            pypi_link=" | [pypi]($pypi_module_link)"
+            pypi_link=" | [![PyPiVersion](https://img.shields.io/pypi/v/${module_name//_/-})](https://pypi.org/project/${module_name//_/-}/)"
         fi
 
         # Append links and docstring to the output file

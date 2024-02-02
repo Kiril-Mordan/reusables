@@ -11,7 +11,6 @@ import random
 import logging
 import attr #>=22.2.0
 import copy
-
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 from plotly.offline import plot
@@ -445,12 +444,15 @@ class RetrieverTunner:
 
                         score = np.mean(comparison_list_dict[record_key])
 
+                        prefix = 'irdm|'
+
                         if inverted:
                             # invert the score so that closer to one is better
                             score = 1 - score
+                            prefix = 'rdm|'
 
                         # create name for inverted distance mean
-                        score_name = self._create_key_for_scores_dict(prefix = 'idm|',
+                        score_name = self._create_key_for_scores_dict(prefix = prefix,
                                                                         n_result = n_result,
                                                                         ceiling = ceiling,
                                                                         prep_type = prep_type)
