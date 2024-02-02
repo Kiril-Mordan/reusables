@@ -14,6 +14,6 @@ Modules in the reposity could be accessed from PyPI for the packages that reache
 - contains __package_metadata__ (won't package without it)
 - falls under common license
 
-The ones that were not packages, could still be used as packages with [this instruction]("https://github.com/Kiril-Mordan/reusables/blob/main/docs/module_from_raw_file.md").
+The ones that were not packages, could still be used as packages with [this instruction](https://github.com/Kiril-Mordan/reusables/blob/main/docs/module_from_raw_file.md).
 
 ## Content:
