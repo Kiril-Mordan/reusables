@@ -38,8 +38,15 @@ find "$module_directory" -type f -name "*.py" | while read -r file; do
             diagram_link=" | [diagram]($diagram_path)"
         fi
 
+        # Check if pypi module exists
+        pypi_module_link="https://pypi.org/project/${module_name//_/-}/"
+        pypi_link=""
+        if curl -s --head  --request GET "$pypi_module_link" | grep "200 " > /dev/null; then
+            pypi_link=" | [pypi]($pypi_module_link)"
+        fi
+
         # Append links and docstring to the output file
-        echo "$module_link$notebook_link$diagram_link - $docstring" >> "$output_file"
+        echo "$module_link$notebook_link$diagram_link$pypi_link - $docstring" >> "$output_file"
         echo "" >> "$output_file"
     fi
 done
