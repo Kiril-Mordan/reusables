@@ -259,7 +259,6 @@ class RetrieverTunner:
                                                 handler = handlers[model_name]) for model_name in model_names}
 
 
-
 ### COMPERISON RANKING SCORES
 
     def _substruct_lists_with_correction(self,
