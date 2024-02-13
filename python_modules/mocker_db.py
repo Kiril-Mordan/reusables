@@ -19,7 +19,7 @@ import attr #>=22.2.0
 import hashlib
 ## for search
 import concurrent.futures
-import hnswlib #0.7.0
+import hnswlib #==0.7.0
 from sentence_transformers import SentenceTransformer #==2.2.2
 
 
@@ -27,7 +27,6 @@ from sentence_transformers import SentenceTransformer #==2.2.2
 __package_metadata__ = {
     "author": "Kyrylo Mordan",
     "author_email": "parachute.repo@gmail.com",
-    "version": "0.0.1",
     "description": "A mock handler for simulating a vector database.",
     # Add other metadata as needed
 }
@@ -478,6 +477,9 @@ class MockerDB:
             if all(value.get(k) == v for k, v in filter_criteria.items())
         }
 
+        if len(self.filtered_data) == 0:
+            self.logger.warning("No data was found with applied filters!")
+
     def remove_from_database(self, filter_criteria : dict = None):
         """
         Removes key-value pairs from a dictionary based on filter criteria.
@@ -487,6 +489,8 @@ class MockerDB:
             key: value for key, value in self.data.items()
             if not all(value.get(k) == v for k, v in filter_criteria.items())
         }
+
+        self.save_data()
 
     def search_database_keys(self,
         query: str,
@@ -532,15 +536,19 @@ class MockerDB:
 
             try:
 
-                labels, distances = self.similarity_search_h.search(query_embedding = query_embedding,
-                                                                    data_embeddings = data_embeddings,
-                                                                    k=search_results_n,
-                                                                    similarity_search_type = similarity_search_type,
-                                                                    similarity_params = similarity_params)
+                if len(data_embeddings) > 0:
+                    labels, distances = self.similarity_search_h.search(query_embedding = query_embedding,
+                                                                        data_embeddings = data_embeddings,
+                                                                        k=search_results_n,
+                                                                        similarity_search_type = similarity_search_type,
+                                                                        similarity_params = similarity_params)
 
+                    self.results_keys = [self.keys_list[i] for i in labels]
+                    self.results_dictances = distances
+                else:
+                    self.results_keys = [{}]
+                    self.results_dictances = None
 
-                self.results_keys = [self.keys_list[i] for i in labels]
-                self.results_dictances = distances
 
             except Exception as e:
                 self.logger.error("Problem during extracting results from the mock database!", e)
