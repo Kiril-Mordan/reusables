@@ -918,7 +918,7 @@ class LongDocHandler:
             output_path = self.markdown_filepath
 
         # Load the notebook
-        with open(notebook_path) as fh:
+        with open(notebook_path, encoding='utf-8') as fh:
             notebook_node = nbformat.read(fh, as_version=4)
 
         # Create a Markdown exporter
