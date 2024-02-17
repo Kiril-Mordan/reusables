@@ -149,19 +149,19 @@ pv.get_logs(
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-02-01 05:29:16</td>
+      <td>2024-02-17 18:52:18</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-02-01 05:29:16</td>
+      <td>2024-02-17 18:52:18</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-02-01 05:29:16</td>
+      <td>2024-02-17 18:52:18</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -260,7 +260,7 @@ rh.list_custom_modules(
 
 
 
-    ['example_local_dependacy_2', 'example_local_dependacy_1']
+    ['example_local_dependacy_1', 'example_local_dependacy_2']
 
 
 
@@ -455,26 +455,25 @@ print(ldh.combine_modules(
     
     __design_choices__ = {}
     
-    # Metadata for package creation
-    
-    
     @attr.s
-    class ComparisonFrame:
+    class Shouter:
     
         """
-        Compares query:response pairs expected vs recieved with semantic similarity
-        and simple metrics of word count, line count etc.
+        A class for managing and displaying formatted log messages.
     
-        ...
+        This class uses the logging module to create and manage a logger
+        for displaying formatted messages. It provides a method to output
+        various types of lines and headers, with customizable message and
+        line lengths.
+        """
     
-        Attributes
-        ----------
-        embedder : SentenceTransformer
-            The model used to generate embeddings for semantic comparison.
-        record_file : str
-            The name of the CSV file where queries and expected results are stored.
-        results_file : str
-            The name of the CSV file where comparison results 
+        # Formatting settings
+        dotline_length = attr.ib(default=50)
+    
+        # Logger settings
+        logger = attr.ib(default=None)
+        logger_name = attr.ib(default='Shouter')
+        loggerLvl = attr.ib(default=lo
 
 
 #### Save combined module
