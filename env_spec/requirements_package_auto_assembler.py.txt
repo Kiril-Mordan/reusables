@@ -1,0 +1,7 @@
+### package_auto_assembler.py
+nbformat
+stdlib-list
+pandas
+nbconvert
+pyyaml
+attrs>=22.2.0
