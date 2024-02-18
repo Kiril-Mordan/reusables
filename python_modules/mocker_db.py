@@ -1,9 +1,9 @@
 """
-Mock Vector Db Handler
+MockerDB
 
-This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
-It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
-and basic data management within a simulated environment resembling a vector database.
+A python module that contains mock vector database like solution built around
+dictionary data type. It contains methods necessary to interact with this 'database',
+embed, search and persist.
 """
 
 # Imports
@@ -81,10 +81,36 @@ class SentenceTransformerEmbedder:
             embeddings.extend(batch_embeddings)
         return embeddings
 
-    def embed_sentences_in_batches_parallel(self, texts, batch_size : int = None, max_workers : int =  None):
+    # def embed_sentences_in_batches_parallel(self, texts, batch_size : int = None, max_workers : int =  None):
 
+    #     """
+    #     Embeds a list of texts in batches in parallel.
+    #     """
+
+    #     if batch_size is None:
+    #         batch_size = self.tbatch_size
+
+    #     if max_workers is None:
+    #         max_workers = self.max_workers
+
+
+    #     # Split texts into batches
+    #     batches = [texts[i:i + batch_size] for i in range(0, len(texts), batch_size)]
+
+    #     # Process batches in parallel
+    #     embeddings = []
+    #     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+    #         # Submit embedding tasks to the executor
+    #         future_to_batch = {executor.submit(self.embed_sentence_transformer, batch): batch for batch in batches}
+
+    #         for future in concurrent.futures.as_completed(future_to_batch):
+    #             embeddings.extend(future.result())
+
+    #     return embeddings
+
+    def embed_sentences_in_batches_parallel(self, texts, batch_size: int = None, max_workers: int = None):
         """
-        Embeds a list of texts in batches in parallel.
+        Embeds a list of texts in batches in parallel using processes.
         """
 
         if batch_size is None:
@@ -93,14 +119,10 @@ class SentenceTransformerEmbedder:
         if max_workers is None:
             max_workers = self.max_workers
 
-
-        # Split texts into batches
         batches = [texts[i:i + batch_size] for i in range(0, len(texts), batch_size)]
 
-        # Process batches in parallel
         embeddings = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Submit embedding tasks to the executor
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
             future_to_batch = {executor.submit(self.embed_sentence_transformer, batch): batch for batch in batches}
 
             for future in concurrent.futures.as_completed(future_to_batch):
@@ -352,6 +374,7 @@ class MockerDB:
 
         if self.persist:
             try:
+                self.logger.debug("Persisting values")
                 with open(self.file_path, 'wb') as file:
                     dill.dump(self.data, file)
             except Exception as e:
@@ -421,12 +444,14 @@ class MockerDB:
         values_dict_list = copy.deepcopy(values_dict_list)
 
         try:
+            self.logger.debug("Making unique keys")
             # make unique keys, taking embed parameter as a part of a key
             values_dict_all = {self._make_key(d = d, embed=embed) : d for d in values_dict_list}
         except Exception as e:
             self.logger.error("Problem during making unique keys foir insert dicts!", e)
 
         try:
+            self.logger.debug("Remove values that already exist")
             # check if keys exist in data
             values_dict_filtered = {key : values_dict_all[key] for key in values_dict_all.keys() if key not in self.data.keys()}
 
@@ -435,6 +460,7 @@ class MockerDB:
 
         if values_dict_filtered != {}:
             try:
+                self.logger.debug("Inserting values")
                 # insert new values
                 self._insert_values_dict(values_dicts = values_dict_filtered,
                                                     var_for_embedding_name = var_for_embedding_name,
