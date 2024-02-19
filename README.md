@@ -35,11 +35,11 @@ It's particularly useful for scenarios where consistent text analysis is require
 such as evaluating the performance of natural language processing models, monitoring content quality,
 or tracking changes in textual data over time using manual evaluation.
 
-[module](python_modules/mocker_db.py) | [usage](docs/mocker_db.md) | [![PyPiVersion](https://img.shields.io/pypi/v/mocker-db)](https://pypi.org/project/mocker-db/) - Mock Vector Db Handler
+[module](python_modules/mocker_db.py) | [usage](docs/mocker_db.md) | [![PyPiVersion](https://img.shields.io/pypi/v/mocker-db)](https://pypi.org/project/mocker-db/) - MockerDB
 
-This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
-It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
-and basic data management within a simulated environment resembling a vector database.
+A python module that contains mock vector database like solution built around
+dictionary data type. It contains methods necessary to interact with this 'database',
+embed, search and persist.
 
 [module](python_modules/shouterlog.py) | [usage](docs/shouterlog.md) | [![PyPiVersion](https://img.shields.io/pypi/v/shouterlog)](https://pypi.org/project/shouterlog/) - Shouter Log
 
