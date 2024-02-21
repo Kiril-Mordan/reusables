@@ -16,6 +16,7 @@ tox-gh-actions
 plotly
 nbconvert
 pylint
+tqdm
 ipykernel
 dill
 package-auto-assembler
