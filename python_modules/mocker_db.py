@@ -19,7 +19,7 @@ import attr #>=22.2.0
 import hashlib
 ## for search
 import concurrent.futures
-import hnswlib #==0.7.0
+import hnswlib #==0.8.0
 from sentence_transformers import SentenceTransformer #==2.2.2
 
 
@@ -572,7 +572,7 @@ class MockerDB:
                     self.results_keys = [self.keys_list[i] for i in labels]
                     self.results_dictances = distances
                 else:
-                    self.results_keys = [{}]
+                    self.results_keys = []
                     self.results_dictances = None
 
 
@@ -635,5 +635,6 @@ class MockerDB:
         # resetting search
         self.filtered_data = None
         self.keys_list = None
+        self.results_keys = []
 
         return results
