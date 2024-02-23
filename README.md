@@ -69,3 +69,7 @@ A simple tool to compare and tune retriever performance, given a desired ranking
 The goal is to provide a simple metric to measure how a given retriver is close to the 'ideal', generated for example
 with a use of more expensive, slower or simply no-existant method.
 
+[module](python_modules/gridlooper.py) - Grid Looper
+
+A tool to run experiments based on defined grid and function with single iteration.
+
