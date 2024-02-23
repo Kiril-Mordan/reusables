@@ -1,5 +1,5 @@
-numpy
 sentence-transformers
+numpy
 google-auth-httplib2
 stdlib-list
 pandas
