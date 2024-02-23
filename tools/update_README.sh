@@ -38,6 +38,13 @@ find "$module_directory" -type f -name "*.py" | while read -r file; do
             diagram_link=" | [diagram]($diagram_path)"
         fi
 
+        # Check if drawio diagram with the same name exists
+        drawio_diagram_path="$docs_directory/$module_name.drawio.png"
+        drawio_diagram_link=""
+        if [ -f "$drawio_diagram_path" ]; then
+            drawio_diagram_link=" | [drawio]($drawio_diagram_path)"
+        fi
+
         # Check if pypi module exists
         pypi_module_link="https://pypi.org/project/${module_name//_/-}/"
         pypi_link=""
@@ -46,7 +53,7 @@ find "$module_directory" -type f -name "*.py" | while read -r file; do
         fi
 
         # Append links and docstring to the output file
-        echo "$module_link$notebook_link$diagram_link$pypi_link - $docstring" >> "$output_file"
+        echo "$module_link$notebook_link$diagram_link$drawio_diagram_link$pypi_link - $docstring" >> "$output_file"
         echo "" >> "$output_file"
     fi
 done
