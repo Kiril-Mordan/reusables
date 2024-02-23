@@ -572,7 +572,7 @@ class MockerDB:
                     self.results_keys = [self.keys_list[i] for i in labels]
                     self.results_dictances = distances
                 else:
-                    self.results_keys = [{}]
+                    self.results_keys = []
                     self.results_dictances = None
 
 
@@ -635,5 +635,6 @@ class MockerDB:
         # resetting search
         self.filtered_data = None
         self.keys_list = None
+        self.results_keys = []
 
         return results
