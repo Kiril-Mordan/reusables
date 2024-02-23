@@ -19,7 +19,7 @@ import attr #>=22.2.0
 import hashlib
 ## for search
 import concurrent.futures
-import hnswlib #==0.7.0
+import hnswlib #==0.8.0
 from sentence_transformers import SentenceTransformer #==2.2.2
 
 
