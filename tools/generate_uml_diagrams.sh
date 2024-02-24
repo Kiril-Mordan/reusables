@@ -20,7 +20,7 @@ for file in "${PLANTUML_DIR}"/*.txt; do
 
     # Move the generated PNG to the docs directory
     # Assuming PlantUML creates the PNG in the same directory as the .txt file
-    mv "${PLANTUML_DIR}/${filename}.png" "${DOCS_DIR}/"
+    mv "${PLANTUML_DIR}/${filename}_plantuml.png" "${DOCS_DIR}/"
 
 done
 

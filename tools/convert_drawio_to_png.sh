@@ -17,5 +17,5 @@ mkdir -p "$TARGET_DIR"
 for file in "$SOURCE_DIR"/*.drawio; do
     filename=$(basename "$file" .drawio)
     # Use the draw.io CLI to convert each file to PNG
-    drawio -x -f png -o "$TARGET_DIR/$filename.drawio.png" "$file"
+    drawio --no-sandbox --disable-gpu -x -f png -o "$TARGET_DIR/$filename.drawio.png" "$file"
 done

@@ -91,7 +91,7 @@ completion = client.chat.completions.create(
 plantuml_code = completion.choices[0].message.content
 
 # save plantum code
-plantuml_file_path = f'plantuml/{module_name}.txt'
+plantuml_file_path = f'plantuml/{module_name}_plantuml.txt'
 
 with open(plantuml_file_path, 'w') as file:
     file.write(plantuml_code)

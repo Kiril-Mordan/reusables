@@ -59,6 +59,7 @@ jobs:
 
           if [ -z "$changed_files" ]; then
               echo "No changes found in the last three commits."
+              exit 0
           else
               echo "Changed files:"
               echo "$changed_files"
