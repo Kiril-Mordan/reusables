@@ -77,6 +77,8 @@ jobs:
 
       - name: Download and install drawio
         run: |
+          sudo apt-get update
+          sudo apt-get install libnotify4 libappindicator3-1
           wget https://github.com/jgraph/drawio-desktop/releases/download/v13.0.3/draw.io-amd64-13.0.3.deb
           sudo dpkg -i draw.io-amd64-13.0.3.deb
 
