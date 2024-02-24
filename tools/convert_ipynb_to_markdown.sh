@@ -26,8 +26,8 @@ if [ $# -gt 0 ]; then
     for module_file in "$@"; do
         convert_to_markdown "$module_file"
     done
-else
-    for module_file in "$root_dir"/*.ipynb; do
-        convert_to_markdown "$module_file"
-    done
-fi
+# else
+#     for module_file in "$root_dir"/*.ipynb; do
+#         convert_to_markdown "$module_file"
+#     done
+# fi
