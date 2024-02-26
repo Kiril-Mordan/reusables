@@ -27,7 +27,7 @@ for reusable code. It provides tool to simplify the process of package creatrion
 to a point that it can be triggered automatically within ci/cd pipelines,
 with minimal preparations and requirements for new modules.
 
-[module](python_modules/comparisonframe.py) | [usage](docs/comparisonframe.md) | [diagram](docs/comparisonframe.png) - Comparison Frame
+[module](python_modules/comparisonframe.py) | [usage](docs/comparisonframe.md) | [plantuml](docs/comparisonframe_plantuml.png) - Comparison Frame
 
 Designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
 such as character and word count, punctuation usage, and semantic similarity.
@@ -69,7 +69,7 @@ A simple tool to compare and tune retriever performance, given a desired ranking
 The goal is to provide a simple metric to measure how a given retriver is close to the 'ideal', generated for example
 with a use of more expensive, slower or simply no-existant method.
 
-[module](python_modules/gridlooper.py) - Grid Looper
+[module](python_modules/gridlooper.py) | [drawio: -Page-1](docs/gridlooper-Page-1.png) - Grid Looper
 
 A tool to run experiments based on defined grid and function with single iteration.
 
