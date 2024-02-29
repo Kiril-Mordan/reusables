@@ -665,6 +665,7 @@ class LocalDependaciesHandler:
     add_empty_design_choices = attr.ib(default=False, type = bool)
 
     # output
+    dependencies_names_list = attr.ib(init=False)
     combined_module = attr.ib(init=False)
 
     logger = attr.ib(default=None)
@@ -820,7 +821,7 @@ class LocalDependaciesHandler:
 
         # List of dependency module names
         dependencies = [os.path.splitext(f)[0] for f in os.listdir(dependencies_dir) if f.endswith('.py')]
-
+        self.dependencies_names_list = dependencies
         # Remove specific dependency imports from the main module
         for dep in dependencies:
             main_module_imports = [imp for imp in main_module_imports if f'{dep} import' not in imp]
@@ -902,6 +903,16 @@ class LongDocHandler:
 
             self.logger = logger
 
+    def _format_title(self, filename : str) -> str:
+        """
+        Formats the filename into a more readable title by removing the '.md' extension,
+        replacing underscores with spaces, and capitalizing each word.
+        """
+        title_without_extension = os.path.splitext(filename)[0]  # Remove the .md extension
+        title_with_spaces = title_without_extension.replace('_', ' ')  # Replace underscores with spaces
+        # Capitalize the first letter of each word
+        return ' '.join(word.capitalize() for word in title_with_spaces.split())
+
 
     def convert_notebook_to_md(self,
                                notebook_path : str = None,
@@ -972,6 +983,63 @@ class LongDocHandler:
             fh.write(body)
 
         self.logger.debug(f"Converted and executed {notebook_path} to {output_path}")
+
+    def convert_dependacies_notebooks_to_md(self,
+                                            dependacies_dir : str,
+                                            dependacies_names : list,
+                                            output_path : str = "../dep_md"):
+
+        """
+        Converts multiple dependacies into multiple md
+        """
+
+        for dep_name in dependacies_names:
+
+            dependancy_path = os.path.join(dependacies_dir, dep_name + ".ipynb")
+
+            self.convert_notebook_to_md(
+                notebook_path = dependancy_path,
+                output_path = os.path.join(output_path, f"{dep_name}.md")
+            )
+
+    def combine_md_files(self,
+                         files_path : str,
+                         md_files : list,
+                         output_file : str,
+                         content_section_title : str = "# Table of Contents\n"):
+        """
+        Combine all markdown (.md) files from the source directory into a single markdown file,
+        and prepend a content section with a bullet point for each component.
+        """
+        # Ensure the source directory ends with a slash
+        if not files_path.endswith('/'):
+            files_path += '/'
+
+        if md_files is None:
+            # Get a list of all markdown files in the directory if not provided
+            md_files = [f for f in os.listdir(files_path) if f.endswith('.md')]
+
+        # Start with a content section
+        content_section = content_section_title
+        combined_content = ""
+
+        for md_file in md_files:
+            # Format the filename to a readable title for the content section
+            title = self._format_title(md_file)
+            # Add the title to the content section
+            content_section += f"- {title}\n"
+
+            with open(files_path + md_file, 'r', encoding='utf-8') as f:
+                # Append each file's content to the combined_content string
+                combined_content +=  f.read() + "\n\n"
+
+        # Prepend the content section to the combined content
+        final_content = content_section + "\n" + combined_content
+
+        # Write the final combined content to the output file
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(final_content)
+        print(f"Combined Markdown with Table of Contents written to {output_file}")
 
     def return_long_description(self,
                                 markdown_filepath : str = None):
