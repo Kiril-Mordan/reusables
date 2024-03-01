@@ -1,0 +1,61 @@
+<mxfile host="app.diagrams.net" modified="2024-03-01T22:52:36.118Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6.1 Safari/605.1.15" etag="i_SZGYVVtC_DIh7EsAmR" version="23.1.5" type="device">
+  <diagram name="Page-1" id="WLMHj4V7T1tkh2896ld8">
+    <mxGraphModel dx="1354" dy="675" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-7" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="990" y="156" width="295" height="193" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-1" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="146" y="93" width="792" height="344" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-2" value="package auto assembler" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="191" y="102" width="135" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-3" value="module_name.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" vertex="1" parent="1">
+          <mxGeometry x="-31" y="112.5" width="114" height="127" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-4" value="module_name.ipynb" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" vertex="1" parent="1">
+          <mxGeometry x="-27" y="275" width="114" height="127" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-5" value="module_name-version-py3-none-any.whl" style="shape=card;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1036" y="219" width="80" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-6" value="" style="shape=card;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1179" y="219" width="80" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-8" value="./dist" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="987" y="161" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-9" value="extract metadata from module" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="170" y="148" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-10" value="update version" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="294" y="148" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-11" value="prepare setup dir" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="362" y="217" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-12" value="merge &amp;nbsp;local dependacies" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="428" y="291" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-13" value="extract requirements from module" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="426" y="148" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-14" value="make readme file" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="502" y="217" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-15" value="prepare setup file" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="634" y="217" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-16" value="make a package" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="766" y="217" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="gH9P8Dfxt6CHixhxEZe5-17" value="module_name-version.tar.gz" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1189" y="259" width="60" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
