@@ -17,7 +17,6 @@ from tqdm import tqdm
 
 
 __design_choices__ = {
-
 }
 
 @attr.s

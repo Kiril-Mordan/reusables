@@ -26,6 +26,10 @@ jobs:
           ./tools/update_module_requirements.sh
           ./tools/update_requirements.sh
 
+      - name: Check requirements for vulnerabilities
+        run: |
+          ./tools/check_for_vulnerabilities.sh
+
       - name: Upload updated requirements
         uses: actions/upload-artifact@v2
         with:
