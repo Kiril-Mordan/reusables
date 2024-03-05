@@ -1,0 +1,6 @@
+### retriever_tunner
+numpy
+attrs>=22.2.0
+plotly
+plotly
+plotly

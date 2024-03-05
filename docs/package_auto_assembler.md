@@ -40,7 +40,7 @@ pv = VersionHandler(
     # required
     versions_filepath = '../tests/package_auto_assembler/lsts_package_versions.yml',
     log_filepath = '../tests/package_auto_assembler/version_logs.csv',
-    # optional 
+    # optional
     default_version = "0.0.1")
 ```
 
@@ -49,7 +49,7 @@ pv = VersionHandler(
 
 ```python
 pv.add_package(
-    package_name = "new_package", 
+    package_name = "new_package",
     # optional
     version = "0.0.1"
 )
@@ -149,19 +149,19 @@ pv.get_logs(
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-01-20 01:53:46</td>
+      <td>2024-03-03 04:59:50</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-01-20 01:53:46</td>
+      <td>2024-03-03 04:59:50</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-01-20 01:53:46</td>
+      <td>2024-03-03 04:59:50</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -377,7 +377,7 @@ mh = MetadataHandler(
 
 ```python
 mh.is_metadata_available(
-    # optional 
+    # optional
     module_filepath = "../tests/package_auto_assembler/example_module.py"
 )
 ```
@@ -394,7 +394,7 @@ mh.is_metadata_available(
 
 ```python
 mh.get_package_metadata(
-    # optional 
+    # optional
     module_filepath = "../tests/package_auto_assembler/example_module.py"
 )
 ```
@@ -432,7 +432,8 @@ ldh = LocalDependaciesHandler(
 print(ldh.combine_modules(
     # optional
     main_module_filepath = "../tests/package_auto_assembler/example_module.py",
-    dependencies_dir = "../tests/package_auto_assembler/dependancies/"
+    dependencies_dir = "../tests/package_auto_assembler/dependancies/",
+    add_empty_design_choices = False
 )[0:1000])
 ```
 
@@ -452,6 +453,8 @@ print(ldh.combine_modules(
     import os
     import csv
     
+    __design_choices__ = {}
+    
     @attr.s
     class Shouter:
     
@@ -470,8 +473,19 @@ print(ldh.combine_modules(
         # Logger settings
         logger = attr.ib(default=None)
         logger_name = attr.ib(default='Shouter')
-        loggerLvl = attr.ib(default=logging.DEBUG)
-        logger_f
+        loggerLvl = attr.ib(default=lo
+
+
+
+```python
+ldh.dependencies_names_list
+```
+
+
+
+
+    ['example_local_dependacy_2', 'example_local_dependacy_1']
+
 
 
 #### Save combined module
@@ -558,14 +572,14 @@ sdh = SetupDirHandler(
                 'long_description' : long_description,
                 'keywords': ['python']},
     requirements = ['attrs>=22.2.0'],
-    classifiers = ['Development Status :: 3 - Alpha', 
-                   'Intended Audience :: Developers', 
-                   'Intended Audience :: Science/Research', 
-                   'Programming Language :: Python :: 3', 
-                   'Programming Language :: Python :: 3.9', 
-                   'Programming Language :: Python :: 3.10', 
-                   'Programming Language :: Python :: 3.11', 
-                   'License :: OSI Approved :: MIT License', 
+    classifiers = ['Development Status :: 3 - Alpha',
+                   'Intended Audience :: Developers',
+                   'Intended Audience :: Science/Research',
+                   'Programming Language :: Python :: 3',
+                   'Programming Language :: Python :: 3.9',
+                   'Programming Language :: Python :: 3.10',
+                   'Programming Language :: Python :: 3.11',
+                   'License :: OSI Approved :: MIT License',
                    'Topic :: Scientific/Engineering'],
     setup_directory = "./example_setup_dir"
 )
@@ -615,14 +629,14 @@ sdh.write_setup_file(
                 'description': 'Example Module',
                 'keywords': ['python']},
     requirements = ['attrs>=22.2.0'],
-    classifiers = ['Development Status :: 3 - Alpha', 
-                   'Intended Audience :: Developers', 
-                   'Intended Audience :: Science/Research', 
-                   'Programming Language :: Python :: 3', 
-                   'Programming Language :: Python :: 3.9', 
-                   'Programming Language :: Python :: 3.10', 
-                   'Programming Language :: Python :: 3.11', 
-                   'License :: OSI Approved :: MIT License', 
+    classifiers = ['Development Status :: 3 - Alpha',
+                   'Intended Audience :: Developers',
+                   'Intended Audience :: Science/Research',
+                   'Programming Language :: Python :: 3',
+                   'Programming Language :: Python :: 3.9',
+                   'Programming Language :: Python :: 3.10',
+                   'Programming Language :: Python :: 3.11',
+                   'License :: OSI Approved :: MIT License',
                    'Topic :: Scientific/Engineering'],
     setup_directory = "./example_setup_dir"
 )
@@ -655,6 +669,7 @@ paa = PackageAutoAssembler(
                     'License :: OSI Approved :: MIT License',
                     'Topic :: Scientific/Engineering'],
     requirements_list = [],
+    execute_readme_notebook = True,
     python_version = "3.8",
     version_increment_type = "patch",
     default_version = "0.0.1"
@@ -735,7 +750,8 @@ paa.add_requirements_from_module(
 paa.add_readme(
     # optional
     example_notebook_path = "../tests/package_auto_assembler/example_module.ipynb",
-    output_path = "./example_module/README.md"
+    output_path = "./example_module/README.md",
+    execute_notebook=False,
 )
 ```
 
@@ -772,7 +788,7 @@ paa.prep_setup_file(
                     'Programming Language :: Python :: 3.11',
                     'License :: OSI Approved :: MIT License',
                     'Topic :: Scientific/Engineering']
-    
+
 )
 ```
 

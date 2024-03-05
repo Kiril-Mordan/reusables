@@ -18,7 +18,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
-          fetch-depth: 4  # Fetches prev commits
+          fetch-depth: 0  # Fetches prev commits
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -75,12 +75,20 @@ jobs:
               echo "::set-output name=files::${processed_files}"
           fi
 
-      - name: Download and install drawio
-        run: |
-          sudo apt-get update
-          sudo apt-get install libnotify4 libappindicator3-1
-          wget https://github.com/jgraph/drawio-desktop/releases/download/v13.0.3/draw.io-amd64-13.0.3.deb
-          sudo dpkg -i draw.io-amd64-13.0.3.deb
+      # - name: Download and install drawio
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install libnotify4 libappindicator3-1
+      #     wget https://github.com/jgraph/drawio-desktop/releases/download/v13.0.3/draw.io-amd64-13.0.3.deb
+      #     sudo dpkg -i draw.io-amd64-13.0.3.deb
+
+      - name: Export drawio files to png files
+        uses: rlespinasse/drawio-export-action@v2
+        with:
+          path: drawio
+          format: png
+          transparent: true
+          output: docs
 
       - name: Create and activate virtual environment
         run: |
@@ -97,12 +105,13 @@ jobs:
         run: |
           ./tools/convert_ipynb_to_markdown.sh ${{ steps.changed-modules.outputs.files }}
 
-      - name: Generate png files from drawio
-        run: |
-          ./tools/convert_drawio_to_png.sh
+      # - name: Generate png files from drawio
+      #   run: |
+      #     ./tools/convert_drawio_to_png.sh
 
       - name: Update README.md
         run: |
+          sudo mv drawio/docs/* docs
           ./tools/update_README.sh
 
       - name: Commit changes
