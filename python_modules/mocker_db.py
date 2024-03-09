@@ -309,6 +309,7 @@ class MockerDB:
 
     ## inputs with defaults
     file_path = attr.ib(default="./mock_persist", type=str)
+    embs_file_path = attr.ib(default="./mock_embs_persist", type=str)
     persist = attr.ib(default=False, type=bool)
 
     embedder_error_tolerance = attr.ib(default=0.0, type=float)
@@ -318,8 +319,11 @@ class MockerDB:
     loggerLvl = attr.ib(default=logging.INFO)
     logger_format = attr.ib(default=None)
 
-    ## outputs
+    ## data
     data = attr.ib(default=None, init=False)
+    embs = attr.ib(default=None, init=False)
+
+    ## outputs
     filtered_data = attr.ib(default=None, init=False)
     keys_list = attr.ib(default=None, init = False)
     results_keys = attr.ib(default=None, init = False)
@@ -349,7 +353,7 @@ class MockerDB:
 
 
 
-    def establish_connection(self, file_path : str = None):
+    def establish_connection(self, file_path : str = None, embs_file_path : str = None):
 
         """
         Simulates establishing a connection by loading data from a local file into the 'data' attribute.
@@ -358,6 +362,9 @@ class MockerDB:
         if file_path is None:
             file_path = self.file_path
 
+        if embs_file_path is None:
+            embs_file_path = self.embs_file_path
+
         try:
             with open(file_path, 'rb') as file:
                 self.data = dill.load(file)
@@ -365,6 +372,14 @@ class MockerDB:
             self.data = {}
         except Exception as e:
             self.logger.error("Error loading data from file: ", e)
+
+        try:
+            with open(embs_file_path, 'rb') as file:
+                self.embs = dill.load(file)
+        except FileNotFoundError:
+            self.embs = {}
+        except Exception as e:
+            self.logger.error("Error loading embeddings storage from file: ", e)
 
     def save_data(self):
 
@@ -377,37 +392,53 @@ class MockerDB:
                 self.logger.debug("Persisting values")
                 with open(self.file_path, 'wb') as file:
                     dill.dump(self.data, file)
+                with open(self.embs_file_path, 'wb') as file:
+                    dill.dump(self.embs, file)
             except Exception as e:
                 self.logger.error("Error saving data to file: ", e)
 
-    def hash_string_sha256(self,input_string):
+    def hash_string_sha256(self,input_string : str) -> str:
         return hashlib.sha256(input_string.encode()).hexdigest()
 
-    def _make_key(self,d, embed):
+    def _make_key(self,
+                  d : dict,
+                  embed : bool) -> str:
 
         input_string = json.dumps(d) + str(embed)
 
         return self.hash_string_sha256(input_string)
 
-    def _add_embeddings(self, data_dict, var_for_embedding_name):
+    def _make_embs_key(self,
+                       text : str,
+                       model : str) -> str:
 
-        """
-        Prepare a dictionary for storage in Mocker by adding embedding.
-        """
+        input_string = str(text) + str(model)
 
-        try:
+        return self.hash_string_sha256(input_string)
 
-            embedding = self.embedder.embed(data_dict[var_for_embedding_name])
-            data_dict['embedding'] = embedding
+    # def _add_embeddings(self,
+    #                     data_dict : dict,
+    #                     var_for_embedding_name : str) -> dict:
 
-        except Exception as e:
-            return 1
+    #     """
+    #     Prepare a dictionary for storage in Mocker by adding embedding.
+    #     """
 
-        return data_dict
+    #     try:
 
+    #         embedding = self.embedder.embed(data_dict[var_for_embedding_name])
+    #         data_dict['embedding'] = embedding
 
+    #     except Exception as e:
+    #         return 1
 
-    def _insert_values_dict(self, values_dicts, var_for_embedding_name, embed = True):
+    #     return data_dict
+
+    def _insert_values_dict(self,
+                            values_dicts : dict,
+                            var_for_embedding_name : str,
+                            model_name : str = None,
+                            embed : bool = True) -> None:
 
         """
         Simulates inserting key-value pair into the mock database.
@@ -416,26 +447,65 @@ class MockerDB:
 
         if embed:
 
-            list_of_text_to_embed = [values_dicts[insd][var_for_embedding_name] for insd in values_dicts]
+            if model_name is None:
+                model_name = self.embedder_params['model_name_or_path']
 
+            list_of_text_to_embed = [values_dicts[insd][var_for_embedding_name] \
+                for insd in values_dicts]
+
+            # generate list of hashes
+            list_of_hash_for_embeddings = [self._make_embs_key(text = text,
+                                                               model = model_name) \
+                for text in list_of_text_to_embed]
+
+            # check which embeddings are not present already
+            if model_name not in list(self.embs.keys()):
+                self.embs[model_name] = {}
+
+            current_embs_keys = list(self.embs[model_name].keys())
+            filtered_list_of_text_to_embed = []
+            existing_list_of_embeddings = []
+
+            for new_hash, new_text in zip(list_of_hash_for_embeddings, list_of_text_to_embed):
+                if new_hash is not current_embs_keys:
+                    filtered_list_of_text_to_embed.append(new_text)
+                else:
+                    existing_list_of_embeddings.append(self.embs[model_name][new_hash])
+
+            # embed new with embedder
             if self.embedder.processing_type in ['parallel', 'batch']:
-
-                embedded_list_of_text = self.embedder.embed(text = list_of_text_to_embed)
-
+                new_embedded_list_of_text = self.embedder.embed(text = filtered_list_of_text_to_embed)
             else:
+                new_embedded_list_of_text = [self.embedder.embed(text = text_to_embed) \
+                    for text_to_embed in filtered_list_of_text_to_embed]
 
-                embedded_list_of_text = [self.embedder.embed(text = text_to_embed) for text_to_embed in list_of_text_to_embed]
+            embedded_list_of_text = []
+            # construct embeddings list from new and stored
+            for new_hash, new_text in zip(list_of_hash_for_embeddings, list_of_text_to_embed):
+                if new_hash is not current_embs_keys:
+                    new_embedding = new_embedded_list_of_text.pop(0)
+                    embedded_list_of_text.append(new_embedding)
+                    # update embeddigs in embeddings storage
+                    self.embs[new_hash] = new_embedding
+                else:
+                    embedded_list_of_text.append(existing_list_of_embeddings.pop(0))
 
+            # assing embeddings to data
             i = 0
             for insd in values_dicts:
                 values_dicts[insd]['embedding'] = embedded_list_of_text[i]
                 i = i + 1
 
+        # update data with embeddings
         self.data.update(values_dicts)
+        # apply persist strategy
         self.save_data()
 
 
-    def insert_values(self, values_dict_list, var_for_embedding_name, embed : bool = True):
+    def insert_values(self,
+                      values_dict_list : list,
+                      var_for_embedding_name : str,
+                      embed : bool = True) -> None:
 
         """
         Simulates inserting key-value pairs into the mock Redis database.
@@ -530,7 +600,21 @@ class MockerDB:
         """
 
         try:
-            query_embedding = self.embedder.embed(query, processing_type='single')
+            model_name = self.embedder_params['model_name_or_path']
+            query_hash = self._make_embs_key(text = query, model= model_name)
+
+            if model_name in list(self.embs.keys()):
+
+                if query_hash not in list(self.embs[model_name].keys()):
+                    query_embedding = self.embedder.embed(query, processing_type='single')
+                else:
+                    query_embedding = self.embs[model_name][query_hash]
+            else:
+                self.embs[model_name] = {}
+                query_embedding = self.embedder.embed(query, processing_type='single')
+                self.embs[model_name][query_hash] = query_embedding
+
+
         except Exception as e:
             self.logger.error("Problem during embedding search query!", e)
 
