@@ -1,6 +1,6 @@
 ### mocker_db.py
-attrs>=22.2.0
-numpy
 sentence-transformers==2.2.2
-dill==0.3.7
 hnswlib==0.8.0
+dill==0.3.7
+numpy
+attrs>=22.2.0
