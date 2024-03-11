@@ -52,6 +52,13 @@ find "$module_directory" -type f -name "*.py" | while read -r file; do
             fi
         done
 
+        # Check if release notes with the same name exist
+        release_notes_path="release_notes/$module_name.md"
+        release_notes_link=""
+        if [ -f "$release_notes_path" ]; then
+            release_notes_link=" | [drawio]($release_notes_path)"
+        fi
+
         # Check if pypi module exists
         pypi_module_link="https://pypi.org/project/${module_name//_/-}/"
         pypi_link=""
@@ -60,7 +67,7 @@ find "$module_directory" -type f -name "*.py" | while read -r file; do
         fi
 
         # Append links and docstring to the output file
-        echo "$module_link$notebook_link$diagram_link$drawio_diagram_link$pypi_link - $docstring" >> "$output_file"
+        echo "$module_link$notebook_link$diagram_link$drawio_diagram_link$release_notes_link$pypi_link - $docstring" >> "$output_file"
         echo "" >> "$output_file"
     fi
 done
