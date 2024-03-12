@@ -17,8 +17,8 @@ Modules in the reposity could be accessed from PyPI for the packages that reache
 The ones that were not packages, could still be used as packages with [this instruction](https://github.com/Kiril-Mordan/reusables/blob/main/docs/module_from_raw_file.md).
 
 ## Content:
-
-[module](python_modules/gridlooper.py) | [drawio: -Page-1](docs/gridlooper-Page-1.png) - Grid Looper
+ 
+[module](python_modules/gridlooper.py) | [drawio: -flow](docs/gridlooper-flow.png) - Grid Looper
 
 A tool to run experiments based on defined grid and function with single iteration.
 
@@ -28,7 +28,7 @@ Utility to simplify webscraping by taking advantave of search and assumptions ab
 Extractor allows to find parent html element that contains searched term, record path to it in a file
 and reuse that to scrape data with same html structure.
 
-[module](python_modules/package_auto_assembler.py) | [usage](docs/package_auto_assembler.md) | [drawio: -_](docs/package_auto_assembler-_.png) | [![PyPiVersion](https://img.shields.io/pypi/v/package-auto-assembler)](https://pypi.org/project/package-auto-assembler/) - Package Auto Assembler
+[module](python_modules/package_auto_assembler.py) | [usage](docs/package_auto_assembler.md) | [drawio: -flow](docs/package_auto_assembler-flow.png) | [![PyPiVersion](https://img.shields.io/pypi/v/package-auto-assembler)](https://pypi.org/project/package-auto-assembler/) - Package Auto Assembler
 
 This tool is meant to streamline creation of single module packages.
 Its purpose is to automate as many aspects of python package creation as possible,
@@ -67,7 +67,7 @@ This class uses the logging module to create and manage a logger for displaying 
 It provides a method to output various types of lines and headers, with customizable message and line lengths.
 The purpose is to be integrated into other classes that also use logger.
 
-[module](python_modules/mocker_db.py) | [usage](docs/mocker_db.md) | [drawio: -Page-1](docs/mocker_db-Page-1.png) | [release notes](release_notes/mocker_db.md) | [![PyPiVersion](https://img.shields.io/pypi/v/mocker-db)](https://pypi.org/project/mocker-db/) - MockerDB
+[module](python_modules/mocker_db.py) | [usage](docs/mocker_db.md) | [drawio: -flow](docs/mocker_db-flow.png) | [release notes](release_notes/mocker_db.md) | [![PyPiVersion](https://img.shields.io/pypi/v/mocker-db)](https://pypi.org/project/mocker-db/) - MockerDB
 
 A python module that contains mock vector database like solution built around
 dictionary data type. It contains methods necessary to interact with this 'database',
