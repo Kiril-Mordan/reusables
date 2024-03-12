@@ -6,7 +6,7 @@ modules_directory="python_modules"
 # Function to process a single module
 process_module() {
     local module_file=$1
-    local module_name=$(basename "$module_file" .py)
+    local module_name=$(basename "$module_file")
     echo "Processing module: $module_name"
     python3 ./tools/extract_requirements.py "$module_name"
 }

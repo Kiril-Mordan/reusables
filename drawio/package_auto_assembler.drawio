@@ -1,5 +1,5 @@
-<mxfile host="Electron" modified="2024-03-03T04:54:41.123Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.1.5 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="T0A6Xdy0630tRt7QjKM_" version="23.1.5" type="device">
-  <diagram name="_" id="WLMHj4V7T1tkh2896ld8">
+<mxfile host="Electron" modified="2024-03-03T05:01:39.988Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.1.5 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="ME6egMb4TlqPnzFZ1E1M" version="23.1.5" type="device">
+  <diagram name="flow" id="WLMHj4V7T1tkh2896ld8">
     <mxGraphModel dx="2874" dy="2067" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
@@ -55,14 +55,8 @@
         <mxCell id="gH9P8Dfxt6CHixhxEZe5-7" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="203" y="1049" width="295" height="193" as="geometry" />
         </mxCell>
-        <mxCell id="gH9P8Dfxt6CHixhxEZe5-1" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="95" y="2102" width="792" height="344" as="geometry" />
-        </mxCell>
         <mxCell id="gH9P8Dfxt6CHixhxEZe5-3" value="module_name.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
           <mxGeometry x="-106" y="-345" width="114" height="127" as="geometry" />
-        </mxCell>
-        <mxCell id="gH9P8Dfxt6CHixhxEZe5-4" value="module_name.ipynb" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
-          <mxGeometry x="-203" y="2108" width="141" height="121" as="geometry" />
         </mxCell>
         <mxCell id="gH9P8Dfxt6CHixhxEZe5-5" value="module_name-version-py3-none-any.whl" style="shape=card;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="241" y="1105" width="80" height="100" as="geometry" />
@@ -76,23 +70,8 @@
         <mxCell id="gH9P8Dfxt6CHixhxEZe5-9" value="extract metadata from module" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="262" y="-40" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="gH9P8Dfxt6CHixhxEZe5-11" value="prepare setup dir" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="311" y="2226" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="gH9P8Dfxt6CHixhxEZe5-12" value="merge &amp;nbsp;local dependacies" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="377" y="2300" width="120" height="60" as="geometry" />
-        </mxCell>
         <mxCell id="gH9P8Dfxt6CHixhxEZe5-13" value="extract requirements from module" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="271" y="284" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="gH9P8Dfxt6CHixhxEZe5-14" value="make readme file" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="451" y="2226" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="gH9P8Dfxt6CHixhxEZe5-15" value="prepare setup file" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="583" y="2226" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="gH9P8Dfxt6CHixhxEZe5-16" value="make a package" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="715" y="2226" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="gH9P8Dfxt6CHixhxEZe5-17" value="module_name-version.tar.gz" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="393" y="1138" width="60" height="30" as="geometry" />

@@ -17,7 +17,7 @@ Modules in the reposity could be accessed from PyPI for the packages that reache
 The ones that were not packages, could still be used as packages with [this instruction](https://github.com/Kiril-Mordan/reusables/blob/main/docs/module_from_raw_file.md).
 
 ## Content:
- 
+
 [module](python_modules/gridlooper.py) | [drawio: -Page-1](docs/gridlooper-Page-1.png) - Grid Looper
 
 A tool to run experiments based on defined grid and function with single iteration.
@@ -67,7 +67,7 @@ This class uses the logging module to create and manage a logger for displaying 
 It provides a method to output various types of lines and headers, with customizable message and line lengths.
 The purpose is to be integrated into other classes that also use logger.
 
-[module](python_modules/mocker_db.py) | [usage](docs/mocker_db.md) | [drawio: -Page-1](docs/mocker_db-Page-1.png) | [drawio](release_notes/mocker_db.md) | [![PyPiVersion](https://img.shields.io/pypi/v/mocker-db)](https://pypi.org/project/mocker-db/) - MockerDB
+[module](python_modules/mocker_db.py) | [usage](docs/mocker_db.md) | [drawio: -Page-1](docs/mocker_db-Page-1.png) | [release notes](release_notes/mocker_db.md) | [![PyPiVersion](https://img.shields.io/pypi/v/mocker-db)](https://pypi.org/project/mocker-db/) - MockerDB
 
 A python module that contains mock vector database like solution built around
 dictionary data type. It contains methods necessary to interact with this 'database',

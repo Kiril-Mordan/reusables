@@ -56,7 +56,7 @@ find "$module_directory" -type f -name "*.py" | while read -r file; do
         release_notes_path="release_notes/$module_name.md"
         release_notes_link=""
         if [ -f "$release_notes_path" ]; then
-            release_notes_link=" | [drawio]($release_notes_path)"
+            release_notes_link=" | [release notes]($release_notes_path)"
         fi
 
         # Check if pypi module exists
