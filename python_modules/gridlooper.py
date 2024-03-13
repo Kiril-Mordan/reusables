@@ -37,6 +37,7 @@ class GridLooper:
 
     # outputs
     experiment_configs = attr.ib(default=None,init=None)
+    experiment_results = attr.ib(default=None,init=None)
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Similarity search')
@@ -133,7 +134,7 @@ class GridLooper:
             if isinstance(value, dict):
                 if not isinstance(dict1[key], dict) or not self._is_subset(dict1[key], value):
                     return False
-            elif dict1[key] != value:
+            elif dict1[key] != value and key != 'config_id':
                 return False
         return True
 
@@ -251,18 +252,19 @@ class GridLooper:
         if data is None:
             data = self.data
 
+
         self.runner_results, self.runner_time = self._loop(loop_type = loop_type,
                    func = runner_function,
                    grid_list = experiment_configs,
                    data = data)
 
-        experiment_results = {'settings' : self.experiments_settings,
+        self.experiment_results = {'settings' : self.experiments_settings,
                               'exlusions' : self.exclusion_combos,
                               'results' : self.runner_results,
                               'time' : self.runner_time}
 
 
         with open(save_path, 'wb') as file:
-                    dill.dump(experiment_results, file)
+            dill.dump(self.experiment_results, file)
 
 
