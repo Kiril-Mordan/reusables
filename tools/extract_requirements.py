@@ -35,7 +35,7 @@ if __name__ == "__main__":
     # define RequirementsHandler
     rh = RequirementsHandler(
         # optional/required later
-        module_filepath = os.path.join(path_to_module, module_name + ".py"),
+        module_filepath = os.path.join(path_to_module, module_name),
         package_mappings = package_mappings,
         requirements_output_path = output_path,
         output_requirements_prefix = output_file_prefix,
