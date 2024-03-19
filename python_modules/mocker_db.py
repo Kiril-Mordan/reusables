@@ -486,7 +486,7 @@ class MockerDB:
                     new_embedding = new_embedded_list_of_text.pop(0)
                     embedded_list_of_text.append(new_embedding)
                     # update embeddigs in embeddings storage
-                    self.embs[new_hash] = new_embedding
+                    self.embs[model_name][new_hash] = new_embedding
                 else:
                     embedded_list_of_text.append(existing_list_of_embeddings.pop(0))
 
@@ -601,7 +601,7 @@ class MockerDB:
 
         try:
             model_name = self.embedder_params['model_name_or_path']
-            query_hash = self._make_embs_key(text = query, model= model_name)
+            query_hash = self._make_embs_key(text = query, model = model_name)
 
             if model_name in list(self.embs.keys()):
 
