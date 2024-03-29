@@ -15,6 +15,7 @@ from collections import defaultdict
 import logging
 
 __design_choices__ = {
+    "FileTypeHandler" : ['prepares one parameter file and reconstructs one parameter file at a time.']
 }
 
 @attr.s
@@ -29,6 +30,7 @@ class FileTypeHandler:
     file_path = attr.ib(default=None, type = str)
 
     # inputs for reconstruction
+    parameter_description = attr.ib(default=None, type = list)
     parameter_attributes_list = attr.ib(default=None, type = list)
     attribute_values_list = attr.ib(default=None, type = list)
 
@@ -116,9 +118,70 @@ class FileTypeHandler:
         except Exception as e:
             return 'error', str(e)
 
+    def _make_parameter_description(self,
+                     parameter_id : str = None,
+                     file_name : str = None,
+                     file_type : str = None):
+
+        """
+        Function to create paramter description.
+        """
+
+        parameter_description = [
+            {
+                'parameter_id' : parameter_id,
+                'file_name': file_name,
+                'file_type': file_type
+            }
+        ]
+
+        return parameter_description
+
+    def _prefilter_search_lists(self,
+                                parameter_id : str,
+                                parameter_attributes_list : list,
+                                attribute_values_list : list) -> tuple:
+
+        """
+        From param lists, selects information related only to selected parameter_id.
+        """
+
+        parameter_attributes_list = [pa for pa in parameter_attributes_list \
+            if pa['parameter_id'] == parameter_id]
+        attribute_ids = [pa['attribute_id'] for pa in parameter_attributes_list]
+
+        attribute_values_list = [at for at in attribute_values_list \
+            if at['attribute_id'] in attribute_ids]
+
+        return parameter_attributes_list, attribute_values_list
+
+    def _process_txt(self,
+                     content : dict,
+                     parameter_id : str = None) -> tuple:
+
+        """
+        Function to process txt files.
+        """
+
+        parameter_attributes =[{
+                'parameter_id' : parameter_id,
+                'attribute_id': parameter_id,
+                'previous_attribute_id': None
+            }]
+
+        # It's a value, add to attribute_values
+        attribute_values = [{
+            'attribute_id': parameter_id,
+            'attribute_name': None,
+            'attribute_value': str(content),
+            'attribute_value_type': type(content).__name__
+        }]
+
+        return parameter_attributes, attribute_values
+
 
     def _process_yaml(self,
-                     data : dict,
+                     content : dict,
                      parent_id : str = None,
                      parameter_id : str = None) -> tuple:
 
@@ -129,7 +192,7 @@ class FileTypeHandler:
         parameter_attributes = []
         attribute_values = []
 
-        for key, value in data.items():
+        for key, value in content.items():
             # Generate a unique ID for the attribute
             attribute_id = self._generate_unique_id(str(key)+str(value))
 
@@ -184,44 +247,61 @@ class FileTypeHandler:
         Reconstructing yaml files from param and attribute lists.
         """
 
-        # Build a dictionary mapping from attribute_id to attribute_name
-        id_to_name = {attr['attribute_id']: attr.get('attribute_name', None) for attr in attribute_values_list}
+        try:
 
-        # Build a nested dictionary to represent the hierarchy of the attributes
-        nested_attrs = defaultdict(dict)
+            # Build a dictionary mapping from attribute_id to attribute_name
+            id_to_name = {attr['attribute_id']: attr.get('attribute_name', None) for attr in attribute_values_list}
+
+            # Build a nested dictionary to represent the hierarchy of the attributes
+            nested_attrs = defaultdict(dict)
 
 
-        # Create a mapping from attribute_id to attribute_name
-        for attr in attribute_values_list:
-            nested_attrs[attr['attribute_id']]['name'] = attr['attribute_name']
-            nested_attrs[attr['attribute_id']]['value'] = attr['attribute_value']
-            nested_attrs[attr['attribute_id']]['type'] = attr['attribute_value_type']
+            # Create a mapping from attribute_id to attribute_name
+            for attr in attribute_values_list:
+                nested_attrs[attr['attribute_id']]['name'] = attr['attribute_name']
+                nested_attrs[attr['attribute_id']]['value'] = attr['attribute_value']
+                nested_attrs[attr['attribute_id']]['type'] = attr['attribute_value_type']
 
-        # Add children based on previous_attribute_id
-        for attr in parameter_attributes_list:
-            if attr['previous_attribute_id']:
-                nested_attrs[attr['previous_attribute_id']].setdefault('children', []).append(attr['attribute_id'])
+            # Add children based on previous_attribute_id
+            for attr in parameter_attributes_list:
+                if attr['previous_attribute_id']:
+                    nested_attrs[attr['previous_attribute_id']].setdefault('children', []).append(attr['attribute_id'])
 
-        # Recursive function to construct the nested dictionary
-        def construct_dict(attr_id):
-            if 'children' in nested_attrs[attr_id]:
-                # reconstruct differently for list
-                if nested_attrs[attr_id]['type'] == 'list':
-                    return [construct_dict(child_id) for child_id in nested_attrs[attr_id]['children']]
+            # Recursive function to construct the nested dictionary
+            def construct_dict(attr_id):
+                if 'children' in nested_attrs[attr_id]:
+                    # reconstruct differently for list
+                    if nested_attrs[attr_id]['type'] == 'list':
+                        return [construct_dict(child_id) for child_id in nested_attrs[attr_id]['children']]
 
-                return {id_to_name[child_id]: construct_dict(child_id) for child_id in nested_attrs[attr_id]['children']}
-            else:
-                return nested_attrs[attr_id]['value']
+                    return {id_to_name[child_id]: construct_dict(child_id) for child_id in nested_attrs[attr_id]['children']}
+                else:
+                    return nested_attrs[attr_id]['value']
 
-        # Start constructing the nested dictionary from the top-level attributes
-        result = {}
-        for attr in parameter_attributes_list:
-            if attr['previous_attribute_id'] is None:
-                # We are at a root attribute
-                attr_name = id_to_name[attr['attribute_id']]
-                result[attr_name] = construct_dict(attr['attribute_id'])
+            # Start constructing the nested dictionary from the top-level attributes
+            result = {}
+            for attr in parameter_attributes_list:
+                if attr['previous_attribute_id'] is None:
+                    # We are at a root attribute
+                    attr_name = id_to_name[attr['attribute_id']]
+                    result[attr_name] = construct_dict(attr['attribute_id'])
+
+        except Exception as e:
+            raise Exception("Failure to reconstruct yaml file!", e)
 
         return result
+
+
+    def _reconstruct_txt(self,
+                         attribute_values_list : list):
+
+        """
+        Reconstructing txt files from param and attribute lists.
+        """
+
+        return attribute_values_list[0]['attribute_value']
+
+
 
     def process_file(self, file_path : str = None):
 
@@ -238,9 +318,19 @@ class FileTypeHandler:
 
         self.parameter_id = self._generate_unique_id(str(self.file_content))
 
+        self.parameter_description = self._make_parameter_description(
+            parameter_id = self.parameter_id,
+            file_name = os.path.basename(file_path),
+            file_type = self.file_type)
+
         if self.file_type == 'yaml':
             (self.parameter_attributes_list,
-             self.attribute_values_list) = self._process_yaml(data=self.file_content,
+             self.attribute_values_list) = self._process_yaml(content=self.file_content,
+                                                              parameter_id=self.parameter_id)
+
+        if self.file_type == 'txt':
+            (self.parameter_attributes_list,
+             self.attribute_values_list) = self._process_txt(content=self.file_content,
                                                               parameter_id=self.parameter_id)
 
 
@@ -248,6 +338,7 @@ class FileTypeHandler:
 
     def reconstruct_file(self,
                          file_path : str = None,
+                         parameter_id : str = None,
                          parameter_attributes_list : list = None,
                          attribute_values_list : list = None):
 
@@ -258,26 +349,51 @@ class FileTypeHandler:
         if file_path is None:
             file_path = self.file_path
 
+        if parameter_id is None:
+            parameter_id = self.parameter_id
+
+        if parameter_id is None:
+            raise ValueError("Provide parameter_id!")
+
         if parameter_attributes_list is None:
             parameter_attributes_list = self.parameter_attributes_list
+
+        if parameter_attributes_list is None:
+            raise ValueError("Provide parameter_attributes_list!")
 
         if attribute_values_list is None:
             attribute_values_list = self.attribute_values_list
 
+        if attribute_values_list is None:
+            raise ValueError("Provide attribute_values_list!")
+
         self.file_type = self._determine_file_type(file_path=file_path)
+
+        if self.file_type not in ['yaml', 'txt']:
+            raise ValueError(f"File type is {self.file_type}!")
+
+        # selecting subset for specific parameter_id
+        (parameter_attributes_list,
+         attribute_values_list) = self._prefilter_search_lists(
+             parameter_id = parameter_id,
+             parameter_attributes_list = parameter_attributes_list,
+             attribute_values_list = attribute_values_list
+         )
 
         if self.file_type == 'yaml':
             self.file_content = self._reconstruct_yaml(attribute_values_list=attribute_values_list,
-                                             parameter_attributes_list=parameter_attributes_list)
+                                                        parameter_attributes_list=parameter_attributes_list)
 
             # Write the dictionary to a YAML file
             with open(file_path, 'w', encoding='utf-8') as file:
                 yaml.dump(self.file_content, file, sort_keys=False)
 
+        if self.file_type == 'txt':
+            self.file_content = self._reconstruct_txt(attribute_values_list=attribute_values_list)
 
-
-
-
+            # Write the dictionary to a YAML file
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(self.file_content)
 
 
 @attr.s
