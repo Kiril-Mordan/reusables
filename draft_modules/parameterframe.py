@@ -13,9 +13,20 @@ from mocker_db import MockerDB
 import yaml
 from collections import defaultdict
 import logging
+import ast
 
 __design_choices__ = {
     "FileTypeHandler" : ['prepares one parameter file and reconstructs one parameter file at a time.']
+}
+
+# Map type name strings back to actual Python types
+TYPE_MAP = {
+    'str': str,
+    'int': int,
+    'float': float,
+    'list': list,
+    'bool': bool,
+    # Add more mappings as necessary for the types you expect
 }
 
 @attr.s
@@ -218,8 +229,6 @@ class FileTypeHandler:
                 attribute_values.extend(sub_vals)
             elif isinstance(value, list):
 
-                # It's a list, process each item
-                parent_id = attribute_id
                 for item in value:
 
                     attribute_id = self._generate_unique_id(str(item))
@@ -227,7 +236,7 @@ class FileTypeHandler:
                     parameter_attributes.append({
                         'parameter_id' : parameter_id,
                         'attribute_id': attribute_id,
-                        'previous_attribute_id': parent_id
+                        'previous_attribute_id': attribute_id
                     })
 
                     attribute_values.append({
@@ -236,8 +245,31 @@ class FileTypeHandler:
                         'attribute_value': item,
                         'attribute_value_type': type(item).__name__
                     })
+            # else:
+            #     # It's a direct value, add to attribute_values
+            #     attribute_values.append({
+            #         'attribute_id': attribute_id,
+            #         'attribute_name': key,
+            #         'attribute_value': value,
+            #         'attribute_value_type': type(value).__name__,
+            #     })
 
         return parameter_attributes, attribute_values
+
+    def _convert_value(self, value, value_type):
+        # Handle simple types directly
+        if value_type in ['int', 'float', 'bool']:
+            return TYPE_MAP[value_type](value)
+        elif value_type == 'list' or value_type == 'dict':
+            try:
+                # Use ast.literal_eval for safe evaluation of the string representation
+                return ast.literal_eval(value)
+            except (ValueError, SyntaxError):
+                # Fallback to original value if conversion is not possible
+                return value
+        else:
+            # Default fallback for types not explicitly handled
+            return value
 
     def _reconstruct_yaml(self,
                           parameter_attributes_list : list,
@@ -276,7 +308,10 @@ class FileTypeHandler:
 
                     return {id_to_name[child_id]: construct_dict(child_id) for child_id in nested_attrs[attr_id]['children']}
                 else:
-                    return nested_attrs[attr_id]['value']
+
+                    value = nested_attrs[attr_id]['value']
+                    value_type = nested_attrs[attr_id]['type']
+                    return  self._convert_value(value, value_type)
 
             # Start constructing the nested dictionary from the top-level attributes
             result = {}
