@@ -1,0 +1,15 @@
+products:
+- name: Book
+  price: 12.99
+  tags:
+  - paperback
+  - literature
+- name: Laptop
+  price: 899.99
+  tags:
+  - electronics
+  - computers
+languages:
+- Python
+- JavaScript
+- Rust

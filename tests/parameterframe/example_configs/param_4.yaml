@@ -1,0 +1,12 @@
+library:
+  books:
+    - title: "The Great Gatsby"
+      author: "F. Scott Fitzgerald"
+      published: 1925
+    - title: "1984"
+      author: "George Orwell"
+      published: 1949
+  address:
+    street: "123 Library Lane"
+    city: "Booktown"
+    zip: "12345"

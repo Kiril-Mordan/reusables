@@ -1,0 +1,5 @@
+boolean_value: true
+null_value: None
+integer_value: 42
+float_value: 3.14
+date_value: '2021-09-23'
