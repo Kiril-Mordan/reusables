@@ -1,7 +1,8 @@
 """
 Parameter frame
 
-Parameter storage managing package, to push, pull and analize parameter sets.
+The module provides an interface for managing solution parameters.
+It allows for the structured storage and retrieval of parameter sets from a database.
 """
 
 import attr
@@ -16,18 +17,11 @@ import logging
 import ast
 
 __design_choices__ = {
-    "FileTypeHandler" : ['prepares one parameter file and reconstructs one parameter file at a time.']
+    "FileTypeHandler" : ['prepares one parameter file and reconstructs one parameter file at a time',
+                         'txt and yaml files can be processed',
+                         'yaml files are not reconstructed 1to1 but are first make into python dictionary, with python type mapping']
 }
 
-# Map type name strings back to actual Python types
-TYPE_MAP = {
-    'str': str,
-    'int': int,
-    'float': float,
-    'list': list,
-    'bool': bool,
-    # Add more mappings as necessary for the types you expect
-}
 
 @attr.s
 class FileTypeHandler:
@@ -41,7 +35,8 @@ class FileTypeHandler:
     file_path = attr.ib(default=None, type = str)
 
     # inputs for reconstruction
-    parameter_description = attr.ib(default=None, type = list)
+    parameter_name = attr.ib(default='', type = str)
+    parameter_description = attr.ib(default='', type = str)
     parameter_attributes_list = attr.ib(default=None, type = list)
     attribute_values_list = attr.ib(default=None, type = list)
 
@@ -75,6 +70,25 @@ class FileTypeHandler:
             logger.setLevel(self.loggerLvl)
 
             self.logger = logger
+
+    def _type_map(self):
+
+        """
+        Returns type mapping to reconstruct yaml files.
+        """
+
+        # Map type name strings back to actual Python types
+        TYPE_MAP = {
+            'str': str,
+            'int': int,
+            'float': float,
+            'list': list,
+            'bool': bool,
+            # Add more mappings as necessary for the types you expect
+        }
+
+        return TYPE_MAP
+
 
     def _generate_unique_id(self, txt : str) -> str:
 
@@ -130,9 +144,11 @@ class FileTypeHandler:
             return 'error', str(e)
 
     def _make_parameter_description(self,
-                     parameter_id : str = None,
-                     file_name : str = None,
-                     file_type : str = None):
+                     parameter_id : str,
+                     parameter_name : str,
+                     parameter_description : str,
+                     file_name : str,
+                     file_type : str):
 
         """
         Function to create paramter description.
@@ -141,6 +157,8 @@ class FileTypeHandler:
         parameter_description = [
             {
                 'parameter_id' : parameter_id,
+                'parameter_name' : parameter_name,
+                'parameter_description' : parameter_description,
                 'file_name': file_name,
                 'file_type': file_type
             }
@@ -245,21 +263,13 @@ class FileTypeHandler:
                         'attribute_value': item,
                         'attribute_value_type': type(item).__name__
                     })
-            # else:
-            #     # It's a direct value, add to attribute_values
-            #     attribute_values.append({
-            #         'attribute_id': attribute_id,
-            #         'attribute_name': key,
-            #         'attribute_value': value,
-            #         'attribute_value_type': type(value).__name__,
-            #     })
 
         return parameter_attributes, attribute_values
 
     def _convert_value(self, value, value_type):
         # Handle simple types directly
         if value_type in ['int', 'float', 'bool']:
-            return TYPE_MAP[value_type](value)
+            return self._type_map()[value_type](value)
         elif value_type == 'list' or value_type == 'dict':
             try:
                 # Use ast.literal_eval for safe evaluation of the string representation
@@ -338,7 +348,10 @@ class FileTypeHandler:
 
 
 
-    def process_file(self, file_path : str = None):
+    def process_file(self,
+                     file_path : str = None,
+                     parameter_name : str = None,
+                     parameter_description : str = None) -> None:
 
         """
         Processes raw parameter file and prepares list of inputs for table handlers.
@@ -346,6 +359,12 @@ class FileTypeHandler:
 
         if file_path is None:
             file_path = self.file_path
+
+        if parameter_name is None:
+            parameter_name = self.parameter_name
+
+        if parameter_description is None:
+            parameter_description = self.parameter_description
 
         self.file_type = self._determine_file_type(file_path=file_path)
         self.file_content = self._load_file_content(file_path=file_path,
@@ -355,6 +374,8 @@ class FileTypeHandler:
 
         self.parameter_description = self._make_parameter_description(
             parameter_id = self.parameter_id,
+            parameter_name = parameter_name,
+            parameter_description = parameter_description,
             file_name = os.path.basename(file_path),
             file_type = self.file_type)
 
@@ -375,7 +396,7 @@ class FileTypeHandler:
                          file_path : str = None,
                          parameter_id : str = None,
                          parameter_attributes_list : list = None,
-                         attribute_values_list : list = None):
+                         attribute_values_list : list = None) -> None:
 
         """
         Reconstructs raw file from pulled list from table handlers.
@@ -435,7 +456,13 @@ class FileTypeHandler:
 class ParameterFrame:
 
     params_path = attr.ib()
-    list_of_params = attr.ib(default=None, type=list)
+    param_names = attr.ib(default=None, type=dict)
+    param_descriptions = attr.ib(default=None, type=dict)
+
+    file_type_handler = attr.ib(default=FileTypeHandler)
+
+    # inner
+    param_attribute_handlers = attr.ib(default={})
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='ParameterFrame')
@@ -459,3 +486,44 @@ class ParameterFrame:
             logger.setLevel(self.loggerLvl)
 
             self.logger = logger
+
+    def process_parameters_from_files(self,
+                           params_path : str = None,
+                           param_names : dict = None,
+                           param_descriptions : dict = None):
+
+        """
+        Process raw parameters from files.
+        """
+
+        if params_path is None:
+            params_path = self.params_path
+
+        if param_names is None:
+            param_names = self.param_names
+
+        if param_names is None:
+            param_names = {os.path.basename(pp).split('.')[0] : os.path.join(params_path,pp) \
+                for pp in os.listdir(params_path)}
+
+        if param_descriptions is None:
+            param_descriptions = self.param_descriptions
+
+        if param_descriptions is None:
+            param_descriptions = {pn : '' for pn in param_names}
+
+        for param_name in param_names:
+
+            self.param_attribute_handlers[param_name] = self.file_type_handler(
+                file_path = param_names[param_name],
+                parameter_name = param_name,
+                parameter_description = param_descriptions[param_name]
+            )
+
+            self.param_attribute_handlers[param_name].process_file()
+
+
+
+
+
+
