@@ -505,6 +505,8 @@ class ParameterFrame:
     param_sets = attr.ib(default={})
     param_attributes = attr.ib(default={})
 
+    commited_tables = attr.ib(default={})
+
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='ParameterFrame')
@@ -588,7 +590,7 @@ class ParameterFrame:
 
             if seed is None:
                 seed = self.seed
-            parameter_set_name = self.name_generator.generate_random_name(seed = seed)
+            parameter_set_name = self.name_generator().generate_random_name(seed = seed)
 
         if parameter_set_description is None:
             parameter_set_description = ''
@@ -606,9 +608,9 @@ class ParameterFrame:
             txt = ''.join(parameter_ids))
 
         # making parameter set lists
-        parameter_set_description = [{'parameter_set_id' : parameter_set_id,
+        parameter_set_description = {'parameter_set_id' : parameter_set_id,
                                'parameter_set_name' : parameter_set_name,
-                               'parameter_set_description' : parameter_set_description}]
+                               'parameter_set_description' : parameter_set_description}
 
         parameter_set = [{'parameter_set_id' : parameter_set_id,
                                'parameter_id' : parameter_id} for parameter_id in parameter_ids]
@@ -639,7 +641,7 @@ class ParameterFrame:
         if solution_id is None:
             # if solution id not provided create new
             solution_id = self._generate_unique_id(
-                txt = self.name_generator.generate_random_name() + solution_name)
+                txt = self.name_generator().generate_random_name() + solution_name)
 
 
         if solution_name not in self.solutions.keys():
@@ -769,6 +771,89 @@ class ParameterFrame:
             'deployment_status' : "STAGING",
             'insertion_datetime' : datetime.now()
         }
+
+    def commit_solution(self,
+                        solution_id : str = None,
+                        solution_name : str = None,
+                        parameter_set_ids : list = None,
+                        parameter_set_names : list = None):
+
+        """
+        Commit solution to local store.
+        """
+
+        if solution_id is None:
+            solution_id = self.solution_id
+
+        if (solution_id is None) and (solution_name is None):
+            raise ValueError("Provide either solution_id or solution_name!")
+
+        if solution_name is None:
+            solution_name = self._get_solution_name_from_memory(solution_id = solution_id)
+
+
+        # save solution with param set
+        if solution_id not in self.commited_tables.keys():
+            self.commited_tables[solution_id] = {}
+
+        ## save solution description
+        self.commited_tables[solution_id]= {
+            'solution_description' : self.solutions[solution_name]['solution_description'],
+            'solution_parameter_set' : {},
+            'parameter_set' : {},
+            'parameter_set_description' : {},
+            'parameter_description' : {},
+            'parameter_attribute' : {},
+            'attribute_values' : {}
+        }
+
+        if (parameter_set_ids is not None) and (parameter_set_names is None):
+                parameter_set_names = [self._get_parameter_set_name_from_memory(
+                    parameter_set_id = parameter_set_id) \
+                        for parameter_set_id in parameter_set_ids]
+
+        if (parameter_set_ids is None) and (parameter_set_names is not None):
+            parameter_set_ids = [self._get_parameter_set_id_from_memory(
+                parameter_set_name = parameter_set_name) \
+                    for parameter_set_name in parameter_set_names]
+
+        if (parameter_set_ids is None) and (parameter_set_names is None):
+                raise ValueError("Provide either parameter_set_ids or parameter_set_names!")
+
+
+        for parameter_set_id, parameter_set_name in zip(parameter_set_ids, parameter_set_names):
+
+            ## save to solution_parameter_set
+            self.commited_tables[solution_id]['solution_parameter_set'][parameter_set_id] = \
+                self.solutions[solution_name]['solution_parameter_set'][parameter_set_name]
+            ## save to parameter_set
+            self.commited_tables[solution_id]['parameter_set'][parameter_set_id] = \
+                self.param_sets[parameter_set_name]['parameter_set']
+            ## save to parameter_set_description
+            self.commited_tables[solution_id]['parameter_set_description'][parameter_set_id] = \
+                self.param_sets[parameter_set_name]['parameter_set_description']
+            ## save to parameter_description
+            for parameter_set in self.param_sets[parameter_set_name]['parameter_set']:
+
+                parameter_id = parameter_set['parameter_id']
+
+                parameter_name = [self.param_attributes[param_name].parameter_name \
+                    for param_name in self.param_attributes \
+                        if self.param_attributes[param_name].parameter_id == parameter_id]
+
+                # saving parameter descriptions
+                self.commited_tables[solution_id]['parameter_description'][parameter_set_id][parameter_id] = \
+                    self.param_attributes[parameter_name].parameter_description
+
+                # saving parameter attributes list
+                self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id][parameter_id] = \
+                    self.param_attributes[parameter_name].parameter_attributes_list
+
+                # saving attribute values
+                self.commited_tables[solution_id]['attribute_values'][parameter_set_id][parameter_id] = \
+                    self.param_attributes[parameter_name].attribute_values_list
+
+
 
     def _change_deployment_status(self,
                                  deployment_status : str,
