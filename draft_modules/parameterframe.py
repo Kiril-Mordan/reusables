@@ -635,17 +635,21 @@ class ParameterFrame:
         if solution_id is None:
             solution_id = self.solution_id
 
+
         # trim solution name
         solution_name = solution_name[:100]
 
         if solution_id is None:
             # if solution id not provided create new
             solution_id = self._generate_unique_id(
-                txt = self.name_generator().generate_random_name() + solution_name)
+                txt = self.name_generator().generate_random_name(seed=23) + solution_name)
 
 
         if solution_name not in self.solutions.keys():
             self.solutions[solution_name] = {}
+
+        if 'solution_id' not in self.solutions[solution_name].keys():
+            self.solutions[solution_name]['solution_id'] = solution_id
 
         self.solutions[solution_name]['solution_description'] = {
             'solution_id' : solution_id,
@@ -742,6 +746,9 @@ class ParameterFrame:
         if solution_id is None:
             solution_id = self.solution_id
 
+        if solution_id is None:
+            solution_id = self.solutions[solution_name]['solution_id']
+
         if (solution_id is None) and (solution_name is None):
             raise ValueError("Provide either solution_id or solution_name!")
 
@@ -787,6 +794,9 @@ class ParameterFrame:
 
         if (solution_id is None) and (solution_name is None):
             raise ValueError("Provide either solution_id or solution_name!")
+
+        if solution_id is None:
+            solution_id = self.solutions[solution_name]['solution_id']
 
         if solution_name is None:
             solution_name = self._get_solution_name_from_memory(solution_id = solution_id)
@@ -839,17 +849,20 @@ class ParameterFrame:
 
                 parameter_name = [self.param_attributes[param_name].parameter_name \
                     for param_name in self.param_attributes \
-                        if self.param_attributes[param_name].parameter_id == parameter_id]
+                        if self.param_attributes[param_name].parameter_id == parameter_id][0]
 
                 # saving parameter descriptions
+                self.commited_tables[solution_id]['parameter_description'][parameter_set_id] = {}
                 self.commited_tables[solution_id]['parameter_description'][parameter_set_id][parameter_id] = \
                     self.param_attributes[parameter_name].parameter_description
 
                 # saving parameter attributes list
+                self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id] = {}
                 self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id][parameter_id] = \
                     self.param_attributes[parameter_name].parameter_attributes_list
 
                 # saving attribute values
+                self.commited_tables[solution_id]['attribute_values'][parameter_set_id] = {}
                 self.commited_tables[solution_id]['attribute_values'][parameter_set_id][parameter_id] = \
                     self.param_attributes[parameter_name].attribute_values_list
 
