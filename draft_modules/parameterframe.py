@@ -11,7 +11,7 @@ import random
 import dill
 import hashlib
 from datetime import datetime
-from mocker_db import MockerDB
+from mocker_db import MockerDB #==0.0.6
 import yaml
 from collections import defaultdict
 import logging
@@ -21,8 +21,90 @@ __design_choices__ = {
     "FileTypeHandler" : ['prepares one parameter file and reconstructs one parameter file at a time',
                          'txt and yaml files can be processed',
                          'yaml files are not reconstructed 1to1 but are first make into python dictionary, with python type mapping'],
-    "ParameterFrame" : ['parameter_names and paramer_description are optional']
+    "ParameterFrame" : ['parameter_names and paramer_description are optional'],
+    "DatabaseConnector" : ['connector is an external component that includes handling of connection to some database',
+                           'default connector is meant for MockerDB',
+                           'any other database connector has to expose add_entries, modify_entries, remove_entries, get_entries, commit',
+                           'entries are supplied in a list of dictionaries with name of the table',
+                           'connector is to be initialized and supplied externally']
 }
+
+
+@attr.s
+class DatabaseConnector:
+
+    db_handler = attr.ib(default=MockerDB)
+    db_handler_params = attr.ib(default = {
+        'file_path' : "./parameterframe_storage",
+         'persist' : True})
+
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='Mocker Database Connector')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+        self._initialize_mocker()
+
+    def _initialize_logger(self):
+
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    def _initialize_mocker(self):
+
+        self.db_handler = self.db_handler(**self.db_handler_params)
+
+    def add_entries(self, table_name: str, entries : list) -> bool:
+        try:
+
+            processed_entries = [{**item, 'table_name': table_name} for item in entries]
+
+            self.db_handler.insert_values(values_dict_list = processed_entries,
+                                                var_for_embedding_name = '',
+                                                embed = False)
+
+        except Exception as e:
+            self.logger.error(f"Failed to add entries: {e}")
+            return False
+
+        return True
+
+    def get_entries(self,
+                    table_name: str,
+                    return_keys : list,
+                    filters : dict = None ) -> list:
+        try:
+
+            if filters is None:
+                filters = {}
+            filters['table_name'] = table_name
+
+            result_entries = self.db_handler.search_database(query = '',
+                                            filter_criteria = filters,
+                                            search_results_n = 999999,
+                                            perform_similarity_search = False,
+                                            return_keys_list = return_keys)
+
+        except Exception as e:
+            self.logger.error(f"Failed to add entries: {e}")
+            return False
+
+        return result_entries
+
+    def commit(self):
+
+        return None
 
 
 @attr.s
@@ -497,6 +579,7 @@ class ParameterFrame:
     seed = attr.ib(default=None, type=int)
 
     # dependancies
+    database_connector = attr.ib(default=None, type=DatabaseConnector)
     file_type_handler = attr.ib(default=FileTypeHandler)
     name_generator = attr.ib(default=ComplexNameGenerator)
 
@@ -516,6 +599,9 @@ class ParameterFrame:
 
     def __attrs_post_init__(self):
         self._initialize_logger()
+
+        if self.database_connector is None:
+            self.database_connector = DatabaseConnector()
 
 
     def _initialize_logger(self):
@@ -602,15 +688,15 @@ class ParameterFrame:
             parameter_names = [pn for pn in param_attributes]
 
         # generate parameter set id
-        parameter_ids = [param_attributes[pa].parameter_id for pa in param_attributes]
+        parameter_ids = [param_attributes[pa].parameter_id for pa in parameter_names]
 
         parameter_set_id = self._generate_unique_id(
             txt = ''.join(parameter_ids))
 
         # making parameter set lists
-        parameter_set_description = {'parameter_set_id' : parameter_set_id,
+        parameter_set_description = [{'parameter_set_id' : parameter_set_id,
                                'parameter_set_name' : parameter_set_name,
-                               'parameter_set_description' : parameter_set_description}
+                               'parameter_set_description' : parameter_set_description}]
 
         parameter_set = [{'parameter_set_id' : parameter_set_id,
                                'parameter_id' : parameter_id} for parameter_id in parameter_ids]
@@ -629,7 +715,7 @@ class ParameterFrame:
                                     maintainers : list = None):
 
         """
-        Add new solution description.
+        Add new solution and its description.
         """
 
         if solution_id is None:
@@ -682,7 +768,7 @@ class ParameterFrame:
         """
 
         try:
-            parameter_set_name = [self.param_sets[p]['parameter_set_description']['parameter_set_name'] \
+            parameter_set_name = [self.param_sets[p]['parameter_set_description'][-1]['parameter_set_name'] \
                 for p in self.param_sets \
                     if self.solutions[p]['parameter_set_description']['parameter_set_id'] == parameter_set_id][0]
         except Exception as e:
@@ -697,7 +783,7 @@ class ParameterFrame:
         """
 
         try:
-            parameter_set_id = self.param_sets[parameter_set_name]['parameter_set_description']['parameter_set_id']
+            parameter_set_id = self.param_sets[parameter_set_name]['parameter_set_description'][-1]['parameter_set_id']
 
         except Exception as e:
             raise ValueError(f"{parameter_set_name} is not in parameter sets saved to memory!")
@@ -740,7 +826,7 @@ class ParameterFrame:
                             parameter_set_name : str = None):
 
         """
-        Add new solution description.
+        Add parameter set to solution
         """
 
         if solution_id is None:
@@ -776,7 +862,7 @@ class ParameterFrame:
             'solution_id' : solution_id,
             'parameter_set_id' : parameter_set_id,
             'deployment_status' : "STAGING",
-            'insertion_datetime' : datetime.now()
+            'insertion_datetime' : datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
     def commit_solution(self,
@@ -808,7 +894,7 @@ class ParameterFrame:
 
         ## save solution description
         self.commited_tables[solution_id]= {
-            'solution_description' : self.solutions[solution_name]['solution_description'],
+            'solution_description' : [self.solutions[solution_name]['solution_description']],
             'solution_parameter_set' : {},
             'parameter_set' : {},
             'parameter_set_description' : {},
@@ -835,7 +921,7 @@ class ParameterFrame:
 
             ## save to solution_parameter_set
             self.commited_tables[solution_id]['solution_parameter_set'][parameter_set_id] = \
-                self.solutions[solution_name]['solution_parameter_set'][parameter_set_name]
+                [self.solutions[solution_name]['solution_parameter_set'][parameter_set_name]]
             ## save to parameter_set
             self.commited_tables[solution_id]['parameter_set'][parameter_set_id] = \
                 self.param_sets[parameter_set_name]['parameter_set']
@@ -852,20 +938,32 @@ class ParameterFrame:
                         if self.param_attributes[param_name].parameter_id == parameter_id][0]
 
                 # saving parameter descriptions
-                self.commited_tables[solution_id]['parameter_description'][parameter_set_id] = {}
+                if parameter_set_id not in self.commited_tables[solution_id]['parameter_description'].keys():
+                    self.commited_tables[solution_id]['parameter_description'][parameter_set_id] = {}
                 self.commited_tables[solution_id]['parameter_description'][parameter_set_id][parameter_id] = \
                     self.param_attributes[parameter_name].parameter_description
 
                 # saving parameter attributes list
-                self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id] = {}
+                if parameter_set_id not in self.commited_tables[solution_id]['parameter_attribute'].keys():
+                    self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id] = {}
                 self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id][parameter_id] = \
                     self.param_attributes[parameter_name].parameter_attributes_list
 
                 # saving attribute values
-                self.commited_tables[solution_id]['attribute_values'][parameter_set_id] = {}
+                if parameter_set_id not in self.commited_tables[solution_id]['attribute_values'].keys():
+                    self.commited_tables[solution_id]['attribute_values'][parameter_set_id] = {}
                 self.commited_tables[solution_id]['attribute_values'][parameter_set_id][parameter_id] = \
                     self.param_attributes[parameter_name].attribute_values_list
 
+    def push_solution(self,
+                        solution_ids : list = None,
+                        solution_names : list = None,
+                        parameter_set_ids : list = None,
+                        parameter_set_names : list = None):
+
+        """
+        Pushes commited to database handler
+        """
 
 
     def _change_deployment_status(self,
