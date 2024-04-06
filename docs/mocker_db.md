@@ -65,7 +65,7 @@ print(results)
 ```
 
 
-    .gitattributes:   0%|          | 0.00/690 [00:00<?, ?B/s]
+    .gitattributes:   0%|          | 0.00/744 [00:00<?, ?B/s]
 
 
 
@@ -82,6 +82,10 @@ print(results)
 
 
     config_sentence_transformers.json:   0%|          | 0.00/122 [00:00<?, ?B/s]
+
+
+
+    model.safetensors:   0%|          | 0.00/1.11G [00:00<?, ?B/s]
 
 
 
