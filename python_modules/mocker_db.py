@@ -599,25 +599,6 @@ class MockerDB:
         Searches the mock database using embeddings and saves a list of entries that match the query.
         """
 
-        try:
-            model_name = self.embedder_params['model_name_or_path']
-            query_hash = self._make_embs_key(text = query, model = model_name)
-
-            if model_name in list(self.embs.keys()):
-
-                if query_hash not in list(self.embs[model_name].keys()):
-                    query_embedding = self.embedder.embed(query, processing_type='single')
-                else:
-                    query_embedding = self.embs[model_name][query_hash]
-            else:
-                self.embs[model_name] = {}
-                query_embedding = self.embedder.embed(query, processing_type='single')
-                self.embs[model_name][query_hash] = query_embedding
-
-
-        except Exception as e:
-            self.logger.error("Problem during embedding search query!", e)
-
 
         if search_results_n is None:
             search_results_n = self.search_results_n
@@ -638,6 +619,26 @@ class MockerDB:
             perform_similarity_search = True
 
         if perform_similarity_search:
+
+
+            try:
+                model_name = self.embedder_params['model_name_or_path']
+                query_hash = self._make_embs_key(text = query, model = model_name)
+
+                if model_name in list(self.embs.keys()):
+
+                    if query_hash not in list(self.embs[model_name].keys()):
+                        query_embedding = self.embedder.embed(query, processing_type='single')
+                    else:
+                        query_embedding = self.embs[model_name][query_hash]
+                else:
+                    self.embs[model_name] = {}
+                    query_embedding = self.embedder.embed(query, processing_type='single')
+                    self.embs[model_name][query_hash] = query_embedding
+
+
+            except Exception as e:
+                self.logger.error("Problem during embedding search query!", e)
 
             try:
                 data_embeddings = np.array([(self.filtered_data[d]['embedding']) for d in self.keys_list])

@@ -109,14 +109,27 @@ jobs:
 
       - name: Commit changes
         run: |
+          chmod +x tools/get_lastest_package_version.sh
+          PACKAGE_VERSION=$(./tools/get_latest_package_version.sh ${{ steps.changed-modules.outputs.files }})
+          if [ -z "${PACKAGE_VERSION}" ]; then
+            echo "Failed to get version"
+            exit 1
+          fi
+
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+
+          git pull origin HEAD:main
+
           git add env_spec/lsts_package_versions.yml
           git add env_spec/version_logs.csv
           # Check if there are any changes in the working directory
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "Update package version tracking files"
-            git push
+
+            git tag -a "v${PACKAGE_VERSION}_$(basename "${{ steps.changed-modules.outputs.files }})" -m "$(basename "${{ steps.changed-modules.outputs.files }})==${PACKAGE_VERSION}"
+            git push origin HEAD:main
+            git push origin "v${PACKAGE_VERSION}_$(basename "${{ steps.changed-modules.outputs.files }})"
           else
             echo "No changes to commit"
           fi
