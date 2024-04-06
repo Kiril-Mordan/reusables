@@ -18,6 +18,9 @@ jobs:
         with:
           fetch-depth: 4  # Fetches prev commits
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install jq
+
       - name: Set up Python 3.10
         uses: actions/setup-python@v2
         with:
@@ -110,14 +113,32 @@ jobs:
 
       - name: Commit changes
         run: |
+          chmod +x tools/get_latest_package_version.sh
+          PACKAGE_VERSION=$(./tools/get_latest_package_version.sh "${{ steps.changed-modules.outputs.files }}")
+          if [ -z "${PACKAGE_VERSION}" ]; then
+            echo "Failed to get version"
+            exit 1
+          fi
+
+          FILE_BASENAME=$(basename "${{ steps.changed-modules.outputs.files }}")
+
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+
+          git pull origin HEAD:main
+
           git add env_spec/lsts_package_versions.yml
           git add env_spec/version_logs.csv
           # Check if there are any changes in the working directory
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "Update package version tracking files"
-            git push
+            COMMIT_MESSAGE="Update package version tracking files"
+            TAG_NAME="v${PACKAGE_VERSION}_${FILE_BASENAME}"
+            TAG_MESSAGE="${FILE_BASENAME}==${PACKAGE_VERSION}"
+
+            git commit -m "${COMMIT_MESSAGE}"
+            git tag -a "${TAG_NAME}" -m "${TAG_MESSAGE}"
+            git push origin HEAD:main
+            git push origin "${TAG_NAME}"
           else
             echo "No changes to commit"
           fi

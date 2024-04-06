@@ -1,4 +1,12 @@
-# Release note
+# Release notes
+
+### 0.0.10
+
+    - fix for search without embeddings
+
+### 0.0.6
+
+    - fix for embedding storage
 
 ### 0.0.5
 
