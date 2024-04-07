@@ -11,11 +11,12 @@ import random
 import dill
 import hashlib
 from datetime import datetime
-from mocker_db import MockerDB #==0.0.6
+from mocker_db import MockerDB #==0.0.10
 import yaml
 from collections import defaultdict
 import logging
 import ast
+import base64
 
 __design_choices__ = {
     "FileTypeHandler" : ['prepares one parameter file and reconstructs one parameter file at a time',
@@ -129,6 +130,7 @@ class FileTypeHandler:
     file_type = attr.ib(default=None, type = str)
     file_content = attr.ib(default=None, type = str)
 
+    is_reconstructed = attr.ib(default=False, type = bool)
 
     # logger config
     logger = attr.ib(default=None)
@@ -196,6 +198,8 @@ class FileTypeHandler:
             return 'yaml'
         if file_extension == '.txt':
             return 'txt'
+        if file_extension == '.dill':
+            return 'dill'
 
         return 'unknown'
 
@@ -216,6 +220,10 @@ class FileTypeHandler:
             elif file_type == 'txt':
                 with open(file_path, 'r') as file:
                     content = file.read()
+                return content
+            elif file_type == 'dill':
+                with open(file_path, 'rb') as file:
+                    content = dill.load(file)
                 return content
             # elif file_extension == '.dill':
             #     with open(file_path, 'rb') as file:
@@ -287,6 +295,41 @@ class FileTypeHandler:
             'attribute_id': parameter_id,
             'attribute_name': None,
             'attribute_value': str(content),
+            'attribute_value_type': type(content).__name__
+        }]
+
+        return parameter_attributes, attribute_values
+
+    def _encode_obj(self, data : object) -> str:
+        """Encode data using Dill."""
+        encoded_bytes = dill.dumps(data) #base64.b64encode(data.encode('utf-8'))
+        return encoded_bytes#.decode('utf-8')
+
+    def _decode_obj(self, encoded_data : object) -> object:
+        """Decode data from serialized object."""
+        decoded_bytes = dill.loads(encoded_data)
+        return decoded_bytes
+
+
+    def _process_binary(self,
+                     content : dict,
+                     parameter_id : str = None) -> tuple:
+
+        """
+        Function to process txt files.
+        """
+
+        parameter_attributes =[{
+                'parameter_id' : parameter_id,
+                'attribute_id': parameter_id,
+                'previous_attribute_id': None
+            }]
+
+        # It's a value, add to attribute_values
+        attribute_values = [{
+            'attribute_id': parameter_id,
+            'attribute_name': None,
+            'attribute_value': self._encode_obj(data = content),
             'attribute_value_type': type(content).__name__
         }]
 
@@ -367,7 +410,7 @@ class FileTypeHandler:
 
     def _reconstruct_yaml(self,
                           parameter_attributes_list : list,
-                          attribute_values_list : list):
+                          attribute_values_list : list) -> object:
 
         """
         Reconstructing yaml files from param and attribute lists.
@@ -422,7 +465,7 @@ class FileTypeHandler:
 
 
     def _reconstruct_txt(self,
-                         attribute_values_list : list):
+                         attribute_values_list : list) -> object:
 
         """
         Reconstructing txt files from param and attribute lists.
@@ -430,6 +473,35 @@ class FileTypeHandler:
 
         return attribute_values_list[0]['attribute_value']
 
+    def _reconstruct_binary(self,
+                         attribute_values_list : list) -> object:
+
+        """
+        Reconstructing txt files from param and attribute lists.
+        """
+
+        return self._decode_obj(encoded_data = attribute_values_list[0]['attribute_value'])
+
+    def _process_file(self,
+                      file_content : dict,
+                      file_type : str,
+                      parameter_id : str) -> tuple:
+
+        """
+        Process file of predefined type
+        """
+
+        if file_type == 'yaml':
+            return self._process_yaml(content = file_content,
+                                    parameter_id = parameter_id)
+
+        if file_type == 'txt':
+            return self._process_txt(content = file_content,
+                                    parameter_id = parameter_id)
+
+        if file_type == 'dill':
+            return self._process_binary(content = file_content,
+                                        parameter_id = parameter_id)
 
 
     def process_file(self,
@@ -463,16 +535,65 @@ class FileTypeHandler:
             file_name = os.path.basename(file_path),
             file_type = self.file_type)
 
-        if self.file_type == 'yaml':
-            (self.parameter_attributes_list,
-             self.attribute_values_list) = self._process_yaml(content=self.file_content,
-                                                              parameter_id=self.parameter_id)
 
-        if self.file_type == 'txt':
-            (self.parameter_attributes_list,
-             self.attribute_values_list) = self._process_txt(content=self.file_content,
-                                                              parameter_id=self.parameter_id)
+        (self.parameter_attributes_list,
+            self.attribute_values_list) = self._process_file(file_content = self.file_content,
+                                                            file_type = self.file_type,
+                                                            parameter_id = self.parameter_id)
 
+    def _reconstruct_file_content(self,
+                          file_type : str,
+                          attribute_values_list : list,
+                          parameter_attributes_list : list = None) -> object:
+
+        """
+        Reconstructs file content from lists
+        """
+
+        if file_type == 'yaml':
+            return self._reconstruct_yaml(attribute_values_list = attribute_values_list,
+                                                        parameter_attributes_list = parameter_attributes_list)
+
+        if file_type == 'txt':
+            return self._reconstruct_txt(attribute_values_list = attribute_values_list)
+
+        if file_type == 'dill':
+            return self._reconstruct_binary(attribute_values_list = attribute_values_list)
+
+        return None
+
+
+    def _reconstruct_file(self,
+                          file_path : str,
+                          file_type : str,
+                          file_content : object) -> bool:
+
+        """
+        Reconstructs file from file content
+        """
+
+        if file_type == 'yaml':
+            # Write the dictionary to a YAML file
+            with open(file_path, 'w', encoding='utf-8') as file:
+                yaml.dump(file_content, file, sort_keys=False)
+
+            return True
+
+        if file_type == 'txt':
+
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(file_content)
+
+            return True
+
+        if file_type == 'dill':
+
+            with open(file_path, 'wb') as file:
+                dill.dump(file_content, file)
+
+            return True
+
+        return False
 
 
 
@@ -509,7 +630,7 @@ class FileTypeHandler:
 
         self.file_type = self._determine_file_type(file_path=file_path)
 
-        if self.file_type not in ['yaml', 'txt']:
+        if self.file_type not in ['yaml', 'txt', 'dill']:
             raise ValueError(f"File type is {self.file_type}!")
 
         # selecting subset for specific parameter_id
@@ -520,20 +641,16 @@ class FileTypeHandler:
              attribute_values_list = attribute_values_list
          )
 
-        if self.file_type == 'yaml':
-            self.file_content = self._reconstruct_yaml(attribute_values_list=attribute_values_list,
-                                                        parameter_attributes_list=parameter_attributes_list)
+        self.file_content = self._reconstruct_file_content(
+                          file_type = self.file_type,
+                          attribute_values_list = attribute_values_list,
+                          parameter_attributes_list = parameter_attributes_list)
 
-            # Write the dictionary to a YAML file
-            with open(file_path, 'w', encoding='utf-8') as file:
-                yaml.dump(self.file_content, file, sort_keys=False)
+        self.is_reconstructed = self._reconstruct_file(
+                          file_path = file_path,
+                          file_type = self.file_type,
+                          file_content = self.file_content)
 
-        if self.file_type == 'txt':
-            self.file_content = self._reconstruct_txt(attribute_values_list=attribute_values_list)
-
-            # Write the dictionary to a YAML file
-            with open(file_path, 'w', encoding='utf-8') as file:
-                file.write(self.file_content)
 
 @attr.s
 class ComplexNameGenerator:
@@ -957,13 +1074,13 @@ class ParameterFrame:
 
     def push_solution(self,
                         solution_ids : list = None,
-                        solution_names : list = None,
-                        parameter_set_ids : list = None,
-                        parameter_set_names : list = None):
+                        solution_names : list = None):
 
         """
-        Pushes commited to database handler
+        Pushes commited tables to database handler
         """
+
+
 
 
     def _change_deployment_status(self,
