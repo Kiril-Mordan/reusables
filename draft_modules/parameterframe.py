@@ -131,6 +131,8 @@ class FileTypeHandler:
     file_content = attr.ib(default=None, type = str)
 
     is_reconstructed = attr.ib(default=False, type = bool)
+    # types for which fth will work
+    available_types = attr.ib(default=['yaml', 'txt', 'dill','unknown'])
 
     # logger config
     logger = attr.ib(default=None)
@@ -205,7 +207,7 @@ class FileTypeHandler:
 
     def _load_file_content(self,
                             file_path: str,
-                            file_type : str) -> str:
+                            file_type : str) -> object:
 
         """
         Load content based on type.
@@ -225,13 +227,11 @@ class FileTypeHandler:
                 with open(file_path, 'rb') as file:
                     content = dill.load(file)
                 return content
-            # elif file_extension == '.dill':
-            #     with open(file_path, 'rb') as file:
-            #         content = dill.load(file)
-            #     return 'dill', content
             else:
                 # Fallback or additional file types can be handled here
-                return None
+                with open(file_path, 'rb') as file:
+                    content = file.read()
+                return content
         except Exception as e:
             return 'error', str(e)
 
@@ -310,6 +310,38 @@ class FileTypeHandler:
         decoded_bytes = dill.loads(encoded_data)
         return decoded_bytes
 
+    def _encode_binary(self, data : str) -> str:
+        """Encode data using Base64."""
+        return str(data)
+
+    def _decode_binary(self, encoded_data : str) -> str:
+        """Decode data from Base64."""
+        return ast.literal_eval(encoded_data)
+
+
+    def _process_dill(self,
+                     content : dict,
+                     parameter_id : str = None) -> tuple:
+
+        """
+        Function to process txt files.
+        """
+
+        parameter_attributes =[{
+                'parameter_id' : parameter_id,
+                'attribute_id': parameter_id,
+                'previous_attribute_id': None
+            }]
+
+        # It's a value, add to attribute_values
+        attribute_values = [{
+            'attribute_id': parameter_id,
+            'attribute_name': None,
+            'attribute_value': self._encode_obj(data = content),
+            'attribute_value_type': type(content).__name__
+        }]
+
+        return parameter_attributes, attribute_values
 
     def _process_binary(self,
                      content : dict,
@@ -329,7 +361,7 @@ class FileTypeHandler:
         attribute_values = [{
             'attribute_id': parameter_id,
             'attribute_name': None,
-            'attribute_value': self._encode_obj(data = content),
+            'attribute_value': self._encode_binary(data = content),
             'attribute_value_type': type(content).__name__
         }]
 
@@ -473,7 +505,7 @@ class FileTypeHandler:
 
         return attribute_values_list[0]['attribute_value']
 
-    def _reconstruct_binary(self,
+    def _reconstruct_dill(self,
                          attribute_values_list : list) -> object:
 
         """
@@ -481,6 +513,15 @@ class FileTypeHandler:
         """
 
         return self._decode_obj(encoded_data = attribute_values_list[0]['attribute_value'])
+
+    def _reconstruct_binary(self,
+                         attribute_values_list : list) -> object:
+
+        """
+        Reconstructing txt files from param and attribute lists.
+        """
+
+        return self._decode_binary(encoded_data = attribute_values_list[0]['attribute_value'])
 
     def _process_file(self,
                       file_content : dict,
@@ -500,6 +541,10 @@ class FileTypeHandler:
                                     parameter_id = parameter_id)
 
         if file_type == 'dill':
+            return self._process_dill(content = file_content,
+                                        parameter_id = parameter_id)
+
+        if file_type == 'unknown':
             return self._process_binary(content = file_content,
                                         parameter_id = parameter_id)
 
@@ -558,6 +603,9 @@ class FileTypeHandler:
             return self._reconstruct_txt(attribute_values_list = attribute_values_list)
 
         if file_type == 'dill':
+            return self._reconstruct_dill(attribute_values_list = attribute_values_list)
+
+        if file_type == 'unknown':
             return self._reconstruct_binary(attribute_values_list = attribute_values_list)
 
         return None
@@ -590,6 +638,13 @@ class FileTypeHandler:
 
             with open(file_path, 'wb') as file:
                 dill.dump(file_content, file)
+
+            return True
+
+        if file_type == 'unknown':
+
+            with open(file_path, 'wb') as file:
+                file.write(file_content)
 
             return True
 
@@ -630,7 +685,7 @@ class FileTypeHandler:
 
         self.file_type = self._determine_file_type(file_path=file_path)
 
-        if self.file_type not in ['yaml', 'txt', 'dill']:
+        if self.file_type not in self.available_types:
             raise ValueError(f"File type is {self.file_type}!")
 
         # selecting subset for specific parameter_id
