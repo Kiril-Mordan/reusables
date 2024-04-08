@@ -132,7 +132,8 @@ class FileTypeHandler:
 
     is_reconstructed = attr.ib(default=False, type = bool)
     # types for which fth will work
-    available_types = attr.ib(default=['yaml', 'txt', 'dill','unknown'])
+    available_types = attr.ib(default=['yaml', 'txt' ,'unknown'])
+    chunk_size = attr.ib(default=255)
 
     # logger config
     logger = attr.ib(default=None)
@@ -200,8 +201,8 @@ class FileTypeHandler:
             return 'yaml'
         if file_extension == '.txt':
             return 'txt'
-        if file_extension == '.dill':
-            return 'dill'
+        # if file_extension == '.dill':
+        #     return 'dill'
 
         return 'unknown'
 
@@ -223,10 +224,10 @@ class FileTypeHandler:
                 with open(file_path, 'r') as file:
                     content = file.read()
                 return content
-            elif file_type == 'dill':
-                with open(file_path, 'rb') as file:
-                    content = dill.load(file)
-                return content
+            # elif file_type == 'dill':
+            #     with open(file_path, 'rb') as file:
+            #         content = dill.load(file)
+            #     return content
             else:
                 # Fallback or additional file types can be handled here
                 with open(file_path, 'rb') as file:
@@ -276,27 +277,40 @@ class FileTypeHandler:
 
         return parameter_attributes_list, attribute_values_list
 
+
     def _process_txt(self,
                      content : dict,
-                     parameter_id : str = None) -> tuple:
+                     parameter_id : str = None,
+                     chunk_size: int = None) -> tuple:
 
         """
         Function to process txt files.
         """
 
-        parameter_attributes =[{
-                'parameter_id' : parameter_id,
-                'attribute_id': parameter_id,
-                'previous_attribute_id': None
-            }]
+        if chunk_size is None:
+            chunk_size = self.chunk_size
 
-        # It's a value, add to attribute_values
-        attribute_values = [{
-            'attribute_id': parameter_id,
-            'attribute_name': None,
-            'attribute_value': str(content),
-            'attribute_value_type': type(content).__name__
-        }]
+        parameter_attributes = []
+        attribute_values = []
+
+        # Split the text into chunks of chunk_size
+        for i in range(0, len(content), chunk_size):
+            chunk = content[i:i+chunk_size]
+            attribute_id = self._generate_unique_id(chunk)
+
+            parameter_attributes.append({
+                'parameter_id': parameter_id,
+                'attribute_id': attribute_id,
+                # Assuming each chunk is sequential and does not have a 'parent' as in a tree structure
+                'previous_attribute_id': None if i == 0 else parameter_attributes[-1]['attribute_id']
+            })
+
+            attribute_values.append({
+                'attribute_id': attribute_id,
+                'attribute_name': f'{int(i//chunk_size)}',
+                'attribute_value': str(chunk),
+                'attribute_value_type': type(content).__name__
+            })
 
         return parameter_attributes, attribute_values
 
@@ -345,25 +359,40 @@ class FileTypeHandler:
 
     def _process_binary(self,
                      content : dict,
-                     parameter_id : str = None) -> tuple:
+                     parameter_id : str = None,
+                     chunk_size: int = None) -> tuple:
 
         """
         Function to process txt files.
         """
 
-        parameter_attributes =[{
-                'parameter_id' : parameter_id,
-                'attribute_id': parameter_id,
-                'previous_attribute_id': None
-            }]
 
-        # It's a value, add to attribute_values
-        attribute_values = [{
-            'attribute_id': parameter_id,
-            'attribute_name': None,
-            'attribute_value': self._encode_binary(data = content),
+        if chunk_size is None:
+            chunk_size = self.chunk_size
+
+        parameter_attributes = []
+        attribute_values = []
+
+        str_content = str(content)
+
+        # Split the text into chunks of chunk_size
+        for i in range(0, len(str_content), chunk_size):
+            chunk = str_content[i:i+chunk_size]
+            attribute_id = self._generate_unique_id(chunk)
+
+            parameter_attributes.append({
+                'parameter_id': parameter_id,
+                'attribute_id': attribute_id,
+                # Assuming each chunk is sequential and does not have a 'parent' as in a tree structure
+                'previous_attribute_id': None if i == 0 else parameter_attributes[-1]['attribute_id']
+            })
+
+            attribute_values.append({
+                'attribute_id': attribute_id,
+                'attribute_name': f'{int(i//chunk_size)}',
+                'attribute_value': self._encode_binary(data = chunk),
             'attribute_value_type': type(content).__name__
-        }]
+            })
 
         return parameter_attributes, attribute_values
 
@@ -503,7 +532,20 @@ class FileTypeHandler:
         Reconstructing txt files from param and attribute lists.
         """
 
-        return attribute_values_list[0]['attribute_value']
+        try:
+            # Assuming each attribute_value in attribute_values_list contains 'attribute_id', 'attribute_name', and 'attribute_value'
+
+            # Sort the attribute_values_list by attribute_name to ensure the correct order
+            # Assuming attribute_name has been stored as 'chunk_X' where X is a sequence number
+            sorted_attributes = sorted(attribute_values_list, key=lambda x: int(x['attribute_name']))
+
+            # Reconstruct the text by concatenating the 'attribute_value' of each sorted attribute
+            reconstructed_text = ''.join(attr['attribute_value'] for attr in sorted_attributes)
+
+        except Exception as e:
+            raise Exception("Failure to reconstruct text!", e)
+
+        return reconstructed_text
 
     def _reconstruct_dill(self,
                          attribute_values_list : list) -> object:
@@ -521,7 +563,20 @@ class FileTypeHandler:
         Reconstructing txt files from param and attribute lists.
         """
 
-        return self._decode_binary(encoded_data = attribute_values_list[0]['attribute_value'])
+        try:
+            # Assuming each attribute_value in attribute_values_list contains 'attribute_id', 'attribute_name', and 'attribute_value'
+
+            # Sort the attribute_values_list by attribute_name to ensure the correct order
+            # Assuming attribute_name has been stored as 'chunk_X' where X is a sequence number
+            sorted_attributes = sorted(attribute_values_list, key=lambda x: int(x['attribute_name']))
+
+            # Reconstruct the text by concatenating the 'attribute_value' of each sorted attribute
+            reconstructed_binary = ''.join(attr['attribute_value'] for attr in sorted_attributes)
+
+        except Exception as e:
+            raise Exception("Failure to reconstruct binary!", e)
+
+        return self._decode_binary(encoded_data = reconstructed_binary)
 
     def _process_file(self,
                       file_content : dict,
