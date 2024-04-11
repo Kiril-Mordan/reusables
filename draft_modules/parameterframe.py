@@ -1182,15 +1182,109 @@ class ParameterFrame:
                 self.commited_tables[solution_id]['attribute_values'][parameter_set_id][parameter_id] = \
                     self.param_attributes[parameter_name].attribute_values_list
 
+
+    def _prep_ps_for_reconstruction(self,
+                                 solution_id : str,
+                                 parameter_set_id : str) -> tuple:
+
+        """
+        Prepares data for reconstruction from selected solutio and param set ids.
+        """
+
+        parameter_ids = [ps['parameter_id'] \
+            for ps in self.commited_tables[solution_id]['parameter_set'][parameter_set_id]]
+
+        parameter_description = self.commited_tables[solution_id]['parameter_description'][parameter_set_id]
+
+        ### param_id_paths
+        param_id_paths = {param_id : parameter_description[param_id][0]['file_name'] for param_id in parameter_ids}
+
+        ### attribute_values
+        attribute_values_list = []
+
+        attribute_values_dict = self.commited_tables[solution_id]['attribute_values'][parameter_set_id]
+
+        for parameter_id in attribute_values_dict:
+
+            if parameter_id in parameter_ids:
+                attribute_values_list += attribute_values_dict[parameter_id]
+
+        ### parameter_attribute
+        parameter_attribute_list = []
+
+        parameter_attribute_dict = self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id]
+
+        for parameter_id in parameter_attribute_dict:
+
+            if parameter_id in parameter_ids:
+                parameter_attribute_list += parameter_attribute_dict[parameter_id]
+
+
+
+        return param_id_paths, attribute_values_list, parameter_attribute_list
+
+    def _reconstruct_parameter_set(self,
+                      parameter_attribute_list : list,
+                      attribute_values_list : list,
+                      param_id_paths : dict,
+                      params_path : str):
+
+        """
+        Reconstructs selected parameter set
+        """
+
+        for param_id in param_id_paths:
+
+            file_name = param_id_paths[param_id]
+            file_path = os.path.join(params_path, file_name)
+
+            fth = self.file_type_handler(
+                        file_path = file_path,
+                        parameter_id = param_id,
+                        parameter_attributes_list = parameter_attribute_list,
+                        attribute_values_list = attribute_values_list
+                    )
+            fth.reconstruct_file()
+
+
+        return True
+
+    def reconstruct_parameter_set(self,
+                                  solution_id : str  = None,
+                                  parameter_set_id : str = None,
+                                  params_path : str = None):
+
+        """
+        Reconstructs selected parameter set
+        """
+
+
+        # prepare for reconstruction
+        (param_id_paths,
+        attribute_values_list,
+        parameter_attribute_list) = self._prep_ps_for_reconstruction(
+            solution_id = solution_id,
+            parameter_set_id = parameter_set_id
+        )
+
+        self._reconstruct_parameter_set(
+            parameter_attribute_list = parameter_attribute_list,
+                attribute_values_list = attribute_values_list,
+                param_id_paths = param_id_paths,
+                params_path = params_path
+        )
+
+
+
     def push_solution(self,
-                        solution_ids : list = None,
-                        solution_names : list = None):
+                      solution_ids : list = None,
+                      solution_names : list = None):
 
         """
-        Pushes commited tables to database handler
+        Pushes commited tables to database handler for selected solutions
         """
 
-
+        return None
 
 
     def _change_deployment_status(self,
