@@ -7,7 +7,7 @@ A tool to run experiments based on defined grid and function with single iterati
 import logging
 import attr #>=22.2.0
 from itertools import product
-import dill
+import dill #==0.3.7
 ## for making keys
 import hashlib
 import json
@@ -17,6 +17,14 @@ from tqdm import tqdm
 
 
 __design_choices__ = {
+}
+
+# Metadata for package creation
+__package_metadata__ = {
+    "author": "Kyrylo Mordan",
+    "author_email": "parachute.repo@gmail.com",
+    "description": "A tool to run experiments based on defined grid and function with single iteration.",
+    # Add other metadata as needed
 }
 
 @attr.s
@@ -38,6 +46,7 @@ class GridLooper:
     # outputs
     experiment_configs = attr.ib(default=None,init=None)
     experiment_results = attr.ib(default=None,init=None)
+    experiment_config_ids = attr.ib(default=None,init=None)
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Similarity search')
@@ -206,10 +215,12 @@ class GridLooper:
 
         loop_res = {}
         loop_time = {}
+        experiment_config_ids = {}
 
         for grid_elem in tqdm(grid_list, desc="Looping", unit="item"):
             config_id = grid_elem['config_id']
             del grid_elem['config_id']
+            experiment_config_ids[config_id] = grid_elem
             exec_start = datetime.now()
             if data:
                 loop_res[config_id] = func(**grid_elem, data = data)
@@ -217,14 +228,14 @@ class GridLooper:
                 loop_res[config_id] = func(**grid_elem)
             loop_time[config_id] = datetime.now() - exec_start
 
-        return loop_res, loop_time
+        return loop_res, loop_time, experiment_config_ids
 
     def _loop(self, loop_type : str, func, grid_list : list, data : dict):
 
         if loop_type == 'brute':
-            loop_res, loop_time = self._brute_loop(func, grid_list, data)
+            loop_res, loop_time, experiment_config_ids = self._brute_loop(func, grid_list, data)
 
-        return loop_res, loop_time
+        return loop_res, loop_time, experiment_config_ids
 
 
 #### EXECUTION LOOPS
@@ -236,6 +247,10 @@ class GridLooper:
                              loop_type : str = None,
                              save_path : str = None):
 
+
+        """
+        Running experiments with runner funtion for predefines configs and save results.
+        """
 
         if runner_function is None:
             runner_function = self.runner_function
@@ -253,12 +268,13 @@ class GridLooper:
             data = self.data
 
 
-        self.runner_results, self.runner_time = self._loop(loop_type = loop_type,
+        self.runner_results, self.runner_time, self.experiment_config_ids = self._loop(loop_type = loop_type,
                    func = runner_function,
                    grid_list = experiment_configs,
                    data = data)
 
         self.experiment_results = {'settings' : self.experiments_settings,
+                                   'experiment_config_ids' : self.experiment_config_ids,
                               'exlusions' : self.exclusion_combos,
                               'results' : self.runner_results,
                               'time' : self.runner_time}
