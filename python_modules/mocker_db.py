@@ -21,6 +21,7 @@ import hashlib
 import concurrent.futures
 import hnswlib #==0.8.0
 from sentence_transformers import SentenceTransformer #==2.2.2
+#from gridlooper import GridLooper
 
 
 # Metadata for package creation
@@ -31,6 +32,12 @@ __package_metadata__ = {
     # Add other metadata as needed
 }
 
+__design_choices__ = {
+    'similarity search' : ['similarity search is optional, mocker can be used as normal database',
+                           'to perform similarity searches mocker need to embed selected field during input',
+                           'on retrieval by not providing query similarity search is not performed, only filters are used']
+
+}
 
 class SentenceTransformerEmbedder:
 
@@ -302,7 +309,7 @@ class MockerDB:
 
     ## for similarity search
     similarity_search_h = attr.ib(default=MockerSimilaritySearch)
-    return_keys_list = attr.ib(default=[], type = list)
+    return_keys_list = attr.ib(default=None, type = list)
     search_results_n = attr.ib(default=3, type = int)
     similarity_search_type = attr.ib(default='linear', type = str)
     similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
@@ -685,15 +692,21 @@ class MockerDB:
         if return_keys_list is None:
             return_keys_list = self.return_keys_list
 
+
+
         # This method mimics the behavior of the original 'get_dict_results' method
         results = []
-        for searched_doc in self.results_keys:
-            result = {key: self.data[searched_doc].get(key) for key in return_keys_list}
-            results.append(result)
+        if return_keys_list is not None:
+            for searched_doc in self.results_keys:
+                result = {key: self.data[searched_doc].get(key) for key in return_keys_list}
+                results.append(result)
+        else:
+            results = [self.data[searched_doc] for searched_doc in self.results_keys]
+
         return results
 
     def search_database(self,
-                        query: str,
+                        query: str = None,
                         search_results_n: int = None,
                         filter_criteria : dict = None,
                         similarity_search_type: str = None,
@@ -706,8 +719,15 @@ class MockerDB:
         in the mock database for a given filter.
         """
 
+        if query is None:
+            perform_similarity_search = False
+            if search_results_n is None:
+                search_results_n = 10000
+
         if filter_criteria:
             self.filter_database(filter_criteria=filter_criteria)
+        else:
+            self.filtered_data = self.data
 
         self.search_database_keys(query = query,
                                     search_results_n = search_results_n,
