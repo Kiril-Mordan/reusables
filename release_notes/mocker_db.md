@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.0.11
+
+    - more advanced filtering
+
 ### 0.0.10
 
     - fix for search without embeddings

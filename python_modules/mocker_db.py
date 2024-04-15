@@ -21,6 +21,7 @@ import hashlib
 import concurrent.futures
 import hnswlib #==0.8.0
 from sentence_transformers import SentenceTransformer #==2.2.2
+from gridlooper import GridLooper #==0.0.1
 
 
 # Metadata for package creation
@@ -31,6 +32,12 @@ __package_metadata__ = {
     # Add other metadata as needed
 }
 
+__design_choices__ = {
+    'similarity search' : ['similarity search is optional, mocker can be used as normal database',
+                           'to perform similarity searches mocker need to embed selected field during input',
+                           'on retrieval by not providing query similarity search is not performed, only filters are used']
+
+}
 
 class SentenceTransformerEmbedder:
 
@@ -81,33 +88,6 @@ class SentenceTransformerEmbedder:
             embeddings.extend(batch_embeddings)
         return embeddings
 
-    # def embed_sentences_in_batches_parallel(self, texts, batch_size : int = None, max_workers : int =  None):
-
-    #     """
-    #     Embeds a list of texts in batches in parallel.
-    #     """
-
-    #     if batch_size is None:
-    #         batch_size = self.tbatch_size
-
-    #     if max_workers is None:
-    #         max_workers = self.max_workers
-
-
-    #     # Split texts into batches
-    #     batches = [texts[i:i + batch_size] for i in range(0, len(texts), batch_size)]
-
-    #     # Process batches in parallel
-    #     embeddings = []
-    #     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-    #         # Submit embedding tasks to the executor
-    #         future_to_batch = {executor.submit(self.embed_sentence_transformer, batch): batch for batch in batches}
-
-    #         for future in concurrent.futures.as_completed(future_to_batch):
-    #             embeddings.extend(future.result())
-
-    #     return embeddings
-
     def embed_sentences_in_batches_parallel(self, texts, batch_size: int = None, max_workers: int = None):
         """
         Embeds a list of texts in batches in parallel using processes.
@@ -132,7 +112,6 @@ class SentenceTransformerEmbedder:
 
 @attr.s
 class MockerSimilaritySearch:
-
 
     search_results_n = attr.ib(default=3, type=int)
     similarity_params = attr.ib(default={'space':'cosine'}, type=dict)
@@ -249,7 +228,6 @@ class MockerSimilaritySearch:
                similarity_search_type: str = None,
                similarity_params : dict = None):
 
-
         if k is None:
             k = self.search_results_n
         if similarity_search_type is None:
@@ -261,7 +239,6 @@ class MockerSimilaritySearch:
             return self.linear_search(search_emb = query_embedding, doc_embs = data_embeddings, k=k, **similarity_params)
         if similarity_search_type == 'hnsw':
             return self.hnsw_search(search_emb = query_embedding, doc_embs = data_embeddings, k=k, **similarity_params)
-
 
 
 @attr.s
@@ -302,7 +279,7 @@ class MockerDB:
 
     ## for similarity search
     similarity_search_h = attr.ib(default=MockerSimilaritySearch)
-    return_keys_list = attr.ib(default=[], type = list)
+    return_keys_list = attr.ib(default=None, type = list)
     search_results_n = attr.ib(default=3, type = int)
     similarity_search_type = attr.ib(default='linear', type = str)
     similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
@@ -350,8 +327,6 @@ class MockerDB:
             logger.setLevel(self.loggerLvl)
 
             self.logger = logger
-
-
 
     def establish_connection(self, file_path : str = None, embs_file_path : str = None):
 
@@ -416,23 +391,24 @@ class MockerDB:
 
         return self.hash_string_sha256(input_string)
 
-    # def _add_embeddings(self,
-    #                     data_dict : dict,
-    #                     var_for_embedding_name : str) -> dict:
+    def _prep_filter_criterias(self, filter_criteria : dict) -> list:
 
-    #     """
-    #     Prepare a dictionary for storage in Mocker by adding embedding.
-    #     """
+        """
+        Makes a list of filters based on provided filter.
+        """
 
-    #     try:
+        filter_criteria = {key: value if isinstance(value, list) else [value] \
+            for key, value in filter_criteria.items()}
 
-    #         embedding = self.embedder.embed(data_dict[var_for_embedding_name])
-    #         data_dict['embedding'] = embedding
+        gl = GridLooper()
+        gl.prepare_search_grid(experiments_settings=filter_criteria)
 
-    #     except Exception as e:
-    #         return 1
+        filter_criterias = gl.experiment_configs
 
-    #     return data_dict
+        filter_criterias = [{k: v for k, v in filter_dict.items() if k != 'config_id'} \
+            for filter_dict in filter_criterias]
+
+        return filter_criterias
 
     def _insert_values_dict(self,
                             values_dicts : dict,
@@ -568,10 +544,12 @@ class MockerDB:
         Filters a dictionary based on multiple field criteria.
         """
 
+        filter_criteria_list = self._prep_filter_criterias(filter_criteria = filter_criteria)
+
         self.filtered_data = {
             key: value for key, value in self.data.items()
-            if all(value.get(k) == v for k, v in filter_criteria.items())
-        }
+            if any(all(value.get(k) == v for k, v in filter_dict.items()) \
+                for filter_dict in filter_criteria_list)}
 
         if len(self.filtered_data) == 0:
             self.logger.warning("No data was found with applied filters!")
@@ -598,7 +576,6 @@ class MockerDB:
         """
         Searches the mock database using embeddings and saves a list of entries that match the query.
         """
-
 
         if search_results_n is None:
             search_results_n = self.search_results_n
@@ -660,10 +637,8 @@ class MockerDB:
                     self.results_keys = []
                     self.results_dictances = None
 
-
             except Exception as e:
                 self.logger.error("Problem during extracting results from the mock database!", e)
-
 
         else:
 
@@ -672,8 +647,6 @@ class MockerDB:
                 self.results_dictances = np.array([0 for _ in self.filtered_data])
             except Exception as e:
                 self.logger.error("Problem during extracting search pool embeddings!", e)
-
-
 
 
     def get_dict_results(self, return_keys_list : list = None) -> list:
@@ -687,13 +660,17 @@ class MockerDB:
 
         # This method mimics the behavior of the original 'get_dict_results' method
         results = []
-        for searched_doc in self.results_keys:
-            result = {key: self.data[searched_doc].get(key) for key in return_keys_list}
-            results.append(result)
+        if return_keys_list is not None:
+            for searched_doc in self.results_keys:
+                result = {key: self.data[searched_doc].get(key) for key in return_keys_list}
+                results.append(result)
+        else:
+            results = [self.data[searched_doc] for searched_doc in self.results_keys]
+
         return results
 
     def search_database(self,
-                        query: str,
+                        query: str = None,
                         search_results_n: int = None,
                         filter_criteria : dict = None,
                         similarity_search_type: str = None,
@@ -706,8 +683,13 @@ class MockerDB:
         in the mock database for a given filter.
         """
 
+        if query is None:
+            perform_similarity_search = False
+
         if filter_criteria:
             self.filter_database(filter_criteria=filter_criteria)
+        else:
+            self.filtered_data = self.data
 
         self.search_database_keys(query = query,
                                     search_results_n = search_results_n,
