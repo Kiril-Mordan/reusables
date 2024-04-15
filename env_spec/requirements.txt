@@ -1,5 +1,5 @@
-sentence-transformers
 numpy
+sentence-transformers
 google-auth-httplib2
 stdlib-list
 pandas
@@ -10,6 +10,7 @@ nbformat
 tox
 mocker_db
 pytest
+gridlooper
 openai
 pyyaml
 tox-gh-actions
