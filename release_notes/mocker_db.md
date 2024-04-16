@@ -1,5 +1,10 @@
 # Release notes
 
+
+### 0.0.12
+
+    -  bugfix for similarity search through partly embedded data
+
 ### 0.0.11
 
     - more advanced filtering

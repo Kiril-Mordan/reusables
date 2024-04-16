@@ -480,7 +480,7 @@ class MockerDB:
 
     def insert_values(self,
                       values_dict_list : list,
-                      var_for_embedding_name : str,
+                      var_for_embedding_name : str = None,
                       embed : bool = True) -> None:
 
         """
@@ -544,7 +544,10 @@ class MockerDB:
         Filters a dictionary based on multiple field criteria.
         """
 
-        filter_criteria_list = self._prep_filter_criterias(filter_criteria = filter_criteria)
+        if filter_criteria is None:
+            filter_criteria_list = []
+        else:
+            filter_criteria_list = self._prep_filter_criterias(filter_criteria = filter_criteria)
 
         self.filtered_data = {
             key: value for key, value in self.data.items()
@@ -559,9 +562,16 @@ class MockerDB:
         Removes key-value pairs from a dictionary based on filter criteria.
         """
 
+        if filter_criteria is None:
+            filter_criteria_list = []
+        else:
+            filter_criteria_list = self._prep_filter_criterias(filter_criteria = filter_criteria)
+
         self.data = {
-            key: value for key, value in self.data.items()
-            if not all(value.get(k) == v for k, v in filter_criteria.items())
+            key: value
+            for key, value in self.data.items()
+            if not any(all(value.get(k) == v for k, v in filter_criteria.items()) \
+                for filter_criteria in filter_criteria_list)
         }
 
         self.save_data()
@@ -618,7 +628,8 @@ class MockerDB:
                 self.logger.error("Problem during embedding search query!", e)
 
             try:
-                data_embeddings = np.array([(self.filtered_data[d]['embedding']) for d in self.keys_list])
+                data_embeddings = np.array([(self.filtered_data[d]['embedding']) \
+                    for d in self.keys_list if 'embedding' in self.filtered_data[d].keys()])
             except Exception as e:
                 self.logger.error("Problem during extracting search pool embeddings!", e)
 
