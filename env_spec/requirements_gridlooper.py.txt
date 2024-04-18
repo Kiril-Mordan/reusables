@@ -1,4 +1,4 @@
 ### gridlooper.py
 attrs>=22.2.0
-dill
+dill==0.3.7
 tqdm
