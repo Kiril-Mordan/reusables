@@ -1,6 +1,10 @@
 # Release notes
 
 
+### 0.1.1
+
+    - initial MockerConnect for using MockerDB API
+
 ### 0.0.12
 
     -  bugfix for similarity search through partly embedded data
