@@ -11,12 +11,11 @@ import random
 import dill
 import hashlib
 from datetime import datetime
-from mocker_db import MockerDB #==0.0.10
+from mocker_db import MockerDB, MockerConnector #==0.1.1
 import yaml
 from collections import defaultdict
 import logging
 import ast
-import base64
 
 __design_choices__ = {
     "FileTypeHandler" : ['prepares one parameter file and reconstructs one parameter file at a time',
@@ -35,10 +34,12 @@ __design_choices__ = {
 class DatabaseConnector:
 
     db_handler = attr.ib(default=MockerDB)
+    db_remote_handler = attr.ib(default=MockerConnector)
     db_handler_params = attr.ib(default = {
         'file_path' : "./parameterframe_storage",
          'persist' : True})
-
+    connection_details = attr.ib(default = {
+        'base_url' : "http://localhost:8000"})
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Mocker Database Connector')
     loggerLvl = attr.ib(default=logging.INFO)
@@ -66,6 +67,7 @@ class DatabaseConnector:
 
         self.db_handler = self.db_handler(**self.db_handler_params)
 
+
     def add_entries(self, table_name: str, entries : list) -> bool:
         try:
 
@@ -81,9 +83,25 @@ class DatabaseConnector:
 
         return True
 
+    def fetch_entries(self,
+                      filters : dict = None,
+                      database_name : str = 'default'):
+
+        db_remote_handler = self.db_remote_handler(**self.connection_details)
+
+        fetched_data = db_remote_handler.search_data(
+            database_name = database_name,
+            filter_criteria = filters)
+
+        self.db_handler.insert_values(
+            values_dict_list = fetched_data['results'],
+            embed = False)
+
+        return True
+
     def get_entries(self,
                     table_name: str,
-                    return_keys : list,
+                    return_keys : list = None,
                     filters : dict = None ) -> list:
         try:
 
@@ -91,11 +109,12 @@ class DatabaseConnector:
                 filters = {}
             filters['table_name'] = table_name
 
-            result_entries = self.db_handler.search_database(query = '',
-                                            filter_criteria = filters,
-                                            search_results_n = 999999,
-                                            perform_similarity_search = False,
-                                            return_keys_list = return_keys)
+            result_entries = self.db_handler.search_database(
+                filter_criteria = filters,
+                return_keys_list = return_keys)
+
+            result_entries = [{k: v for k, v in item.items() if k != 'table_name'} \
+                for item in result_entries]
 
         except Exception as e:
             self.logger.error(f"Failed to add entries: {e}")
@@ -105,7 +124,13 @@ class DatabaseConnector:
 
     def commit(self):
 
-        return None
+        db_remote_handler = self.db_remote_handler(**self.connection_details)
+
+        db_remote_handler.insert_data(
+            data = [d for _, d in self.db_handler.data.items()]
+        )
+
+        return True
 
 
 @attr.s
@@ -830,6 +855,8 @@ class ParameterFrame:
         if self.database_connector is None:
             self.database_connector = DatabaseConnector()
 
+        self.commited_tables = {}
+
 
     def _initialize_logger(self):
 
@@ -1223,7 +1250,7 @@ class ParameterFrame:
 
         return param_id_paths, attribute_values_list, parameter_attribute_list
 
-    def _reconstruct_parameter_set(self,
+    def _reconstruct_ps(self,
                       parameter_attribute_list : list,
                       attribute_values_list : list,
                       param_id_paths : dict,
@@ -1252,12 +1279,27 @@ class ParameterFrame:
     def reconstruct_parameter_set(self,
                                   solution_id : str  = None,
                                   parameter_set_id : str = None,
+                                  solution_name : str = None,
+                                  parameter_set_name : str = None,
                                   params_path : str = None):
 
         """
         Reconstructs selected parameter set
         """
 
+        if (solution_id is None) and (solution_name is None):
+            raise ValueError("Provide either solution_id or solution_name!")
+
+        if (parameter_set_id is None) and (parameter_set_name is None):
+            raise ValueError("Provide either parameter_set_id or parameter_set_name!")
+
+        if solution_id is None:
+            solution_id = [id for id, dd in self.commited_tables.items() \
+                if dd['solution_description'][0]['solution_name'] == solution_name][0]
+
+        if parameter_set_id is None:
+            parameter_set_id = [id for id, dd in self.commited_tables[solution_id]['parameter_set_description'].items() \
+                if dd[0]['parameter_set_name'] == parameter_set_name][0]
 
         # prepare for reconstruction
         (param_id_paths,
@@ -1267,24 +1309,300 @@ class ParameterFrame:
             parameter_set_id = parameter_set_id
         )
 
-        self._reconstruct_parameter_set(
+        self._reconstruct_ps(
             parameter_attribute_list = parameter_attribute_list,
-                attribute_values_list = attribute_values_list,
-                param_id_paths = param_id_paths,
-                params_path = params_path
+            attribute_values_list = attribute_values_list,
+            param_id_paths = param_id_paths,
+            params_path = params_path
         )
 
+    def _prep_tables_for_pushing(self,
+                                 solution_id : str,
+                                 parameter_set_ids : list):
 
+        """
+        Prepare tables for pushing selected solution
+        """
+
+        solution_parameter_set = []
+        parameter_set = []
+        parameter_set_description = []
+        parameter_description = []
+        parameter_attribute = []
+        attribute_values = []
+
+        try:
+
+            solution_description = self.commited_tables[solution_id]['solution_description']
+            ##
+            for parameter_set_id in parameter_set_ids:
+
+                solution_parameter_set = solution_parameter_set + \
+                    self.commited_tables[solution_id]['solution_parameter_set'][parameter_set_id]
+                parameter_set = parameter_set + \
+                    self.commited_tables[solution_id]['parameter_set'][parameter_set_id]
+                parameter_set_description = parameter_set_description + \
+                    self.commited_tables[solution_id]['parameter_set_description'][parameter_set_id]
+
+                parameter_description_dict = self.commited_tables[solution_id]['parameter_description'][parameter_set_id]
+                parameter_description = parameter_description + \
+                    [item for sublist in parameter_description_dict.values() for item in sublist]
+
+                parameter_attribute_dict = self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id]
+                parameter_attribute = parameter_attribute + \
+                    [item for sublist in parameter_attribute_dict.values() for item in sublist]
+
+                attribute_values_dict = self.commited_tables[solution_id]['attribute_values'][parameter_set_id]
+                attribute_values = attribute_values + \
+                    [item for sublist in attribute_values_dict.values() for item in sublist]
+
+        except Exception as e:
+            self.logger.error("Problem during preparation of tables for pushing!")
+            raise e
+
+        return (solution_description,
+                solution_parameter_set,
+                parameter_set,
+                parameter_set_description,
+                parameter_description,
+                parameter_attribute,
+                attribute_values)
 
     def push_solution(self,
-                      solution_ids : list = None,
-                      solution_names : list = None):
+                      solution_id : list = None,
+                      solution_name : list = None,
+                      parameter_set_ids : list = None,
+                      parameter_set_names : list = None,):
 
         """
         Pushes commited tables to database handler for selected solutions
         """
 
-        return None
+        if (solution_id is None) and (solution_name is None):
+            raise ValueError("Provide either solution_ids or solution_names!")
+
+        if (parameter_set_ids is None) and (parameter_set_names is None):
+            raise ValueError("Provide either parameter_set_ids or parameter_set_names!")
+
+        if solution_id is None:
+            solution_id = [id for id, dd in self.commited_tables.items() \
+                if dd['solution_description'][0]['solution_name'] == solution_name][0]
+
+        if parameter_set_ids is None:
+            parameter_set_ids = [id for id, dd in self.commited_tables[solution_id]['parameter_set_description'].items() \
+                if dd[0]['parameter_set_name'] in parameter_set_names]
+
+
+        (solution_description,
+            solution_parameter_set,
+            parameter_set,
+            parameter_set_description,
+            parameter_description,
+            parameter_attribute,
+            attribute_values) = self._prep_tables_for_pushing(
+                solution_id = solution_id,
+                parameter_set_ids = parameter_set_ids
+            )
+
+        self.database_connector.add_entries(table_name = 'solution_description',
+                                            entries = solution_description)
+        self.database_connector.add_entries(table_name = 'solution_parameter_set',
+                                            entries = solution_parameter_set)
+        self.database_connector.add_entries(table_name = 'parameter_set',
+                                            entries = parameter_set)
+        self.database_connector.add_entries(table_name = 'parameter_set_description',
+                                            entries = parameter_set_description)
+        self.database_connector.add_entries(table_name = 'parameter_description',
+                                            entries = parameter_description)
+        self.database_connector.add_entries(table_name = 'parameter_attribute',
+                                            entries = parameter_attribute)
+        self.database_connector.add_entries(table_name = 'attribute_values',
+                                            entries = attribute_values)
+
+        self.database_connector.commit()
+
+        return True
+
+    def _rebuild_tables_from_pulled_data(self,
+                                     solution_id: str,
+                                     parameter_set_ids: list,
+                                     solution_description,
+                                     solution_parameter_sets,
+                                     parameter_sets,
+                                     parameter_set_descriptions,
+                                     parameter_descriptions,
+                                     parameter_attributes,
+                                     attribute_values):
+        """
+        Rebuild the committed_tables dictionary structure from the flat lists
+        returned by the `_prep_tables_for_pushing` function. This function
+        distributes list elements evenly across provided parameter_set_ids.
+        """
+
+        try:
+            # Initialize the main dictionary for the solution_id
+            if solution_id not in self.commited_tables:
+                self.commited_tables[solution_id] = {}
+
+            # Set the solution description
+            self.commited_tables[solution_id]['solution_description'] = solution_description
+
+            # Initialize dictionaries for this solution_id
+            if 'solution_parameter_set' not in self.commited_tables[solution_id].keys():
+                self.commited_tables[solution_id]['solution_parameter_set'] = {}
+            if 'parameter_set' not in self.commited_tables[solution_id].keys():
+                self.commited_tables[solution_id]['parameter_set'] = {}
+            if 'parameter_set_description' not in self.commited_tables[solution_id].keys():
+                self.commited_tables[solution_id]['parameter_set_description'] = {}
+            if 'parameter_description' not in self.commited_tables[solution_id].keys():
+                self.commited_tables[solution_id]['parameter_description'] = {}
+            if 'parameter_attribute' not in self.commited_tables[solution_id].keys():
+                self.commited_tables[solution_id]['parameter_attribute'] = {}
+            if 'attribute_values' not in self.commited_tables[solution_id].keys():
+                self.commited_tables[solution_id]['attribute_values'] = {}
+
+            # Calculate distribution counts for each list based on the number of parameter_set_ids
+            num_ids = len(parameter_set_ids)
+            sps_count = len(solution_parameter_sets) // num_ids
+            ps_count = len(parameter_sets) // num_ids
+            psd_count = len(parameter_set_descriptions) // num_ids
+            pd_count = len(parameter_descriptions) // num_ids
+            # pa_count = len(parameter_attributes) // num_ids
+            # av_count = len(attribute_values) // num_ids
+
+            # Iterators for each type of data
+            sps_iter = iter(solution_parameter_sets)
+            ps_iter = iter(parameter_sets)
+            psd_iter = iter(parameter_set_descriptions)
+            pd_iter = iter(parameter_descriptions)
+            # pa_iter = iter(parameter_attributes)
+            # av_iter = iter(attribute_values)
+
+            for parameter_set_id in parameter_set_ids:
+                # Distribute solution_parameter_sets
+                self.commited_tables[solution_id]['solution_parameter_set'][parameter_set_id] = [next(sps_iter) for _ in range(sps_count)]
+
+                # Distribute parameter_sets
+                self.commited_tables[solution_id]['parameter_set'][parameter_set_id] = [next(ps_iter) for _ in range(ps_count)]
+
+                # Distribute parameter_set_descriptions
+                self.commited_tables[solution_id]['parameter_set_description'][parameter_set_id] = [next(psd_iter) for _ in range(psd_count)]
+
+                # Distribute parameter_descriptions
+                parameter_descriptions = [next(pd_iter) for _ in range(pd_count)]
+                self.commited_tables[solution_id]['parameter_description'][parameter_set_id] = {
+                    parameter_description['parameter_id'] : [parameter_description] \
+                        for parameter_description in parameter_descriptions}
+
+                parameter_ids = [parameter_description['parameter_id'] \
+                    for parameter_description in parameter_descriptions]
+
+                if parameter_set_id not in self.commited_tables[solution_id]['parameter_attribute'].keys():
+                    self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id] = {}
+
+                if parameter_set_id not in self.commited_tables[solution_id]['attribute_values'].keys():
+                    self.commited_tables[solution_id]['attribute_values'][parameter_set_id] = {}
+
+                for parameter_id in parameter_ids:
+
+                    # Distribute parameter_attributes
+                    self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id][parameter_id] = [
+                        parameter_attribute for parameter_attribute in parameter_attributes \
+                            if parameter_attribute['parameter_id'] == parameter_id]
+
+                    attribute_ids = [parameter_attribute['attribute_id'] \
+                        for parameter_attribute in parameter_attributes \
+                            if parameter_attribute['parameter_id'] == parameter_id]
+
+                    # Distribute attribute_values
+                    self.commited_tables[solution_id]['attribute_values'][parameter_set_id][parameter_id] = [
+                        attribute_value for attribute_value in attribute_values \
+                            if attribute_value['attribute_id'] in attribute_ids]
+
+        except Exception as e:
+            self.logger.error("Problem during rebuilding of tables from pushed data!")
+            raise e
+
+
+
+    def pull_solution(self,
+                      solution_id : list = None,
+                      parameter_set_id : list = None):
+
+        """
+        Pushes commited tables to database handler for selected solutions
+        """
+
+        if solution_id is None:
+            raise ValueError("Provide solution_id!")
+
+        if parameter_set_id is None:
+            raise ValueError("Provide parameter_set_id!")
+
+        # fetch tables with solution and parameter_set_ids
+        self.database_connector.fetch_entries(
+            filters={'table_name' : ['solution_description',
+                                          'solution_parameter_set',
+                                          'parameter_set',
+                                          'parameter_set_description'],
+                          'solution_id': [solution_id, None],
+                          'parameter_set_id' :[parameter_set_id, None]})
+
+        # get parameter_id for fetching next tables
+        dict_param_ids = self.database_connector.get_entries(
+            table_name = 'parameter_set',
+            return_keys=['parameter_id'])
+
+        param_ids = [dict_param_id['parameter_id'] for dict_param_id in dict_param_ids]
+
+        # fetch tables with parameter_ids
+        self.database_connector.fetch_entries(
+            filters={'table_name' : ['parameter_description',
+                                          'parameter_attribute'],
+                          'parameter_id': param_ids})
+
+        # get attribute_ids for fetching next tables
+        dict_attribute_ids = self.database_connector.get_entries(
+            table_name = 'parameter_attribute',
+            return_keys=['attribute_id'])
+
+        attribute_ids = [dict_attribute_id['attribute_id'] for dict_attribute_id in dict_attribute_ids]
+
+        # fetch final tables
+        self.database_connector.fetch_entries(
+            filters={'table_name' : 'attribute_values',
+                          'attribute_id': attribute_ids})
+
+        # get table lists from connector
+        solution_description = self.database_connector.get_entries(
+    table_name = 'solution_description')
+        solution_parameter_sets = self.database_connector.get_entries(
+    table_name = 'solution_parameter_set')
+        parameter_sets = self.database_connector.get_entries(
+    table_name = 'parameter_set')
+        parameter_set_descriptions = self.database_connector.get_entries(
+    table_name = 'parameter_set_description')
+        parameter_descriptions = self.database_connector.get_entries(
+    table_name = 'parameter_description')
+        parameter_attributes = self.database_connector.get_entries(
+    table_name = 'parameter_attribute')
+        attribute_values = self.database_connector.get_entries(
+    table_name = 'attribute_values')
+
+        # get table lists into commited
+        self._rebuild_tables_from_pulled_data(
+            solution_id = solution_id,
+            parameter_set_ids = [parameter_set_id],
+            solution_description = solution_description,
+            solution_parameter_sets = solution_parameter_sets,
+            parameter_sets = parameter_sets,
+            parameter_set_descriptions = parameter_set_descriptions,
+            parameter_descriptions = parameter_descriptions,
+            parameter_attributes = parameter_attributes,
+            attribute_values = attribute_values
+        )
+
+
 
 
     def _change_deployment_status(self,
