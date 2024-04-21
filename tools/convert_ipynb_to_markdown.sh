@@ -13,7 +13,8 @@ convert_to_markdown() {
 
   # Check if the notebook file is 'parameterframe' module
   if [[ "$notebook_file" == *"parameterframe"* ]]; then
-    echo "Skipping execution and conversion for module: $notebook_file"
+    echo "Skipping execution for module: $notebook_file"
+    jupyter nbconvert --to markdown "$notebook_file" --output-dir="$output_dir"
     return
   fi
 
