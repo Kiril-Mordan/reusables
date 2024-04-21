@@ -48,6 +48,11 @@ with a use of more expensive, slower or simply no-existant method.
 This module provides a set of functions for interacting with the Google Drive API.
 It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
 
+[module](python_modules/parameterframe.py) | [drawio: -flow](docs/parameterframe-flow.png) | [drawio: -schema](docs/parameterframe-schema.png) | [drawio: -scema](docs/parameterframe-scema.png) | [drawio: -usage](docs/parameterframe-usage.png) - Parameter frame
+
+The module provides an interface for managing solution parameters.
+It allows for the structured storage and retrieval of parameter sets from a database.
+
 [module](python_modules/comparisonframe.py) | [usage](docs/comparisonframe.md) | [plantuml](docs/comparisonframe_plantuml.png) - Comparison Frame
 
 Designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
