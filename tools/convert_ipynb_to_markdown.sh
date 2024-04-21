@@ -11,20 +11,24 @@ convert_to_markdown() {
   # Get the relative path of the notebook directory
   local relative_dir="${notebook_dir#$root_dir}"
 
-  # Convert the notebook to markdown and save it in the output directory
-  jupyter nbconvert --to markdown --execute --ExecutePreprocessor.kernel_name=python3 "$notebook_file" --output-dir="$output_directory"
-}
+  # Check if the notebook file is 'parameterframe' module
+  if [[ "$notebook_file" == *"parameterframe"* ]]; then
+    echo "Skipping execution and conversion for module: $notebook_file"
+    return
+  fi
 
+  # Convert the notebook to markdown and save it in the output directory
+  jupyter nbconvert --to markdown --execute --ExecutePreprocessor.kernel_name=python3 "$notebook_file" --output-dir="$output_dir"
+}
 
 # Specify the root directory to start the conversion
 root_dir="example_notebooks/"
 output_directory="docs/"
 
-
 # If arguments are provided, process each; otherwise, process all modules in directory
 if [ $# -gt 0 ]; then
     for module_file in "$@"; do
-        convert_to_markdown "$module_file"
+        convert_to_markdown "$module_file" "$output_directory"
     done
 fi
 # else
