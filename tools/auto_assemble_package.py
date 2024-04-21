@@ -9,6 +9,11 @@ args = parser.parse_args()
 
 module_name = args.module_name
 
+execute_notebook = True
+if module_name in ['parameterframe']:
+    execute_notebook = False
+
+
 paa = PackageAutoAssembler(
     # required
     module_name = f"{module_name}",
@@ -45,7 +50,7 @@ if paa.metadata_h.is_metadata_available():
     paa.add_or_update_version()
     paa.prep_setup_dir()
     paa.add_requirements_from_module()
-    paa.add_readme()
+    paa.add_readme(execute_notebook = execute_notebook)
     paa.prep_setup_file()
     paa.make_package()
 
