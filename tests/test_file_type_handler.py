@@ -1,7 +1,7 @@
 import pytest
 import yaml
 import dill
-from draft_modules.parameterframe import FileTypeHandler
+from python_modules.parameterframe import FileTypeHandler
 
 # A list of tuples, each containing the paths to an input YAML file and its expected output YAML file
 YAML_FILE_PATHS = [

@@ -30,6 +30,14 @@ __design_choices__ = {
 }
 
 
+# Metadata for package creation
+__package_metadata__ = {
+    "author": "Kyrylo Mordan",
+    "author_email": "parachute.repo@gmail.com",
+    "description": "A tool to manage parameters in a form of files, process them, upload to param storage, pull and reconstrut as files.",
+    "keywords" : ['python', 'parameter storage']
+}
+
 @attr.s
 class DatabaseConnector:
 
