@@ -1326,7 +1326,7 @@ class ReleaseNotesHandler:
                                   new_messages : list = None):
 
         if existing_contents is None:
-            existing_contents = self.existing_contents
+            existing_contents = self.existing_contents.copy()
 
         if version is None:
             version = self.version
