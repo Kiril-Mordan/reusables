@@ -15,7 +15,7 @@ sys.path.append('../')
 from python_modules.package_auto_assembler import (VersionHandler, \
     ImportMappingHandler, RequirementsHandler, MetadataHandler, \
         LocalDependaciesHandler, LongDocHandler, SetupDirHandler, \
-            PackageAutoAssembler)
+            ReleaseNotesHandler, PackageAutoAssembler)
 ```
 
 ## Usage examples
@@ -29,6 +29,7 @@ The examples contain:
 6. prepare README
 7. assembling setup directory
 8. making a package
+9. creating release notes from commit messages
 
 ### 1. Package versioning
 
@@ -149,19 +150,19 @@ pv.get_logs(
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-03-03 04:59:50</td>
+      <td>2024-04-25 00:55:16</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-03-03 04:59:50</td>
+      <td>2024-04-25 00:55:16</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-03-03 04:59:50</td>
+      <td>2024-04-25 00:55:16</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -260,7 +261,7 @@ rh.list_custom_modules(
 
 
 
-    ['example_local_dependacy_2', 'example_local_dependacy_1']
+    ['example_local_dependacy_1', 'example_local_dependacy_2']
 
 
 
@@ -806,5 +807,121 @@ paa.make_package(
 
 
     CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=1, stdout='', stderr="usage: setup.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]\n   or: setup.py --help [cmd1 cmd2 ...]\n   or: setup.py --help-commands\n   or: setup.py cmd --help\n\nerror: invalid command 'bdist_wheel'\n")
+
+
+
+### 9. Creating release notes from commit messages
+
+
+```python
+rnh = ReleaseNotesHandler(
+    # path to existing or new release notes file
+    filepath = '../tests/package_auto_assembler/release_notes.md',
+    # name of label in commit message [example_module] for filter
+    label_name = 'example_module',
+    # new version to be used in release notes
+    version = '0.0.2'
+)
+```
+
+    No messages to clean were provided
+
+
+##### - overwritting commit messages fro example
+
+
+```python
+# commit messages from last merge
+rnh.commit_messages
+```
+
+
+
+
+    ['Update requirements']
+
+
+
+
+```python
+example_commit_messages = [
+    '[example_module] usage example for initial release notes; bugfixes for RNH',
+    '[BUGFIX] missing parameterframe usage example and reduntant png file',
+    '[example_module] initial release notes handler',
+    'Update README',
+    'Update requirements'
+]
+rnh.commit_messages = example_commit_messages
+```
+
+##### - internal methods that run on intialiazation of ReleaseNotesHandler
+
+
+```python
+# get messages relevant only for label
+rnh._filter_commit_messages_by_package()
+print("Example filtered_messaged:")
+print(rnh.filtered_messages)
+# clean messages
+rnh._clean_and_split_commit_messages()
+print("Example processed_messages:")
+print(rnh.processed_messages)
+# augment existing release note with new entries or create new
+rnh._create_release_note_entry()
+print("Example processed_note_entries:")
+print(rnh.processed_note_entries)
+```
+
+    Example filtered_messaged:
+    ['[example_module] usage example for initial release notes; bugfixes for RNH', '[example_module] initial release notes handler']
+    Example processed_messages:
+    ['usage example for initial release notes', 'bugfixes for RNH', 'initial release notes handler']
+    Example processed_note_entries:
+    ['# Release notes\n', '\n', '### 0.0.2\n\n    - usage example for initial release notes\n    - bugfixes for RNH\n    - initial release notes handler\n\n', '### 0.0.1\n', '\n', '    - initial version of example_module\n']
+
+
+##### - saving updated relese notes
+
+
+```python
+rnh.existing_contents
+```
+
+
+
+
+    ['# Release notes\n',
+     '\n',
+     '### 0.0.1\n',
+     '\n',
+     '    - initial version of example_module\n']
+
+
+
+
+```python
+rnh.save_release_notes()
+```
+
+
+```python
+# updated content
+rnh.get_release_notes_content()
+```
+
+
+
+
+    ['# Release notes\n',
+     '\n',
+     '### 0.0.2\n',
+     '\n',
+     '    - usage example for initial release notes\n',
+     '    - bugfixes for RNH\n',
+     '    - initial release notes handler\n',
+     '\n',
+     '### 0.0.1\n',
+     '\n',
+     '    - initial version of example_module\n']
 
 
