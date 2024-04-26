@@ -1209,8 +1209,10 @@ class ReleaseNotesHandler:
     filepath = attr.ib(default='release_notes.md', type=str)
     label_name = attr.ib(default=None, type=list)
     version = attr.ib(default='0.0.1', type=str)
+    max_search_depth = attr.ib(default=2, type=int)
 
     # processed
+    n_last_messages = attr.ib(default=1, type=int)
     existing_contents = attr.ib(default=None, type=list)
     commit_messages = attr.ib(default=None, type=list)
     filtered_messages = attr.ib(default=None, type=list)
@@ -1251,15 +1253,15 @@ class ReleaseNotesHandler:
 
             self.logger = logger
 
-    def _get_commits_since_last_merge(self):
+    def _get_commits_since_last_merge(self, n_last_messages : int = 1):
 
         # First, find the last merge commit
-        find_merge_command = ["git", "log", "--merges", "--format=%H", "-n", "1"]
+        find_merge_command = ["git", "log", "--merges", "--format=%H", "-n", str(n_last_messages)]
         merge_result = subprocess.run(find_merge_command, capture_output=True, text=True)
         if merge_result.returncode != 0:
             raise Exception("Failed to find last merge commit")
 
-        last_merge_commit_hash = merge_result.stdout.strip()
+        last_merge_commit_hash = merge_result.stdout.strip().split("\n")[n_last_messages-1]
         if not last_merge_commit_hash:
             raise Exception("No merge commits found")
 
@@ -1290,6 +1292,16 @@ class ReleaseNotesHandler:
 
         # Filter messages that match the pattern
         filtered_messages = [msg for msg in commit_messages if pattern.search(msg)]
+
+        if filtered_messages == []:
+            self.n_last_messages += 1
+            self.logger.warning(f"No relevant commit messages found!")
+            if self.n_last_messages <= self.max_search_depth:
+                self.logger.warning(f"..trying depth {self.n_last_messages} !")
+                self._get_commits_since_last_merge(n_last_messages = self.n_last_messages)
+                self._filter_commit_messages_by_package(
+                    label_name = label_name)
+                filtered_messages = self.filtered_messages
 
         self.filtered_messages = filtered_messages
 
@@ -1326,7 +1338,9 @@ class ReleaseNotesHandler:
                                   new_messages : list = None):
 
         if existing_contents is None:
-            existing_contents = self.existing_contents.copy()
+            if self.existing_contents is not None:
+                existing_contents = self.existing_contents.copy()
+
 
         if version is None:
             version = self.version
@@ -1392,10 +1406,10 @@ class ReleaseNotesHandler:
         if note_entries is None:
             note_entries = self.processed_note_entries
 
-
-        # Write the updated or new contents back to the file
-        with open(filepath, 'w') as file:
-            file.writelines(note_entries)
+        if self.processed_messages != []:
+            # Write the updated or new contents back to the file
+            with open(filepath, 'w') as file:
+                file.writelines(note_entries)
 
 @attr.s
 class PackageAutoAssembler:
@@ -1430,14 +1444,23 @@ class PackageAutoAssembler:
     default_version = attr.ib(default="0.0.1", type = str)
     kernel_name = attr.ib(default = 'python', type = str)
 
+    ## handler classes
+    setup_dir_h_class = attr.ib(default=SetupDirHandler)
+    version_h_class = attr.ib(default=VersionHandler)
+    import_mapping_h_class = attr.ib(default=ImportMappingHandler)
+    local_dependacies_h_class = attr.ib(default=LocalDependaciesHandler)
+    requirements_h_class = attr.ib(default=RequirementsHandler)
+    metadata_h_class = attr.ib(default=MetadataHandler)
+    long_doc_h_class = attr.ib(default=LongDocHandler)
+
     ## handlers
-    setup_dir_h = attr.ib(default=SetupDirHandler)
-    version_h = attr.ib(default=VersionHandler)
-    import_mapping_h = attr.ib(default=ImportMappingHandler)
-    local_dependacies_h = attr.ib(default=LocalDependaciesHandler)
-    requirements_h = attr.ib(default=RequirementsHandler)
-    metadata_h = attr.ib(default=MetadataHandler)
-    long_doc_h = attr.ib(default=LongDocHandler)
+    setup_dir_h = attr.ib(default = None, type = SetupDirHandler)
+    version_h = attr.ib(default = None, type = VersionHandler)
+    import_mapping_h = attr.ib(default = None, type=ImportMappingHandler)
+    local_dependacies_h = attr.ib(default = None, type=LocalDependaciesHandler)
+    requirements_h = attr.ib(default = None, type=RequirementsHandler)
+    metadata_h = attr.ib(default = None, type=MetadataHandler)
+    long_doc_h = attr.ib(default = None, type=LongDocHandler)
 
     ## output
     package_result = attr.ib(init=False)
@@ -1450,7 +1473,8 @@ class PackageAutoAssembler:
 
     def __attrs_post_init__(self):
         self._initialize_logger()
-        self._initialize_handlers()
+        #self._initialize_handlers()
+        self._initialize_import_mapping_handler()
 
 
     def _initialize_logger(self):
@@ -1465,6 +1489,79 @@ class PackageAutoAssembler:
             logger.setLevel(self.loggerLvl)
 
             self.logger = logger
+
+    def _initialize_metadata_handler(self):
+
+        """
+        Initialize metadata handler with available parameters.
+        """
+
+        self.metadata_h = self.metadata_h_class(
+            module_filepath = self.module_filepath)
+
+    def _initialize_version_handler(self):
+
+        """
+        Initialize version handler with available parameters.
+        """
+
+        self.version_h = self.version_h_class(
+            versions_filepath = self.versions_filepath,
+            log_filepath = self.log_filepath,
+            default_version = self.default_version)
+
+    def _initialize_requirements_handler(self):
+
+        """
+        Initialize requirements handler with available parameters.
+        """
+
+        self.requirements_h = self.requirements_h_class(
+            module_filepath = self.module_filepath,
+            custom_modules_filepath = self.dependencies_dir,
+            python_version = self.python_version)
+
+    def _initialize_import_mapping_handler(self):
+
+        """
+        Initialize import mapping handler with available parameters.
+        """
+
+        self.import_mapping_h = self.import_mapping_h_class(
+            mapping_filepath = self.mapping_filepath)
+
+    def _initialize_local_dependacies_handler(self):
+
+        """
+        Initialize local dependanies handler with available parameters.
+        """
+
+        self.local_dependacies_h = self.local_dependacies_h_class(
+            main_module_filepath = self.module_filepath,
+            dependencies_dir = self.dependencies_dir)
+
+    def _initialize_long_doc_handler(self):
+
+        """
+        Initialize long doc handler with available parameters.
+        """
+
+        self.long_doc_h = self.long_doc_h_class(
+            notebook_path = self.example_notebook_path,
+            kernel_name = self.kernel_name)
+
+    def _initialize_setup_dir_handler(self):
+
+        """
+        Initialize setup dir handler with available parameters.
+        """
+
+        self.setup_dir_h = self.setup_dir_h_class(
+            module_name = self.module_name,
+            module_filepath = self.module_filepath,
+            setup_directory = self.setup_directory,
+            logger = self.logger)
+
 
     def _initialize_handlers(self):
 
@@ -1503,6 +1600,9 @@ class PackageAutoAssembler:
         Add metadata extracted from the module.
         """
 
+        if self.metadata_h is None:
+            self._initialize_metadata_handler()
+
         if module_filepath is None:
             module_filepath = self.module_filepath
 
@@ -1520,6 +1620,9 @@ class PackageAutoAssembler:
         """
         Increment version and creates entry in version logs.
         """
+
+        if self.version_h is None:
+            self._initialize_version_handler()
 
         if module_name is None:
             module_name = self.module_name
@@ -1548,6 +1651,9 @@ class PackageAutoAssembler:
         Prepare setup directory.
         """
 
+        if self.setup_dir_h is None:
+            self._initialize_setup_dir_handler()
+
         # create empty dir for setup
         self.setup_dir_h.flush_n_make_setup_dir()
         # copy module to dir
@@ -1564,6 +1670,9 @@ class PackageAutoAssembler:
         """
         Combine local dependacies and main module into one file.
         """
+
+        if self.local_dependacies_h is None:
+            self._initialize_local_dependacies_handler()
 
         if main_module_filepath is None:
             main_module_filepath = self.module_filepath
@@ -1592,6 +1701,9 @@ class PackageAutoAssembler:
         Extract and add requirements from the module.
         """
 
+        if self.requirements_h is None:
+            self._initialize_requirements_handler()
+
         if module_filepath is None:
             module_filepath = self.module_filepath
 
@@ -1619,6 +1731,9 @@ class PackageAutoAssembler:
         """
         Make README file based on usage example.
         """
+
+        if self.long_doc_h is None:
+            self._initialize_long_doc_handler()
 
         if example_notebook_path is None:
             example_notebook_path = self.example_notebook_path
@@ -1650,6 +1765,9 @@ class PackageAutoAssembler:
         """
         Assemble setup.py file.
         """
+
+        if self.setup_dir_h is None:
+            self._initialize_setup_dir_handler()
 
         if metadata is None:
             metadata = self.metadata
