@@ -150,19 +150,19 @@ pv.get_logs(
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-04-27 00:26:18</td>
+      <td>2024-04-27 03:57:52</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-04-27 00:26:18</td>
+      <td>2024-04-27 03:57:52</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-04-27 00:26:18</td>
+      <td>2024-04-27 03:57:52</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -848,6 +848,8 @@ rnh.commit_messages
 
 
     ['Update requirements',
+     '[package_auto_assembler] fetching more of commit history for ReleaseNotesHandler',
+     'Update requirements',
      '[package_auto_assember] minor fixes to ReleaseNotesHandler; initial changes to allow for test install capability',
      'Update README',
      'Update requirements']
