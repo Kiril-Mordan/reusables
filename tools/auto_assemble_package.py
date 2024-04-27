@@ -40,8 +40,6 @@ paa = PackageAutoAssembler(
     default_version = "0.0.1"
 )
 
-paa._initialize_metadata_handler()
-
 if paa.metadata_h.is_metadata_available():
 
     paa.logger.info(f"Assembling package: {module_name}")

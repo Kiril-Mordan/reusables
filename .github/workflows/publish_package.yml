@@ -115,6 +115,7 @@ jobs:
         run: |
           set -x
           chmod +x tools/get_latest_package_version.sh
+
           PACKAGE_VERSION=$(./tools/get_latest_package_version.sh "${{ steps.changed-modules.outputs.files }}")
           if [ -z "${PACKAGE_VERSION}" ]; then
             echo "Failed to get version"
@@ -122,6 +123,9 @@ jobs:
           fi
 
           FILE_BASENAME=$(basename "${{ steps.changed-modules.outputs.files }}")
+          LABEL_NAME=$(basename "${{ steps.changed-modules.outputs.files }} .py")
+
+          python tools/update_release_notes.py "$LABEL_NAME" "$PACKAGE_VERSION"
 
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"

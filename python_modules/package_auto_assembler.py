@@ -1472,7 +1472,6 @@ class PackageAutoAssembler:
 
     def __attrs_post_init__(self):
         self._initialize_logger()
-        #self._initialize_handlers()
         self._initialize_metadata_handler()
         self._initialize_import_mapping_handler()
 
@@ -1561,38 +1560,6 @@ class PackageAutoAssembler:
             module_filepath = self.module_filepath,
             setup_directory = self.setup_directory,
             logger = self.logger)
-
-
-    def _initialize_handlers(self):
-
-        """
-        Initialize handlers with available parameters.
-        """
-
-        self.metadata_h = self.metadata_h(module_filepath = self.module_filepath)
-
-        self.version_h = self.version_h(versions_filepath = self.versions_filepath,
-                                        log_filepath = self.log_filepath,
-                                        default_version = self.default_version)
-
-        self.import_mapping_h = self.import_mapping_h(mapping_filepath = self.mapping_filepath)
-
-        self.local_dependacies_h = self.local_dependacies_h(main_module_filepath = self.module_filepath,
-                                                            dependencies_dir = self.dependencies_dir)
-
-        self.requirements_h = self.requirements_h(module_filepath = self.module_filepath,
-                                                  custom_modules_filepath = self.dependencies_dir,
-                                                  python_version = self.python_version)
-
-        self.long_doc_h = self.long_doc_h(notebook_path = self.example_notebook_path,
-                                          kernel_name = self.kernel_name)
-
-        self.setup_dir_h = self.setup_dir_h(module_name = self.module_name,
-                                            module_filepath = self.module_filepath,
-                                            setup_directory = self.setup_directory,
-                                            logger = self.logger)
-
-
 
     def add_metadata_from_module(self, module_filepath : str = None):
 
