@@ -13,7 +13,8 @@ MAPPING_FILE="env_spec/package_mapping.json"
 VERSIONS_FILE="env_spec/lsts_package_versions.yml"
 
 # Use jq to attempt to retrieve the mapping value
-MAPPED_VALUE=$(jq -r --arg k "$PACKAGE_NAME" '.[$k]' "$MAPPING_FILE")
+#MAPPED_VALUE=$(jq -r --arg k "$PACKAGE_NAME" '.[$k]' "$MAPPING_FILE")
+MAPPED_VALUE="$PACKAGE_NAME"
 
 # Check if the jq command found a mapping (i.e., the result is not null)
 if [ "$MAPPED_VALUE" != "null" ]; then

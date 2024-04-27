@@ -1391,7 +1391,6 @@ class ReleaseNotesHandler:
 
         return content
 
-
     def save_release_notes(self,
                            filepath : str = None,
                            note_entries : str = None):
@@ -1474,6 +1473,7 @@ class PackageAutoAssembler:
     def __attrs_post_init__(self):
         self._initialize_logger()
         #self._initialize_handlers()
+        self._initialize_metadata_handler()
         self._initialize_import_mapping_handler()
 
 

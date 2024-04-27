@@ -150,19 +150,19 @@ pv.get_logs(
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-04-25 00:55:16</td>
+      <td>2024-04-27 00:26:18</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-04-25 00:55:16</td>
+      <td>2024-04-27 00:26:18</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-04-25 00:55:16</td>
+      <td>2024-04-27 00:26:18</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -261,7 +261,7 @@ rh.list_custom_modules(
 
 
 
-    ['example_local_dependacy_1', 'example_local_dependacy_2']
+    ['example_local_dependacy_2', 'example_local_dependacy_1']
 
 
 
@@ -824,6 +824,15 @@ rnh = ReleaseNotesHandler(
 )
 ```
 
+    No relevant commit messages found!
+
+
+    ..trying depth 2 !
+
+
+    No relevant commit messages found!
+
+
     No messages to clean were provided
 
 
@@ -838,7 +847,10 @@ rnh.commit_messages
 
 
 
-    ['Update requirements']
+    ['Update requirements',
+     '[package_auto_assember] minor fixes to ReleaseNotesHandler; initial changes to allow for test install capability',
+     'Update README',
+     'Update requirements']
 
 
 
