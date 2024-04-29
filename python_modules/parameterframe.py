@@ -140,6 +140,115 @@ class DatabaseConnector:
 
         return True
 
+    def push_tables(self,
+                      solution_description : list,
+                      solution_parameter_set : list,
+                      parameter_set : list,
+                      parameter_set_description : list,
+                      parameter_description : list,
+                      parameter_attribute : list,
+                      attribute_values : list):
+
+        """
+        Pushes tables with database handler
+        """
+
+
+        self.add_entries(table_name = 'solution_description',
+                                            entries = solution_description)
+        self.add_entries(table_name = 'solution_parameter_set',
+                                            entries = solution_parameter_set)
+        self.add_entries(table_name = 'parameter_set',
+                                            entries = parameter_set)
+        self.add_entries(table_name = 'parameter_set_description',
+                                            entries = parameter_set_description)
+        self.add_entries(table_name = 'parameter_description',
+                                            entries = parameter_description)
+        self.add_entries(table_name = 'parameter_attribute',
+                                            entries = parameter_attribute)
+        self.add_entries(table_name = 'attribute_values',
+                                            entries = attribute_values)
+
+        self.commit()
+
+        return True
+
+    def pull_tables(self,
+                      solution_id : list = None,
+                      parameter_set_id : list = None):
+
+        """
+        Pulls commited tables from database for selected solutions
+        """
+
+        if solution_id is None:
+            raise ValueError("Provide solution_id!")
+
+        if parameter_set_id is None:
+            raise ValueError("Provide parameter_set_id!")
+
+        # fetch tables with solution and parameter_set_ids
+        self.fetch_entries(
+            filters={'table_name' : ['solution_description',
+                                          'solution_parameter_set',
+                                          'parameter_set',
+                                          'parameter_set_description'],
+                          'solution_id': [solution_id, None],
+                          'parameter_set_id' :[parameter_set_id, None]})
+
+        # get parameter_id for fetching next tables
+        dict_param_ids = self.get_entries(
+            table_name = 'parameter_set',
+            return_keys=['parameter_id'])
+
+        param_ids = [dict_param_id['parameter_id'] for dict_param_id in dict_param_ids]
+
+        # fetch tables with parameter_ids
+        self.fetch_entries(
+            filters={'table_name' : ['parameter_description',
+                                          'parameter_attribute'],
+                          'parameter_id': param_ids})
+
+        # get attribute_ids for fetching next tables
+        dict_attribute_ids = self.get_entries(
+            table_name = 'parameter_attribute',
+            return_keys=['attribute_id'])
+
+        attribute_ids = [dict_attribute_id['attribute_id'] \
+            for dict_attribute_id in dict_attribute_ids]
+
+        # fetch final tables
+        self.fetch_entries(
+            filters={'table_name' : 'attribute_values',
+                          'attribute_id': attribute_ids})
+
+        # get table lists from connector
+        solution_description = self.get_entries(
+    table_name = 'solution_description')
+        solution_parameter_sets = self.get_entries(
+    table_name = 'solution_parameter_set')
+        parameter_sets = self.get_entries(
+    table_name = 'parameter_set')
+        parameter_set_descriptions = self.get_entries(
+    table_name = 'parameter_set_description')
+        parameter_descriptions = self.get_entries(
+    table_name = 'parameter_description')
+        parameter_attributes = self.get_entries(
+    table_name = 'parameter_attribute')
+        attribute_values = self.get_entries(
+    table_name = 'attribute_values')
+
+        return (
+            solution_description,
+            solution_parameter_sets,
+            parameter_sets,
+            parameter_set_descriptions,
+            parameter_descriptions,
+            parameter_attributes,
+            attribute_values
+        )
+
+
 
 @attr.s
 class FileTypeHandler:
@@ -1412,22 +1521,15 @@ class ParameterFrame:
                 parameter_set_ids = parameter_set_ids
             )
 
-        self.database_connector.add_entries(table_name = 'solution_description',
-                                            entries = solution_description)
-        self.database_connector.add_entries(table_name = 'solution_parameter_set',
-                                            entries = solution_parameter_set)
-        self.database_connector.add_entries(table_name = 'parameter_set',
-                                            entries = parameter_set)
-        self.database_connector.add_entries(table_name = 'parameter_set_description',
-                                            entries = parameter_set_description)
-        self.database_connector.add_entries(table_name = 'parameter_description',
-                                            entries = parameter_description)
-        self.database_connector.add_entries(table_name = 'parameter_attribute',
-                                            entries = parameter_attribute)
-        self.database_connector.add_entries(table_name = 'attribute_values',
-                                            entries = attribute_values)
-
-        self.database_connector.commit()
+        self.database_connector.push_tables(
+            solution_description,
+            solution_parameter_set,
+            parameter_set,
+            parameter_set_description,
+            parameter_description,
+            parameter_attribute,
+            attribute_values
+        )
 
         return True
 
@@ -1538,7 +1640,7 @@ class ParameterFrame:
                       parameter_set_id : list = None):
 
         """
-        Pushes commited tables to database handler for selected solutions
+        Pulls commited tables from database for selected solutions
         """
 
         if solution_id is None:
@@ -1547,55 +1649,16 @@ class ParameterFrame:
         if parameter_set_id is None:
             raise ValueError("Provide parameter_set_id!")
 
-        # fetch tables with solution and parameter_set_ids
-        self.database_connector.fetch_entries(
-            filters={'table_name' : ['solution_description',
-                                          'solution_parameter_set',
-                                          'parameter_set',
-                                          'parameter_set_description'],
-                          'solution_id': [solution_id, None],
-                          'parameter_set_id' :[parameter_set_id, None]})
-
-        # get parameter_id for fetching next tables
-        dict_param_ids = self.database_connector.get_entries(
-            table_name = 'parameter_set',
-            return_keys=['parameter_id'])
-
-        param_ids = [dict_param_id['parameter_id'] for dict_param_id in dict_param_ids]
-
-        # fetch tables with parameter_ids
-        self.database_connector.fetch_entries(
-            filters={'table_name' : ['parameter_description',
-                                          'parameter_attribute'],
-                          'parameter_id': param_ids})
-
-        # get attribute_ids for fetching next tables
-        dict_attribute_ids = self.database_connector.get_entries(
-            table_name = 'parameter_attribute',
-            return_keys=['attribute_id'])
-
-        attribute_ids = [dict_attribute_id['attribute_id'] for dict_attribute_id in dict_attribute_ids]
-
-        # fetch final tables
-        self.database_connector.fetch_entries(
-            filters={'table_name' : 'attribute_values',
-                          'attribute_id': attribute_ids})
-
-        # get table lists from connector
-        solution_description = self.database_connector.get_entries(
-    table_name = 'solution_description')
-        solution_parameter_sets = self.database_connector.get_entries(
-    table_name = 'solution_parameter_set')
-        parameter_sets = self.database_connector.get_entries(
-    table_name = 'parameter_set')
-        parameter_set_descriptions = self.database_connector.get_entries(
-    table_name = 'parameter_set_description')
-        parameter_descriptions = self.database_connector.get_entries(
-    table_name = 'parameter_description')
-        parameter_attributes = self.database_connector.get_entries(
-    table_name = 'parameter_attribute')
-        attribute_values = self.database_connector.get_entries(
-    table_name = 'attribute_values')
+        (solution_description,
+         solution_parameter_sets,
+         parameter_sets,
+         parameter_set_descriptions,
+         parameter_descriptions,
+         parameter_attributes,
+         attribute_values) = self.database_connector.pull_tables(
+            solution_id = solution_id,
+            parameter_set_id = parameter_set_id
+        )
 
         # get table lists into commited
         self._rebuild_tables_from_pulled_data(
@@ -1609,9 +1672,6 @@ class ParameterFrame:
             parameter_attributes = parameter_attributes,
             attribute_values = attribute_values
         )
-
-
-
 
     def _change_deployment_status(self,
                                  deployment_status : str,
