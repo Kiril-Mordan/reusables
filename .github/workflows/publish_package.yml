@@ -134,6 +134,7 @@ jobs:
 
           git add env_spec/lsts_package_versions.yml
           git add env_spec/version_logs.csv
+          git add release_notes
           # Check if there are any changes in the working directory
           if [ -n "$(git status --porcelain)" ]; then
             COMMIT_MESSAGE="Update package version tracking files"
