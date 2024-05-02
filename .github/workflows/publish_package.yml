@@ -123,7 +123,7 @@ jobs:
           fi
 
           FILE_BASENAME=$(basename "${{ steps.changed-modules.outputs.files }}")
-          LABEL_NAME=$(basename "${{ steps.changed-modules.outputs.files }} .py")
+          LABEL_NAME=$(basename "${{ steps.changed-modules.outputs.files }}" .py)
 
           python tools/update_release_notes.py "$LABEL_NAME" "$PACKAGE_VERSION"
 
