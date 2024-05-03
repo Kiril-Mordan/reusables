@@ -17,6 +17,11 @@ from collections import defaultdict
 import logging
 import ast
 
+from sqlalchemy import create_engine, Column, String, Text, ForeignKey, DateTime
+from sqlalchemy.orm import relationship, sessionmaker, declarative_base
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError, DBAPIError
+from sqlalchemy import inspect
+
 __design_choices__ = {
     "FileTypeHandler" : ['prepares one parameter file and reconstructs one parameter file at a time',
                          'txt and yaml files can be processed',
@@ -39,7 +44,7 @@ __package_metadata__ = {
 }
 
 @attr.s
-class DatabaseConnector:
+class MockerDatabaseConnector:
 
     db_handler = attr.ib(default=MockerDB)
     db_remote_handler = attr.ib(default=MockerConnector)
@@ -248,6 +253,227 @@ class DatabaseConnector:
             attribute_values
         )
 
+
+@attr.s
+class SqlAlchemyDatabaseManager:
+
+
+    connection_details = attr.ib(default = {
+        'base_url' : "http://localhost:8000"})
+
+    _instance = None
+    Base = declarative_base()
+
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='SqlAlchemy Database Connector')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(SqlAlchemyDatabaseManager, cls).__new__(cls)
+        return cls._instance
+
+    def __attrs_post_init__(self):
+
+        if not hasattr(self, 'engine'):
+            self.engine = create_engine(self.connection_details['base_url'])
+            self.Session = sessionmaker(bind=self.engine)
+
+        self._initialize_logger()
+
+    def _initialize_logger(self):
+
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    class AttributeValues(Base):
+        __tablename__ = 'attribute_values'
+        attribute_id = Column(String, primary_key=True)
+        previous_attribute_id = Column(String, nullable=True)
+        attribute_name = Column(String)
+        attribute_value = Column(String)
+        attribute_value_type = Column(String)
+
+    class ParameterDescription(Base):
+        __tablename__ = 'parameter_description'
+        parameter_id = Column(String, primary_key=True)
+        parameter_name = Column(String)
+        parameter_description = Column(Text)
+        file_name = Column(String)
+        file_type = Column(String)
+
+    class ParameterAttribute(Base):
+        __tablename__ = 'parameter_attribute'
+        parameter_id = Column(String, ForeignKey('parameter_description.parameter_id'), primary_key=True)
+        attribute_id = Column(String, ForeignKey('attribute_values.attribute_id'), primary_key=True)
+        previous_attribute_id = Column(String, nullable=True)
+        attribute_values = relationship("AttributeValues")
+        parameter_description = relationship("ParameterDescription")
+
+    class ParameterSet(Base):
+        __tablename__ = 'parameter_set'
+        parameter_set_id = Column(String, primary_key=True)
+        parameter_id = Column(String,primary_key=True)
+        #parameter_description = relationship("ParameterDescription")
+        # If ParameterAttribute should be related here, it needs adjustment.
+
+    class SolutionParameterSet(Base):
+        __tablename__ = 'solution_parameter_set'
+        solution_id = Column(String, primary_key=True)
+        parameter_set_id = Column(String, primary_key=True)
+        #parameter_set = relationship("ParameterSet")
+        deployment_status = Column(String)
+        insertion_datetime = Column(String)
+
+
+    class ParameterSetDescription(Base):
+        __tablename__ = 'parameter_set_description'
+        parameter_set_id = Column(String, primary_key=True)
+        parameter_set_name = Column(String)
+        parameter_set_description = Column(Text)
+        # This should not have parameter_id as primary key if it's not part of ParameterSet primary key.
+
+    class SolutionDescription(Base):
+        __tablename__ = 'solution_description'
+        solution_id = Column(String, primary_key=True)
+        solution_name = Column(String)
+        solution_description = Column(Text)
+        deployment_date = Column(String)
+        deprecation_date = Column(String, nullable=True)
+        maintainers = Column(Text)
+
+    # Define other models similarly
+
+    def create_tables(self):
+        self.Base.metadata.create_all(self.engine)
+
+    def drop_tables(self):
+        self.Base.metadata.drop_all(self.engine)
+
+
+    def _merge_entries(self, entries):
+        with self.Session() as session:
+            try:
+                for entry in entries:
+                    session.merge(entry)  # Merges based on primary key
+                session.commit()
+            except SQLAlchemyError as e:
+                session.rollback()
+                self.logger.error(f"SQLAlchemy Error: {e}")
+
+
+    def _as_dict(self, obj, with_relationships=False):
+        data = {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
+        if with_relationships:
+            for relationship in inspect(obj).mapper.relationships:
+                related_data = getattr(obj, relationship.key)
+                if related_data is not None:
+                    if isinstance(related_data, list):
+                        data[relationship.key] = [self._as_dict(child, True) for child in related_data]
+                    else:
+                        data[relationship.key] = self._as_dict(related_data, True)
+        return data
+
+    def push_tables(self,
+                      solution_description : list,
+                      solution_parameter_set : list,
+                      parameter_set : list,
+                      parameter_set_description : list,
+                      parameter_description : list,
+                      parameter_attribute : list,
+                      attribute_values : list):
+
+        """
+        Pushes tables with database handler
+        """
+
+
+        solution_description = [self.SolutionDescription(**data)
+                                for data in solution_description]
+
+        parameter_description = [self.ParameterDescription(**data)
+                                for data in parameter_description]
+
+        parameter_set_description = [self.ParameterSetDescription(**data)
+                                for data in parameter_set_description]
+
+        solution_parameter_set = [self.SolutionParameterSet(**data)
+                                for data in solution_parameter_set]
+
+        parameter_set = [self.ParameterSet(**data)
+                                for data in parameter_set]
+
+        parameter_attribute = [self.ParameterAttribute(**data)
+                                for data in parameter_attribute]
+
+        attribute_values = [self.AttributeValues(**data)
+                                for data in attribute_values]
+
+
+        inserts = solution_description + parameter_description + parameter_set +\
+             solution_parameter_set + parameter_set_description + \
+                attribute_values + parameter_attribute
+
+        self._merge_entries(entries = inserts)
+
+        return True
+
+    def pull_tables(self, solution_id=None, parameter_set_id=None):
+        if solution_id is None or parameter_set_id is None:
+            raise ValueError("Provide both solution_id and parameter_set_id!")
+
+        session = self.Session()
+        try:
+            # Fetch related entries based on solution_id and parameter_set_id
+            solution_descriptions = session.query(self.SolutionDescription).filter(
+                self.SolutionDescription.solution_id == solution_id).all()
+            solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
+                self.SolutionParameterSet.solution_id == solution_id,
+                self.SolutionParameterSet.parameter_set_id == parameter_set_id).all()
+            parameter_sets = session.query(self.ParameterSet).filter(
+                self.ParameterSet.parameter_set_id == parameter_set_id).all()
+            parameter_set_descriptions = session.query(self.ParameterSetDescription).filter(
+                self.ParameterSetDescription.parameter_set_id == parameter_set_id).all()
+
+            # Fetch parameter_id from parameter_sets for further queries
+            param_ids = [param.parameter_id for param in parameter_sets]
+
+            # Continue to fetch related entries based on parameter_id
+            parameter_descriptions = session.query(self.ParameterDescription).filter(
+                self.ParameterDescription.parameter_id.in_(param_ids)).all()
+            parameter_attributes = session.query(self.ParameterAttribute).filter(
+                self.ParameterAttribute.parameter_id.in_(param_ids)).all()
+
+            # Get attribute_ids for fetching attribute values
+            attribute_ids = [attr.attribute_id for attr in parameter_attributes]
+            attribute_values = session.query(self.AttributeValues).filter(
+                self.AttributeValues.attribute_id.in_(attribute_ids)).all()
+
+            return (
+                [self._as_dict(data) for data in solution_descriptions],
+                [self._as_dict(data) for data in solution_parameter_sets],
+                [self._as_dict(data) for data in parameter_sets],
+                [self._as_dict(data) for data in parameter_set_descriptions],
+                [self._as_dict(data) for data in parameter_descriptions],
+                [self._as_dict(data) for data in parameter_attributes],
+                [self._as_dict(data) for data in attribute_values]
+            )
+
+        except Exception as e:
+            session.rollback()
+            print(f"An error occurred: {e}")
+        finally:
+            session.close()
 
 
 @attr.s
@@ -947,8 +1173,11 @@ class ParameterFrame:
     param_descriptions = attr.ib(default=None, type=dict)
     seed = attr.ib(default=None, type=int)
 
+    connection_details = attr.ib(default = {
+        'base_url' : "http://localhost:8000"})
+
     # dependancies
-    database_connector = attr.ib(default=None, type=DatabaseConnector)
+    database_connector = attr.ib(default=None, type=MockerDatabaseConnector)
     file_type_handler = attr.ib(default=FileTypeHandler)
     name_generator = attr.ib(default=ComplexNameGenerator)
 
@@ -970,7 +1199,9 @@ class ParameterFrame:
         self._initialize_logger()
 
         if self.database_connector is None:
-            self.database_connector = DatabaseConnector()
+            self.database_connector = MockerDatabaseConnector(connection_details = self.connection_details)
+
+
 
         self.commited_tables = {}
 
@@ -1080,7 +1311,7 @@ class ParameterFrame:
     def add_solution_description(self,
                                     solution_name : str,
                                     deployment_date : str = None,
-                                    deprication_date : str = None,
+                                    deprecation_date : str = None,
                                     solution_description : str = None,
                                     solution_id : str = None,
                                     maintainers : list = None):
@@ -1113,7 +1344,7 @@ class ParameterFrame:
             'solution_name' : solution_name,
             'solution_description' : solution_description,
             'deployment_date' : deployment_date,
-            'deprication_date' : deprication_date,
+            'deprecation_date' : deprecation_date,
             'maintainers' : maintainers
         }
 
@@ -1166,7 +1397,7 @@ class ParameterFrame:
                                     solution_id : str,
                                     solution_name : str = None,
                                     deployment_date : str = None,
-                                    deprication_date : str = None,
+                                    deprecation_date : str = None,
                                     solution_description : str = None,
                                     maintainers : list = None):
 
@@ -1182,8 +1413,8 @@ class ParameterFrame:
             self.solutions[solution_name]['solution_description']['solution_name'] = solution_name
         if deployment_date is not None:
             self.solutions[solution_name]['solution_description']['deployment_date'] = deployment_date
-        if deprication_date is not None:
-            self.solutions[solution_name]['solution_description']['deprication_date'] = deprication_date
+        if deprecation_date is not None:
+            self.solutions[solution_name]['solution_description']['deprecation_date'] = deprecation_date
         if solution_description is not None:
             self.solutions[solution_name]['solution_description']['solution_description'] = solution_description
         if maintainers is not None:
@@ -1522,13 +1753,14 @@ class ParameterFrame:
             )
 
         self.database_connector.push_tables(
-            solution_description,
-            solution_parameter_set,
-            parameter_set,
-            parameter_set_description,
-            parameter_description,
-            parameter_attribute,
-            attribute_values
+
+            solution_description = solution_description,
+            solution_parameter_set = solution_parameter_set,
+            parameter_set = parameter_set,
+            parameter_set_description = parameter_set_description,
+            parameter_description = parameter_description,
+            parameter_attribute = parameter_attribute,
+            attribute_values = attribute_values
         )
 
         return True
