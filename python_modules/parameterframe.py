@@ -146,33 +146,39 @@ class MockerDatabaseConnector:
         return True
 
     def push_tables(self,
-                      solution_description : list,
-                      solution_parameter_set : list,
-                      parameter_set : list,
-                      parameter_set_description : list,
-                      parameter_description : list,
-                      parameter_attribute : list,
-                      attribute_values : list):
+                      solution_description : list = None,
+                      solution_parameter_set : list = None,
+                      parameter_set : list = None,
+                      parameter_set_description : list = None,
+                      parameter_description : list = None,
+                      parameter_attribute : list = None,
+                      attribute_values : list = None):
 
         """
         Pushes tables with database handler
         """
 
-
-        self.add_entries(table_name = 'solution_description',
-                                            entries = solution_description)
-        self.add_entries(table_name = 'solution_parameter_set',
-                                            entries = solution_parameter_set)
-        self.add_entries(table_name = 'parameter_set',
-                                            entries = parameter_set)
-        self.add_entries(table_name = 'parameter_set_description',
-                                            entries = parameter_set_description)
-        self.add_entries(table_name = 'parameter_description',
-                                            entries = parameter_description)
-        self.add_entries(table_name = 'parameter_attribute',
-                                            entries = parameter_attribute)
-        self.add_entries(table_name = 'attribute_values',
-                                            entries = attribute_values)
+        if solution_description:
+            self.add_entries(table_name = 'solution_description',
+                                                entries = solution_description)
+        if solution_parameter_set:
+            self.add_entries(table_name = 'solution_parameter_set',
+                                                entries = solution_parameter_set)
+        if parameter_set:
+            self.add_entries(table_name = 'parameter_set',
+                                                entries = parameter_set)
+        if parameter_set_description:
+            self.add_entries(table_name = 'parameter_set_description',
+                                                entries = parameter_set_description)
+        if parameter_description:
+            self.add_entries(table_name = 'parameter_description',
+                                                entries = parameter_description)
+        if parameter_attribute:
+            self.add_entries(table_name = 'parameter_attribute',
+                                                entries = parameter_attribute)
+        if attribute_values:
+            self.add_entries(table_name = 'attribute_values',
+                                                entries = attribute_values)
 
         self.commit()
 
@@ -253,6 +259,29 @@ class MockerDatabaseConnector:
             attribute_values
         )
 
+    def get_parameter_sets_info(self,
+                            solution_id : str = None,
+                            deployment_status : str = None):
+
+        """
+        Get parameter sets for solution id with select deployment status.
+        """
+
+        if solution_id is None:
+            raise ValueError("Provide solution_id!")
+
+        # fetch tables with solution and parameter_set_ids
+        self.fetch_entries(
+            filters={'table_name' : 'solution_parameter_set',
+                     'solution_id': solution_id,
+                     'deployment_status' : deployment_status})
+
+        solution_parameter_sets = self.get_entries(
+            table_name = 'solution_parameter_set',
+            filters={'solution_id': solution_id,
+                    'deployment_status' : deployment_status})
+
+        return solution_parameter_sets
 
 @attr.s
 class SqlAlchemyDatabaseManager:
@@ -385,48 +414,54 @@ class SqlAlchemyDatabaseManager:
         return data
 
     def push_tables(self,
-                      solution_description : list,
-                      solution_parameter_set : list,
-                      parameter_set : list,
-                      parameter_set_description : list,
-                      parameter_description : list,
-                      parameter_attribute : list,
-                      attribute_values : list):
+                      solution_description : list = None,
+                      solution_parameter_set : list = None,
+                      parameter_set : list = None,
+                      parameter_set_description : list = None,
+                      parameter_description : list = None,
+                      parameter_attribute : list = None,
+                      attribute_values : list = None):
 
         """
         Pushes tables with database handler
         """
 
+        inserts = []
 
-        solution_description = [self.SolutionDescription(**data)
-                                for data in solution_description]
+        if solution_description:
+            solution_description = [self.SolutionDescription(**data)
+                                    for data in solution_description]
+            inserts += solution_description
+        if parameter_description:
+            parameter_description = [self.ParameterDescription(**data)
+                                    for data in parameter_description]
+            inserts += parameter_description
+        if parameter_set_description:
+            parameter_set_description = [self.ParameterSetDescription(**data)
+                                    for data in parameter_set_description]
+            inserts += parameter_set_description
+        if solution_parameter_set:
+            solution_parameter_set = [self.SolutionParameterSet(**data)
+                                    for data in solution_parameter_set]
+            inserts += solution_parameter_set
+        if parameter_set:
+            parameter_set = [self.ParameterSet(**data)
+                                    for data in parameter_set]
+            inserts += parameter_set
+        if parameter_attribute:
+            parameter_attribute = [self.ParameterAttribute(**data)
+                                    for data in parameter_attribute]
+            inserts += parameter_attribute
+        if attribute_values:
+            attribute_values = [self.AttributeValues(**data)
+                                    for data in attribute_values]
+            inserts += attribute_values
 
-        parameter_description = [self.ParameterDescription(**data)
-                                for data in parameter_description]
+        if inserts:
+            self._merge_entries(entries = inserts)
+            return True
 
-        parameter_set_description = [self.ParameterSetDescription(**data)
-                                for data in parameter_set_description]
-
-        solution_parameter_set = [self.SolutionParameterSet(**data)
-                                for data in solution_parameter_set]
-
-        parameter_set = [self.ParameterSet(**data)
-                                for data in parameter_set]
-
-        parameter_attribute = [self.ParameterAttribute(**data)
-                                for data in parameter_attribute]
-
-        attribute_values = [self.AttributeValues(**data)
-                                for data in attribute_values]
-
-
-        inserts = solution_description + parameter_description + parameter_set +\
-             solution_parameter_set + parameter_set_description + \
-                attribute_values + parameter_attribute
-
-        self._merge_entries(entries = inserts)
-
-        return True
+        return False
 
     def pull_tables(self, solution_id=None, parameter_set_id=None):
         if solution_id is None or parameter_set_id is None:
@@ -468,6 +503,31 @@ class SqlAlchemyDatabaseManager:
                 [self._as_dict(data) for data in parameter_attributes],
                 [self._as_dict(data) for data in attribute_values]
             )
+
+        except Exception as e:
+            session.rollback()
+            print(f"An error occurred: {e}")
+        finally:
+            session.close()
+
+    def get_parameter_sets_info(self,
+                            solution_id : str = None,
+                            deployment_status : str = None):
+
+        """
+        Get parameter sets for solution id with select deployment status.
+        """
+
+        if solution_id is None:
+            raise ValueError("Provide solution_id!")
+
+        session = self.Session()
+        try:
+            solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
+                self.SolutionParameterSet.solution_id == solution_id,
+                self.SolutionParameterSet.deployment_status == deployment_status).all()
+
+            return [self._as_dict(data) for data in solution_parameter_sets]
 
         except Exception as e:
             session.rollback()
@@ -1145,9 +1205,13 @@ class ComplexNameGenerator:
         adjectives = ["fuzzy", "bright", "dark", "shiny", "giant", "tiny", "happy", "sad"]
         nouns = ["toaster", "refrigerator", "microwave", "laptop", "thermostat", "television", "car", "scooter"]
 
+        if seed is None:
+            seed = self.seed
+
         if isinstance(seed, int):
             # Set the seed value
             random.seed(seed)
+            self.seed += 1
 
         # Randomly choose a word from each list
         color = random.choice(colors)
@@ -1165,7 +1229,7 @@ class ComplexNameGenerator:
 @attr.s
 class ParameterFrame:
 
-    params_path = attr.ib()
+    params_path = attr.ib(default=None)
 
     # optional
     solution_id = attr.ib(default=None, type=str)
@@ -1182,6 +1246,7 @@ class ParameterFrame:
     name_generator = attr.ib(default=ComplexNameGenerator)
 
     # inner
+    seed = attr.ib(default=23, type=int)
     solutions = attr.ib(default={})
     param_sets = attr.ib(default={})
     param_attributes = attr.ib(default={})
@@ -1201,9 +1266,12 @@ class ParameterFrame:
         if self.database_connector is None:
             self.database_connector = MockerDatabaseConnector(connection_details = self.connection_details)
 
+        self._initialize_name_generator()
 
-
+        self.solutions = {}
+        self.param_sets = {}
         self.commited_tables = {}
+        self.param_attributes = {}
 
 
     def _initialize_logger(self):
@@ -1218,6 +1286,14 @@ class ParameterFrame:
             logger.setLevel(self.loggerLvl)
 
             self.logger = logger
+
+    def _initialize_name_generator(self):
+
+        """
+        Initializing name generator
+        """
+
+        self.name_generator = self.name_generator(seed = self.seed)
 
     def _generate_unique_id(self, txt : str) -> str:
 
@@ -1263,6 +1339,8 @@ class ParameterFrame:
 
             self.param_attributes[param_name].process_file()
 
+        return True
+
     def make_parameter_set(self,
                            parameter_set_name : str = None,
                            parameter_set_description : str = None,
@@ -1278,7 +1356,7 @@ class ParameterFrame:
 
             if seed is None:
                 seed = self.seed
-            parameter_set_name = self.name_generator().generate_random_name(seed = seed)
+            parameter_set_name = self.name_generator.generate_random_name()
 
         if parameter_set_description is None:
             parameter_set_description = ''
@@ -1307,22 +1385,24 @@ class ParameterFrame:
         self.param_sets[parameter_set_name] = {'parameter_set' : parameter_set,
                                                'parameter_set_description' : parameter_set_description}
 
+        self.logger.info(f"Parameter set id for {parameter_set_name}: {parameter_set_id}")
 
-    def add_solution_description(self,
-                                    solution_name : str,
-                                    deployment_date : str = None,
-                                    deprecation_date : str = None,
-                                    solution_description : str = None,
-                                    solution_id : str = None,
-                                    maintainers : list = None):
+
+    def add_solution(self,
+                        solution_name : str,
+                        deployment_date : str = None,
+                        deprecation_date : str = None,
+                        solution_description : str = None,
+                        solution_id : str = None,
+                        maintainers : list = None,
+                        seed : int = None):
 
         """
         Add new solution and its description.
         """
 
-        if solution_id is None:
-            solution_id = self.solution_id
-
+        if seed is None:
+            seed = self.seed
 
         # trim solution name
         solution_name = solution_name[:100]
@@ -1330,8 +1410,8 @@ class ParameterFrame:
         if solution_id is None:
             # if solution id not provided create new
             solution_id = self._generate_unique_id(
-                txt = self.name_generator().generate_random_name(seed=23) + solution_name)
-
+                txt = self.name_generator.generate_random_name(seed = seed) \
+                    + solution_name)
 
         if solution_name not in self.solutions.keys():
             self.solutions[solution_name] = {}
@@ -1348,6 +1428,11 @@ class ParameterFrame:
             'maintainers' : maintainers
         }
 
+        self.logger.info(f"Solution id for {solution_name}: {solution_id}")
+        return True
+
+
+
     def _get_solution_name_from_memory(self, solution_id : str) -> str:
 
         """
@@ -1355,11 +1440,14 @@ class ParameterFrame:
         """
 
         try:
-            solution_name = [self.solutions[s]['solution_description']['solution_name'] \
+            solution_name = [self.solutions[s]['solution_id'] \
                 for s in self.solutions \
-                    if self.solutions[s]['solution_description']['solution_id'] == solution_id][0]
+                    if self.solutions[s]['solution_id'] == solution_id][0]
         except Exception as e:
-            raise ValueError(f"{solution_id} is not in solutions saved to memory!")
+            self.logger.warning(f"{solution_id} is not in solutions saved to memory!")
+            solution_name = self.name_generator.generate_random_name()
+            self.logger.warning(f"Name {solution_name} is assigned to {solution_id} temporarily!")
+
 
         return solution_name
 
@@ -1434,11 +1522,11 @@ class ParameterFrame:
         if solution_id is None:
             solution_id = self.solution_id
 
-        if solution_id is None:
-            solution_id = self.solutions[solution_name]['solution_id']
-
         if (solution_id is None) and (solution_name is None):
             raise ValueError("Provide either solution_id or solution_name!")
+
+        if solution_id is None:
+            solution_id = self.solutions[solution_name]['solution_id']
 
         if (parameter_set_id is None) and (parameter_set_name is None):
             raise ValueError("Provide either parameter_set_id or parameter_set_name!")
@@ -1457,6 +1545,9 @@ class ParameterFrame:
         if solution_name not in self.solutions.keys():
             self.solutions[solution_name] = {}
 
+        if 'solution_id' not in self.solutions[solution_name].keys():
+            self.solutions[solution_name]['solution_id'] = solution_id
+
         if 'solution_parameter_set' not in self.solutions[solution_name].keys():
             self.solutions[solution_name]['solution_parameter_set'] = {}
 
@@ -1466,6 +1557,8 @@ class ParameterFrame:
             'deployment_status' : "STAGING",
             'insertion_datetime' : datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
+
+        return True
 
     def commit_solution(self,
                         solution_id : str = None,
@@ -1494,9 +1587,13 @@ class ParameterFrame:
         if solution_id not in self.commited_tables.keys():
             self.commited_tables[solution_id] = {}
 
+        solution_description = None
+        if 'solution_description' in self.solutions[solution_name].keys():
+            solution_description = [self.solutions[solution_name]['solution_description']]
+
         ## save solution description
         self.commited_tables[solution_id]= {
-            'solution_description' : [self.solutions[solution_name]['solution_description']],
+            'solution_description' : solution_description,
             'solution_parameter_set' : {},
             'parameter_set' : {},
             'parameter_set_description' : {},
@@ -1505,58 +1602,66 @@ class ParameterFrame:
             'attribute_values' : {}
         }
 
-        if (parameter_set_ids is not None) and (parameter_set_names is None):
-                parameter_set_names = [self._get_parameter_set_name_from_memory(
-                    parameter_set_id = parameter_set_id) \
-                        for parameter_set_id in parameter_set_ids]
+        if solution_description:
+            self.logger.info(f"Commited solution description for {solution_id}")
 
-        if (parameter_set_ids is None) and (parameter_set_names is not None):
-            parameter_set_ids = [self._get_parameter_set_id_from_memory(
-                parameter_set_name = parameter_set_name) \
-                    for parameter_set_name in parameter_set_names]
+        if (parameter_set_ids is not None) or (parameter_set_names is not None):
 
-        if (parameter_set_ids is None) and (parameter_set_names is None):
-                raise ValueError("Provide either parameter_set_ids or parameter_set_names!")
+            if (parameter_set_ids is not None) and (parameter_set_names is None):
+                    parameter_set_names = [self._get_parameter_set_name_from_memory(
+                        parameter_set_id = parameter_set_id) \
+                            for parameter_set_id in parameter_set_ids]
+
+            if (parameter_set_ids is None) and (parameter_set_names is not None):
+                parameter_set_ids = [self._get_parameter_set_id_from_memory(
+                    parameter_set_name = parameter_set_name) \
+                        for parameter_set_name in parameter_set_names]
+
+            if (parameter_set_ids is None) and (parameter_set_names is None):
+                    raise ValueError("Provide either parameter_set_ids or parameter_set_names!")
 
 
-        for parameter_set_id, parameter_set_name in zip(parameter_set_ids, parameter_set_names):
+            for parameter_set_id, parameter_set_name in zip(parameter_set_ids, parameter_set_names):
 
-            ## save to solution_parameter_set
-            self.commited_tables[solution_id]['solution_parameter_set'][parameter_set_id] = \
-                [self.solutions[solution_name]['solution_parameter_set'][parameter_set_name]]
-            ## save to parameter_set
-            self.commited_tables[solution_id]['parameter_set'][parameter_set_id] = \
-                self.param_sets[parameter_set_name]['parameter_set']
-            ## save to parameter_set_description
-            self.commited_tables[solution_id]['parameter_set_description'][parameter_set_id] = \
-                self.param_sets[parameter_set_name]['parameter_set_description']
-            ## save to parameter_description
-            for parameter_set in self.param_sets[parameter_set_name]['parameter_set']:
+                ## save to solution_parameter_set
+                self.commited_tables[solution_id]['solution_parameter_set'][parameter_set_id] = \
+                    [self.solutions[solution_name]['solution_parameter_set'][parameter_set_name]]
+                ## save to parameter_set
+                self.commited_tables[solution_id]['parameter_set'][parameter_set_id] = \
+                    self.param_sets[parameter_set_name]['parameter_set']
+                ## save to parameter_set_description
+                self.commited_tables[solution_id]['parameter_set_description'][parameter_set_id] = \
+                    self.param_sets[parameter_set_name]['parameter_set_description']
+                ## save to parameter_description
+                for parameter_set in self.param_sets[parameter_set_name]['parameter_set']:
 
-                parameter_id = parameter_set['parameter_id']
+                    parameter_id = parameter_set['parameter_id']
 
-                parameter_name = [self.param_attributes[param_name].parameter_name \
-                    for param_name in self.param_attributes \
-                        if self.param_attributes[param_name].parameter_id == parameter_id][0]
+                    parameter_name = [self.param_attributes[param_name].parameter_name \
+                        for param_name in self.param_attributes \
+                            if self.param_attributes[param_name].parameter_id == parameter_id][0]
 
-                # saving parameter descriptions
-                if parameter_set_id not in self.commited_tables[solution_id]['parameter_description'].keys():
-                    self.commited_tables[solution_id]['parameter_description'][parameter_set_id] = {}
-                self.commited_tables[solution_id]['parameter_description'][parameter_set_id][parameter_id] = \
-                    self.param_attributes[parameter_name].parameter_description
+                    # saving parameter descriptions
+                    if parameter_set_id not in self.commited_tables[solution_id]['parameter_description'].keys():
+                        self.commited_tables[solution_id]['parameter_description'][parameter_set_id] = {}
+                    self.commited_tables[solution_id]['parameter_description'][parameter_set_id][parameter_id] = \
+                        self.param_attributes[parameter_name].parameter_description
 
-                # saving parameter attributes list
-                if parameter_set_id not in self.commited_tables[solution_id]['parameter_attribute'].keys():
-                    self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id] = {}
-                self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id][parameter_id] = \
-                    self.param_attributes[parameter_name].parameter_attributes_list
+                    # saving parameter attributes list
+                    if parameter_set_id not in self.commited_tables[solution_id]['parameter_attribute'].keys():
+                        self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id] = {}
+                    self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id][parameter_id] = \
+                        self.param_attributes[parameter_name].parameter_attributes_list
 
-                # saving attribute values
-                if parameter_set_id not in self.commited_tables[solution_id]['attribute_values'].keys():
-                    self.commited_tables[solution_id]['attribute_values'][parameter_set_id] = {}
-                self.commited_tables[solution_id]['attribute_values'][parameter_set_id][parameter_id] = \
-                    self.param_attributes[parameter_name].attribute_values_list
+                    # saving attribute values
+                    if parameter_set_id not in self.commited_tables[solution_id]['attribute_values'].keys():
+                        self.commited_tables[solution_id]['attribute_values'][parameter_set_id] = {}
+                    self.commited_tables[solution_id]['attribute_values'][parameter_set_id][parameter_id] = \
+                        self.param_attributes[parameter_name].attribute_values_list
 
+                self.logger.info(f"Commited solution tables for {solution_id}")
+
+        return True
 
     def _prep_ps_for_reconstruction(self,
                                  solution_id : str,
@@ -1666,7 +1771,7 @@ class ParameterFrame:
 
     def _prep_tables_for_pushing(self,
                                  solution_id : str,
-                                 parameter_set_ids : list):
+                                 parameter_set_ids : list = None):
 
         """
         Prepare tables for pushing selected solution
@@ -1683,38 +1788,42 @@ class ParameterFrame:
 
             solution_description = self.commited_tables[solution_id]['solution_description']
             ##
-            for parameter_set_id in parameter_set_ids:
 
-                solution_parameter_set = solution_parameter_set + \
-                    self.commited_tables[solution_id]['solution_parameter_set'][parameter_set_id]
-                parameter_set = parameter_set + \
-                    self.commited_tables[solution_id]['parameter_set'][parameter_set_id]
-                parameter_set_description = parameter_set_description + \
-                    self.commited_tables[solution_id]['parameter_set_description'][parameter_set_id]
+            if parameter_set_ids:
+                for parameter_set_id in parameter_set_ids:
 
-                parameter_description_dict = self.commited_tables[solution_id]['parameter_description'][parameter_set_id]
-                parameter_description = parameter_description + \
-                    [item for sublist in parameter_description_dict.values() for item in sublist]
+                    solution_parameter_set = solution_parameter_set + \
+                        self.commited_tables[solution_id]['solution_parameter_set'][parameter_set_id]
+                    parameter_set = parameter_set + \
+                        self.commited_tables[solution_id]['parameter_set'][parameter_set_id]
+                    parameter_set_description = parameter_set_description + \
+                        self.commited_tables[solution_id]['parameter_set_description'][parameter_set_id]
 
-                parameter_attribute_dict = self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id]
-                parameter_attribute = parameter_attribute + \
-                    [item for sublist in parameter_attribute_dict.values() for item in sublist]
+                    parameter_description_dict = self.commited_tables[solution_id]['parameter_description'][parameter_set_id]
+                    parameter_description = parameter_description + \
+                        [item for sublist in parameter_description_dict.values() for item in sublist]
 
-                attribute_values_dict = self.commited_tables[solution_id]['attribute_values'][parameter_set_id]
-                attribute_values = attribute_values + \
-                    [item for sublist in attribute_values_dict.values() for item in sublist]
+                    parameter_attribute_dict = self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id]
+                    parameter_attribute = parameter_attribute + \
+                        [item for sublist in parameter_attribute_dict.values() for item in sublist]
+
+                    attribute_values_dict = self.commited_tables[solution_id]['attribute_values'][parameter_set_id]
+                    attribute_values = attribute_values + \
+                        [item for sublist in attribute_values_dict.values() for item in sublist]
+
+                    return (solution_description,
+                            solution_parameter_set,
+                            parameter_set,
+                            parameter_set_description,
+                            parameter_description,
+                            parameter_attribute,
+                            attribute_values)
 
         except Exception as e:
             self.logger.error("Problem during preparation of tables for pushing!")
             raise e
 
-        return (solution_description,
-                solution_parameter_set,
-                parameter_set,
-                parameter_set_description,
-                parameter_description,
-                parameter_attribute,
-                attribute_values)
+        return solution_description
 
     def push_solution(self,
                       solution_id : list = None,
@@ -1729,12 +1838,21 @@ class ParameterFrame:
         if (solution_id is None) and (solution_name is None):
             raise ValueError("Provide either solution_ids or solution_names!")
 
-        if (parameter_set_ids is None) and (parameter_set_names is None):
-            raise ValueError("Provide either parameter_set_ids or parameter_set_names!")
-
         if solution_id is None:
             solution_id = [id for id, dd in self.commited_tables.items() \
                 if dd['solution_description'][0]['solution_name'] == solution_name][0]
+
+        if (parameter_set_ids is None) and (parameter_set_names is None):
+            solution_description = self._prep_tables_for_pushing(
+                solution_id = solution_id
+            )
+
+            self.database_connector.push_tables(
+                solution_description = solution_description
+            )
+
+            return True
+
 
         if parameter_set_ids is None:
             parameter_set_ids = [id for id, dd in self.commited_tables[solution_id]['parameter_set_description'].items() \
@@ -1944,12 +2062,28 @@ class ParameterFrame:
             self.solutions[solution_name]['solution_parameter_set']\
                 [parameter_set_name]['deployment_status'] = deployment_status
 
+    def get_parameter_set_id_for_solution(self,
+                                          solution_id : str = None,
+                                          deployment_status : str = None):
+
+        """
+        Get parameter set id/s for solution id with select deployment status.
+        """
+
+        tabs = self.database_connector.get_parameter_sets_info(
+            solution_id=solution_id,
+            deployment_status=deployment_status)
+
+        parameter_set_ids = [t['parameter_set_id'] for t in tabs]
+
+        return parameter_set_ids
+
     def get_deployment_status(self,
                                  solution_id : str = None,
                                 solution_name : str = None,
                                 parameter_set_id : str = None,
                                 parameter_set_name : str = None,
-                                remote : bool = False):
+                                remote : bool = True):
 
         """
         Get deployment status of parameter set.
