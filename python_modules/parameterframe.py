@@ -100,6 +100,10 @@ class MockerDatabaseConnector:
                       filters : dict = None,
                       database_name : str = 'default'):
 
+        """
+        Fetches entries from remove mocker to local mocker
+        """
+
         db_remote_handler = self.db_remote_handler(**self.connection_details)
 
         fetched_data = db_remote_handler.search_data(
@@ -111,6 +115,26 @@ class MockerDatabaseConnector:
             embed = False)
 
         return True
+
+    def remove_entries(self,
+                       filters : dict = None,
+                       database_name : str = 'default'):
+
+        """
+        Removes entries from remote and local mocker
+        """
+
+        db_remote_handler = self.db_remote_handler(**self.connection_details)
+
+        db_remote_handler.delete_data(
+            database_name = database_name,
+            filter_criteria = filters)
+
+        self.db_handler.remove_from_database(
+            filter_criteria = filters)
+
+        return True
+
 
     def get_entries(self,
                     table_name: str,
@@ -261,6 +285,7 @@ class MockerDatabaseConnector:
 
     def get_parameter_sets_info(self,
                             solution_id : str = None,
+                            parameter_set_ids : list = None,
                             deployment_status : str = None):
 
         """
@@ -270,18 +295,69 @@ class MockerDatabaseConnector:
         if solution_id is None:
             raise ValueError("Provide solution_id!")
 
+
+        fetch_filters = {'table_name' : 'solution_parameter_set',
+                        'solution_id': solution_id}
+
+        get_filters = {'solution_id': solution_id}
+
+        if parameter_set_ids:
+            fetch_filters['parameter_set_id'] = parameter_set_ids
+            get_filters['parameter_set_id'] = parameter_set_ids
+
+        if deployment_status:
+            fetch_filters['deployment_status'] = deployment_status
+            get_filters['deployment_status'] = deployment_status
+
         # fetch tables with solution and parameter_set_ids
+
         self.fetch_entries(
-            filters={'table_name' : 'solution_parameter_set',
-                     'solution_id': solution_id,
-                     'deployment_status' : deployment_status})
+            filters=fetch_filters)
 
         solution_parameter_sets = self.get_entries(
             table_name = 'solution_parameter_set',
-            filters={'solution_id': solution_id,
-                    'deployment_status' : deployment_status})
+            filters=get_filters)
+
 
         return solution_parameter_sets
+
+    def modify_parameter_set_status(self,
+                                    solution_id : str,
+                                    parameter_set_ids : list,
+                                    current_deployment_status : str,
+                                    new_deployment_status : str):
+
+        """
+        Reuploads solution parameter set entry with different status
+        """
+
+        solution_parameter_sets = self.get_parameter_sets_info(
+            solution_id = solution_id,
+            parameter_set_ids = parameter_set_ids,
+            deployment_status = current_deployment_status
+        )
+
+        if len(solution_parameter_sets) == 0:
+            self.logger.warning(f"No deployed parameter_set_ids with {current_deployment_status} from selected!")
+            return False
+
+        for solution_parameter_set in solution_parameter_sets:
+
+            self.remove_entries(
+                filters = {'table_name' : 'solution_parameter_set',
+                        'solution_id': solution_parameter_set['solution_id'],
+                        'parameter_set_id' : solution_parameter_set['parameter_set_id'],
+                        'deployment_status' : current_deployment_status}
+            )
+            solution_parameter_set['deployment_status'] = new_deployment_status
+
+            self.logger.info(
+                f"{solution_id} + {solution_parameter_set['parameter_set_id']} : {current_deployment_status} -> {new_deployment_status}")
+
+        return self.push_tables(solution_parameter_set = solution_parameter_sets)
+
+
+
 
 @attr.s
 class SqlAlchemyDatabaseManager:
@@ -512,6 +588,7 @@ class SqlAlchemyDatabaseManager:
 
     def get_parameter_sets_info(self,
                             solution_id : str = None,
+                            parameter_set_ids : list = None,
                             deployment_status : str = None):
 
         """
@@ -523,9 +600,19 @@ class SqlAlchemyDatabaseManager:
 
         session = self.Session()
         try:
-            solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
-                self.SolutionParameterSet.solution_id == solution_id,
-                self.SolutionParameterSet.deployment_status == deployment_status).all()
+            if parameter_set_ids :
+                solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
+                    self.SolutionParameterSet.solution_id == solution_id,
+                    self.SolutionParameterSet.parameter_set_id == parameter_set_ids).all()
+            elif parameter_set_ids and deployment_status:
+                solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
+                    self.SolutionParameterSet.solution_id == solution_id,
+                    self.SolutionParameterSet.parameter_set_id == parameter_set_ids,
+                    self.SolutionParameterSet.deployment_status == deployment_status).all()
+            else:
+                solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
+                    self.SolutionParameterSet.solution_id == solution_id,
+                    self.SolutionParameterSet.deployment_status == deployment_status).all()
 
             return [self._as_dict(data) for data in solution_parameter_sets]
 
@@ -534,6 +621,54 @@ class SqlAlchemyDatabaseManager:
             print(f"An error occurred: {e}")
         finally:
             session.close()
+
+    def modify_parameter_set_status(self,
+                                    solution_id : str,
+                                    parameter_set_ids : list,
+                                    current_deployment_status : str,
+                                    new_deployment_status : str):
+
+        """
+        Reuploads solution parameter set entry with different status
+        """
+
+        solution_parameter_sets = self.get_parameter_sets_info(
+            solution_id = solution_id,
+            parameter_set_ids = parameter_set_ids,
+            deployment_status = current_deployment_status
+        )
+
+        if len(solution_parameter_sets) == 0:
+            self.logger.warning(f"No deployed parameter_set_ids with {current_deployment_status} from selected!")
+            return False
+
+
+        session = self.Session()
+        parameter_set_ids = [t['parameter_set_id'] for t in solution_parameter_sets]
+        try:
+            # Fetch the user record to modify
+            solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
+                self.SolutionParameterSet.solution_id == solution_id,
+                self.SolutionParameterSet.parameter_set_id.in_(parameter_set_ids),
+                self.SolutionParameterSet.deployment_status == current_deployment_status).all()
+
+            if solution_parameter_sets:
+                for solution_parameter_set in solution_parameter_sets:
+                    solution_parameter_set.deployment_status = new_deployment_status
+                    self.logger.info(
+        f"{solution_id} + {solution_parameter_set.parameter_set_id} : {current_deployment_status} -> {new_deployment_status}")
+                    session.commit()
+
+
+
+        except Exception as e:
+            session.rollback()  # Roll back in case of errors
+            print(f"An error occurred: {e}")
+        finally:
+            session.close()  # Close the session to free resources
+
+
+        return True
 
 
 @attr.s
@@ -2029,7 +2164,7 @@ class ParameterFrame:
                                 solution_name : str = None,
                                 parameter_set_id : str = None,
                                 parameter_set_name : str = None,
-                                remote : bool = False):
+                                remote : bool = True):
 
         """
         Change deployment status of parameter set.
@@ -2080,101 +2215,72 @@ class ParameterFrame:
 
     def get_deployment_status(self,
                                  solution_id : str = None,
-                                solution_name : str = None,
-                                parameter_set_id : str = None,
-                                parameter_set_name : str = None,
-                                remote : bool = True):
+                                parameter_set_id : str = None):
 
         """
         Get deployment status of parameter set.
         """
 
-        if solution_id is None:
-            solution_id = self.solution_id
+        tabs = self.database_connector.get_parameter_sets_info(
+            solution_id=solution_id,
+            parameter_set_ids=parameter_set_id)
 
-        if (solution_id is None) and (solution_name is None):
-            raise ValueError("Provide either solution_id or solution_name!")
+        return [t['deployment_status'] for t in tabs][0]
 
-        if (parameter_set_id is None) and (parameter_set_name is None):
-            raise ValueError("Provide either parameter_set_id or parameter_set_name!")
-
-        if remote:
-            raise Exception("Connection with parameter storage was not established!")
-        else:
-
-            if solution_name is None:
-                solution_name = self._get_solution_name_from_memory(solution_id = solution_id)
-
-            if (parameter_set_id is not None) and (parameter_set_name is None):
-                parameter_set_name = self._get_parameter_set_name_from_memory(
-                    parameter_set_id = parameter_set_id)
-
-            if (parameter_set_id is None) and (parameter_set_name is not None):
-                parameter_set_id = self._get_parameter_set_id_from_memory(
-                    parameter_set_name = parameter_set_name)
-
-            return self.solutions[solution_name]['solution_parameter_set']\
-                [parameter_set_name]['deployment_status']
 
     def change_status_from_staging_to_production(self,
                                                  solution_id : str = None,
-                                                solution_name : str = None,
-                                                parameter_set_id : str = None,
-                                                parameter_set_name : str = None,
-                                                remote : bool = False):
+                                                parameter_set_id : str = None):
 
         """
         Change deployment status of parameter set from staging to production.
         """
 
-        current_deployment_status = self.get_deployment_status(
-            solution_id = solution_id,
-            solution_name = solution_name,
-            parameter_set_id = parameter_set_id,
-            parameter_set_name = parameter_set_name,
-            remote = remote
-        )
+        self.database_connector.modify_parameter_set_status(
+                solution_id=solution_id,
+                parameter_set_ids = parameter_set_id,
+                current_deployment_status = "STAGING",
+                new_deployment_status = "PRODUCTION"
+            )
 
-        if current_deployment_status != "STAGING":
-            raise Exception(f"Current deployment status is {current_deployment_status}!")
-
-        self._change_deployment_status(
-            deployment_status = "PRODUCTION",
-            solution_id = solution_id,
-            solution_name = solution_name,
-            parameter_set_id = parameter_set_id,
-            parameter_set_name = parameter_set_name,
-            remote = remote
-        )
 
     def change_status_from_production_to_archived(self,
                                                  solution_id : str = None,
-                                                solution_name : str = None,
-                                                parameter_set_id : str = None,
-                                                parameter_set_name : str = None,
-                                                remote : bool = False):
+                                                parameter_set_id : str = None):
 
         """
         Change deployment status of parameter set from production to archived.
         """
 
-        current_deployment_status = self.get_deployment_status(
-            solution_id = solution_id,
-            solution_name = solution_name,
-            parameter_set_id = parameter_set_id,
-            parameter_set_name = parameter_set_name,
-            remote = remote
-        )
+        self.database_connector.modify_parameter_set_status(
+                solution_id=solution_id,
+                parameter_set_ids = parameter_set_id,
+                current_deployment_status = "PRODUCTION",
+                new_deployment_status = "ARCHIVED"
+            )
 
-        if current_deployment_status != "PRODUCTION":
-            raise Exception(f"Current deployment status is {current_deployment_status}!")
 
-        self._change_deployment_status(
-            deployment_status = "ARCHIVED",
-            solution_id = solution_id,
-            solution_name = solution_name,
-            parameter_set_id = parameter_set_id,
-            parameter_set_name = parameter_set_name,
-            remote = remote
-        )
+    def change_status_from_archived_production(self,
+                                                solution_id : str = None,
+                                                parameter_set_id : str = None):
+
+        """
+        Change deployment status of parameter set from archived to production.
+        """
+
+        self.database_connector.modify_parameter_set_status(
+                solution_id=solution_id,
+                parameter_set_ids = None,
+                current_deployment_status = "PRODUCTION",
+                new_deployment_status = "STAGING"
+            )
+
+        self.database_connector.modify_parameter_set_status(
+                solution_id=solution_id,
+                parameter_set_ids = parameter_set_id,
+                current_deployment_status = "ARCHIVED",
+                new_deployment_status = "PRODUCTION"
+            )
+
+
 
