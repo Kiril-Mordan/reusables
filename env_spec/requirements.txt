@@ -16,6 +16,7 @@ openai
 pyyaml
 tox-gh-actions
 plotly
+sqlalchemy
 nbconvert
 pylint
 tqdm

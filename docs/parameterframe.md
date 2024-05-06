@@ -10,7 +10,7 @@ import sys
 import pandas as pd
 import os
 sys.path.append('../')
-from python_modules.parameterframe import FileTypeHandler, ParameterFrame, DatabaseConnector
+from python_modules.parameterframe import FileTypeHandler, ParameterFrame, MockerDatabaseConnector, SqlAlchemyDatabaseManager
 
 ```
 
@@ -27,7 +27,9 @@ from python_modules.parameterframe import FileTypeHandler, ParameterFrame, Datab
 params_path = "../tests/parameterframe/example_configs"
 
 pf = ParameterFrame(
-    params_path = params_path
+    params_path = params_path,
+    database_connector = SqlAlchemyDatabaseManager(connection_details = {
+    'base_url' : 'postgresql+psycopg2://postgres:mysecretpassword@localhost:5432/mytestdb'})
 )
 
 pf.process_parameters_from_files()
@@ -63,7 +65,7 @@ pf.solutions['example_solution']
       'solution_name': 'example_solution',
       'solution_description': 'example solution for test',
       'deployment_date': None,
-      'deprication_date': None,
+      'deprecation_date': None,
       'maintainers': None}}
 
 
@@ -112,7 +114,7 @@ pd.DataFrame([pf.solutions['example_solution']['solution_parameter_set']['test_s
       <td>ffb2fa4d1f14786e7a11641a870c3db55f08f375fb7ac0...</td>
       <td>a54f04d2ff154294309403206e059aec556cdcfa511206...</td>
       <td>STAGING</td>
-      <td>2024-04-21 23:18:22</td>
+      <td>2024-05-02 18:36:32</td>
     </tr>
   </tbody>
 </table>
@@ -160,7 +162,7 @@ pd.DataFrame(pf.commited_tables['ffb2fa4d1f14786e7a11641a870c3db55f08f375fb7ac00
       <th>solution_name</th>
       <th>solution_description</th>
       <th>deployment_date</th>
-      <th>deprication_date</th>
+      <th>deprecation_date</th>
       <th>maintainers</th>
     </tr>
   </thead>
@@ -222,7 +224,7 @@ pd.DataFrame(pf.commited_tables['ffb2fa4d1f14786e7a11641a870c3db55f08f375fb7ac00
       <td>ffb2fa4d1f14786e7a11641a870c3db55f08f375fb7ac0...</td>
       <td>a54f04d2ff154294309403206e059aec556cdcfa511206...</td>
       <td>STAGING</td>
-      <td>2024-04-21 23:18:22</td>
+      <td>2024-05-02 18:36:32</td>
     </tr>
   </tbody>
 </table>
@@ -1046,9 +1048,6 @@ pf.push_solution(solution_id='ffb2fa4d1f14786e7a11641a870c3db55f08f375fb7ac00c9a
                  parameter_set_ids=['a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5'])
 ```
 
-    HTTP Request: POST http://localhost:8000/insert "HTTP/1.1 200 OK"
-
-
 
 
 
@@ -1063,17 +1062,14 @@ pf.push_solution(solution_id='ffb2fa4d1f14786e7a11641a870c3db55f08f375fb7ac00c9a
 params_path = "../tests/parameterframe/example_configs"
 
 pf2 = ParameterFrame(
-    params_path = params_path
+    params_path = params_path,
+    database_connector = SqlAlchemyDatabaseManager(connection_details = {
+    'base_url' : 'postgresql+psycopg2://postgres:mysecretpassword@localhost:5432/mytestdb'})
 )
 
 pf2.pull_solution(solution_id='ffb2fa4d1f14786e7a11641a870c3db55f08f375fb7ac00c9a2127f7cd801a60',
                  parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
 ```
-
-    HTTP Request: POST http://localhost:8000/search "HTTP/1.1 200 OK"
-    HTTP Request: POST http://localhost:8000/search "HTTP/1.1 200 OK"
-    HTTP Request: POST http://localhost:8000/search "HTTP/1.1 200 OK"
-
 
 ### 6. Reconstructing files
 
@@ -1085,7 +1081,7 @@ os.listdir("../tests/parameterframe/reconstructed_files")
 
 
 
-    ['.gitignore']
+    []
 
 
 
@@ -1108,7 +1104,6 @@ os.listdir("../tests/parameterframe/reconstructed_files")
 
     ['param_2.yaml',
      'param_11.dill',
-     '.gitignore',
      'param_1.yaml',
      'param_10.txt',
      'param_21.ipynb']
