@@ -1,5 +1,5 @@
 """
-Parameter frame
+Parameterframe
 
 The module provides an interface for managing solution parameters.
 It allows for the structured storage and retrieval of parameter sets from a database.
@@ -21,6 +21,7 @@ from sqlalchemy import create_engine, Column, String, Text, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, sessionmaker, declarative_base
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError, DBAPIError
 from sqlalchemy import inspect
+
 
 __design_choices__ = {
     "FileTypeHandler" : ['prepares one parameter file and reconstructs one parameter file at a time',
@@ -209,8 +210,8 @@ class MockerDatabaseConnector:
         return True
 
     def pull_tables(self,
-                      solution_id : list = None,
-                      parameter_set_id : list = None):
+                      solution_id : str = None,
+                      parameter_set_id : str = None):
 
         """
         Pulls commited tables from database for selected solutions
@@ -219,17 +220,18 @@ class MockerDatabaseConnector:
         if solution_id is None:
             raise ValueError("Provide solution_id!")
 
-        if parameter_set_id is None:
-            raise ValueError("Provide parameter_set_id!")
-
-        # fetch tables with solution and parameter_set_ids
-        self.fetch_entries(
-            filters={'table_name' : ['solution_description',
+        fetch_filters = {'table_name' : ['solution_description',
                                           'solution_parameter_set',
                                           'parameter_set',
                                           'parameter_set_description'],
-                          'solution_id': [solution_id, None],
-                          'parameter_set_id' :[parameter_set_id, None]})
+                          'solution_id': [solution_id, None]}
+
+        if parameter_set_id:
+            fetch_filters['parameter_set_id'] = [parameter_set_id, None]
+
+        # fetch tables with solution and parameter_set_ids
+        self.fetch_entries(
+            filters = fetch_filters)
 
         # get parameter_id for fetching next tables
         dict_param_ids = self.get_entries(
@@ -539,22 +541,40 @@ class SqlAlchemyDatabaseManager:
 
         return False
 
-    def pull_tables(self, solution_id=None, parameter_set_id=None):
-        if solution_id is None or parameter_set_id is None:
-            raise ValueError("Provide both solution_id and parameter_set_id!")
+    def pull_tables(self,
+                    solution_id : str = None,
+                    parameter_set_id : str = None):
+
+        """
+        Pulls commited tables from database for selected solutions
+        """
+
+        if solution_id is None:
+            raise ValueError("Provide solution_id!")
 
         session = self.Session()
         try:
             # Fetch related entries based on solution_id and parameter_set_id
             solution_descriptions = session.query(self.SolutionDescription).filter(
                 self.SolutionDescription.solution_id == solution_id).all()
-            solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
-                self.SolutionParameterSet.solution_id == solution_id,
-                self.SolutionParameterSet.parameter_set_id == parameter_set_id).all()
-            parameter_sets = session.query(self.ParameterSet).filter(
-                self.ParameterSet.parameter_set_id == parameter_set_id).all()
-            parameter_set_descriptions = session.query(self.ParameterSetDescription).filter(
-                self.ParameterSetDescription.parameter_set_id == parameter_set_id).all()
+            if parameter_set_id:
+                solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
+                    self.SolutionParameterSet.solution_id == solution_id,
+                    self.SolutionParameterSet.parameter_set_id == parameter_set_id).all()
+                parameter_sets = session.query(self.ParameterSet).filter(
+                    self.ParameterSet.parameter_set_id == parameter_set_id).all()
+                parameter_set_descriptions = session.query(self.ParameterSetDescription).filter(
+                    self.ParameterSetDescription.parameter_set_id == parameter_set_id).all()
+            else:
+                solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
+                    self.SolutionParameterSet.solution_id == solution_id).all()
+
+                parameter_set_ids = [solution_parameter_set.parameter_set_id for solution_parameter_set in solution_parameter_sets]
+
+                parameter_sets = session.query(self.ParameterSet).filter(
+                    self.ParameterSet.parameter_set_id.in_(parameter_set_ids)).all()
+                parameter_set_descriptions = session.query(self.ParameterSetDescription).filter(
+                    self.ParameterSetDescription.parameter_set_id.in_(parameter_set_ids)).all()
 
             # Fetch parameter_id from parameter_sets for further queries
             param_ids = [param.parameter_id for param in parameter_sets]
@@ -695,7 +715,7 @@ class FileTypeHandler:
 
     is_reconstructed = attr.ib(default=False, type = bool)
     # types for which fth will work
-    available_types = attr.ib(default=['yaml', 'txt' ,'unknown'])
+    available_types = attr.ib(default=['yaml', 'txt' ,'other'])
     chunk_size = attr.ib(default=255)
 
     # logger config
@@ -767,7 +787,7 @@ class FileTypeHandler:
         # if file_extension == '.dill':
         #     return 'dill'
 
-        return 'unknown'
+        return 'other'
 
     def _load_file_content(self,
                             file_path: str,
@@ -1162,7 +1182,7 @@ class FileTypeHandler:
             return self._process_dill(content = file_content,
                                         parameter_id = parameter_id)
 
-        if file_type == 'unknown':
+        if file_type == 'other':
             return self._process_binary(content = file_content,
                                         parameter_id = parameter_id)
 
@@ -1223,7 +1243,7 @@ class FileTypeHandler:
         if file_type == 'dill':
             return self._reconstruct_dill(attribute_values_list = attribute_values_list)
 
-        if file_type == 'unknown':
+        if file_type == 'other':
             return self._reconstruct_binary(attribute_values_list = attribute_values_list)
 
         return None
@@ -1259,7 +1279,7 @@ class FileTypeHandler:
 
             return True
 
-        if file_type == 'unknown':
+        if file_type == 'other':
 
             with open(file_path, 'wb') as file:
                 file.write(file_content)
@@ -1402,6 +1422,11 @@ class ParameterFrame:
             self.database_connector = MockerDatabaseConnector(connection_details = self.connection_details)
 
         self._initialize_name_generator()
+
+        import pandas as pd
+
+        self.pd = pd
+        self.pd.set_option('display.max_colwidth', 70)
 
         self.solutions = {}
         self.param_sets = {}
@@ -2058,10 +2083,10 @@ class ParameterFrame:
 
             # Calculate distribution counts for each list based on the number of parameter_set_ids
             num_ids = len(parameter_set_ids)
-            sps_count = len(solution_parameter_sets) // num_ids
-            ps_count = len(parameter_sets) // num_ids
-            psd_count = len(parameter_set_descriptions) // num_ids
-            pd_count = len(parameter_descriptions) // num_ids
+            sps_count = len(solution_parameter_sets)
+            ps_count = len(parameter_sets)
+            psd_count = len(parameter_set_descriptions)
+            pd_count = len(parameter_descriptions)
             # pa_count = len(parameter_attributes) // num_ids
             # av_count = len(attribute_values) // num_ids
 
@@ -2121,8 +2146,8 @@ class ParameterFrame:
 
 
     def pull_solution(self,
-                      solution_id : list = None,
-                      parameter_set_id : list = None):
+                      solution_id : str = None,
+                      parameter_set_id : str = None):
 
         """
         Pulls commited tables from database for selected solutions
@@ -2131,8 +2156,6 @@ class ParameterFrame:
         if solution_id is None:
             raise ValueError("Provide solution_id!")
 
-        if parameter_set_id is None:
-            raise ValueError("Provide parameter_set_id!")
 
         (solution_description,
          solution_parameter_sets,
@@ -2145,10 +2168,18 @@ class ParameterFrame:
             parameter_set_id = parameter_set_id
         )
 
+        if len(solution_description) == 0:
+            self.logger.warning(f"No solutions with {solution_id} could be pulled!")
+
+        parameter_set_ids = [solution_parameter_set['parameter_set_id'] for solution_parameter_set in solution_parameter_sets]
+
+        if len(parameter_set_ids) == 0:
+            self.logger.warning(f"No parameter sets were pulled for solution_id {solution_id}")
+
         # get table lists into commited
         self._rebuild_tables_from_pulled_data(
             solution_id = solution_id,
-            parameter_set_ids = [parameter_set_id],
+            parameter_set_ids = parameter_set_ids,
             solution_description = solution_description,
             solution_parameter_sets = solution_parameter_sets,
             parameter_sets = parameter_sets,
@@ -2157,6 +2188,8 @@ class ParameterFrame:
             parameter_attributes = parameter_attributes,
             attribute_values = attribute_values
         )
+
+        return True
 
     def _change_deployment_status(self,
                                  deployment_status : str,
@@ -2281,6 +2314,94 @@ class ParameterFrame:
                 current_deployment_status = "ARCHIVED",
                 new_deployment_status = "PRODUCTION"
             )
+
+    def show_solutions(self):
+
+        """
+        Show info on locally commited solutions
+        """
+
+        solution_descriptions = [self.commited_tables[sid]['solution_description'][0] \
+             if self.commited_tables[sid]['solution_description'] else {'solution_id' : sid} for sid in self.commited_tables]
+
+        for solution_description in solution_descriptions:
+
+            if 'solution_name' not in solution_description.keys():
+                solution_description['solution_name'] = None
+                solution_description['solution_description'] = None
+                solution_description['deployment_date'] = None
+                solution_description['deprecation_date'] = None
+                solution_description['maintainers'] = None
+
+
+        solution_descriptions_pd = self.pd.DataFrame(solution_descriptions)
+
+        if solution_descriptions_pd.shape[0] == 0:
+            solution_descriptions_pd['solution_id'] = [sid for sid in self.commited_tables]
+            solution_descriptions_pd['solution_name'] = [None for sid in self.commited_tables]
+            solution_descriptions_pd['solution_description'] = [None for sid in self.commited_tables]
+            solution_descriptions_pd['deployment_date'] = [None for sid in self.commited_tables]
+            solution_descriptions_pd['deprecation_date'] = [None for sid in self.commited_tables]
+            solution_descriptions_pd['maintainers'] = [None for sid in self.commited_tables]
+
+        solution_descriptions_pd['commited_parameter_sets'] = [
+                    len(self.commited_tables[sid]['solution_parameter_set']) \
+                    if self.commited_tables[sid]['solution_parameter_set'] != {}\
+                    else 0
+                    for sid in self.commited_tables
+                ]
+
+        return solution_descriptions_pd
+
+    def show_parameter_sets(self, solution_id : str):
+
+        """
+        Show info on locally commited parameter_sets for solution_id
+        """
+
+
+        solution_parameter_sets = [
+            sps for spsid in self.commited_tables[solution_id]['solution_parameter_set'] \
+                for sps in self.commited_tables[solution_id]['solution_parameter_set'][spsid]]
+        solution_parameter_sets_pd = self.pd.DataFrame(solution_parameter_sets)
+
+        if solution_parameter_sets_pd.shape[0] == 0:
+            raise ValueError(f"Solution with id {solution_id} does not exist locally!")
+
+        solution_parameter_sets_pd = solution_parameter_sets_pd.drop(columns=["solution_id"])
+
+        parameter_set_descriptions = [
+            sps for spsid in self.commited_tables[solution_id]['parameter_set_description'] \
+                for sps in self.commited_tables[solution_id]['parameter_set_description'][spsid]]
+        parameter_set_descriptions_pd = self.pd.DataFrame(parameter_set_descriptions)
+
+
+        psdsp_id_pd = parameter_set_descriptions_pd.merge(
+            solution_parameter_sets_pd, on = 'parameter_set_id')
+        psdsp_id_pd['commited_parameters'] = [
+            len(self.commited_tables[solution_id]['parameter_set'][pid_d['parameter_set_id']]) \
+                for pid_d in parameter_set_descriptions]
+
+        return psdsp_id_pd
+
+    def show_parameters(self, solution_id : str, parameter_set_id : str):
+
+        """
+        Show info on locally commited parameters for solution_id and parameter_set_id
+        """
+
+        if parameter_set_id not in self.commited_tables[solution_id]['parameter_description']:
+            raise ValueError(f"Parameter set with id {parameter_set_id} does not exist locally for solution {solution_id}!")
+
+        parameter_descriptions = self.commited_tables[solution_id]['parameter_description'][parameter_set_id]
+        parameter_descriptions_l = [parameter_descriptions[pid][0] for pid in parameter_descriptions]
+        parameter_descriptions_pd = self.pd.DataFrame(parameter_descriptions_l)
+        parameter_descriptions_pd['commited_attributes'] = [
+            len(self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id][parameter_id]) \
+                for parameter_id in parameter_descriptions]
+        return parameter_descriptions_pd
+
+
 
 
 
