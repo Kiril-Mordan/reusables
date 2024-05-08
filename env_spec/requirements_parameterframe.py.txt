@@ -1,5 +1,6 @@
 ### parameterframe.py
-dill
-pyyaml
-mocker_db==0.1.1
 attrs
+mocker_db==0.1.1
+pyyaml
+sqlalchemy
+dill
