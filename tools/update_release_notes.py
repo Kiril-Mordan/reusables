@@ -18,7 +18,7 @@ if __name__ == "__main__":
         filepath = release_notes_filepath,
         label_name = label_name,
         version = version,
-        max_search_depth = 2
+        max_search_depth = 3
     )
 
     rnh.save_release_notes()
