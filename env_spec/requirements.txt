@@ -18,6 +18,7 @@ tox-gh-actions
 plotly
 sqlalchemy
 nbconvert
+pip_audit
 pylint
 tqdm
 ipykernel
