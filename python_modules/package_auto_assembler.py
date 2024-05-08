@@ -27,6 +27,8 @@ from nbconvert import MarkdownExporter
 from nbconvert.preprocessors import ExecutePreprocessor
 import attr #>=22.2.0
 from stdlib_list import stdlib_list
+import tempfile
+import pip_audit #==2.7.3
 
 
 # Metadata for package creation
@@ -377,7 +379,8 @@ class RequirementsHandler:
 
     # output
     module_name = attr.ib(init=False)
-    requirements_list = attr.ib(init=False)
+    requirements_list = attr.ib(default=[], type = list)
+    vulnerabilities = attr.ib(default=[], type = list)
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Package Requirements Handler')
@@ -386,6 +389,8 @@ class RequirementsHandler:
 
     def __attrs_post_init__(self):
         self._initialize_logger()
+        self.vulnerabilities = []
+        self.requirements_list = []
 
 
     def _initialize_logger(self):
@@ -401,6 +406,64 @@ class RequirementsHandler:
 
             self.logger = logger
 
+    def check_vulnerabilities(self,
+                              requirements_list : list = None,
+                              raise_error : bool = True):
+
+        """
+        Checks vulnerabilities with pip-audit
+        """
+
+        if requirements_list is None:
+            requirements_list = self.requirements_list
+
+        # Create a temporary requirements file
+        with tempfile.NamedTemporaryFile(delete=True, mode='w', suffix='.txt') as temp_req_file:
+            for dep in requirements_list:
+                temp_req_file.write(dep + '\n')
+            temp_req_file.flush()
+
+            # Run pip-audit on the temporary requirements file
+            result = subprocess.run(
+                ["pip-audit", "-r", temp_req_file.name, "--progress-spinner=off"],
+                capture_output=True, text=True
+            )
+
+            print(result.stdout)
+            self.logger.info(result.stderr)
+
+            if result.returncode == 0:
+                vulnerabilities = []
+            else:
+
+                if result.stdout:
+                    # Access stdout
+                    stdout = result.stdout.strip()
+
+                    # Split into lines and skip the header (assumed to be the first two lines here)
+                    lines = stdout.splitlines()
+                    header_line = ['name', 'version', 'id', 'fix_versions']
+                    data_lines = lines[2:]
+
+                    # Prepare a list of dictionaries
+                    vulnerabilities = []
+
+                    # Process each data line into a dictionary
+                    for line in data_lines:
+                        values = line.split()
+
+                        vd = {key:value for key,value in zip(header_line, values)}
+                        if len(values) <= 3:
+                            vd['fix_versions'] = None
+
+                        vulnerabilities.append(vd)
+                else:
+                    vulnerabilities = []
+
+        self.vulnerabilities += vulnerabilities
+
+        if vulnerabilities and raise_error:
+            raise ValueError("Found vulnerabilities, resolve them or ignore check to move forwards!")
 
     def list_custom_modules(self,
                             custom_modules_filepath : str = None):
@@ -531,7 +594,7 @@ class RequirementsHandler:
                 # deduplicate requirements
                 requirements = [requirements[0]] + list(set(requirements[1:]))
 
-        self.requirements_list = requirements
+        self.requirements_list += requirements
 
         return requirements
 
@@ -1442,6 +1505,7 @@ class PackageAutoAssembler:
     version_increment_type = attr.ib(default="patch", type = str)
     default_version = attr.ib(default="0.0.1", type = str)
     kernel_name = attr.ib(default = 'python', type = str)
+    check_vulnerabilities = attr.ib(default=True, type = bool)
 
     ## handler classes
     setup_dir_h_class = attr.ib(default=SetupDirHandler)
@@ -1689,6 +1753,7 @@ class PackageAutoAssembler:
                 package_mappings=import_mappings,
                 module_filepath=module_filepath,
                 custom_modules=custom_modules)
+        self.requirements_h.check_vulnerabilities()
 
     def add_readme(self,
                     example_notebook_path : str = None,
