@@ -1316,6 +1316,44 @@ class ReleaseNotesHandler:
 
             self.logger = logger
 
+    def _deduplicate_with_exceptions(self,
+                                     lst : list):
+
+        seen = set()
+        buffer = []
+        deduplicated = []
+        version_headers = []
+
+        for item in lst:
+
+            # start filling buffor after version is detected
+            if item.startswith("###"):
+
+                if item in version_headers:
+                    seen.add(item)
+                else:
+                    deduplicated += buffer
+
+                    if deduplicated[-1] != "\n":
+                        deduplicated.append("\n")
+
+                    version_headers.append(item)
+                if deduplicated[-1] != "\n":
+                    buffer.append("\n")
+
+            if item != lst[-1]:
+                # clean buffor when version is detected
+                if item.startswith("###"):
+                    buffer = []
+            else:
+                # in the end append buffor to deduplicated
+                buffer.append(item)
+                deduplicated += buffer
+
+            buffer.append(item)
+
+        return deduplicated
+
     def _get_commits_since_last_merge(self, n_last_messages : int = 1):
 
         # First, find the last merge commit
@@ -1412,9 +1450,16 @@ class ReleaseNotesHandler:
             new_messages = self.processed_messages
 
         # Prepare the new release note section
-        new_release_note = f"### {version}\n\n"
-        for msg in new_messages:
-            new_release_note += f"    - {msg}\n"
+        # new_release_note = f"### {version}\n\n"
+        # for msg in new_messages:
+        #     new_release_note += f"    - {msg}\n"
+
+        if new_messages:
+            new_release_notes = [f"### {version}\n"] + ["\n"]
+            for msg in new_messages:
+                new_release_notes += [f"    - {msg}\n"]
+        else:
+            new_release_notes = []
 
         # If there are existing contents, integrate the new entry
         if existing_contents:
@@ -1426,10 +1471,18 @@ class ReleaseNotesHandler:
                 index += 1
 
             # Insert the new release note section into the contents
-            existing_contents.insert(index, new_release_note + "\n")
+            for new_release_note in new_release_notes:
+                existing_contents.insert(index, new_release_note)
+                index += 1
         else:
+
             # If no existing contents, start a new list of contents
-            existing_contents = ['# Release notes\n\n', new_release_note + "\n"]
+            existing_contents = ["# Release notes\n"] + ["\n"]
+            for new_release_note in new_release_notes:
+                existing_contents += new_release_note
+
+        existing_contents = self._deduplicate_with_exceptions(
+            lst=existing_contents)
 
         self.processed_note_entries = existing_contents
 
@@ -1472,6 +1525,9 @@ class ReleaseNotesHandler:
             # Write the updated or new contents back to the file
             with open(filepath, 'w') as file:
                 file.writelines(note_entries)
+
+
+
 
 @attr.s
 class PackageAutoAssembler:
