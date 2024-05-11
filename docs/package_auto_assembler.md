@@ -150,19 +150,19 @@ pv.get_logs(
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-05-08 22:10:01</td>
+      <td>2024-05-11 04:27:37</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-05-08 22:10:01</td>
+      <td>2024-05-11 04:27:37</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-05-08 22:10:01</td>
+      <td>2024-05-11 04:27:37</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -912,7 +912,7 @@ rnh = ReleaseNotesHandler(
     No messages to clean were provided
 
 
-##### - overwritting commit messages fro example
+##### - overwritting commit messages from example
 
 
 ```python
@@ -923,7 +923,11 @@ rnh.commit_messages
 
 
 
-    ['Update requirements']
+    ['Update requirements',
+     '[package_auto_assembler] improved ReleaseNotesHandler with resistance to duplicate history',
+     'Update package version tracking files',
+     'Update README',
+     'Update requirements']
 
 
 
@@ -962,7 +966,7 @@ print(rnh.processed_note_entries)
     Example processed_messages:
     ['usage example for initial release notes', 'bugfixes for RNH', 'initial release notes handler']
     Example processed_note_entries:
-    ['# Release notes\n', '\n', '### 0.0.2\n\n    - usage example for initial release notes\n    - bugfixes for RNH\n    - initial release notes handler\n\n', '### 0.0.1\n', '\n', '    - initial version of example_module\n']
+    ['# Release notes\n', '\n', '### 0.0.2\n', '\n', '    - usage example for initial release notes\n', '    - bugfixes for RNH\n', '    - initial release notes handler\n', '\n', '### 0.0.1\n', '    - initial version of example_module\n']
 
 
 ##### - saving updated relese notes
@@ -978,7 +982,6 @@ rnh.existing_contents
     ['# Release notes\n',
      '\n',
      '### 0.0.1\n',
-     '\n',
      '    - initial version of example_module\n']
 
 
@@ -1006,7 +1009,6 @@ rnh.get_release_notes_content()
      '    - initial release notes handler\n',
      '\n',
      '### 0.0.1\n',
-     '\n',
      '    - initial version of example_module\n']
 
 
