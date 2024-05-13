@@ -1,6 +1,8 @@
 ### parameterframe.py
-attrs
-mocker_db==0.1.1
 pyyaml
+pandas
 sqlalchemy
+attrs
+cryptography
+mocker_db==0.1.1
 dill
