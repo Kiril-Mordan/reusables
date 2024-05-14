@@ -224,14 +224,13 @@ class MockerDatabaseConnector:
         Pulls commited tables from database for selected solutions
         """
 
-        if solution_id is None:
-            raise ValueError("Provide solution_id!")
-
         fetch_filters = {'table_name' : ['solution_description',
                                           'solution_parameter_set',
                                           'parameter_set',
-                                          'parameter_set_description'],
-                          'solution_id': [solution_id, None]}
+                                          'parameter_set_description']}
+
+        if solution_id:
+            fetch_filters['solution_id'] = [solution_id, None]
 
         if parameter_set_id:
             fetch_filters['parameter_set_id'] = [parameter_set_id, None]
@@ -562,25 +561,35 @@ class SqlAlchemyDatabaseManager:
         Pulls commited tables from database for selected solutions
         """
 
-        if solution_id is None:
-            raise ValueError("Provide solution_id!")
+        # if solution_id is None:
+        #     raise ValueError("Provide solution_id!")
 
         session = self.Session()
         try:
             # Fetch related entries based on solution_id and parameter_set_id
-            solution_descriptions = session.query(self.SolutionDescription).filter(
-                self.SolutionDescription.solution_id == solution_id).all()
+            if solution_id:
+                solution_descriptions = session.query(self.SolutionDescription).filter(
+                    self.SolutionDescription.solution_id == solution_id).all()
+            else:
+                solution_descriptions = session.query(self.SolutionDescription).filter().all()
+
             if parameter_set_id:
-                solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
-                    self.SolutionParameterSet.solution_id == solution_id,
-                    self.SolutionParameterSet.parameter_set_id == parameter_set_id).all()
+                if solution_id:
+                    solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
+                        self.SolutionParameterSet.solution_id == solution_id,
+                        self.SolutionParameterSet.parameter_set_id == parameter_set_id).all()
+
                 parameter_sets = session.query(self.ParameterSet).filter(
                     self.ParameterSet.parameter_set_id == parameter_set_id).all()
                 parameter_set_descriptions = session.query(self.ParameterSetDescription).filter(
                     self.ParameterSetDescription.parameter_set_id == parameter_set_id).all()
             else:
-                solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
-                    self.SolutionParameterSet.solution_id == solution_id).all()
+
+                if solution_id:
+                    solution_parameter_sets = session.query(self.SolutionParameterSet).filter(
+                        self.SolutionParameterSet.solution_id == solution_id).all()
+                else:
+                    solution_parameter_sets = session.query(self.SolutionParameterSet).filter().all()
 
                 parameter_set_ids = [solution_parameter_set.parameter_set_id for solution_parameter_set in solution_parameter_sets]
 
@@ -1447,7 +1456,7 @@ class ComplexNameGenerator:
         if isinstance(seed, int):
             # Set the seed value
             random.seed(seed)
-            self.seed += 1
+            self.seed = seed + 1
 
         # Randomly choose a word from each list
         color = random.choice(colors)
@@ -1484,7 +1493,7 @@ class ParameterFrame:
     name_generator = attr.ib(default=ComplexNameGenerator)
 
     # inner
-    seed = attr.ib(default=23, type=int)
+    seed = attr.ib(default=None, type=int)
     solutions = attr.ib(default={})
     param_sets = attr.ib(default={})
     param_attributes = attr.ib(default={})
@@ -1653,7 +1662,7 @@ class ParameterFrame:
         if solution_id is None:
             # if solution id not provided create new
             solution_id = self._generate_unique_id(
-                txt = self.name_generator.generate_random_name(seed = seed) \
+                txt = self.name_generator.generate_random_name(seed = 23) \
                     + solution_name)
 
         if solution_name not in self.solutions.keys():
@@ -2238,11 +2247,7 @@ class ParameterFrame:
         Pulls commited tables from database for selected solutions
         """
 
-        if solution_id is None:
-            raise ValueError("Provide solution_id!")
-
-
-        (solution_description,
+        (solution_descriptions,
          solution_parameter_sets,
          parameter_sets,
          parameter_set_descriptions,
@@ -2253,26 +2258,56 @@ class ParameterFrame:
             parameter_set_id = parameter_set_id
         )
 
-        if len(solution_description) == 0:
+        if len(solution_descriptions) == 0:
             self.logger.warning(f"No solutions with {solution_id} could be pulled!")
 
-        parameter_set_ids = [solution_parameter_set['parameter_set_id'] for solution_parameter_set in solution_parameter_sets]
+        parameter_set_ids = [solution_parameter_set['parameter_set_id'] \
+            for solution_parameter_set in solution_parameter_sets]
 
         if len(parameter_set_ids) == 0:
             self.logger.warning(f"No parameter sets were pulled for solution_id {solution_id}")
 
-        # get table lists into commited
-        self._rebuild_tables_from_pulled_data(
-            solution_id = solution_id,
-            parameter_set_ids = parameter_set_ids,
-            solution_description = solution_description,
-            solution_parameter_sets = solution_parameter_sets,
-            parameter_sets = parameter_sets,
-            parameter_set_descriptions = parameter_set_descriptions,
-            parameter_descriptions = parameter_descriptions,
-            parameter_attributes = parameter_attributes,
-            attribute_values = attribute_values
-        )
+        solution_ids = list(set([solution_descriptions['solution_id'] \
+            for solution_descriptions in solution_descriptions]))
+
+        if solution_parameter_sets:
+
+            for solution_id in solution_ids:
+
+                solution_description = [sd for sd in solution_descriptions if sd['solution_id'] == solution_id]
+                parameter_set_ids = list(set([sp['parameter_set_id'] for sp in solution_parameter_sets \
+                    if sp['solution_id'] == solution_id]))
+
+                for parameter_set_id in parameter_set_ids:
+
+                    solution_parameter_set = [sp for sp in solution_parameter_sets \
+                        if sp['solution_id'] == solution_id and sp['parameter_set_id'] == parameter_set_id]
+
+                    parameter_set_description = [sp for sp in parameter_set_descriptions \
+                        if sp['parameter_set_id'] == parameter_set_id]
+
+                    parameter_set = [sp for sp in parameter_sets \
+                        if sp['parameter_set_id'] == parameter_set_id]
+
+                    parameter_ids = [sp['parameter_id'] for sp in parameter_set]
+
+                    parameter_description = [sp for sp in parameter_descriptions \
+                        if sp['parameter_id'] in parameter_ids]
+
+                    # get table lists into commited
+                    self._rebuild_tables_from_pulled_data(
+                        solution_id = solution_id,
+                        parameter_set_ids = [parameter_set_id],
+                        solution_description = solution_description,
+                        solution_parameter_sets = solution_parameter_set,
+                        parameter_sets = parameter_set,
+                        parameter_set_descriptions = parameter_set_description,
+                        parameter_descriptions = parameter_description,
+                        parameter_attributes = parameter_attributes,
+                        attribute_values = attribute_values
+                    )
+        else:
+            self.logger.warning(f"Nothing was pulled for {solution_id}")
 
         return True
 
