@@ -10,9 +10,13 @@ import sys
 import pandas as pd
 import os
 sys.path.append('../')
-from parameterframe import ParameterFrame, MockerDatabaseConnector, SqlAlchemyDatabaseManager
+from python_modules.parameterframe import ParameterFrame, MockerDatabaseConnector, SqlAlchemyDatabaseManager
 
 ```
+
+    /Users/insani_dei/miniconda3/envs/parameterframe/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+      from .autonotebook import tqdm as notebook_tqdm
+
 
 ## Content
 
@@ -33,9 +37,11 @@ from parameterframe import ParameterFrame, MockerDatabaseConnector, SqlAlchemyDa
 # - with database connector for MockerDB
 pf = ParameterFrame(
     database_connector = MockerDatabaseConnector(connection_details = {
-    'base_url' : 'http://localhost:8000'})
+    'base_url' : 'http://localhost:8001'})
 )
 ```
+
+when using SqlAlchemyDatabaseManager with database for the first time, it might be useful to create tables with `SqlAlchemyDatabaseManager.create_tables` and if schema of the database needs to be reset `SqlAlchemyDatabaseManager.drop_tables`
 
 
 ```python
@@ -189,6 +195,9 @@ pf.push_solution(
 )
 ```
 
+    HTTP Request: POST http://localhost:8001/insert "HTTP/1.1 200 OK"
+
+
 
 
 
@@ -208,7 +217,7 @@ params_path = "../tests/parameterframe/example_configs"
 pf = ParameterFrame(
     params_path = params_path,
     database_connector = MockerDatabaseConnector(connection_details = {
-    'base_url' : 'http://localhost:8000'})
+    'base_url' : 'http://localhost:8001'})
 )
 ```
 
@@ -297,7 +306,7 @@ pf.add_parameter_set_to_solution(
 ```
 
     b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca is not in solutions saved to memory!
-    Name pink_bright_toaster_706 is assigned to b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca temporarily!
+    Name pink_happy_car_642 is assigned to b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca temporarily!
 
 
 
@@ -309,7 +318,7 @@ pf.add_parameter_set_to_solution(
 
 
 ```python
-pf.commit_solution(solution_name="pink_bright_toaster_706",
+pf.commit_solution(solution_name="pink_happy_car_642",
                     parameter_set_names=["test_set"])
 ```
 
@@ -416,7 +425,7 @@ pf.show_parameter_sets(solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add
       <td>test_set</td>
       <td>example parameters for test purposes</td>
       <td>STAGING</td>
-      <td>2024-05-07 19:51:13</td>
+      <td>2024-05-15 00:09:10</td>
       <td>5</td>
     </tr>
   </tbody>
@@ -504,7 +513,7 @@ pf.show_parameters(solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3
       <td></td>
       <td>param_21.ipynb</td>
       <td>other</td>
-      <td>4</td>
+      <td>2</td>
     </tr>
   </tbody>
 </table>
@@ -520,6 +529,9 @@ pf.push_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc
                  parameter_set_names=["test_set"])
 ```
 
+    HTTP Request: POST http://localhost:8001/insert "HTTP/1.1 200 OK"
+
+
 
 
 
@@ -534,7 +546,7 @@ pf.push_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc
 # - with database connector for MockerDB
 pf = ParameterFrame(
     database_connector = MockerDatabaseConnector(connection_details = {
-    'base_url' : 'http://localhost:8000'})
+    'base_url' : 'http://localhost:8001'})
 )
 ```
 
@@ -553,6 +565,9 @@ pf.get_parameter_set_id_for_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909
                                                         deployment_status="STAGING")
 ```
 
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+
+
 
 
 
@@ -565,6 +580,9 @@ pf.get_parameter_set_id_for_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909
 pf.get_deployment_status(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
                          parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
 ```
+
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+
 
 
 
@@ -580,7 +598,7 @@ pf.get_deployment_status(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add
 # - with database connector for MockerDB
 pf = ParameterFrame(
     database_connector = MockerDatabaseConnector(connection_details = {
-    'base_url' : 'http://localhost:8000'})
+    'base_url' : 'http://localhost:8001'})
 )
 ```
 
@@ -603,10 +621,17 @@ pf.database_connector.modify_parameter_set_status(
 )
 ```
 
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+    No data was found with applied filters!
+
+
+    No deployed parameter_set_ids with PRODUCTION from selected!
 
 
 
-    True
+
+
+    False
 
 
 
@@ -618,7 +643,10 @@ pf.change_status_from_staging_to_production(
 )
 ```
 
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+    HTTP Request: POST http://localhost:8001/delete "HTTP/1.1 200 OK"
     b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca + a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5 : STAGING -> PRODUCTION
+    HTTP Request: POST http://localhost:8001/insert "HTTP/1.1 200 OK"
 
 
 
@@ -626,6 +654,9 @@ pf.change_status_from_staging_to_production(
 pf.get_deployment_status(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
                          parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
 ```
+
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+
 
 
 
@@ -642,7 +673,10 @@ pf.change_status_from_production_to_archived(
 )
 ```
 
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+    HTTP Request: POST http://localhost:8001/delete "HTTP/1.1 200 OK"
     b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca + a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5 : PRODUCTION -> ARCHIVED
+    HTTP Request: POST http://localhost:8001/insert "HTTP/1.1 200 OK"
 
 
 
@@ -650,6 +684,9 @@ pf.change_status_from_production_to_archived(
 pf.get_deployment_status(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
                          parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
 ```
+
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+
 
 
 
@@ -666,8 +703,15 @@ pf.change_status_from_archived_production(
 )
 ```
 
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+    No data was found with applied filters!
     No deployed parameter_set_ids with PRODUCTION from selected!
+
+
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+    HTTP Request: POST http://localhost:8001/delete "HTTP/1.1 200 OK"
     b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca + a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5 : ARCHIVED -> PRODUCTION
+    HTTP Request: POST http://localhost:8001/insert "HTTP/1.1 200 OK"
 
 
 
@@ -675,6 +719,9 @@ pf.change_status_from_archived_production(
 pf.get_deployment_status(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
                          parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
 ```
+
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+
 
 
 
@@ -696,7 +743,7 @@ params_path = "../tests/parameterframe/example_configs"
 pf2 = ParameterFrame(
     params_path = params_path,
     database_connector = MockerDatabaseConnector(connection_details = {
-    'base_url' : 'http://localhost:8000'})
+    'base_url' : 'http://localhost:8001'})
 )
 ```
 
@@ -752,12 +799,21 @@ pf2.show_solutions()
 
 
 
+When pulling information with database handler, one could pull specific parameter sets, solutions and everything.
+
 
 ```python
 pf2.pull_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
                   # optionally specify parameter_set_id
                  parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
 ```
+
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+    No data was found with applied filters!
+    No solutions with b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca could be pulled!
+
 
 
 
@@ -771,6 +827,25 @@ pf2.pull_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbc
 pf2.pull_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
                   # optionally specify parameter_set_id
                  parameter_set_id=None)
+```
+
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+
+
+    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+
+
+
+
+
+    True
+
+
+
+
+```python
+pf2.pull_solution()
 ```
 
 
@@ -818,13 +893,13 @@ pf2.show_solutions()
   <tbody>
     <tr>
       <th>0</th>
-      <td>b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca</td>
+      <td>cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0cc5fe1cb12101acf5</td>
       <td>new_example_solution</td>
       <td>Description of new example solution.</td>
       <td>2024-xx-xx</td>
       <td>None</td>
       <td>some text about maintainers credentials</td>
-      <td>1</td>
+      <td>2</td>
     </tr>
   </tbody>
 </table>
@@ -834,7 +909,7 @@ pf2.show_solutions()
 
 
 ```python
-pf2.show_parameter_sets(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca')
+pf2.show_parameter_sets(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0cc5fe1cb12101acf5')
 ```
 
 
@@ -869,12 +944,21 @@ pf2.show_parameter_sets(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add7
   <tbody>
     <tr>
       <th>0</th>
-      <td>a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5</td>
-      <td>test_set</td>
-      <td>example parameters for test purposes</td>
-      <td>PRODUCTION</td>
-      <td>2024-05-07 19:51:13</td>
-      <td>5</td>
+      <td>3940d6dd4c0d817625a31141874c54cf0c8d88b24994f7915deb4096b3c8d0cf</td>
+      <td>blue_tiny_television_381</td>
+      <td></td>
+      <td>STAGING</td>
+      <td>2024-05-15 00:37:50</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>5779bbf896ebb8f09a6ea252b09f8adb1a416e8780cf1424fb9bb93dbec8deb5</td>
+      <td>yellow_shiny_microwave_931</td>
+      <td></td>
+      <td>STAGING</td>
+      <td>2024-05-15 00:36:04</td>
+      <td>3</td>
     </tr>
   </tbody>
 </table>
@@ -884,8 +968,8 @@ pf2.show_parameter_sets(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add7
 
 
 ```python
-pf2.show_parameters(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
-                    parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
+pf2.show_parameters(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0cc5fe1cb12101acf5',
+                    parameter_set_id='5779bbf896ebb8f09a6ea252b09f8adb1a416e8780cf1424fb9bb93dbec8deb5')
 ```
 
 
@@ -920,48 +1004,30 @@ pf2.show_parameters(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3f
   <tbody>
     <tr>
       <th>0</th>
-      <td>4cea5b09e77da310c5105978f2ceea5c5d8c9c7b65d0e00b45135ea90fc011af</td>
-      <td>param_1</td>
+      <td>3386ebc962b1c57745ca24320bf873df6eb84a2b9cb733607d72006347bf95b8</td>
+      <td>Screenshot 2024-05-04 at 02</td>
       <td></td>
-      <td>param_1.yaml</td>
-      <td>yaml</td>
-      <td>3</td>
+      <td>Screenshot 2024-05-04 at 02.59.31.png</td>
+      <td>other</td>
+      <td>35</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>bf11768decb1d0204e2636edd05c354573d473e67f1b048369b2ee99c865bf5f</td>
-      <td>param_2</td>
+      <td>4d8ca206d9bd09296b69a95f0c3c62d233282025964c356811510cc074cc2c49</td>
+      <td>1</td>
       <td></td>
-      <td>param_2.yaml</td>
-      <td>yaml</td>
-      <td>6</td>
+      <td>1. AF - opis projektu.pdf</td>
+      <td>other</td>
+      <td>34</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>9a4a3ace265c9bf2facc0044ca24260c42805c6e7b2a608dfd2f56a54d9d36be</td>
-      <td>param_10</td>
+      <td>5afae3951544cd3736685a3b2daa31c00106191a799b96b0c636cd35e9a416ff</td>
+      <td>uploads</td>
       <td></td>
-      <td>param_10.txt</td>
-      <td>txt</td>
-      <td>9</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>ace2f31433212fbf9e764069a30a7675ca78f496d31f061d06d0a0420fc52768</td>
-      <td>param_11</td>
-      <td></td>
-      <td>param_11.dill</td>
+      <td>uploads.zip</td>
       <td>other</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>1a4f19ee9e186ee739daecbc778501c5851d3fb5d05c4a3c1200e599855e8689</td>
-      <td>param_21</td>
-      <td></td>
-      <td>param_21.ipynb</td>
-      <td>other</td>
-      <td>4</td>
+      <td>61</td>
     </tr>
   </tbody>
 </table>
