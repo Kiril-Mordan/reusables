@@ -218,7 +218,8 @@ class MockerDatabaseConnector:
 
     def pull_tables(self,
                       solution_id : str = None,
-                      parameter_set_id : str = None):
+                      parameter_set_id : str = None,
+                      pull_attribute_values : bool = True):
 
         """
         Pulls commited tables from database for selected solutions
@@ -257,13 +258,14 @@ class MockerDatabaseConnector:
             table_name = 'parameter_attribute',
             return_keys=['attribute_id'])
 
-        attribute_ids = [dict_attribute_id['attribute_id'] \
-            for dict_attribute_id in dict_attribute_ids]
+        if pull_attribute_values:
+            attribute_ids = [dict_attribute_id['attribute_id'] \
+                for dict_attribute_id in dict_attribute_ids]
 
-        # fetch final tables
-        self.fetch_entries(
-            filters={'table_name' : 'attribute_values',
-                          'attribute_id': attribute_ids})
+            # fetch final tables
+            self.fetch_entries(
+                filters={'table_name' : 'attribute_values',
+                            'attribute_id': attribute_ids})
 
         # get table lists from connector
         solution_description = self.get_entries(
@@ -278,8 +280,11 @@ class MockerDatabaseConnector:
     table_name = 'parameter_description')
         parameter_attributes = self.get_entries(
     table_name = 'parameter_attribute')
-        attribute_values = self.get_entries(
-    table_name = 'attribute_values')
+        if pull_attribute_values:
+            attribute_values = self.get_entries(
+        table_name = 'attribute_values')
+        else:
+            attribute_values = None
 
         return (
             solution_description,
@@ -555,7 +560,8 @@ class SqlAlchemyDatabaseManager:
 
     def pull_tables(self,
                     solution_id : str = None,
-                    parameter_set_id : str = None):
+                    parameter_set_id : str = None,
+                    pull_attribute_values : bool = True):
 
         """
         Pulls commited tables from database for selected solutions
@@ -607,19 +613,38 @@ class SqlAlchemyDatabaseManager:
             parameter_attributes = session.query(self.ParameterAttribute).filter(
                 self.ParameterAttribute.parameter_id.in_(param_ids)).all()
 
-            # Get attribute_ids for fetching attribute values
-            attribute_ids = [attr.attribute_id for attr in parameter_attributes]
-            attribute_values = session.query(self.AttributeValues).filter(
-                self.AttributeValues.attribute_id.in_(attribute_ids)).all()
+            if pull_attribute_values:
+                # Get attribute_ids for fetching attribute values
+                attribute_ids = [attr.attribute_id for attr in parameter_attributes]
+                attribute_values = session.query(self.AttributeValues).filter(
+                    self.AttributeValues.attribute_id.in_(attribute_ids)).all()
+            else:
+                attribute_values = None
+
+            # transforming pulled data
+            if solution_descriptions:
+                solution_descriptions = [self._as_dict(data) for data in solution_descriptions]
+            if solution_parameter_sets:
+                solution_parameter_sets = [self._as_dict(data) for data in solution_parameter_sets]
+            if parameter_sets:
+                parameter_sets = [self._as_dict(data) for data in parameter_sets]
+            if parameter_set_descriptions:
+                parameter_set_descriptions = [self._as_dict(data) for data in parameter_set_descriptions]
+            if parameter_descriptions:
+                parameter_descriptions = [self._as_dict(data) for data in parameter_descriptions]
+            if parameter_attributes:
+                parameter_attributes = [self._as_dict(data) for data in parameter_attributes]
+            if attribute_values:
+                attribute_values = [self._as_dict(data) for data in attribute_values]
 
             return (
-                [self._as_dict(data) for data in solution_descriptions],
-                [self._as_dict(data) for data in solution_parameter_sets],
-                [self._as_dict(data) for data in parameter_sets],
-                [self._as_dict(data) for data in parameter_set_descriptions],
-                [self._as_dict(data) for data in parameter_descriptions],
-                [self._as_dict(data) for data in parameter_attributes],
-                [self._as_dict(data) for data in attribute_values]
+                solution_descriptions,
+                solution_parameter_sets,
+                parameter_sets,
+                parameter_set_descriptions,
+                parameter_descriptions,
+                parameter_attributes,
+                attribute_values
             )
 
         except Exception as e:
@@ -2219,19 +2244,28 @@ class ParameterFrame:
 
                 for parameter_id in parameter_ids:
 
-                    # Distribute parameter_attributes
-                    self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id][parameter_id] = [
-                        parameter_attribute for parameter_attribute in parameter_attributes \
-                            if parameter_attribute['parameter_id'] == parameter_id]
+                    if parameter_attributes:
+                        # Distribute parameter_attributes
+                        self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id][parameter_id] = [
+                            parameter_attribute for parameter_attribute in parameter_attributes \
+                                if parameter_attribute['parameter_id'] == parameter_id]
+                    else:
+                        self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id][parameter_id] = []
 
-                    attribute_ids = [parameter_attribute['attribute_id'] \
+
+
+                    if attribute_values:
+
+                        attribute_ids = [parameter_attribute['attribute_id'] \
                         for parameter_attribute in parameter_attributes \
                             if parameter_attribute['parameter_id'] == parameter_id]
 
-                    # Distribute attribute_values
-                    self.commited_tables[solution_id]['attribute_values'][parameter_set_id][parameter_id] = [
-                        attribute_value for attribute_value in attribute_values \
-                            if attribute_value['attribute_id'] in attribute_ids]
+                        # Distribute attribute_values
+                        self.commited_tables[solution_id]['attribute_values'][parameter_set_id][parameter_id] = [
+                            attribute_value for attribute_value in attribute_values \
+                                if attribute_value['attribute_id'] in attribute_ids]
+                    else:
+                        self.commited_tables[solution_id]['attribute_values'][parameter_set_id][parameter_id] = []
 
         except Exception as e:
             self.logger.error("Problem during rebuilding of tables from pushed data!")
@@ -2241,7 +2275,8 @@ class ParameterFrame:
 
     def pull_solution(self,
                       solution_id : str = None,
-                      parameter_set_id : str = None):
+                      parameter_set_id : str = None,
+                      pull_attribute_values : bool = True):
 
         """
         Pulls commited tables from database for selected solutions
@@ -2255,7 +2290,8 @@ class ParameterFrame:
          parameter_attributes,
          attribute_values) = self.database_connector.pull_tables(
             solution_id = solution_id,
-            parameter_set_id = parameter_set_id
+            parameter_set_id = parameter_set_id,
+            pull_attribute_values = pull_attribute_values
         )
 
         if len(solution_descriptions) == 0:
@@ -2291,8 +2327,11 @@ class ParameterFrame:
 
                     parameter_ids = [sp['parameter_id'] for sp in parameter_set]
 
-                    parameter_description = [sp for sp in parameter_descriptions \
-                        if sp['parameter_id'] in parameter_ids]
+                    if parameter_descriptions:
+                        parameter_description = [sp for sp in parameter_descriptions \
+                            if sp['parameter_id'] in parameter_ids]
+                    else:
+                        parameter_description = None
 
                     # get table lists into commited
                     self._rebuild_tables_from_pulled_data(

@@ -1,5 +1,14 @@
 # Release notes
 
+### 0.1.3
+
+    - fixes and preparations for initial api
+
+### 0.1.2
+
+    - binary compression and decompression with zlib
+    - optional symmetric encryption and decryption with cryptography lib
+
 ### 0.1.1
 
     - bugfixes for random name and id generators
