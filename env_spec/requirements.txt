@@ -16,8 +16,11 @@ openai
 pyyaml
 tox-gh-actions
 plotly
+sqlalchemy
 nbconvert
+pip_audit
 pylint
+cryptography
 tqdm
 ipykernel
 dill

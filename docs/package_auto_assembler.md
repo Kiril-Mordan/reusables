@@ -150,19 +150,19 @@ pv.get_logs(
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-04-27 00:26:18</td>
+      <td>2024-05-11 04:27:37</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-04-27 00:26:18</td>
+      <td>2024-05-11 04:27:37</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-04-27 00:26:18</td>
+      <td>2024-05-11 04:27:37</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -328,6 +328,74 @@ rh.extract_requirements(
 
 
     ['### example_module.py', 'attrs>=22.2.0']
+
+
+
+#### Audit dependencies
+
+
+```python
+rh.check_vulnerabilities(
+    # optional if ran extract_requirements() before
+    requirements_list = None,
+    raise_error = True
+)
+```
+
+    No known vulnerabilities found
+    
+
+
+    
+
+
+
+```python
+rh.vulnerabilities
+```
+
+
+
+
+    []
+
+
+
+
+```python
+try:
+    rh.check_vulnerabilities(
+        # optional if ran extract_requirements() before
+        requirements_list = ['attrs>=22.2.0', 'pandas', 'hnswlib==0.7.0'],
+        raise_error = True
+    )
+except Exception as e:
+    print(f"Error: {e}")
+```
+
+    Found 1 known vulnerability in 1 package
+    
+
+
+    Name    Version ID                  Fix Versions
+    ------- ------- ------------------- ------------
+    hnswlib 0.7.0   GHSA-xwc8-rf6m-xr86
+    
+    Error: Found vulnerabilities, resolve them or ignore check to move forwards!
+
+
+
+```python
+rh.vulnerabilities
+```
+
+
+
+
+    [{'name': 'hnswlib',
+      'version': '0.7.0',
+      'id': 'GHSA-xwc8-rf6m-xr86',
+      'fix_versions': None}]
 
 
 
@@ -673,7 +741,8 @@ paa = PackageAutoAssembler(
     execute_readme_notebook = True,
     python_version = "3.8",
     version_increment_type = "patch",
-    default_version = "0.0.1"
+    default_version = "0.0.1",
+    check_vulnerabilities = True
 )
 ```
 
@@ -744,17 +813,12 @@ paa.add_requirements_from_module(
 )
 ```
 
-#### Make README out of example notebook
+    No known vulnerabilities found
+    
 
 
-```python
-paa.add_readme(
-    # optional
-    example_notebook_path = "../tests/package_auto_assembler/example_module.ipynb",
-    output_path = "./example_module/README.md",
-    execute_notebook=False,
-)
-```
+    
+
 
 
 ```python
@@ -767,6 +831,18 @@ paa.requirements_list
     ['### example_module.py', 'attrs>=22.2.0']
 
 
+
+#### Make README out of example notebook
+
+
+```python
+paa.add_readme(
+    # optional
+    example_notebook_path = "../tests/package_auto_assembler/example_module.ipynb",
+    output_path = "./example_module/README.md",
+    execute_notebook=False,
+)
+```
 
 #### Prepare setup file
 
@@ -836,7 +912,7 @@ rnh = ReleaseNotesHandler(
     No messages to clean were provided
 
 
-##### - overwritting commit messages fro example
+##### - overwritting commit messages from example
 
 
 ```python
@@ -848,7 +924,8 @@ rnh.commit_messages
 
 
     ['Update requirements',
-     '[package_auto_assember] minor fixes to ReleaseNotesHandler; initial changes to allow for test install capability',
+     '[package_auto_assembler] improved ReleaseNotesHandler with resistance to duplicate history',
+     'Update package version tracking files',
      'Update README',
      'Update requirements']
 
@@ -889,7 +966,7 @@ print(rnh.processed_note_entries)
     Example processed_messages:
     ['usage example for initial release notes', 'bugfixes for RNH', 'initial release notes handler']
     Example processed_note_entries:
-    ['# Release notes\n', '\n', '### 0.0.2\n\n    - usage example for initial release notes\n    - bugfixes for RNH\n    - initial release notes handler\n\n', '### 0.0.1\n', '\n', '    - initial version of example_module\n']
+    ['# Release notes\n', '\n', '### 0.0.2\n', '\n', '    - usage example for initial release notes\n', '    - bugfixes for RNH\n', '    - initial release notes handler\n', '\n', '### 0.0.1\n', '    - initial version of example_module\n']
 
 
 ##### - saving updated relese notes
@@ -905,7 +982,6 @@ rnh.existing_contents
     ['# Release notes\n',
      '\n',
      '### 0.0.1\n',
-     '\n',
      '    - initial version of example_module\n']
 
 
@@ -933,7 +1009,6 @@ rnh.get_release_notes_content()
      '    - initial release notes handler\n',
      '\n',
      '### 0.0.1\n',
-     '\n',
      '    - initial version of example_module\n']
 
 
