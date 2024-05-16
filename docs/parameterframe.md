@@ -10,13 +10,9 @@ import sys
 import pandas as pd
 import os
 sys.path.append('../')
-from python_modules.parameterframe import ParameterFrame, MockerDatabaseConnector, SqlAlchemyDatabaseManager
+from parameterframe import ParameterFrame, MockerDatabaseConnector, SqlAlchemyDatabaseManager
 
 ```
-
-    /Users/insani_dei/miniconda3/envs/parameterframe/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-      from .autonotebook import tqdm as notebook_tqdm
-
 
 ## Content
 
@@ -845,7 +841,10 @@ pf2.pull_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbc
 
 
 ```python
-pf2.pull_solution()
+pf2.pull_solution(
+    # optional parameter to skip pull of attributes if data pulled just for show_ methods
+    pull_attribute_values = False
+)
 ```
 
 
@@ -899,7 +898,7 @@ pf2.show_solutions()
       <td>2024-xx-xx</td>
       <td>None</td>
       <td>some text about maintainers credentials</td>
-      <td>2</td>
+      <td>6</td>
     </tr>
   </tbody>
 </table>
@@ -944,6 +943,15 @@ pf2.show_parameter_sets(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5
   <tbody>
     <tr>
       <th>0</th>
+      <td>5779bbf896ebb8f09a6ea252b09f8adb1a416e8780cf1424fb9bb93dbec8deb5</td>
+      <td>green_tiny_car_749</td>
+      <td></td>
+      <td>STAGING</td>
+      <td>2024-05-15 01:36:09</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>1</th>
       <td>3940d6dd4c0d817625a31141874c54cf0c8d88b24994f7915deb4096b3c8d0cf</td>
       <td>blue_tiny_television_381</td>
       <td></td>
@@ -952,13 +960,40 @@ pf2.show_parameter_sets(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5
       <td>2</td>
     </tr>
     <tr>
-      <th>1</th>
-      <td>5779bbf896ebb8f09a6ea252b09f8adb1a416e8780cf1424fb9bb93dbec8deb5</td>
-      <td>yellow_shiny_microwave_931</td>
+      <th>2</th>
+      <td>2f3ee8e19d91a89298d40984df5e7bdd1f1a48008b2e61c88a7f6f81b4ab23f5</td>
+      <td>silver_happy_car_441</td>
       <td></td>
       <td>STAGING</td>
-      <td>2024-05-15 00:36:04</td>
-      <td>3</td>
+      <td>2024-05-16 00:03:25</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>82b8c5340454adf83667e59092fedbee28213475fd58ab6b3d95b4fc60f4d45f</td>
+      <td>purple_giant_television_135</td>
+      <td></td>
+      <td>STAGING</td>
+      <td>2024-05-16 00:05:43</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>dddc057bc151de9f8fb8caa834c8e13b789cf68cb53299b4c65c23f1e1310acd</td>
+      <td>red_sad_scooter_769</td>
+      <td></td>
+      <td>STAGING</td>
+      <td>2024-05-16 00:08:21</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>73ece98c90d4e0bcce8b523a8e8d2bd4290c68f2a783ea279b39fe4507e42de7</td>
+      <td>blue_fuzzy_refrigerator_297</td>
+      <td></td>
+      <td>STAGING</td>
+      <td>2024-05-15 23:57:17</td>
+      <td>1</td>
     </tr>
   </tbody>
 </table>
