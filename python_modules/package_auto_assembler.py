@@ -1320,37 +1320,37 @@ class ReleaseNotesHandler:
                                      lst : list):
 
         seen = set()
-        buffer = []
         deduplicated = []
-        version_headers = []
+        version_headers = set()
 
-        for item in lst:
-
-            # start filling buffor after version is detected
+        # Reverse iteration
+        for item in reversed(lst):
+            # If it's a version header, handle it differently
             if item.startswith("###"):
-
-                if item in version_headers:
-                    seen.add(item)
-                else:
-                    deduplicated += buffer
-
-                    if deduplicated[-1] != "\n":
+                if item not in version_headers:
+                    version_headers.add(item)
+                    if deduplicated and deduplicated[-1] != "\n":
                         deduplicated.append("\n")
-
-                    version_headers.append(item)
-                if deduplicated[-1] != "\n":
-                    buffer.append("\n")
-
-            if item != lst[-1]:
-                # clean buffor when version is detected
-                if item.startswith("###"):
-                    buffer = []
+                    deduplicated.append(item)
+                    deduplicated.append("\n")  # Ensure newline after version header
             else:
-                # in the end append buffor to deduplicated
-                buffer.append(item)
-                deduplicated += buffer
+                if item not in seen:
+                    if item == "\n" and (not deduplicated or deduplicated[-1] == "\n"):
+                        # Skip consecutive newlines
+                        continue
+                    seen.add(item)
+                    deduplicated.append(item)
+                    if item != "\n" and (deduplicated and deduplicated[-1] != "\n"):
+                        deduplicated.append("\n")  # Ensure newline after each item
 
-            buffer.append(item)
+        # Reverse the result to restore original order
+        deduplicated.reverse()
+
+        # Clean up leading and trailing newlines
+        while deduplicated and deduplicated[0] == "\n":
+            deduplicated.pop(0)
+        while deduplicated and deduplicated[-1] == "\n":
+            deduplicated.pop()
 
         return deduplicated
 
@@ -1782,7 +1782,8 @@ class PackageAutoAssembler:
 
     def add_requirements_from_module(self,
                                      module_filepath : str = None,
-                                     import_mappings : str = None):
+                                     import_mappings : str = None,
+                                     check_vulnerabilities : bool = None):
 
         """
         Extract and add requirements from the module.
@@ -1793,6 +1794,9 @@ class PackageAutoAssembler:
 
         if module_filepath is None:
             module_filepath = self.module_filepath
+
+        if check_vulnerabilities is None:
+            check_vulnerabilities = self.check_vulnerabilities
 
         if import_mappings is None:
 
@@ -1809,7 +1813,8 @@ class PackageAutoAssembler:
                 package_mappings=import_mappings,
                 module_filepath=module_filepath,
                 custom_modules=custom_modules)
-        self.requirements_h.check_vulnerabilities()
+        if check_vulnerabilities:
+            self.requirements_h.check_vulnerabilities()
 
     def add_readme(self,
                     example_notebook_path : str = None,
