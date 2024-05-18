@@ -4,16 +4,18 @@ Grid Looper
 A tool to run experiments based on defined grid and function with single iteration.
 """
 
-import logging
-import attr #>=22.2.0
-from itertools import product
-import dill #==0.3.7
 ## for making keys
 import hashlib
 import json
-## to track time
+
+import logging
+
 from datetime import datetime
+from itertools import product
 from tqdm import tqdm
+
+import attr #>=22.2.0
+import dill #==0.3.7
 
 
 __design_choices__ = {
@@ -30,6 +32,10 @@ __package_metadata__ = {
 @attr.s
 class GridLooper:
 
+    """
+    A tool to run experiments based on defined grid and function with single iteration.
+    """
+
     # for defining grid
     experiments_settings = attr.ib(default=None)
     exclusion_keys = attr.ib(default=None)
@@ -44,6 +50,8 @@ class GridLooper:
     save_path = attr.ib(default='./experiments.dill')
 
     # outputs
+    runner_results = attr.ib(default=None,init=None)
+    runner_time = attr.ib(default=None,init=None)
     experiment_configs = attr.ib(default=None,init=None)
     experiment_results = attr.ib(default=None,init=None)
     experiment_config_ids = attr.ib(default=None,init=None)
@@ -91,7 +99,8 @@ class GridLooper:
         for key, values in settings_dict.items():
             if isinstance(values, dict):
                 # Generate combinations for nested dictionaries
-                nested_combinations = list(product(*[[(nested_key, value) for value in nested_values] for nested_key, nested_values in values.items()]))
+                nested_combinations = list(product(*[[(nested_key, value) for value in nested_values] \
+                    for nested_key, nested_values in values.items()]))
                 combinations.extend([(key, dict(combo)) for combo in nested_combinations])
             else:
                 # Directly use values for non-dictionary types
@@ -111,7 +120,8 @@ class GridLooper:
             keys_to_combine = set(experiments_settings.keys())
 
         # Generate combinations for each key
-        all_combinations = [self._expand_dict_combinations({key: experiments_settings[key]}) for key in keys_to_combine if key in experiments_settings]
+        all_combinations = [self._expand_dict_combinations({key: experiments_settings[key]}) \
+            for key in keys_to_combine if key in experiments_settings]
 
         # Compute the cartesian product of all combinations
         product_combinations = list(product(*all_combinations))
@@ -282,5 +292,3 @@ class GridLooper:
 
         with open(save_path, 'wb') as file:
             dill.dump(self.experiment_results, file)
-
-
