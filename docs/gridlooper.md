@@ -85,42 +85,42 @@ gl.experiment_configs
 
 
 
-    [{'runner_params': {'a': '1', 'b': 2},
-      'c': 100,
-      'config_id': '54eac3ee5ce6ae6d126502ee87dbbafce54111b346b895e1d5e29c50097fa800'},
-     {'runner_params': {'a': '1', 'b': 2},
-      'c': 500,
-      'config_id': 'b2ef1c49a36375e88203f9ff1f01db69457fc9eb6435333aaafee68bb871d9da'},
-     {'runner_params': {'a': '2', 'b': 2},
-      'c': 100,
-      'config_id': '4b1a723841dbf9f6e2a415159d0deb938373ba21506285289e46cafdcf455f05'},
-     {'runner_params': {'a': '2', 'b': 2},
-      'c': 500,
-      'config_id': '44a22efdfe7e385b4fbaeb84976ac0d10703a98902ce134cddd1000e09ba156a'},
-     {'runner_params': {'a': '4', 'b': 2},
-      'c': 100,
-      'config_id': '6dc5a94f832532513b1d739fdad694029b6b9d97cec9fa869ce3d75b822c23ce'},
-     {'runner_params': {'a': '4', 'b': 2},
-      'c': 500,
-      'config_id': '9e7ec3d2e9d7d5ccf4b8c05b9a7a145fc443f77cd7031dcdaf139a77f88d5944'},
-     {'runner_params': {'a': '4', 'b': 6},
-      'c': 100,
-      'config_id': 'dcd7c1aeb1b3c41ab924ece9ed471d682cef319304a9675dfd1f7d27f6e29c7c'},
-     {'runner_params': {'a': '4', 'b': 6},
-      'c': 500,
-      'config_id': 'ad38629f25dd962d157ee8b36b1fc34a54079f8b08d0d4e79fd45cecfa167d49'},
-     {'runner_params': {'a': '4', 'b': 10},
-      'c': 100,
-      'config_id': '6cd8cc53587798f4fc2583a122a7cad6e79cb7b6c10639e6a9714d12fa2c3092'},
-     {'runner_params': {'a': '4', 'b': 10},
-      'c': 500,
-      'config_id': '495efcc2399e24fed5a5dee4b3909f27688b7723eb62b28be6ff6eb74c4e8574'},
-     {'runner_params': {'a': '4', 'b': 100},
-      'c': 100,
-      'config_id': '2dcdd7a719ce8fa4731c8d9adefd131d809fd29e014aa9acd3be8a6538cc8765'},
-     {'runner_params': {'a': '4', 'b': 100},
-      'c': 500,
-      'config_id': '64f83d857c2c3a0030bd187330da30dc6d4aaf2ae1418f150b9902a269a4f3d8'}]
+    [{'c': 100,
+      'runner_params': {'a': '1', 'b': 2},
+      'config_id': '8562104a0147be32e0a7611eb5229773906d12c2614826c5fc16b05b76466aba'},
+     {'c': 100,
+      'runner_params': {'a': '2', 'b': 2},
+      'config_id': 'a6148a8d9c48e610c40e5fdde002c1601a0c0344b7df4dcd458dbe7e6fe27772'},
+     {'c': 100,
+      'runner_params': {'a': '4', 'b': 2},
+      'config_id': '53bc174470bf27ac5b821773d691f6290dd546a703461cde818e1b18eb5224c8'},
+     {'c': 100,
+      'runner_params': {'a': '4', 'b': 6},
+      'config_id': 'c341935f88d73f9c0919bdfb061a6d6548ceb83a24e88ce2bda409e489e57e11'},
+     {'c': 100,
+      'runner_params': {'a': '4', 'b': 10},
+      'config_id': 'd5643e3314c572d7c65c86cf5f36686891b306473f5958f7d019ecaad768a6d8'},
+     {'c': 100,
+      'runner_params': {'a': '4', 'b': 100},
+      'config_id': '4500841c83a8731c56f661b570a7f2a754e2808c41de44a5dd7097accdb437ce'},
+     {'c': 500,
+      'runner_params': {'a': '1', 'b': 2},
+      'config_id': '3757452851f2829021b4cf33d08f0fe8049ca4617e6dead2f78aa45db48eeeb4'},
+     {'c': 500,
+      'runner_params': {'a': '2', 'b': 2},
+      'config_id': '598e1072c1d2953abffc9cb2518b09daec7fc78d261920a328a9396820cd3edd'},
+     {'c': 500,
+      'runner_params': {'a': '4', 'b': 2},
+      'config_id': '052e617f5141d37da96e804759603c6d0e8df10dfb5489cf383ed2813b8f87b8'},
+     {'c': 500,
+      'runner_params': {'a': '4', 'b': 6},
+      'config_id': '5c862e5bfeab31aa17483a39a92b455401e49679b1fa3f191beaebec74b396d7'},
+     {'c': 500,
+      'runner_params': {'a': '4', 'b': 10},
+      'config_id': 'aded884015788f0e9152cbb286604945e7a2f109309a8059efbe35a801ff8b54'},
+     {'c': 500,
+      'runner_params': {'a': '4', 'b': 100},
+      'config_id': 'c2900743d454591bcce89c767591edf9044c2c77baae1e271f19a3570f2b0c8f'}]
 
 
 
@@ -142,7 +142,7 @@ gl.executing_experimets(
 
     Looping:   0%|          | 0/12 [00:00<?, ?item/s]
 
-    Looping: 100%|██████████| 12/12 [00:00<00:00, 97731.36item/s]
+    Looping: 100%|██████████| 12/12 [00:00<00:00, 120989.54item/s]
 
     
 
@@ -157,17 +157,17 @@ gl.experiment_results['results']
 
 
 
-    {'54eac3ee5ce6ae6d126502ee87dbbafce54111b346b895e1d5e29c50097fa800': 103,
-     'b2ef1c49a36375e88203f9ff1f01db69457fc9eb6435333aaafee68bb871d9da': 503,
-     '4b1a723841dbf9f6e2a415159d0deb938373ba21506285289e46cafdcf455f05': 104,
-     '44a22efdfe7e385b4fbaeb84976ac0d10703a98902ce134cddd1000e09ba156a': 504,
-     '6dc5a94f832532513b1d739fdad694029b6b9d97cec9fa869ce3d75b822c23ce': 106,
-     '9e7ec3d2e9d7d5ccf4b8c05b9a7a145fc443f77cd7031dcdaf139a77f88d5944': 506,
-     'dcd7c1aeb1b3c41ab924ece9ed471d682cef319304a9675dfd1f7d27f6e29c7c': 110,
-     'ad38629f25dd962d157ee8b36b1fc34a54079f8b08d0d4e79fd45cecfa167d49': 510,
-     '6cd8cc53587798f4fc2583a122a7cad6e79cb7b6c10639e6a9714d12fa2c3092': 114,
-     '495efcc2399e24fed5a5dee4b3909f27688b7723eb62b28be6ff6eb74c4e8574': 514,
-     '2dcdd7a719ce8fa4731c8d9adefd131d809fd29e014aa9acd3be8a6538cc8765': 204,
-     '64f83d857c2c3a0030bd187330da30dc6d4aaf2ae1418f150b9902a269a4f3d8': 604}
+    {'8562104a0147be32e0a7611eb5229773906d12c2614826c5fc16b05b76466aba': 103,
+     'a6148a8d9c48e610c40e5fdde002c1601a0c0344b7df4dcd458dbe7e6fe27772': 104,
+     '53bc174470bf27ac5b821773d691f6290dd546a703461cde818e1b18eb5224c8': 106,
+     'c341935f88d73f9c0919bdfb061a6d6548ceb83a24e88ce2bda409e489e57e11': 110,
+     'd5643e3314c572d7c65c86cf5f36686891b306473f5958f7d019ecaad768a6d8': 114,
+     '4500841c83a8731c56f661b570a7f2a754e2808c41de44a5dd7097accdb437ce': 204,
+     '3757452851f2829021b4cf33d08f0fe8049ca4617e6dead2f78aa45db48eeeb4': 503,
+     '598e1072c1d2953abffc9cb2518b09daec7fc78d261920a328a9396820cd3edd': 504,
+     '052e617f5141d37da96e804759603c6d0e8df10dfb5489cf383ed2813b8f87b8': 506,
+     '5c862e5bfeab31aa17483a39a92b455401e49679b1fa3f191beaebec74b396d7': 510,
+     'aded884015788f0e9152cbb286604945e7a2f109309a8059efbe35a801ff8b54': 514,
+     'c2900743d454591bcce89c767591edf9044c2c77baae1e271f19a3570f2b0c8f': 604}
 
 
