@@ -2474,6 +2474,154 @@ class ParameterFrame:
                 new_deployment_status = "PRODUCTION"
             )
 
+    def _overlap_score(self,
+                        ids : list,
+                        id_dict : dict,
+                        group_ids : list) -> dict:
+
+        scores = {}
+
+        ids_value_counts = pd.Series(ids).value_counts()
+        ids_value_counts_norm = ids_value_counts - 1
+        pivc_freq = ids_value_counts_norm/len(ids_value_counts_norm)
+
+        for id in group_ids:
+            sc = pivc_freq[pivc_freq.index.isin(id_dict[id])]
+            score = sum(sc)
+            scores[id] = score
+
+        return scores
+
+
+    def _make_parameter_attribute_overlap_scores(self,
+                                                show_parameters,
+                                                solution_id : str,
+                                                parameter_set_id : str):
+
+        parameter_ids = show_parameters['parameter_id']
+
+        attribute_ids = []
+        attribute_id_dict = {}
+
+        for paramter_id in parameter_ids:
+            # extract attributes for parameters
+            atrids_dict = self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id][paramter_id]
+
+
+            atrids = [atrid['attribute_id'] for atrid in atrids_dict]
+
+            attribute_id_dict[paramter_id] = atrids
+            attribute_ids = attribute_ids + atrids
+
+
+        scores = self._overlap_score(ids = attribute_ids,
+                                        id_dict = attribute_id_dict,
+                                        group_ids = parameter_ids)
+
+        return scores, attribute_ids
+
+    def _make_parameter_set_attribute_overlap_scores(self, solution_id : str, show_parameter_sets):
+
+        parameter_set_ids = show_parameter_sets['parameter_set_id']
+
+        ps_attribute_ids = []
+        ps_attribute_id_dict = {}
+
+
+        for parameter_set_id in parameter_set_ids:
+
+            show_parameters = self.show_parameters(solution_id=solution_id,
+                            parameter_set_id=parameter_set_id)
+
+            _, attribute_ids = self._make_parameter_attribute_overlap_scores(
+                show_parameters = show_parameters,
+                solution_id = solution_id,
+                parameter_set_id = parameter_set_id)
+
+            ps_attribute_id_dict[parameter_set_id] = attribute_ids
+            ps_attribute_ids = ps_attribute_ids + attribute_ids
+
+
+        scores = self._overlap_score(ids = ps_attribute_ids,
+                                        id_dict = ps_attribute_id_dict,
+                                        group_ids = parameter_set_ids)
+
+
+        return scores, ps_attribute_ids
+
+    def _make_parameter_set_parameter_overlap_scores(self, solution_id : str, show_parameter_sets):
+
+        parameter_set_ids = show_parameter_sets['parameter_set_id']
+
+        ps_parameter_ids = []
+        ps_parameter_id_dict = {}
+
+
+        for parameter_set_id in parameter_set_ids:
+
+            # extract attributes for parameters
+            prids_dict = self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id]
+
+            prids = [parameter_id for parameter_id in prids_dict]
+
+            ps_parameter_id_dict[parameter_set_id] = prids
+            ps_parameter_ids = ps_parameter_ids + prids
+
+        scores = self._overlap_score(ids = ps_parameter_ids,
+                                        id_dict = ps_parameter_id_dict,
+                                        group_ids = parameter_set_ids)
+
+
+        return scores, ps_parameter_ids
+
+    def _make_solution_attribute_overlap_scores(self, show_solutions):
+
+        solution_ids = show_solutions['solution_id']
+
+        s_attribute_ids = []
+        s_attribute_id_dict = {}
+
+        for solution_id in solution_ids:
+
+            show_parameter_sets = self.show_parameter_sets(solution_id=solution_id)
+
+            _, attribute_ids = self._make_parameter_set_attribute_overlap_scores(
+                show_parameter_sets = show_parameter_sets,
+                solution_id = solution_id)
+
+            s_attribute_id_dict[solution_id] = attribute_ids
+            s_attribute_ids = s_attribute_ids + attribute_ids
+
+        scores = self._overlap_score(ids = s_attribute_ids,
+                                        id_dict = s_attribute_id_dict,
+                                        group_ids = solution_ids)
+
+        return scores
+
+    def _make_solution_parameter_overlap_scores(self, show_solutions):
+
+        solution_ids = show_solutions['solution_id']
+
+        s_parameter_ids = []
+        s_parameter_id_dict = {}
+
+        for solution_id in solution_ids:
+
+            show_parameter_sets = self.show_parameter_sets(solution_id=solution_id)
+
+            _, parameter_ids = self._make_parameter_set_parameter_overlap_scores(
+                show_parameter_sets = show_parameter_sets,
+                solution_id = solution_id)
+
+            s_parameter_id_dict[solution_id] = parameter_ids
+            s_parameter_ids = s_parameter_ids + parameter_ids
+
+        scores = self._overlap_score(ids = s_parameter_ids,
+                                        id_dict = s_parameter_id_dict,
+                                        group_ids = solution_ids)
+
+        return scores
+
     def show_solutions(self):
 
         """
@@ -2510,6 +2658,18 @@ class ParameterFrame:
                     for sid in self.commited_tables
                 ]
 
+        solution_attribute_overlap_scores = self._make_solution_attribute_overlap_scores(
+            show_solutions=solution_descriptions_pd)
+
+        solution_descriptions_pd['aos'] = [solution_attribute_overlap_scores[solution_id] \
+            for solution_id in solution_descriptions_pd['solution_id']]
+
+        solution_parameter_overlap_scores = self._make_solution_parameter_overlap_scores(
+            show_solutions=solution_descriptions_pd)
+
+        solution_descriptions_pd['pos'] = [solution_parameter_overlap_scores[solution_id] \
+            for solution_id in solution_descriptions_pd['solution_id']]
+
         return solution_descriptions_pd
 
     def show_parameter_sets(self, solution_id : str):
@@ -2541,6 +2701,20 @@ class ParameterFrame:
             len(self.commited_tables[solution_id]['parameter_set'][pid_d['parameter_set_id']]) \
                 for pid_d in parameter_set_descriptions]
 
+        parameter_set_attribute_overlap_scores, _ = self._make_parameter_set_attribute_overlap_scores(
+            solution_id = solution_id,
+            show_parameter_sets = psdsp_id_pd)
+
+        psdsp_id_pd['aos'] = [parameter_set_attribute_overlap_scores[parameter_set_id] \
+            for parameter_set_id in psdsp_id_pd['parameter_set_id']]
+
+        parameter_set_parameter_overlap_scores, _ = self._make_parameter_set_parameter_overlap_scores(
+            solution_id = solution_id,
+            show_parameter_sets = psdsp_id_pd)
+
+        psdsp_id_pd['pos'] = [parameter_set_parameter_overlap_scores[parameter_set_id] \
+            for parameter_set_id in psdsp_id_pd['parameter_set_id']]
+
         return psdsp_id_pd
 
     def show_parameters(self, solution_id : str, parameter_set_id : str):
@@ -2558,6 +2732,15 @@ class ParameterFrame:
         parameter_descriptions_pd['commited_attributes'] = [
             len(self.commited_tables[solution_id]['parameter_attribute'][parameter_set_id][parameter_id]) \
                 for parameter_id in parameter_descriptions]
+
+        parameter_attribute_overlap_scores, _ = self._make_parameter_attribute_overlap_scores(
+            show_parameters = parameter_descriptions_pd,
+            solution_id = solution_id,
+            parameter_set_id = parameter_set_id)
+
+        parameter_descriptions_pd['aos'] = [parameter_attribute_overlap_scores[parameter_id] \
+            for parameter_id in parameter_descriptions_pd['parameter_id']]
+
         return parameter_descriptions_pd
 
 
