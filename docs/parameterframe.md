@@ -10,9 +10,13 @@ import sys
 import pandas as pd
 import os
 sys.path.append('../')
-from parameterframe import ParameterFrame, MockerDatabaseConnector, SqlAlchemyDatabaseManager
+from python_modules.parameterframe import ParameterFrame, MockerDatabaseConnector, SqlAlchemyDatabaseManager
 
 ```
+
+    /Users/insani_dei/miniconda3/envs/parameterframe/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+      from .autonotebook import tqdm as notebook_tqdm
+
 
 ## Content
 
@@ -25,6 +29,7 @@ from parameterframe import ParameterFrame, MockerDatabaseConnector, SqlAlchemyDa
 7. Pulling select parameter sets
 8. Reconstructing parameter se
 9. Structure of local commit tables
+10. Scores
 
 ### 1. Adding new solution and uploading it
 
@@ -786,6 +791,7 @@ pf2.show_solutions()
       <th>deprecation_date</th>
       <th>maintainers</th>
       <th>commited_parameter_sets</th>
+      <th>aos</th>
     </tr>
   </thead>
   <tbody>
@@ -825,11 +831,9 @@ pf2.pull_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbc
                  parameter_set_id=None)
 ```
 
-    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
-    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
-
-
-    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+    No solutions with b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca could be pulled!
+    No parameter sets were pulled for solution_id b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca
+    Nothing was pulled for b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca
 
 
 
@@ -887,6 +891,8 @@ pf2.show_solutions()
       <th>deprecation_date</th>
       <th>maintainers</th>
       <th>commited_parameter_sets</th>
+      <th>aos</th>
+      <th>pos</th>
     </tr>
   </thead>
   <tbody>
@@ -899,6 +905,8 @@ pf2.show_solutions()
       <td>None</td>
       <td>some text about maintainers credentials</td>
       <td>6</td>
+      <td>0.397157</td>
+      <td>0.428571</td>
     </tr>
   </tbody>
 </table>
@@ -938,6 +946,8 @@ pf2.show_parameter_sets(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5
       <th>deployment_status</th>
       <th>insertion_datetime</th>
       <th>commited_parameters</th>
+      <th>aos</th>
+      <th>pos</th>
     </tr>
   </thead>
   <tbody>
@@ -949,33 +959,41 @@ pf2.show_parameter_sets(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5
       <td>STAGING</td>
       <td>2024-05-15 01:36:09</td>
       <td>3</td>
+      <td>0.025744</td>
+      <td>0.285714</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>3940d6dd4c0d817625a31141874c54cf0c8d88b24994f7915deb4096b3c8d0cf</td>
-      <td>blue_tiny_television_381</td>
+      <td>73ece98c90d4e0bcce8b523a8e8d2bd4290c68f2a783ea279b39fe4507e42de7</td>
+      <td>blue_fuzzy_refrigerator_297</td>
       <td></td>
       <td>STAGING</td>
-      <td>2024-05-15 00:37:50</td>
-      <td>2</td>
+      <td>2024-05-15 23:57:17</td>
+      <td>1</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2f3ee8e19d91a89298d40984df5e7bdd1f1a48008b2e61c88a7f6f81b4ab23f5</td>
-      <td>silver_happy_car_441</td>
-      <td></td>
-      <td>STAGING</td>
-      <td>2024-05-16 00:03:25</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>3</th>
       <td>82b8c5340454adf83667e59092fedbee28213475fd58ab6b3d95b4fc60f4d45f</td>
       <td>purple_giant_television_135</td>
       <td></td>
       <td>STAGING</td>
       <td>2024-05-16 00:05:43</td>
       <td>1</td>
+      <td>0.371413</td>
+      <td>0.142857</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>3940d6dd4c0d817625a31141874c54cf0c8d88b24994f7915deb4096b3c8d0cf</td>
+      <td>blue_tiny_television_381</td>
+      <td></td>
+      <td>STAGING</td>
+      <td>2024-05-15 00:37:50</td>
+      <td>2</td>
+      <td>0.025744</td>
+      <td>0.285714</td>
     </tr>
     <tr>
       <th>4</th>
@@ -985,15 +1003,82 @@ pf2.show_parameter_sets(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5
       <td>STAGING</td>
       <td>2024-05-16 00:08:21</td>
       <td>2</td>
+      <td>0.371413</td>
+      <td>0.142857</td>
     </tr>
     <tr>
       <th>5</th>
-      <td>73ece98c90d4e0bcce8b523a8e8d2bd4290c68f2a783ea279b39fe4507e42de7</td>
-      <td>blue_fuzzy_refrigerator_297</td>
+      <td>2f3ee8e19d91a89298d40984df5e7bdd1f1a48008b2e61c88a7f6f81b4ab23f5</td>
+      <td>silver_happy_car_441</td>
       <td></td>
       <td>STAGING</td>
-      <td>2024-05-15 23:57:17</td>
+      <td>2024-05-16 00:03:25</td>
       <td>1</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+pf2.show_parameters(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0cc5fe1cb12101acf5',
+                    parameter_set_id='3940d6dd4c0d817625a31141874c54cf0c8d88b24994f7915deb4096b3c8d0cf')
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_id</th>
+      <th>parameter_name</th>
+      <th>parameter_description</th>
+      <th>file_name</th>
+      <th>file_type</th>
+      <th>commited_attributes</th>
+      <th>aos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>3386ebc962b1c57745ca24320bf873df6eb84a2b9cb733607d72006347bf95b8</td>
+      <td>Screenshot 2024-05-04 at 02</td>
+      <td></td>
+      <td>Screenshot 2024-05-04 at 02.59.31.png</td>
+      <td>other</td>
+      <td>35</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>5afae3951544cd3736685a3b2daa31c00106191a799b96b0c636cd35e9a416ff</td>
+      <td>uploads</td>
+      <td></td>
+      <td>uploads.zip</td>
+      <td>other</td>
+      <td>61</td>
+      <td>0.0</td>
     </tr>
   </tbody>
 </table>
@@ -1034,6 +1119,7 @@ pf2.show_parameters(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0
       <th>file_name</th>
       <th>file_type</th>
       <th>commited_attributes</th>
+      <th>aos</th>
     </tr>
   </thead>
   <tbody>
@@ -1045,6 +1131,7 @@ pf2.show_parameters(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0
       <td>Screenshot 2024-05-04 at 02.59.31.png</td>
       <td>other</td>
       <td>35</td>
+      <td>0.0</td>
     </tr>
     <tr>
       <th>1</th>
@@ -1054,6 +1141,7 @@ pf2.show_parameters(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0
       <td>1. AF - opis projektu.pdf</td>
       <td>other</td>
       <td>34</td>
+      <td>0.0</td>
     </tr>
     <tr>
       <th>2</th>
@@ -1063,6 +1151,123 @@ pf2.show_parameters(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0
       <td>uploads.zip</td>
       <td>other</td>
       <td>61</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+pf2.show_parameters(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0cc5fe1cb12101acf5',
+                    parameter_set_id='dddc057bc151de9f8fb8caa834c8e13b789cf68cb53299b4c65c23f1e1310acd')
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_id</th>
+      <th>parameter_name</th>
+      <th>parameter_description</th>
+      <th>file_name</th>
+      <th>file_type</th>
+      <th>commited_attributes</th>
+      <th>aos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>e6ae9d10f3b4d69c1ef6ff8038d13e9f0b093fc3710f2fed0259204aac2fcba4</td>
+      <td>Geekbench 6</td>
+      <td></td>
+      <td>Geekbench 6.app.zip</td>
+      <td>other</td>
+      <td>1385</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>be0886c2f5d24aa5672bf84e355d9d4adb527a36e5e973413c555200d7f3fdb2</td>
+      <td>Ollama</td>
+      <td></td>
+      <td>Ollama.app.zip</td>
+      <td>other</td>
+      <td>1400</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+pf2.show_parameters(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0cc5fe1cb12101acf5',
+                    parameter_set_id='82b8c5340454adf83667e59092fedbee28213475fd58ab6b3d95b4fc60f4d45f')
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_id</th>
+      <th>parameter_name</th>
+      <th>parameter_description</th>
+      <th>file_name</th>
+      <th>file_type</th>
+      <th>commited_attributes</th>
+      <th>aos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>e6ae9d10f3b4d69c1ef6ff8038d13e9f0b093fc3710f2fed0259204aac2fcba4</td>
+      <td>Geekbench 6</td>
+      <td></td>
+      <td>Geekbench 6.app.zip</td>
+      <td>other</td>
+      <td>1385</td>
+      <td>0.0</td>
     </tr>
   </tbody>
 </table>
@@ -1818,3 +2023,24 @@ pd.DataFrame([tab for param_id, tab_list in pf2.commited_tables['b5c2e4a9bdcb57c
 </div>
 
 
+
+### 10. Scores
+
+##### I. Attribute overlap ratio
+
+AOR represents an overlap ratio between attribute ids that:
+
+- belong to a parameter within parameter set
+- belong to a parameter sets within solution
+- belong to a solution within solutions
+
+The score is between $0$ and $1$, and the greater the score, the greater is an overlap between attribute ids within select group and non unique attribute ids.
+
+##### II. Parameter overlap ratio
+
+POR represents an overlap ratio between parameter ids that:
+
+- belong to a parameter sets within solution
+- belong to a solution within solutions
+
+The score is between $0$ and $1$, and the greater the score, the greater is an overlap between parameter ids within select group and non unique parameter ids.
