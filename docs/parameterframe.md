@@ -10,13 +10,9 @@ import sys
 import pandas as pd
 import os
 sys.path.append('../')
-from python_modules.parameterframe import ParameterFrame, MockerDatabaseConnector, SqlAlchemyDatabaseManager
+from parameterframe import ParameterFrame, MockerDatabaseConnector, SqlAlchemyDatabaseManager
 
 ```
-
-    /Users/insani_dei/miniconda3/envs/parameterframe/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-      from .autonotebook import tqdm as notebook_tqdm
-
 
 ## Content
 
@@ -86,6 +82,8 @@ pf.show_solutions()
       <th>deprecation_date</th>
       <th>maintainers</th>
       <th>commited_parameter_sets</th>
+      <th>aos</th>
+      <th>pos</th>
     </tr>
   </thead>
   <tbody>
@@ -106,9 +104,20 @@ pf.add_solution(
     deprecation_date=None,
     maintainers="some text about maintainers credentials"
 )
+
+pf.add_solution(
+    # mandatory
+    solution_name="new_example_solution2",
+    # optional description
+    solution_description="Description of new example solution.",
+    deployment_date="2024-xx-xx",
+    deprecation_date=None,
+    maintainers="some text about maintainers credentials"
+)
 ```
 
     Solution id for new_example_solution: b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca
+    Solution id for new_example_solution2: 1c0b910dc0074ea3966fbb1a96038e5eaee8dc1b873f9867830e0659b54dd311
 
 
 
@@ -124,9 +133,15 @@ pf.commit_solution(
     # either solution id or solution name should be provided
     solution_name="new_example_solution"
 )
+
+pf.commit_solution(
+    # either solution id or solution name should be provided
+    solution_name="new_example_solution2"
+)
 ```
 
     Commited solution description for b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca
+    Commited solution description for 1c0b910dc0074ea3966fbb1a96038e5eaee8dc1b873f9867830e0659b54dd311
 
 
 
@@ -169,6 +184,8 @@ pf.show_solutions()
       <th>deprecation_date</th>
       <th>maintainers</th>
       <th>commited_parameter_sets</th>
+      <th>aos</th>
+      <th>pos</th>
     </tr>
   </thead>
   <tbody>
@@ -180,6 +197,20 @@ pf.show_solutions()
       <td>2024-xx-xx</td>
       <td>None</td>
       <td>some text about maintainers credentials</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1c0b910dc0074ea3966fbb1a96038e5eaee8dc1b873f9867830e0659b54dd311</td>
+      <td>new_example_solution2</td>
+      <td>Description of new example solution.</td>
+      <td>2024-xx-xx</td>
+      <td>None</td>
+      <td>some text about maintainers credentials</td>
+      <td>0</td>
+      <td>0</td>
       <td>0</td>
     </tr>
   </tbody>
@@ -195,9 +226,6 @@ pf.push_solution(
     solution_name = "new_example_solution"
 )
 ```
-
-    HTTP Request: POST http://localhost:8001/insert "HTTP/1.1 200 OK"
-
 
 
 
@@ -276,6 +304,8 @@ pf.show_solutions()
       <th>deprecation_date</th>
       <th>maintainers</th>
       <th>commited_parameter_sets</th>
+      <th>aos</th>
+      <th>pos</th>
     </tr>
   </thead>
   <tbody>
@@ -366,6 +396,8 @@ pf.show_solutions()
       <th>deprecation_date</th>
       <th>maintainers</th>
       <th>commited_parameter_sets</th>
+      <th>aos</th>
+      <th>pos</th>
     </tr>
   </thead>
   <tbody>
@@ -378,6 +410,8 @@ pf.show_solutions()
       <td>None</td>
       <td>None</td>
       <td>1</td>
+      <td>0.05</td>
+      <td>0.0</td>
     </tr>
   </tbody>
 </table>
@@ -417,6 +451,8 @@ pf.show_parameter_sets(solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add
       <th>deployment_status</th>
       <th>insertion_datetime</th>
       <th>commited_parameters</th>
+      <th>aos</th>
+      <th>pos</th>
     </tr>
   </thead>
   <tbody>
@@ -426,8 +462,10 @@ pf.show_parameter_sets(solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add
       <td>test_set</td>
       <td>example parameters for test purposes</td>
       <td>STAGING</td>
-      <td>2024-05-15 00:09:10</td>
+      <td>2024-05-21 03:03:23</td>
       <td>5</td>
+      <td>0.05</td>
+      <td>0.0</td>
     </tr>
   </tbody>
 </table>
@@ -468,6 +506,7 @@ pf.show_parameters(solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3
       <th>file_name</th>
       <th>file_type</th>
       <th>commited_attributes</th>
+      <th>aos</th>
     </tr>
   </thead>
   <tbody>
@@ -479,6 +518,7 @@ pf.show_parameters(solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3
       <td>param_1.yaml</td>
       <td>yaml</td>
       <td>3</td>
+      <td>0.05</td>
     </tr>
     <tr>
       <th>1</th>
@@ -488,6 +528,7 @@ pf.show_parameters(solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3
       <td>param_2.yaml</td>
       <td>yaml</td>
       <td>6</td>
+      <td>0.05</td>
     </tr>
     <tr>
       <th>2</th>
@@ -497,6 +538,7 @@ pf.show_parameters(solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3
       <td>param_10.txt</td>
       <td>txt</td>
       <td>9</td>
+      <td>0.00</td>
     </tr>
     <tr>
       <th>3</th>
@@ -506,6 +548,7 @@ pf.show_parameters(solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3
       <td>param_11.dill</td>
       <td>other</td>
       <td>1</td>
+      <td>0.00</td>
     </tr>
     <tr>
       <th>4</th>
@@ -515,6 +558,7 @@ pf.show_parameters(solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3
       <td>param_21.ipynb</td>
       <td>other</td>
       <td>2</td>
+      <td>0.00</td>
     </tr>
   </tbody>
 </table>
@@ -529,9 +573,6 @@ pf.show_parameters(solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3
 pf.push_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
                  parameter_set_names=["test_set"])
 ```
-
-    HTTP Request: POST http://localhost:8001/insert "HTTP/1.1 200 OK"
-
 
 
 
@@ -566,9 +607,6 @@ pf.get_parameter_set_id_for_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909
                                                         deployment_status="STAGING")
 ```
 
-    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
-
-
 
 
 
@@ -581,9 +619,6 @@ pf.get_parameter_set_id_for_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909
 pf.get_deployment_status(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
                          parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
 ```
-
-    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
-
 
 
 
@@ -622,17 +657,10 @@ pf.database_connector.modify_parameter_set_status(
 )
 ```
 
-    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
-    No data was found with applied filters!
-
-
-    No deployed parameter_set_ids with PRODUCTION from selected!
 
 
 
-
-
-    False
+    True
 
 
 
@@ -644,10 +672,7 @@ pf.change_status_from_staging_to_production(
 )
 ```
 
-    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
-    HTTP Request: POST http://localhost:8001/delete "HTTP/1.1 200 OK"
     b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca + a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5 : STAGING -> PRODUCTION
-    HTTP Request: POST http://localhost:8001/insert "HTTP/1.1 200 OK"
 
 
 
@@ -655,9 +680,6 @@ pf.change_status_from_staging_to_production(
 pf.get_deployment_status(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
                          parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
 ```
-
-    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
-
 
 
 
@@ -674,10 +696,7 @@ pf.change_status_from_production_to_archived(
 )
 ```
 
-    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
-    HTTP Request: POST http://localhost:8001/delete "HTTP/1.1 200 OK"
     b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca + a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5 : PRODUCTION -> ARCHIVED
-    HTTP Request: POST http://localhost:8001/insert "HTTP/1.1 200 OK"
 
 
 
@@ -685,9 +704,6 @@ pf.change_status_from_production_to_archived(
 pf.get_deployment_status(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
                          parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
 ```
-
-    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
-
 
 
 
@@ -704,15 +720,8 @@ pf.change_status_from_archived_production(
 )
 ```
 
-    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
-    No data was found with applied filters!
     No deployed parameter_set_ids with PRODUCTION from selected!
-
-
-    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
-    HTTP Request: POST http://localhost:8001/delete "HTTP/1.1 200 OK"
     b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca + a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5 : ARCHIVED -> PRODUCTION
-    HTTP Request: POST http://localhost:8001/insert "HTTP/1.1 200 OK"
 
 
 
@@ -720,9 +729,6 @@ pf.change_status_from_archived_production(
 pf.get_deployment_status(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
                          parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
 ```
-
-    HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
-
 
 
 
@@ -792,6 +798,7 @@ pf2.show_solutions()
       <th>maintainers</th>
       <th>commited_parameter_sets</th>
       <th>aos</th>
+      <th>pos</th>
     </tr>
   </thead>
   <tbody>
