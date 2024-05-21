@@ -2578,23 +2578,32 @@ class ParameterFrame:
 
         solution_ids = show_solutions['solution_id']
 
+        solution_ids_for_score = []
+
         s_attribute_ids = []
         s_attribute_id_dict = {}
 
         for solution_id in solution_ids:
 
-            show_parameter_sets = self.show_parameter_sets(solution_id=solution_id)
+            if (show_solutions[show_solutions['solution_id'] == solution_id].reset_index()['commited_parameter_sets'] > 0)[0]:
 
-            _, attribute_ids = self._make_parameter_set_attribute_overlap_scores(
-                show_parameter_sets = show_parameter_sets,
-                solution_id = solution_id)
+                show_parameter_sets = self.show_parameter_sets(solution_id=solution_id)
 
-            s_attribute_id_dict[solution_id] = attribute_ids
-            s_attribute_ids = s_attribute_ids + attribute_ids
+                _, attribute_ids = self._make_parameter_set_attribute_overlap_scores(
+                    show_parameter_sets = show_parameter_sets,
+                    solution_id = solution_id)
 
-        scores = self._overlap_score(ids = s_attribute_ids,
-                                        id_dict = s_attribute_id_dict,
-                                        group_ids = solution_ids)
+                s_attribute_id_dict[solution_id] = attribute_ids
+                s_attribute_ids = s_attribute_ids + attribute_ids
+                solution_ids_for_score.append(solution_id)
+
+        if solution_ids_for_score:
+
+            scores = self._overlap_score(ids = s_attribute_ids,
+                                            id_dict = s_attribute_id_dict,
+                                            group_ids = solution_ids_for_score)
+        else:
+            scores = None
 
         return scores
 
@@ -2659,16 +2668,21 @@ class ParameterFrame:
                 ]
 
         solution_attribute_overlap_scores = self._make_solution_attribute_overlap_scores(
-            show_solutions=solution_descriptions_pd)
+            show_solutions=solution_descriptions_pd )
 
-        solution_descriptions_pd['aos'] = [solution_attribute_overlap_scores[solution_id] \
-            for solution_id in solution_descriptions_pd['solution_id']]
+        if solution_attribute_overlap_scores:
 
-        solution_parameter_overlap_scores = self._make_solution_parameter_overlap_scores(
-            show_solutions=solution_descriptions_pd)
+            solution_descriptions_pd['aos'] = [solution_attribute_overlap_scores[solution_id] \
+                for solution_id in solution_descriptions_pd['solution_id']]
 
-        solution_descriptions_pd['pos'] = [solution_parameter_overlap_scores[solution_id] \
-            for solution_id in solution_descriptions_pd['solution_id']]
+            solution_parameter_overlap_scores = self._make_solution_parameter_overlap_scores(
+                show_solutions=solution_descriptions_pd)
+
+            solution_descriptions_pd['pos'] = [solution_parameter_overlap_scores[solution_id] \
+                for solution_id in solution_descriptions_pd['solution_id']]
+        else:
+            solution_descriptions_pd['aos'] = [0 for _ in range(solution_descriptions_pd.shape[0])]
+            solution_descriptions_pd['pos'] = [0 for _ in range(solution_descriptions_pd.shape[0])]
 
         return solution_descriptions_pd
 
