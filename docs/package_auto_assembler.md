@@ -150,19 +150,19 @@ pv.get_logs(
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-05-11 04:27:37</td>
+      <td>2024-05-22 01:06:54</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-05-11 04:27:37</td>
+      <td>2024-05-22 01:06:54</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-05-11 04:27:37</td>
+      <td>2024-05-22 01:06:54</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -261,7 +261,7 @@ rh.list_custom_modules(
 
 
 
-    ['example_local_dependacy_2', 'example_local_dependacy_1']
+    ['example_local_dependacy_1', 'example_local_dependacy_2']
 
 
 
@@ -524,25 +524,26 @@ print(ldh.combine_modules(
     
     __design_choices__ = {}
     
+    # Metadata for package creation
+    
+    
     @attr.s
-    class Shouter:
+    class ComparisonFrame:
     
         """
-        A class for managing and displaying formatted log messages.
+        Compares query:response pairs expected vs recieved with semantic similarity
+        and simple metrics of word count, line count etc.
     
-        This class uses the logging module to create and manage a logger
-        for displaying formatted messages. It provides a method to output
-        various types of lines and headers, with customizable message and
-        line lengths.
-        """
+        ...
     
-        # Formatting settings
-        dotline_length = attr.ib(default=50)
-    
-        # Logger settings
-        logger = attr.ib(default=None)
-        logger_name = attr.ib(default='Shouter')
-        loggerLvl = attr.ib(default=lo
+        Attributes
+        ----------
+        embedder : SentenceTransformer
+            The model used to generate embeddings for semantic comparison.
+        record_file : str
+            The name of the CSV file where queries and expected results are stored.
+        results_file : str
+            The name of the CSV file where comparison results 
 
 
 
@@ -553,7 +554,7 @@ ldh.dependencies_names_list
 
 
 
-    ['example_local_dependacy_2', 'example_local_dependacy_1']
+    ['example_local_dependacy_1', 'example_local_dependacy_2']
 
 
 
@@ -924,7 +925,8 @@ rnh.commit_messages
 
 
     ['Update requirements',
-     '[package_auto_assembler] improved ReleaseNotesHandler with resistance to duplicate history',
+     '[package_auto_assembler] test_install_package() method for local testing',
+     'simpler test_install_package.py script',
      'Update package version tracking files',
      'Update README',
      'Update requirements']
@@ -966,7 +968,7 @@ print(rnh.processed_note_entries)
     Example processed_messages:
     ['usage example for initial release notes', 'bugfixes for RNH', 'initial release notes handler']
     Example processed_note_entries:
-    ['# Release notes\n', '\n', '### 0.0.2\n', '\n', '    - usage example for initial release notes\n', '    - bugfixes for RNH\n', '    - initial release notes handler\n', '\n', '### 0.0.1\n', '    - initial version of example_module\n']
+    ['# Release notes\n', '\n', '### 0.0.2\n', '\n', '    - usage example for initial release notes\n', '\n', '    - bugfixes for RNH\n', '\n', '    - initial release notes handler\n', '\n', '### 0.0.1\n', '\n', '    - initial version of example_module\n']
 
 
 ##### - saving updated relese notes
@@ -1005,10 +1007,13 @@ rnh.get_release_notes_content()
      '### 0.0.2\n',
      '\n',
      '    - usage example for initial release notes\n',
+     '\n',
      '    - bugfixes for RNH\n',
+     '\n',
      '    - initial release notes handler\n',
      '\n',
      '### 0.0.1\n',
+     '\n',
      '    - initial version of example_module\n']
 
 
