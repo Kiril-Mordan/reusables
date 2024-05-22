@@ -12,6 +12,7 @@ with minimal preparations and requirements for new modules.
 # Imports
 import logging
 import os
+import sys
 import ast
 import json
 import csv
@@ -1893,3 +1894,27 @@ class PackageAutoAssembler:
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
         return result
+
+    def test_install_package(self,
+                             module_name : str = None,
+                             remove_temp_files : bool = True):
+
+        """
+        Test install package to environment and optional remove temp files.
+        """
+
+        if module_name is None:
+            module_name = self.module_name
+
+        # Reinstall the module from the wheel file
+        wheel_files = [f for f in os.listdir('dist') if f.endswith('-py3-none-any.whl')]
+        for wheel_file in wheel_files:
+            subprocess.run([sys.executable, "-m", "pip", "install", "--force-reinstall",
+                            os.path.join('dist', wheel_file)], check=True)
+
+        if remove_temp_files:
+            # Clean up the build directories and other generated files
+            shutil.rmtree('build', ignore_errors=True)
+            shutil.rmtree('dist', ignore_errors=True)
+            shutil.rmtree(module_name, ignore_errors=True)
+            shutil.rmtree(f"{module_name}.egg-info", ignore_errors=True)
