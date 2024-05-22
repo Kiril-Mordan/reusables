@@ -42,4 +42,5 @@ if __name__ == "__main__":
     #paa.add_readme()
     paa.prep_setup_file()
     paa.make_package()
+    paa.test_install_package()
 
