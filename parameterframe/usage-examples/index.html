@@ -1,0 +1,2562 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../schema/">
+      
+      
+        <link rel="next" href="../usage/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.24">
+    
+    
+      
+        <title>Parameterframe - parameterframe</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.6543a935.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../css/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#parameterframe" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="parameterframe" class="md-header__button md-logo" aria-label="parameterframe" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            parameterframe
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Parameterframe
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="green"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="green" data-md-color-accent="green"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="parameterframe" class="md-nav__button md-logo" aria-label="parameterframe" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    parameterframe
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Intro
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Flow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-notes/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Release notes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schema/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Schema
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Parameterframe
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Parameterframe
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#content" class="md-nav__link">
+    <span class="md-ellipsis">
+      Content
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Content">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-adding-new-solution-and-uploading-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Adding new solution and uploading it
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-processing-new-files-and-creating-parameter-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Processing new files and creating parameter set
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-adding-parameter-set-to-solution-and-commiting" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Adding parameter set to solution and commiting
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-uploading-parameter-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Uploading parameter sets
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-getting-latest-parameter-set-id-for-solution" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Getting latest parameter set id for solution
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-changing-parameter-set-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Changing parameter set status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-pulling-select-parameter-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Pulling select parameter sets
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-reconstructing-parameter-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Reconstructing parameter set
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-structure-of-commit-tables" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. Structure of commit tables
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Structure of commit tables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#solution_description" class="md-nav__link">
+    <span class="md-ellipsis">
+      solution_description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#solution_parameter_set" class="md-nav__link">
+    <span class="md-ellipsis">
+      solution_parameter_set
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter_set" class="md-nav__link">
+    <span class="md-ellipsis">
+      parameter_set
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter_set_description" class="md-nav__link">
+    <span class="md-ellipsis">
+      parameter_set_description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter_description" class="md-nav__link">
+    <span class="md-ellipsis">
+      parameter_description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter_attribute" class="md-nav__link">
+    <span class="md-ellipsis">
+      parameter_attribute
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attribute_values" class="md-nav__link">
+    <span class="md-ellipsis">
+      attribute_values
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-scores" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. Scores
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Scores">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#i-attribute-overlap-ratio" class="md-nav__link">
+    <span class="md-ellipsis">
+      I. Attribute overlap ratio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ii-parameter-overlap-ratio" class="md-nav__link">
+    <span class="md-ellipsis">
+      II. Parameter overlap ratio
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Usage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#content" class="md-nav__link">
+    <span class="md-ellipsis">
+      Content
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Content">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-adding-new-solution-and-uploading-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Adding new solution and uploading it
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-processing-new-files-and-creating-parameter-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Processing new files and creating parameter set
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-adding-parameter-set-to-solution-and-commiting" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Adding parameter set to solution and commiting
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-uploading-parameter-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Uploading parameter sets
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-getting-latest-parameter-set-id-for-solution" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Getting latest parameter set id for solution
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-changing-parameter-set-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Changing parameter set status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-pulling-select-parameter-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Pulling select parameter sets
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-reconstructing-parameter-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Reconstructing parameter set
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-structure-of-commit-tables" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. Structure of commit tables
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Structure of commit tables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#solution_description" class="md-nav__link">
+    <span class="md-ellipsis">
+      solution_description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#solution_parameter_set" class="md-nav__link">
+    <span class="md-ellipsis">
+      solution_parameter_set
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter_set" class="md-nav__link">
+    <span class="md-ellipsis">
+      parameter_set
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter_set_description" class="md-nav__link">
+    <span class="md-ellipsis">
+      parameter_set_description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter_description" class="md-nav__link">
+    <span class="md-ellipsis">
+      parameter_description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter_attribute" class="md-nav__link">
+    <span class="md-ellipsis">
+      parameter_attribute
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attribute_values" class="md-nav__link">
+    <span class="md-ellipsis">
+      attribute_values
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-scores" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. Scores
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Scores">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#i-attribute-overlap-ratio" class="md-nav__link">
+    <span class="md-ellipsis">
+      I. Attribute overlap ratio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ii-parameter-overlap-ratio" class="md-nav__link">
+    <span class="md-ellipsis">
+      II. Parameter overlap ratio
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="parameterframe">Parameterframe</h1>
+<p>The module provides an interface for managing solution parameters.
+It allows for the structured storage and retrieval of parameter sets from a database.</p>
+<pre><code class="language-python">import sys
+import pandas as pd
+import os
+sys.path.append('../')
+from parameterframe import ParameterFrame, MockerDatabaseConnector, SqlAlchemyDatabaseManager
+
+</code></pre>
+<h2 id="content">Content</h2>
+<ol>
+<li>Adding new solution and uploading it</li>
+<li>Processing new files and creating parameter set</li>
+<li>Adding parameter set to solution and commiting</li>
+<li>Uploading parameter sets</li>
+<li>Getting latest parameter set id for solution</li>
+<li>Changing parameter set status</li>
+<li>Pulling select parameter sets</li>
+<li>Reconstructing parameter se</li>
+<li>Structure of local commit tables</li>
+<li>Scores</li>
+</ol>
+<h3 id="1-adding-new-solution-and-uploading-it">1. Adding new solution and uploading it</h3>
+<pre><code class="language-python"># - with database connector for MockerDB
+pf = ParameterFrame(
+    database_connector = MockerDatabaseConnector(connection_details = {
+    'base_url' : 'http://localhost:8001'})
+)
+</code></pre>
+<p>when using SqlAlchemyDatabaseManager with database for the first time, it might be useful to create tables with <code>SqlAlchemyDatabaseManager.create_tables</code> and if schema of the database needs to be reset <code>SqlAlchemyDatabaseManager.drop_tables</code></p>
+<pre><code class="language-python"># - with SqlAlchemy database connector
+pf = ParameterFrame(
+    database_connector = SqlAlchemyDatabaseManager(connection_details = {
+    'base_url' : 'postgresql+psycopg2://postgres:mysecretpassword@localhost:5432/mytestdb'})
+)
+</code></pre>
+<pre><code class="language-python">pf.show_solutions()
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>solution_id</th>
+      <th>solution_name</th>
+      <th>solution_description</th>
+      <th>deployment_date</th>
+      <th>deprecation_date</th>
+      <th>maintainers</th>
+      <th>commited_parameter_sets</th>
+      <th>aos</th>
+      <th>pos</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+</div>
+
+<pre><code class="language-python">pf.add_solution(
+    # mandatory
+    solution_name=&quot;new_example_solution&quot;,
+    # optional description
+    solution_description=&quot;Description of new example solution.&quot;,
+    deployment_date=&quot;2024-xx-xx&quot;,
+    deprecation_date=None,
+    maintainers=&quot;some text about maintainers credentials&quot;
+)
+
+pf.add_solution(
+    # mandatory
+    solution_name=&quot;new_example_solution2&quot;,
+    # optional description
+    solution_description=&quot;Description of new example solution.&quot;,
+    deployment_date=&quot;2024-xx-xx&quot;,
+    deprecation_date=None,
+    maintainers=&quot;some text about maintainers credentials&quot;
+)
+</code></pre>
+<pre><code>Solution id for new_example_solution: b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca
+Solution id for new_example_solution2: 1c0b910dc0074ea3966fbb1a96038e5eaee8dc1b873f9867830e0659b54dd311
+
+
+
+
+
+True
+</code></pre>
+<pre><code class="language-python">pf.commit_solution(
+    # either solution id or solution name should be provided
+    solution_name=&quot;new_example_solution&quot;
+)
+
+pf.commit_solution(
+    # either solution id or solution name should be provided
+    solution_name=&quot;new_example_solution2&quot;
+)
+</code></pre>
+<pre><code>Commited solution description for b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca
+Commited solution description for 1c0b910dc0074ea3966fbb1a96038e5eaee8dc1b873f9867830e0659b54dd311
+
+
+
+
+
+True
+</code></pre>
+<pre><code class="language-python">pf.show_solutions()
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>solution_id</th>
+      <th>solution_name</th>
+      <th>solution_description</th>
+      <th>deployment_date</th>
+      <th>deprecation_date</th>
+      <th>maintainers</th>
+      <th>commited_parameter_sets</th>
+      <th>aos</th>
+      <th>pos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca</td>
+      <td>new_example_solution</td>
+      <td>Description of new example solution.</td>
+      <td>2024-xx-xx</td>
+      <td>None</td>
+      <td>some text about maintainers credentials</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1c0b910dc0074ea3966fbb1a96038e5eaee8dc1b873f9867830e0659b54dd311</td>
+      <td>new_example_solution2</td>
+      <td>Description of new example solution.</td>
+      <td>2024-xx-xx</td>
+      <td>None</td>
+      <td>some text about maintainers credentials</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<pre><code class="language-python">pf.push_solution(
+    # either solution id or solution name should be provided
+    solution_name = &quot;new_example_solution&quot;
+)
+</code></pre>
+<pre><code>True
+</code></pre>
+<h3 id="2-processing-new-files-and-creating-parameter-set">2. Processing new files and creating parameter set</h3>
+<pre><code class="language-python">params_path = &quot;../tests/parameterframe/example_configs&quot;
+</code></pre>
+<pre><code class="language-python">pf = ParameterFrame(
+    params_path = params_path,
+    database_connector = MockerDatabaseConnector(connection_details = {
+    'base_url' : 'http://localhost:8001'})
+)
+</code></pre>
+<pre><code class="language-python">pf = ParameterFrame(
+    params_path = params_path,
+    database_connector = SqlAlchemyDatabaseManager(connection_details = {
+    'base_url' : 'postgresql+psycopg2://postgres:mysecretpassword@localhost:5432/mytestdb'})
+)
+</code></pre>
+<pre><code class="language-python">pf.process_parameters_from_files()
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python">pf.show_solutions()
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>solution_id</th>
+      <th>solution_name</th>
+      <th>solution_description</th>
+      <th>deployment_date</th>
+      <th>deprecation_date</th>
+      <th>maintainers</th>
+      <th>commited_parameter_sets</th>
+      <th>aos</th>
+      <th>pos</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+</div>
+
+<pre><code class="language-python">pf.make_parameter_set(
+    parameter_set_name=&quot;test_set&quot;,
+    parameter_set_description=&quot;example parameters for test purposes&quot;,
+    parameter_names=['param_1','param_2','param_10', 'param_11','param_21']
+)
+</code></pre>
+<pre><code>Parameter set id for test_set: a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5
+</code></pre>
+<h3 id="3-adding-parameter-set-to-solution-and-commiting">3. Adding parameter set to solution and commiting</h3>
+<pre><code class="language-python">pf.add_parameter_set_to_solution(
+    solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+    parameter_set_name=&quot;test_set&quot;)
+</code></pre>
+<pre><code>b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca is not in solutions saved to memory!
+Name pink_happy_car_642 is assigned to b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca temporarily!
+
+
+
+
+
+True
+</code></pre>
+<pre><code class="language-python">pf.commit_solution(solution_name=&quot;pink_happy_car_642&quot;,
+                    parameter_set_names=[&quot;test_set&quot;])
+</code></pre>
+<pre><code>Commited solution tables for b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca
+
+
+
+
+
+True
+</code></pre>
+<pre><code class="language-python">pf.show_solutions()
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>solution_id</th>
+      <th>solution_name</th>
+      <th>solution_description</th>
+      <th>deployment_date</th>
+      <th>deprecation_date</th>
+      <th>maintainers</th>
+      <th>commited_parameter_sets</th>
+      <th>aos</th>
+      <th>pos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>1</td>
+      <td>0.05</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<pre><code class="language-python">pf.show_parameter_sets(solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca')
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_set_id</th>
+      <th>parameter_set_name</th>
+      <th>parameter_set_description</th>
+      <th>deployment_status</th>
+      <th>insertion_datetime</th>
+      <th>commited_parameters</th>
+      <th>aos</th>
+      <th>pos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5</td>
+      <td>test_set</td>
+      <td>example parameters for test purposes</td>
+      <td>STAGING</td>
+      <td>2024-05-21 03:03:23</td>
+      <td>5</td>
+      <td>0.05</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<pre><code class="language-python">pf.show_parameters(solution_id = 'b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+                   parameter_set_id = 'a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_id</th>
+      <th>parameter_name</th>
+      <th>parameter_description</th>
+      <th>file_name</th>
+      <th>file_type</th>
+      <th>commited_attributes</th>
+      <th>aos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>4cea5b09e77da310c5105978f2ceea5c5d8c9c7b65d0e00b45135ea90fc011af</td>
+      <td>param_1</td>
+      <td></td>
+      <td>param_1.yaml</td>
+      <td>yaml</td>
+      <td>3</td>
+      <td>0.05</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>bf11768decb1d0204e2636edd05c354573d473e67f1b048369b2ee99c865bf5f</td>
+      <td>param_2</td>
+      <td></td>
+      <td>param_2.yaml</td>
+      <td>yaml</td>
+      <td>6</td>
+      <td>0.05</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>9a4a3ace265c9bf2facc0044ca24260c42805c6e7b2a608dfd2f56a54d9d36be</td>
+      <td>param_10</td>
+      <td></td>
+      <td>param_10.txt</td>
+      <td>txt</td>
+      <td>9</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>ace2f31433212fbf9e764069a30a7675ca78f496d31f061d06d0a0420fc52768</td>
+      <td>param_11</td>
+      <td></td>
+      <td>param_11.dill</td>
+      <td>other</td>
+      <td>1</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1a4f19ee9e186ee739daecbc778501c5851d3fb5d05c4a3c1200e599855e8689</td>
+      <td>param_21</td>
+      <td></td>
+      <td>param_21.ipynb</td>
+      <td>other</td>
+      <td>2</td>
+      <td>0.00</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3 id="4-uploading-parameter-sets">4. Uploading parameter sets</h3>
+<pre><code class="language-python">pf.push_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+                 parameter_set_names=[&quot;test_set&quot;])
+</code></pre>
+<pre><code>True
+</code></pre>
+<h3 id="5-getting-latest-parameter-set-id-for-solution">5. Getting latest parameter set id for solution</h3>
+<pre><code class="language-python"># - with database connector for MockerDB
+pf = ParameterFrame(
+    database_connector = MockerDatabaseConnector(connection_details = {
+    'base_url' : 'http://localhost:8001'})
+)
+</code></pre>
+<pre><code class="language-python"># - with SqlAlchemy database connector
+pf = ParameterFrame(
+    database_connector = SqlAlchemyDatabaseManager(connection_details = {
+    'base_url' : 'postgresql+psycopg2://postgres:mysecretpassword@localhost:5432/mytestdb'})
+)
+</code></pre>
+<pre><code class="language-python">pf.get_parameter_set_id_for_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+                                                        deployment_status=&quot;STAGING&quot;)
+</code></pre>
+<pre><code>['a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5']
+</code></pre>
+<pre><code class="language-python">pf.get_deployment_status(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+                         parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
+</code></pre>
+<pre><code>'STAGING'
+</code></pre>
+<h3 id="6-changing-parameter-set-status">6. Changing parameter set status</h3>
+<pre><code class="language-python"># - with database connector for MockerDB
+pf = ParameterFrame(
+    database_connector = MockerDatabaseConnector(connection_details = {
+    'base_url' : 'http://localhost:8001'})
+)
+</code></pre>
+<pre><code class="language-python"># - with SqlAlchemy database connector
+pf = ParameterFrame(
+    database_connector = SqlAlchemyDatabaseManager(connection_details = {
+    'base_url' : 'postgresql+psycopg2://postgres:mysecretpassword@localhost:5432/mytestdb'})
+)
+</code></pre>
+<pre><code class="language-python">pf.database_connector.modify_parameter_set_status(
+    solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+    parameter_set_ids = 'a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5',
+    current_deployment_status = &quot;PRODUCTION&quot;,
+    new_deployment_status = &quot;STAGING&quot;
+)
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python">pf.change_status_from_staging_to_production(
+    solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+    parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5'
+)
+</code></pre>
+<pre><code>b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca + a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5 : STAGING -&gt; PRODUCTION
+</code></pre>
+<pre><code class="language-python">pf.get_deployment_status(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+                         parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
+</code></pre>
+<pre><code>'PRODUCTION'
+</code></pre>
+<pre><code class="language-python">pf.change_status_from_production_to_archived(
+    solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+    parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5'
+)
+</code></pre>
+<pre><code>b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca + a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5 : PRODUCTION -&gt; ARCHIVED
+</code></pre>
+<pre><code class="language-python">pf.get_deployment_status(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+                         parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
+</code></pre>
+<pre><code>'ARCHIVED'
+</code></pre>
+<pre><code class="language-python">pf.change_status_from_archived_production(
+    solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+    parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5'
+)
+</code></pre>
+<pre><code>No deployed parameter_set_ids with PRODUCTION from selected!
+b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca + a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5 : ARCHIVED -&gt; PRODUCTION
+</code></pre>
+<pre><code class="language-python">pf.get_deployment_status(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+                         parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
+</code></pre>
+<pre><code>'PRODUCTION'
+</code></pre>
+<h3 id="7-pulling-select-parameter-sets">7. Pulling select parameter sets</h3>
+<pre><code class="language-python">params_path = &quot;../tests/parameterframe/example_configs&quot;
+</code></pre>
+<pre><code class="language-python"># - with database connector for MockerDB
+pf2 = ParameterFrame(
+    params_path = params_path,
+    database_connector = MockerDatabaseConnector(connection_details = {
+    'base_url' : 'http://localhost:8001'})
+)
+</code></pre>
+<pre><code class="language-python"># - with SqlAlchemy database connector
+pf2 = ParameterFrame(
+    params_path = params_path,
+    database_connector = SqlAlchemyDatabaseManager(connection_details = {
+    'base_url' : 'postgresql+psycopg2://postgres:mysecretpassword@localhost:5432/mytestdb'})
+)
+</code></pre>
+<pre><code class="language-python">pf2.show_solutions()
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>solution_id</th>
+      <th>solution_name</th>
+      <th>solution_description</th>
+      <th>deployment_date</th>
+      <th>deprecation_date</th>
+      <th>maintainers</th>
+      <th>commited_parameter_sets</th>
+      <th>aos</th>
+      <th>pos</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+</div>
+
+<p>When pulling information with database handler, one could pull specific parameter sets, solutions and everything.</p>
+<pre><code class="language-python">pf2.pull_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+                  # optionally specify parameter_set_id
+                 parameter_set_id='a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5')
+</code></pre>
+<pre><code>HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+HTTP Request: POST http://localhost:8001/search "HTTP/1.1 200 OK"
+No data was found with applied filters!
+No solutions with b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca could be pulled!
+
+
+
+
+
+True
+</code></pre>
+<pre><code class="language-python">pf2.pull_solution(solution_id='b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca',
+                  # optionally specify parameter_set_id
+                 parameter_set_id=None)
+</code></pre>
+<pre><code>No solutions with b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca could be pulled!
+No parameter sets were pulled for solution_id b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca
+Nothing was pulled for b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca
+
+
+
+
+
+True
+</code></pre>
+<pre><code class="language-python">pf2.pull_solution(
+    # optional parameter to skip pull of attributes if data pulled just for show_ methods
+    pull_attribute_values = False
+)
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python">pf2.show_solutions()
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>solution_id</th>
+      <th>solution_name</th>
+      <th>solution_description</th>
+      <th>deployment_date</th>
+      <th>deprecation_date</th>
+      <th>maintainers</th>
+      <th>commited_parameter_sets</th>
+      <th>aos</th>
+      <th>pos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0cc5fe1cb12101acf5</td>
+      <td>new_example_solution</td>
+      <td>Description of new example solution.</td>
+      <td>2024-xx-xx</td>
+      <td>None</td>
+      <td>some text about maintainers credentials</td>
+      <td>6</td>
+      <td>0.397157</td>
+      <td>0.428571</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<pre><code class="language-python">pf2.show_parameter_sets(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0cc5fe1cb12101acf5')
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_set_id</th>
+      <th>parameter_set_name</th>
+      <th>parameter_set_description</th>
+      <th>deployment_status</th>
+      <th>insertion_datetime</th>
+      <th>commited_parameters</th>
+      <th>aos</th>
+      <th>pos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>5779bbf896ebb8f09a6ea252b09f8adb1a416e8780cf1424fb9bb93dbec8deb5</td>
+      <td>green_tiny_car_749</td>
+      <td></td>
+      <td>STAGING</td>
+      <td>2024-05-15 01:36:09</td>
+      <td>3</td>
+      <td>0.025744</td>
+      <td>0.285714</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>73ece98c90d4e0bcce8b523a8e8d2bd4290c68f2a783ea279b39fe4507e42de7</td>
+      <td>blue_fuzzy_refrigerator_297</td>
+      <td></td>
+      <td>STAGING</td>
+      <td>2024-05-15 23:57:17</td>
+      <td>1</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>82b8c5340454adf83667e59092fedbee28213475fd58ab6b3d95b4fc60f4d45f</td>
+      <td>purple_giant_television_135</td>
+      <td></td>
+      <td>STAGING</td>
+      <td>2024-05-16 00:05:43</td>
+      <td>1</td>
+      <td>0.371413</td>
+      <td>0.142857</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>3940d6dd4c0d817625a31141874c54cf0c8d88b24994f7915deb4096b3c8d0cf</td>
+      <td>blue_tiny_television_381</td>
+      <td></td>
+      <td>STAGING</td>
+      <td>2024-05-15 00:37:50</td>
+      <td>2</td>
+      <td>0.025744</td>
+      <td>0.285714</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>dddc057bc151de9f8fb8caa834c8e13b789cf68cb53299b4c65c23f1e1310acd</td>
+      <td>red_sad_scooter_769</td>
+      <td></td>
+      <td>STAGING</td>
+      <td>2024-05-16 00:08:21</td>
+      <td>2</td>
+      <td>0.371413</td>
+      <td>0.142857</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2f3ee8e19d91a89298d40984df5e7bdd1f1a48008b2e61c88a7f6f81b4ab23f5</td>
+      <td>silver_happy_car_441</td>
+      <td></td>
+      <td>STAGING</td>
+      <td>2024-05-16 00:03:25</td>
+      <td>1</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<pre><code class="language-python">pf2.show_parameters(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0cc5fe1cb12101acf5',
+                    parameter_set_id='3940d6dd4c0d817625a31141874c54cf0c8d88b24994f7915deb4096b3c8d0cf')
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_id</th>
+      <th>parameter_name</th>
+      <th>parameter_description</th>
+      <th>file_name</th>
+      <th>file_type</th>
+      <th>commited_attributes</th>
+      <th>aos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>3386ebc962b1c57745ca24320bf873df6eb84a2b9cb733607d72006347bf95b8</td>
+      <td>Screenshot 2024-05-04 at 02</td>
+      <td></td>
+      <td>Screenshot 2024-05-04 at 02.59.31.png</td>
+      <td>other</td>
+      <td>35</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>5afae3951544cd3736685a3b2daa31c00106191a799b96b0c636cd35e9a416ff</td>
+      <td>uploads</td>
+      <td></td>
+      <td>uploads.zip</td>
+      <td>other</td>
+      <td>61</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<pre><code class="language-python">pf2.show_parameters(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0cc5fe1cb12101acf5',
+                    parameter_set_id='5779bbf896ebb8f09a6ea252b09f8adb1a416e8780cf1424fb9bb93dbec8deb5')
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_id</th>
+      <th>parameter_name</th>
+      <th>parameter_description</th>
+      <th>file_name</th>
+      <th>file_type</th>
+      <th>commited_attributes</th>
+      <th>aos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>3386ebc962b1c57745ca24320bf873df6eb84a2b9cb733607d72006347bf95b8</td>
+      <td>Screenshot 2024-05-04 at 02</td>
+      <td></td>
+      <td>Screenshot 2024-05-04 at 02.59.31.png</td>
+      <td>other</td>
+      <td>35</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>4d8ca206d9bd09296b69a95f0c3c62d233282025964c356811510cc074cc2c49</td>
+      <td>1</td>
+      <td></td>
+      <td>1. AF - opis projektu.pdf</td>
+      <td>other</td>
+      <td>34</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>5afae3951544cd3736685a3b2daa31c00106191a799b96b0c636cd35e9a416ff</td>
+      <td>uploads</td>
+      <td></td>
+      <td>uploads.zip</td>
+      <td>other</td>
+      <td>61</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<pre><code class="language-python">pf2.show_parameters(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0cc5fe1cb12101acf5',
+                    parameter_set_id='dddc057bc151de9f8fb8caa834c8e13b789cf68cb53299b4c65c23f1e1310acd')
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_id</th>
+      <th>parameter_name</th>
+      <th>parameter_description</th>
+      <th>file_name</th>
+      <th>file_type</th>
+      <th>commited_attributes</th>
+      <th>aos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>e6ae9d10f3b4d69c1ef6ff8038d13e9f0b093fc3710f2fed0259204aac2fcba4</td>
+      <td>Geekbench 6</td>
+      <td></td>
+      <td>Geekbench 6.app.zip</td>
+      <td>other</td>
+      <td>1385</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>be0886c2f5d24aa5672bf84e355d9d4adb527a36e5e973413c555200d7f3fdb2</td>
+      <td>Ollama</td>
+      <td></td>
+      <td>Ollama.app.zip</td>
+      <td>other</td>
+      <td>1400</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<pre><code class="language-python">pf2.show_parameters(solution_id='cec89c4cbb8c891d388407ea93d84a5cd4f996af6d5c1b0cc5fe1cb12101acf5',
+                    parameter_set_id='82b8c5340454adf83667e59092fedbee28213475fd58ab6b3d95b4fc60f4d45f')
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_id</th>
+      <th>parameter_name</th>
+      <th>parameter_description</th>
+      <th>file_name</th>
+      <th>file_type</th>
+      <th>commited_attributes</th>
+      <th>aos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>e6ae9d10f3b4d69c1ef6ff8038d13e9f0b093fc3710f2fed0259204aac2fcba4</td>
+      <td>Geekbench 6</td>
+      <td></td>
+      <td>Geekbench 6.app.zip</td>
+      <td>other</td>
+      <td>1385</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3 id="8-reconstructing-parameter-set">8. Reconstructing parameter set</h3>
+<pre><code class="language-python">os.listdir(&quot;../tests/parameterframe/reconstructed_files&quot;)
+</code></pre>
+<pre><code>[]
+</code></pre>
+<pre><code class="language-python">pf2.reconstruct_parameter_set(
+    solution_name = &quot;new_example_solution&quot;,
+    parameter_set_name = &quot;test_set&quot;,
+    params_path = &quot;../tests/parameterframe/reconstructed_files&quot;
+)
+
+os.listdir(&quot;../tests/parameterframe/reconstructed_files&quot;)
+</code></pre>
+<pre><code>['param_2.yaml',
+ 'param_11.dill',
+ 'param_1.yaml',
+ 'param_10.txt',
+ 'param_21.ipynb']
+</code></pre>
+<h3 id="9-structure-of-commit-tables">9. Structure of commit tables</h3>
+<h4 id="solution_description">solution_description</h4>
+<pre><code class="language-python">pd.DataFrame(pf2.commited_tables['b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca']['solution_description'])
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>solution_id</th>
+      <th>solution_name</th>
+      <th>solution_description</th>
+      <th>deployment_date</th>
+      <th>deprecation_date</th>
+      <th>maintainers</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca</td>
+      <td>new_example_solution</td>
+      <td>Description of new example solution.</td>
+      <td>2024-xx-xx</td>
+      <td>None</td>
+      <td>some text about maintainers credentials</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h4 id="solution_parameter_set">solution_parameter_set</h4>
+<pre><code class="language-python">param_set_id = 'a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5'
+
+pd.DataFrame(pf2.commited_tables['b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca']['solution_parameter_set'][param_set_id])
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>solution_id</th>
+      <th>parameter_set_id</th>
+      <th>deployment_status</th>
+      <th>insertion_datetime</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca</td>
+      <td>a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5</td>
+      <td>PRODUCTION</td>
+      <td>2024-05-07 19:51:13</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h4 id="parameter_set">parameter_set</h4>
+<pre><code class="language-python">pd.DataFrame(pf2.commited_tables['b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca']\
+    ['parameter_set']\
+        [param_set_id])
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_set_id</th>
+      <th>parameter_id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5</td>
+      <td>4cea5b09e77da310c5105978f2ceea5c5d8c9c7b65d0e00b45135ea90fc011af</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5</td>
+      <td>bf11768decb1d0204e2636edd05c354573d473e67f1b048369b2ee99c865bf5f</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5</td>
+      <td>9a4a3ace265c9bf2facc0044ca24260c42805c6e7b2a608dfd2f56a54d9d36be</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5</td>
+      <td>ace2f31433212fbf9e764069a30a7675ca78f496d31f061d06d0a0420fc52768</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5</td>
+      <td>1a4f19ee9e186ee739daecbc778501c5851d3fb5d05c4a3c1200e599855e8689</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h4 id="parameter_set_description">parameter_set_description</h4>
+<pre><code class="language-python">pd.DataFrame(pf2.commited_tables['b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca']\
+    ['parameter_set_description']\
+        [param_set_id])
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_set_id</th>
+      <th>parameter_set_name</th>
+      <th>parameter_set_description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>a54f04d2ff154294309403206e059aec556cdcfa51120649ce663f3230a970d5</td>
+      <td>test_set</td>
+      <td>example parameters for test purposes</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h4 id="parameter_description">parameter_description</h4>
+<pre><code class="language-python">pd.DataFrame([tab for param_id, tab_list in pf2.commited_tables['b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca']\
+    ['parameter_description']\
+        [param_set_id].items()\
+            for tab in tab_list])
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_id</th>
+      <th>parameter_name</th>
+      <th>parameter_description</th>
+      <th>file_name</th>
+      <th>file_type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>4cea5b09e77da310c5105978f2ceea5c5d8c9c7b65d0e00b45135ea90fc011af</td>
+      <td>param_1</td>
+      <td></td>
+      <td>param_1.yaml</td>
+      <td>yaml</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>bf11768decb1d0204e2636edd05c354573d473e67f1b048369b2ee99c865bf5f</td>
+      <td>param_2</td>
+      <td></td>
+      <td>param_2.yaml</td>
+      <td>yaml</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>9a4a3ace265c9bf2facc0044ca24260c42805c6e7b2a608dfd2f56a54d9d36be</td>
+      <td>param_10</td>
+      <td></td>
+      <td>param_10.txt</td>
+      <td>txt</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>ace2f31433212fbf9e764069a30a7675ca78f496d31f061d06d0a0420fc52768</td>
+      <td>param_11</td>
+      <td></td>
+      <td>param_11.dill</td>
+      <td>other</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1a4f19ee9e186ee739daecbc778501c5851d3fb5d05c4a3c1200e599855e8689</td>
+      <td>param_21</td>
+      <td></td>
+      <td>param_21.ipynb</td>
+      <td>other</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h4 id="parameter_attribute">parameter_attribute</h4>
+<pre><code class="language-python">pd.DataFrame([tab for param_id, tab_list in pf2.commited_tables['b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca']\
+    ['parameter_attribute']\
+        [param_set_id].items() \
+            for tab in tab_list])
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>parameter_id</th>
+      <th>attribute_id</th>
+      <th>previous_attribute_id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>4cea5b09e77da310c5105978f2ceea5c5d8c9c7b65d0e00b45135ea90fc011af</td>
+      <td>ee25af17445d7622cbf61a5b9424246a1f3104704b68bd31b9b7532471d492e5</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>4cea5b09e77da310c5105978f2ceea5c5d8c9c7b65d0e00b45135ea90fc011af</td>
+      <td>8b5b2be24e60ba407b90967820da8a1385a6d67691a02bc663703160ef655101</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>4cea5b09e77da310c5105978f2ceea5c5d8c9c7b65d0e00b45135ea90fc011af</td>
+      <td>52ea872c99c586530348ba8902dcab831761673d25cf1cb0023576820289ce6b</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>bf11768decb1d0204e2636edd05c354573d473e67f1b048369b2ee99c865bf5f</td>
+      <td>7d5ee0e0cd00c3703e5f346c6887baf503faaf9fe090774f6866311f4fa34179</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>bf11768decb1d0204e2636edd05c354573d473e67f1b048369b2ee99c865bf5f</td>
+      <td>ee25af17445d7622cbf61a5b9424246a1f3104704b68bd31b9b7532471d492e5</td>
+      <td>7d5ee0e0cd00c3703e5f346c6887baf503faaf9fe090774f6866311f4fa34179</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>bf11768decb1d0204e2636edd05c354573d473e67f1b048369b2ee99c865bf5f</td>
+      <td>3367512147bf19ae99c986b356af11dcdc067376aa1b79eb8ba8f61324e8dc18</td>
+      <td>7d5ee0e0cd00c3703e5f346c6887baf503faaf9fe090774f6866311f4fa34179</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>bf11768decb1d0204e2636edd05c354573d473e67f1b048369b2ee99c865bf5f</td>
+      <td>341769820d8937a5c9f9b980eefca37f3f37fcc6fd01c6f4c930fdb9d5dd5128</td>
+      <td>7d5ee0e0cd00c3703e5f346c6887baf503faaf9fe090774f6866311f4fa34179</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>bf11768decb1d0204e2636edd05c354573d473e67f1b048369b2ee99c865bf5f</td>
+      <td>2e8b00e571f9d835d3f022a9ff49b9779034ab21bffdcde075d9d729fabeb960</td>
+      <td>341769820d8937a5c9f9b980eefca37f3f37fcc6fd01c6f4c930fdb9d5dd5128</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>bf11768decb1d0204e2636edd05c354573d473e67f1b048369b2ee99c865bf5f</td>
+      <td>ecd93cf051988b23b3590415f4e7d550de264600d7d2af8704c973b9c98ca6a9</td>
+      <td>341769820d8937a5c9f9b980eefca37f3f37fcc6fd01c6f4c930fdb9d5dd5128</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>9a4a3ace265c9bf2facc0044ca24260c42805c6e7b2a608dfd2f56a54d9d36be</td>
+      <td>fa4e8d81f4dbe6d306aff59bea4693d325a203be5d5b9fde5d5f1e7cce26b861</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>9a4a3ace265c9bf2facc0044ca24260c42805c6e7b2a608dfd2f56a54d9d36be</td>
+      <td>c26e7e96f0f3647c159b0934f4dc55207ac059abb56005d7a8acd8344ef14798</td>
+      <td>fa4e8d81f4dbe6d306aff59bea4693d325a203be5d5b9fde5d5f1e7cce26b861</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>9a4a3ace265c9bf2facc0044ca24260c42805c6e7b2a608dfd2f56a54d9d36be</td>
+      <td>f7cd339f77c1799f399d8ebcbb27f2d41a448622254d64e9270ae2316211ac1d</td>
+      <td>c26e7e96f0f3647c159b0934f4dc55207ac059abb56005d7a8acd8344ef14798</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>9a4a3ace265c9bf2facc0044ca24260c42805c6e7b2a608dfd2f56a54d9d36be</td>
+      <td>15a33fe62774a1857b404f453ba1195eb4355e10bc9519f2f991dd7ba8db19b7</td>
+      <td>f7cd339f77c1799f399d8ebcbb27f2d41a448622254d64e9270ae2316211ac1d</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>9a4a3ace265c9bf2facc0044ca24260c42805c6e7b2a608dfd2f56a54d9d36be</td>
+      <td>99761e3d58bc213dc3ab33f2dc8dabe5f97d3aea6b59cd367d40b76937f49aa6</td>
+      <td>15a33fe62774a1857b404f453ba1195eb4355e10bc9519f2f991dd7ba8db19b7</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>9a4a3ace265c9bf2facc0044ca24260c42805c6e7b2a608dfd2f56a54d9d36be</td>
+      <td>036a9c122c1f4c9304afa23c4d1fce5224c270a206889afa689f3efb36ff368d</td>
+      <td>99761e3d58bc213dc3ab33f2dc8dabe5f97d3aea6b59cd367d40b76937f49aa6</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>9a4a3ace265c9bf2facc0044ca24260c42805c6e7b2a608dfd2f56a54d9d36be</td>
+      <td>e72aa8015688052f4e7fddbf4c74e5bf2bd74239ebf3902a5fdc008ecb03aa46</td>
+      <td>036a9c122c1f4c9304afa23c4d1fce5224c270a206889afa689f3efb36ff368d</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>9a4a3ace265c9bf2facc0044ca24260c42805c6e7b2a608dfd2f56a54d9d36be</td>
+      <td>0ae8eda3dbeedbc17e27a679c5426dd3af1434f7c37b4ecd3b2fb5c492272b75</td>
+      <td>e72aa8015688052f4e7fddbf4c74e5bf2bd74239ebf3902a5fdc008ecb03aa46</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>9a4a3ace265c9bf2facc0044ca24260c42805c6e7b2a608dfd2f56a54d9d36be</td>
+      <td>cedcfbb0d95798514b6aaf30118fff7b46f863f1bc8b80bb2ddd2145e5b3f318</td>
+      <td>0ae8eda3dbeedbc17e27a679c5426dd3af1434f7c37b4ecd3b2fb5c492272b75</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>ace2f31433212fbf9e764069a30a7675ca78f496d31f061d06d0a0420fc52768</td>
+      <td>ace2f31433212fbf9e764069a30a7675ca78f496d31f061d06d0a0420fc52768</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>1a4f19ee9e186ee739daecbc778501c5851d3fb5d05c4a3c1200e599855e8689</td>
+      <td>87d93e1862f0f58199c3fcb7114b92fe59f03581804b1c8419868fb00ff8a469</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>1a4f19ee9e186ee739daecbc778501c5851d3fb5d05c4a3c1200e599855e8689</td>
+      <td>b4a705d09aa0361f4db453da32abb05a5c4e0249d6180d2b8a58d72d08dbd6a0</td>
+      <td>87d93e1862f0f58199c3fcb7114b92fe59f03581804b1c8419868fb00ff8a469</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>1a4f19ee9e186ee739daecbc778501c5851d3fb5d05c4a3c1200e599855e8689</td>
+      <td>e4e2c33a2ea67f34bf3ac1e9d99edaad501c7dc4ea82f4b60e9d959418d8438d</td>
+      <td>b4a705d09aa0361f4db453da32abb05a5c4e0249d6180d2b8a58d72d08dbd6a0</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>1a4f19ee9e186ee739daecbc778501c5851d3fb5d05c4a3c1200e599855e8689</td>
+      <td>777abf12375b7f605b21535eb0d6232ce99581c6d2b1179af976cd0708ad27ff</td>
+      <td>e4e2c33a2ea67f34bf3ac1e9d99edaad501c7dc4ea82f4b60e9d959418d8438d</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h4 id="attribute_values">attribute_values</h4>
+<pre><code class="language-python">pd.DataFrame([tab for param_id, tab_list in pf2.commited_tables['b5c2e4a9bdcb57cc70bdb7310c7909cc1549550add79e3fbcc8aa1cf323cd8ca']\
+    ['attribute_values']\
+        [param_set_id].items() \
+            for tab in tab_list])
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>attribute_id</th>
+      <th>previous_attribute_id</th>
+      <th>attribute_name</th>
+      <th>attribute_value</th>
+      <th>attribute_value_type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>ee25af17445d7622cbf61a5b9424246a1f3104704b68bd31b9b7532471d492e5</td>
+      <td>None</td>
+      <td>name</td>
+      <td>Some name</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>8b5b2be24e60ba407b90967820da8a1385a6d67691a02bc663703160ef655101</td>
+      <td>None</td>
+      <td>age</td>
+      <td>111</td>
+      <td>int</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>52ea872c99c586530348ba8902dcab831761673d25cf1cb0023576820289ce6b</td>
+      <td>None</td>
+      <td>country</td>
+      <td>Some land</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>ee25af17445d7622cbf61a5b9424246a1f3104704b68bd31b9b7532471d492e5</td>
+      <td>None</td>
+      <td>name</td>
+      <td>Some name</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>7d5ee0e0cd00c3703e5f346c6887baf503faaf9fe090774f6866311f4fa34179</td>
+      <td>None</td>
+      <td>employee</td>
+      <td>{'name': 'Some name', 'id': 10293, 'contact': {'email': 'some.name...</td>
+      <td>dict</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>3367512147bf19ae99c986b356af11dcdc067376aa1b79eb8ba8f61324e8dc18</td>
+      <td>None</td>
+      <td>id</td>
+      <td>10293</td>
+      <td>int</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>341769820d8937a5c9f9b980eefca37f3f37fcc6fd01c6f4c930fdb9d5dd5128</td>
+      <td>None</td>
+      <td>contact</td>
+      <td>{'email': 'some.name@example.com', 'phone': '+1234567890'}</td>
+      <td>dict</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>2e8b00e571f9d835d3f022a9ff49b9779034ab21bffdcde075d9d729fabeb960</td>
+      <td>None</td>
+      <td>email</td>
+      <td>some.name@example.com</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>ecd93cf051988b23b3590415f4e7d550de264600d7d2af8704c973b9c98ca6a9</td>
+      <td>None</td>
+      <td>phone</td>
+      <td>+1234567890</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>fa4e8d81f4dbe6d306aff59bea4693d325a203be5d5b9fde5d5f1e7cce26b861</td>
+      <td>None</td>
+      <td>0</td>
+      <td>\X/Fc7;/v`6joU5z*n{35zFB&lt;&lt;6BMC,}/_04],&gt;v$Jr2&amp;0M_7qU'IY#6uO\$kEr.)Z...</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>c26e7e96f0f3647c159b0934f4dc55207ac059abb56005d7a8acd8344ef14798</td>
+      <td>None</td>
+      <td>1</td>
+      <td>A7J+1x5|?r]2zg54nxoa&gt;W*loh8Np~*9+*KxWLuD/Z5g!=DN&gt;}c#]Dt-&gt;tiov?|Ms....</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>f7cd339f77c1799f399d8ebcbb27f2d41a448622254d64e9270ae2316211ac1d</td>
+      <td>None</td>
+      <td>2</td>
+      <td>LUs%&lt;HRbNA_4:yYTh!!x&amp;oFZ201sQ7;~Q_IYr"lGRMd=xx,r}|n8zHIP6%JN)",vQI...</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>15a33fe62774a1857b404f453ba1195eb4355e10bc9519f2f991dd7ba8db19b7</td>
+      <td>None</td>
+      <td>3</td>
+      <td>b&amp;z(/Z{s@U&gt;@o!}{+(mmygo}u~AHgdu&gt;:jz4fNBm0;Q6'o+f%H/z3^8Hh!w&lt;#z.~21...</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>99761e3d58bc213dc3ab33f2dc8dabe5f97d3aea6b59cd367d40b76937f49aa6</td>
+      <td>None</td>
+      <td>4</td>
+      <td>.#;5Cu]5~8ZmYBLI4w)|h=)C&lt;(#`KSoM,`7n?dun7]LX&gt;j7/U&gt;Jf||4`AN_u*W!*3)...</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>036a9c122c1f4c9304afa23c4d1fce5224c270a206889afa689f3efb36ff368d</td>
+      <td>None</td>
+      <td>5</td>
+      <td>0S)*}6"i)kUg3=n:}&gt;Ji)!"BTbzsdgps8{cR]`.41QJ&lt;O{wr[}}gGan_O63D0WBr]&lt;...</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>e72aa8015688052f4e7fddbf4c74e5bf2bd74239ebf3902a5fdc008ecb03aa46</td>
+      <td>None</td>
+      <td>6</td>
+      <td>Xb;IgM/`T:VY*6XQ:nvB3)&gt;@32w8H-cD"g&gt;x`MlWp_TnuyCaz62e??md&lt;8tR$Q=X7&lt;...</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>0ae8eda3dbeedbc17e27a679c5426dd3af1434f7c37b4ecd3b2fb5c492272b75</td>
+      <td>None</td>
+      <td>7</td>
+      <td>pq.%\nmm;M!^cyS|ApMpnjUS&lt;#Ov?e+n"wX/to.wjifCG.fKK@6gI+Wvax&amp;}j18R8p...</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>cedcfbb0d95798514b6aaf30118fff7b46f863f1bc8b80bb2ddd2145e5b3f318</td>
+      <td>None</td>
+      <td>8</td>
+      <td>+-;Zt=ex</td>
+      <td>str</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>ace2f31433212fbf9e764069a30a7675ca78f496d31f061d06d0a0420fc52768</td>
+      <td>None</td>
+      <td>0</td>
+      <td>b'\x80\x04\x95h\x00\x00\x00\x00\x00\x00\x00}\x94(\x8c\x07integer\x...</td>
+      <td>bytes</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>87d93e1862f0f58199c3fcb7114b92fe59f03581804b1c8419868fb00ff8a469</td>
+      <td>None</td>
+      <td>0</td>
+      <td>b'{\n "cells": [\n  {\n   "cell_type": "markdown",\n   "metadata":...</td>
+      <td>bytes</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>b4a705d09aa0361f4db453da32abb05a5c4e0249d6180d2b8a58d72d08dbd6a0</td>
+      <td>None</td>
+      <td>1</td>
+      <td>xt/plain": [\n       "4"\n      ]\n     },\n     "execution_count"...</td>
+      <td>bytes</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>e4e2c33a2ea67f34bf3ac1e9d99edaad501c7dc4ea82f4b60e9d959418d8438d</td>
+      <td>None</td>
+      <td>2</td>
+      <td>"language": "python",\n   "name": "python3"\n  },\n  "language_...</td>
+      <td>bytes</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>777abf12375b7f605b21535eb0d6232ce99581c6d2b1179af976cd0708ad27ff</td>
+      <td>None</td>
+      <td>3</td>
+      <td>r": "python",\n   "pygments_lexer": "ipython3",\n   "version": "3....</td>
+      <td>bytes</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3 id="10-scores">10. Scores</h3>
+<h5 id="i-attribute-overlap-ratio">I. Attribute overlap ratio</h5>
+<p>AOR represents an overlap ratio between attribute ids that:</p>
+<ul>
+<li>belong to a parameter within parameter set</li>
+<li>belong to a parameter sets within solution</li>
+<li>belong to a solution within solutions</li>
+</ul>
+<p>The score is between $0$ and $1$, and the greater the score, the greater is an overlap between attribute ids within select group and non unique attribute ids.</p>
+<h5 id="ii-parameter-overlap-ratio">II. Parameter overlap ratio</h5>
+<p>POR represents an overlap ratio between parameter ids that:</p>
+<ul>
+<li>belong to a parameter sets within solution</li>
+<li>belong to a solution within solutions</li>
+</ul>
+<p>The score is between $0$ and $1$, and the greater the score, the greater is an overlap between parameter ids within select group and non unique parameter ids.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.081f42fc.min.js"></script>
+      
+    
+  </body>
+</html>
