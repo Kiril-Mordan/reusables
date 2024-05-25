@@ -2,6 +2,11 @@ name: Deploy MkDocs site to GitHub Pages
 
 on:
   workflow_dispatch:
+    inputs:
+        package_name:
+          description: 'Name of the package'
+          required: true
+          default: 'parameterframe'
   workflow_run:
       workflows: ["Publish packages"]
       types:
@@ -25,11 +30,11 @@ jobs:
         pip install mkdocs mkdocs-material attrs
 
     - name: Build site
-      run: python tools/make_mkdocs_site.py parameterframe
+      run: python tools/make_mkdocs_site.py ${{ github.event.inputs.package_name }}
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./temp_project/site
-        destination_dir: parameterframe
+        destination_dir: ${{ github.event.inputs.package_name }}
