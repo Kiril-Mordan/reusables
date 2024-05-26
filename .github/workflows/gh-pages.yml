@@ -21,18 +21,18 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Find Changed Modules
-        id: changed-modules
-        run: |
-          if [ "${{ github.event.inputs.package_name }}" != "" ]; then
-            echo "${{ github.event.inputs.package_name }}" > changed_files
-          else
-            chmod +x ./tools/find_and_process_changed_files.sh
-            ./tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' 'release_notes' '' ''
-          fi
+      id: changed-modules
+      run: |
+        if [ "${{ github.event.inputs.package_name }}" != "" ]; then
+          echo "${{ github.event.inputs.package_name }}" > changed_files
+        else
+          chmod +x ./tools/find_and_process_changed_files.sh
+          ./tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' 'release_notes' '' ''
+        fi
 
-          if [ -s changed_files ]; then
-              echo "::set-output name=files::$(cat changed_files)"
-          fi
+        if [ -s changed_files ]; then
+            echo "::set-output name=files::$(cat changed_files)"
+        fi
 
     - name: Setup Python
       if: steps.changed-modules.outputs.files != ''
