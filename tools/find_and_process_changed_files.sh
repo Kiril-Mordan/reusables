@@ -32,7 +32,6 @@ for i in 1 2 3; do
   echo "No changes found between HEAD~$i and HEAD~$((i-1))."
 done
 
-changed_files=("1")
 
 if [ -z "$changed_files" ]; then
     echo "No changes found in the last three commits."
