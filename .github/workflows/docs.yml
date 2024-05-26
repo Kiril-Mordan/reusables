@@ -28,59 +28,17 @@ jobs:
       - name: Find Changed Modules
         id: changed-modules
         run: |
-          # Directories to check, passed as arguments before the last two arguments
-          directories_to_check=('python_modules/' 'example_notebooks/')
 
-          # Output directory, passed as the second-to-last argument
-          output_directory='example_notebooks/'
-
-          # File extension to add, passed as the last argument
-          extension_to_add='.ipynb'
-
-          # Function to check for changes in a given commit range
-          check_changes() {
-            local commit_range=$1
-            local changed_files=""
-            for dir in "${directories_to_check[@]}"; do
-              if [ -n "$(git diff --name-only $commit_range | grep "$dir")" ]; then
-                changed_files+=$(git diff --name-only $commit_range | grep "$dir")
-                changed_files+=$'\n'
-              fi
-            done
-            echo "$changed_files"
-          }
-
-          # Checking for changes in the last three commits
-          for i in 1 2 3; do
-            changed_files=$(check_changes "HEAD~$i HEAD~$((i-1))")
-            if [ -n "$changed_files" ]; then
-              break
-            fi
-            echo "No changes found between HEAD~$i and HEAD~$((i-1))."
-          done
-
-          if [ -z "$changed_files" ]; then
-              echo "No changes found in the last three commits."
+          if [ "${{ github.event.inputs.package_name }}" != "" ]; then
+            echo "${{ github.event.inputs.package_name }}" > changed_files
           else
-              echo "Changed files:"
-              echo "$changed_files"
-              # Process files
-              processed_files=$(echo "$changed_files" |
-                                sed 's/.*\///' |       # Remove directory path
-                                sed 's/\.[^.]*$//' |   # Remove file extensions
-                                sort | uniq |         # Sort and deduplicate
-                                awk -v dir="$output_directory" -v ext="$extension_to_add" '{print dir $0 ext}')  # Prepend directory and append extension
-              echo "Processed files:"
-              echo "$processed_files"
-              echo "::set-output name=files::${processed_files}"
+            chmod +x ./tools/find_and_process_changed_files.sh
+            ./tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' 'example_notebooks/' '.ipynb'
           fi
 
-      # - name: Download and install drawio
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install libnotify4 libappindicator3-1
-      #     wget https://github.com/jgraph/drawio-desktop/releases/download/v13.0.3/draw.io-amd64-13.0.3.deb
-      #     sudo dpkg -i draw.io-amd64-13.0.3.deb
+          if [ -s changed_files ]; then
+              echo "::set-output name=files::$(cat changed_files)"
+          fi
 
       - name: Export drawio files to png files
         uses: rlespinasse/drawio-export-action@v2
@@ -102,12 +60,9 @@ jobs:
         run: python -m ipykernel install --user --name python3
 
       - name: Generate md files from jupyter for changed modules
+        if: steps.changed-modules.outputs.files != ''
         run: |
           ./tools/convert_ipynb_to_markdown.sh ${{ steps.changed-modules.outputs.files }}
-
-      # - name: Generate png files from drawio
-      #   run: |
-      #     ./tools/convert_drawio_to_png.sh
 
       - name: Update README.md
         run: |

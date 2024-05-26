@@ -3,10 +3,10 @@ name: Deploy MkDocs site to GitHub Pages
 on:
   workflow_dispatch:
     inputs:
-        package_name:
-          description: 'Name of the package'
-          required: true
-          default: 'parameterframe'
+      package_name:
+        description: 'Name of the package'
+        required: false
+        default: 'parameterframe'
   workflow_run:
       workflows: ["Publish packages"]
       types:
@@ -20,21 +20,39 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    - name: Find Changed Modules
+        id: changed-modules
+        run: |
+          if [ "${{ github.event.inputs.package_name }}" != "" ]; then
+            echo "${{ github.event.inputs.package_name }}" > changed_files
+          else
+            chmod +x ./tools/find_and_process_changed_files.sh
+            ./tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' 'release_notes' '' ''
+          fi
+
+          if [ -s changed_files ]; then
+              echo "::set-output name=files::$(cat changed_files)"
+          fi
+
     - name: Setup Python
+      if: steps.changed-modules.outputs.files != ''
       uses: actions/setup-python@v2
       with:
         python-version: '3.10'
 
     - name: Install dependencies
+      if: steps.changed-modules.outputs.files != ''
       run: |
         pip install mkdocs mkdocs-material attrs
 
     - name: Build site
-      run: python tools/make_mkdocs_site.py ${{ github.event.inputs.package_name }}
+      if: steps.changed-modules.outputs.files != ''
+      run: python tools/make_mkdocs_site.py "${{ steps.changed-modules.outputs.files }}"
 
     - name: Deploy to GitHub Pages
+      if: steps.changed-modules.outputs.files != ''
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./temp_project/site
-        destination_dir: ${{ github.event.inputs.package_name }}
+        destination_dir: "${{ steps.changed-modules.outputs.files }}"
