@@ -8,9 +8,9 @@ on:
         required: false
         default: 'parameterframe'
   workflow_run:
-      workflows: ["Publish packages"]
-      types:
-        - completed
+    workflows: ["Publish packages"]
+    types:
+      - completed
 
 jobs:
   build:
