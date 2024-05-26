@@ -40,14 +40,20 @@ jobs:
       with:
         python-version: '3.10'
 
+
     - name: Install dependencies
       if: steps.changed-modules.outputs.files != ''
       run: |
-        pip install mkdocs mkdocs-material attrs
+        python -m venv venv
+        source venv/bin/activate
+        pip install mkdocs mkdocs-material attrs nbconvert nbformat ipykernel
+        python -m ipykernel install --user --name python3
 
     - name: Build site
       if: steps.changed-modules.outputs.files != ''
-      run: python tools/make_mkdocs_site.py "${{ steps.changed-modules.outputs.files }}"
+      run: |
+        source venv/bin/activate
+        python3 tools/make_mkdocs_site.py "${{ steps.changed-modules.outputs.files }}"
 
     - name: Deploy to GitHub Pages
       if: steps.changed-modules.outputs.files != ''
