@@ -22,6 +22,7 @@ check_changes() {
   echo "$changed_files"
 }
 
+
 # Checking for changes in the last three commits
 for i in 1 2 3; do
   changed_files=$(check_changes "HEAD~$i HEAD~$((i-1))")
@@ -30,6 +31,8 @@ for i in 1 2 3; do
   fi
   echo "No changes found between HEAD~$i and HEAD~$((i-1))."
 done
+
+changed_files=("1")
 
 if [ -z "$changed_files" ]; then
     echo "No changes found in the last three commits."
@@ -44,5 +47,6 @@ else
                       awk -v dir="$output_directory" -v ext="$extension_to_add" '{print dir $0 ext}')  # Prepend directory and append extension
     echo "Processed files:"
     echo "$processed_files"
-    echo "files=${processed_files}" >> $GITHUB_ENV
+    echo "$processed_files" > changed_files
 fi
+
