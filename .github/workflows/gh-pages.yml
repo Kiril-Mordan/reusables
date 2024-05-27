@@ -13,46 +13,45 @@ on:
       - completed
 
 jobs:
-  build:
+  build_site:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Find Changed Modules
-      id: changed-modules
-      run: |
-        if [ "${{ github.event.inputs.package_name }}" != "" ]; then
-          echo "${{ github.event.inputs.package_name }}" > changed_files
-        else
-          chmod +x ./tools/find_and_process_changed_files.sh
-          ./tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' 'release_notes' '' ''
-        fi
+      - name: Find Changed Modules
+        id: changed-modules
+        run: |
+          if [ "${{ github.event.inputs.package_name }}" != "" ]; then
+            echo "${{ github.event.inputs.package_name }}" > changed_files
+          else
+            chmod +x ./tools/find_and_process_changed_files.sh
+            ./tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' 'release_notes' '' ''
+          fi
 
-        if [ -s changed_files ]; then
-            echo "::set-output name=files::$(cat changed_files)"
-        fi
+          if [ -s changed_files ]; then
+              echo "::set-output name=files::$(cat changed_files)"
+          fi
 
-    - name: Setup Python
-      if: steps.changed-modules.outputs.files != ''
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.10'
+      - name: Setup Python
+        if: steps.changed-modules.outputs.files != ''
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
 
-    - name: Install dependencies
-      if: steps.changed-modules.outputs.files != ''
-      run: |
-        pip install mkdocs mkdocs-material attrs
+      - name: Install dependencies
+        if: steps.changed-modules.outputs.files != ''
+        run: |
+          pip install mkdocs mkdocs-material attrs nbformat
 
-    - name: Build site
-      if: steps.changed-modules.outputs.files != ''
-      run: python tools/make_mkdocs_site.py "${{ steps.changed-modules.outputs.files }}"
+      - name: Build site
+        if: steps.changed-modules.outputs.files != ''
+        run: python tools/make_mkdocs_site.py "${{ steps.changed-modules.outputs.files }}"
 
-    - name: Deploy to GitHub Pages
-      if: steps.changed-modules.outputs.files != ''
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./temp_project/site
-        destination_dir: "${{ steps.changed-modules.outputs.files }}"
+      - name: Deploy to GitHub Pages
+        if: steps.changed-modules.outputs.files != ''
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./temp_project/site
+          destination_dir: "${{ steps.changed-modules.outputs.files }}"
