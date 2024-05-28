@@ -1,35 +1,11 @@
-# Package Auto Assembler
-
-This tool is meant to streamline creation of single module packages.
-Its purpose is to automate as many aspects of python package creation as possible,
-to shorten a development cycle of reusable components, maintain certain standard of quality
-for reusable code. It provides tool to simplify the process of package creatrion
-to a point that it can be triggered automatically within ci/cd pipelines,
-with minimal preparations and requirements for new modules.
-
-
-
 ```python
 import sys
 sys.path.append('../')
 from python_modules.package_auto_assembler import (VersionHandler, \
     ImportMappingHandler, RequirementsHandler, MetadataHandler, \
         LocalDependaciesHandler, LongDocHandler, SetupDirHandler, \
-            ReleaseNotesHandler, PackageAutoAssembler)
+            ReleaseNotesHandler, MkDocsHandler, PackageAutoAssembler)
 ```
-
-## Usage examples
-
-The examples contain: 
-1. package versioning
-2. import mapping
-3. extracting and merging requirements
-4. preparing metadata
-5. merging local dependacies into single module
-6. prepare README
-7. assembling setup directory
-8. making a package
-9. creating release notes from commit messages
 
 ### 1. Package versioning
 
@@ -150,19 +126,19 @@ pv.get_logs(
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-05-22 01:06:54</td>
+      <td>2024-05-28 01:28:20</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-05-22 01:06:54</td>
+      <td>2024-05-28 01:28:20</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-05-22 01:06:54</td>
+      <td>2024-05-28 01:28:20</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -261,7 +237,7 @@ rh.list_custom_modules(
 
 
 
-    ['example_local_dependacy_1', 'example_local_dependacy_2']
+    ['example_local_dependacy_2', 'example_local_dependacy_1']
 
 
 
@@ -883,7 +859,7 @@ paa.make_package(
 
 
 
-    CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=1, stdout='', stderr="usage: setup.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]\n   or: setup.py --help [cmd1 cmd2 ...]\n   or: setup.py --help-commands\n   or: setup.py cmd --help\n\nerror: invalid command 'bdist_wheel'\n")
+    CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=0, stdout="running sdist\nrunning egg_info\nwriting example_module.egg-info/PKG-INFO\nwriting dependency_links to example_module.egg-info/dependency_links.txt\nwriting requirements to example_module.egg-info/requires.txt\nwriting top-level names to example_module.egg-info/top_level.txt\nreading manifest file 'example_module.egg-info/SOURCES.txt'\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nrunning check\ncreating example_module-0.0.1\ncreating example_module-0.0.1/example_module\ncreating example_module-0.0.1/example_module.egg-info\ncopying files to example_module-0.0.1...\ncopying example_module/__init__.py -> example_module-0.0.1/example_module\ncopying example_module/example_module.py -> example_module-0.0.1/example_module\ncopying example_module/setup.py -> example_module-0.0.1/example_module\ncopying example_module.egg-info/PKG-INFO -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/dependency_links.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/requires.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/top_level.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -> example_module-0.0.1/example_module.egg-info\nWriting example_module-0.0.1/setup.cfg\nCreating tar archive\nremoving 'example_module-0.0.1' (and everything under it)\nrunning bdist_wheel\nrunning build\nrunning build_py\ncopying example_module/example_module.py -> build/lib/example_module\ncopying example_module/__init__.py -> build/lib/example_module\ncopying example_module/setup.py -> build/lib/example_module\ninstalling to build/bdist.macosx-10.9-x86_64/wheel\nrunning install\nrunning install_lib\ncreating build/bdist.macosx-10.9-x86_64/wheel\ncreating build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/example_module.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/__init__.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/setup.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\nrunning install_egg_info\nCopying example_module.egg-info to build/bdist.macosx-10.9-x86_64/wheel/example_module-0.0.1-py3.9.egg-info\nrunning install_scripts\ncreating build/bdist.macosx-10.9-x86_64/wheel/example_module-0.0.1.dist-info/WHEEL\ncreating 'dist/example_module-0.0.1-py3-none-any.whl' and adding 'build/bdist.macosx-10.9-x86_64/wheel' to it\nadding 'example_module/__init__.py'\nadding 'example_module/example_module.py'\nadding 'example_module/setup.py'\nadding 'example_module-0.0.1.dist-info/METADATA'\nadding 'example_module-0.0.1.dist-info/WHEEL'\nadding 'example_module-0.0.1.dist-info/top_level.txt'\nadding 'example_module-0.0.1.dist-info/RECORD'\nremoving build/bdist.macosx-10.9-x86_64/wheel\n", stderr='warning: sdist: standard file not found: should have one of README, README.rst, README.txt, README.md\n\n/Users/insani_dei/miniconda3/envs/testenv/lib/python3.9/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.\n!!\n\n        ********************************************************************************\n        Please avoid running ``setup.py`` directly.\n        Instead, use pypa/build, pypa/installer or other\n        standards-based tools.\n\n        See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.\n        ********************************************************************************\n\n!!\n  self.initialize_options()\n')
 
 
 
@@ -902,14 +878,8 @@ rnh = ReleaseNotesHandler(
 ```
 
     No relevant commit messages found!
-
-
     ..trying depth 2 !
-
-
     No relevant commit messages found!
-
-
     No messages to clean were provided
 
 
@@ -924,12 +894,12 @@ rnh.commit_messages
 
 
 
-    ['Update requirements',
-     '[package_auto_assembler] test_install_package() method for local testing',
-     'simpler test_install_package.py script',
-     'Update package version tracking files',
-     'Update README',
-     'Update requirements']
+    ['slight changes to gh-pages workflow',
+     'adding package_auto_assembler to usage examples test run exceptions',
+     'updated gh-pages workflow',
+     'testing newer MkDocsHandler',
+     'updated workflows',
+     'package name parameter for gh-pages workflow']
 
 
 
@@ -1017,3 +987,74 @@ rnh.get_release_notes_content()
      '    - initial version of example_module\n']
 
 
+
+### 10. Making simple MkDocs site
+
+##### - preparing inputs
+
+
+```python
+package_name = "example_module"
+
+module_content = LongDocHandler().read_module_content(filepath=f"../tests/package_auto_assembler/{package_name}.py")
+
+docstring = LongDocHandler().extract_module_docstring(module_content=module_content)
+pypi_link = LongDocHandler().get_pypi_badge(module_name=package_name)
+
+
+docs_file_paths = {
+    "../example_module.md" : "usage-examples.md",
+    '../tests/package_auto_assembler/release_notes.md' : 'release_notes.md'
+}
+```
+
+
+```python
+mdh = MkDocsHandler(
+    # required
+    ## name of the package to be displayed
+    package_name = package_name,
+    ## dictionary of markdown files, with path as keys
+    docs_file_paths = docs_file_paths,
+    # optional
+    ## module docstring to be displayed in the index
+    module_docstring = docstring,
+    ## pypi badge to be displayed in the index
+    pypi_badge = pypi_link,
+    ## license badge to be displayed in the index
+    license_badge="[![License](https://img.shields.io/github/license/Kiril-Mordan/reusables)](https://github.com/Kiril-Mordan/reusables/blob/main/LICENSE)",
+    ## name of the project directory
+    project_name = "temp_project")
+```
+
+##### - preparing site
+
+
+```python
+mdh.create_mkdocs_dir()
+mdh.move_files_to_docs()
+mdh.generate_markdown_for_images()
+mdh.create_index()
+mdh.create_mkdocs_yml()
+mdh.build_mkdocs_site()
+```
+
+    Created new MkDocs dir: temp_project
+    Copied ../example_module.md to temp_project/docs/usage-examples.md
+    Copied ../tests/package_auto_assembler/release_notes.md to temp_project/docs/release_notes.md
+    index.md has been created with site_name: example-module
+    mkdocs.yml has been created with site_name: Example module
+    Custom CSS created at temp_project/docs/css/extra.css
+
+
+    INFO    -  Cleaning site directory
+    INFO    -  Building documentation to directory: /Users/user/reusables/example_notebooks/temp_project/site
+    INFO    -  Documentation built in 0.80 seconds
+
+
+##### - test runing site
+
+
+```python
+mdh.serve_mkdocs_site()
+```
