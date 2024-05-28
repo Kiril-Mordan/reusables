@@ -1,7 +1,5 @@
 """
-Package Auto Assembler
-
-This tool is meant to streamline creation of single module packages.
+Package auto assembler is a tool that meant to streamline creation of single module packages.
 Its purpose is to automate as many aspects of python package creation as possible,
 to shorten a development cycle of reusable components, maintain certain standard of quality
 for reusable code. It provides tool to simplify the process of package creatrion
@@ -29,6 +27,7 @@ from nbconvert.preprocessors import ExecutePreprocessor
 import attr #>=22.2.0
 from stdlib_list import stdlib_list
 import tempfile
+import requests
 import pip_audit #==2.7.3
 
 
@@ -967,6 +966,29 @@ class LongDocHandler:
 
             self.logger = logger
 
+    def read_module_content(self,
+                     filepath : str) -> str:
+
+        """
+        Method for reading in module.
+        """
+
+        with open(filepath, 'r') as file:
+            return file.read()
+
+    def extract_module_docstring(self,
+                                 module_content : str) -> str:
+
+        """
+        Method for extracting title, module level docstring.
+        """
+
+        match = re.search(r'^("""(.*?)"""|\'\'\'(.*?)\'\'\')', module_content, flags=re.DOTALL)
+        if match:
+            docstring_content = match.group(2) if match.group(2) is not None else match.group(3)
+            return docstring_content.strip()
+        return None
+
     def _format_title(self, filename : str) -> str:
         """
         Formats the filename into a more readable title by removing the '.md' extension,
@@ -976,6 +998,26 @@ class LongDocHandler:
         title_with_spaces = title_without_extension.replace('_', ' ')  # Replace underscores with spaces
         # Capitalize the first letter of each word
         return ' '.join(word.capitalize() for word in title_with_spaces.split())
+
+    def get_pypi_badge(self, module_name : str):
+
+        """
+        Get badge for module that was pushed to pypi.
+        """
+
+        # Convert underscores to hyphens
+        module_name_hyphenated = module_name.replace('_', '-')
+        pypi_module_link = f"https://pypi.org/project/{module_name_hyphenated}/"
+        pypi_link = ""
+
+        # Send a HEAD request to the PyPI module link
+        response = requests.head(pypi_module_link)
+
+        # Check if the response status code is 200 (OK)
+        if response.status_code == 200:
+            pypi_link = f"[![PyPiVersion](https://img.shields.io/pypi/v/{module_name_hyphenated})]({pypi_module_link})"
+
+        return pypi_link
 
 
     def convert_notebook_to_md(self,
@@ -1212,6 +1254,7 @@ class SetupDirHandler:
 
     def write_setup_file(self,
                          module_name : str = None,
+                         module_docstring : str = None,
                          metadata : dict = None,
                          requirements : str = None,
                          classifiers : list = None,
@@ -1240,6 +1283,15 @@ class SetupDirHandler:
             setup_directory = self.setup_directory
 
         metadata_str = ', '.join([f'{key}="{value}"' for key, value in metadata.items()])
+
+        title = module_name.capitalize()
+        title = title.replace("_"," ")
+
+        long_description_intro = f"""# {title}\n\n"""
+
+        if module_docstring:
+            long_description_intro += f"""{module_docstring}\n\n"""
+
         setup_content = f"""from setuptools import setup
 import codecs
 import os
@@ -1247,11 +1299,15 @@ import os
 here = os.path.abspath(os.path.dirname(__file__))
 path_to_readme = os.path.join(here, "README.md")
 
+"""
+
+        setup_content += f'long_description = """{long_description_intro}"""'
+
+        setup_content += f"""
+
 if os.path.exists(path_to_readme):
   with codecs.open(path_to_readme, encoding="utf-8") as fh:
-      long_description = fh.read()
-else:
-  long_description = ''
+      long_description += fh.read()
 
 setup(
     name="{module_name}",
@@ -1262,7 +1318,7 @@ setup(
     long_description_content_type='text/markdown',
     {metadata_str}
 )
-        """
+"""
         with open(os.path.join(setup_directory, 'setup.py'), 'w') as file:
             file.write(setup_content)
 
@@ -1528,6 +1584,316 @@ class ReleaseNotesHandler:
                 file.writelines(note_entries)
 
 
+@attr.s
+class MkDocsHandler:
+
+    # inputs
+    package_name = attr.ib(type=str)
+    docs_file_paths = attr.ib(type=list)
+
+    module_docstring = attr.ib(default=None, type=str)
+    pypi_badge = attr.ib(default='', type=str)
+    license_badge = attr.ib(default='', type=str)
+
+    project_name = attr.ib(default="temp_project", type=str)
+
+    # processed
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='MkDocs Handler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+
+    def _initialize_logger(self):
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    def create_mkdocs_project(self, project_name: str = None):
+        """
+        Create a new MkDocs project.
+        """
+
+        if project_name is None:
+            project_name = self.project_name
+
+        subprocess.run(["mkdocs", "new", project_name])
+        print(f"Created new MkDocs project: {project_name}")
+
+    def create_mkdocs_dir(self, project_name: str = None):
+        """
+        Create a new dir for MkDocs project.
+        """
+
+        if project_name is None:
+            project_name = self.project_name
+
+        if os.path.exists(project_name):
+            shutil.rmtree(project_name)
+        os.makedirs(project_name)
+
+        print(f"Created new MkDocs dir: {project_name}")
+
+    def move_files_to_docs(self, file_paths: dict = None, project_name: str = None):
+        """
+        Move files from given list of paths to the docs directory.
+        """
+
+        if file_paths is None:
+            file_paths = self.docs_file_paths
+
+        if project_name is None:
+            project_name = self.project_name
+
+        docs_dir = os.path.join(project_name, "docs")
+        if not os.path.exists(docs_dir):
+            os.makedirs(docs_dir)
+
+        for file_path in file_paths:
+            if os.path.exists(file_path):
+                filename = file_paths[file_path]
+                destination = os.path.join(docs_dir, filename)
+
+                # Ensure unique filenames
+                if os.path.exists(destination):
+                    base, extension = os.path.splitext(filename)
+                    counter = 1
+                    while os.path.exists(destination):
+                        new_filename = f"{base}_{counter}{extension}"
+                        destination = os.path.join(docs_dir, new_filename)
+                        counter += 1
+
+                shutil.copy(file_path, destination)
+                print(f"Copied {file_path} to {destination}")
+            else:
+                print(f"File not found: {file_path}")
+
+    def _clean_filename(self, filename: str, package_name: str) -> str:
+        """
+        Remove the package name prefix from the filename.
+
+        Args:
+            filename (str): The original filename.
+            package_name (str): The package name to remove.
+
+        Returns:
+            str: The cleaned filename without the package name prefix.
+        """
+        if filename.startswith(f"{package_name}-"):
+          return filename[len(package_name)+1:]
+        # if filename == f"{package_name}.md":
+        #   return "usage-examples.md"
+
+        return filename
+
+    def create_index(self,
+                     project_name: str = None,
+                     module_docstring : str = None,
+                     pypi_badge : str = None,
+                     license_badge : str = None):
+
+        """
+        Create index page with small intro.
+        """
+
+        if project_name is None:
+            project_name = self.package_name
+
+        if module_docstring is None:
+            module_docstring = self.module_docstring
+
+        if pypi_badge is None:
+            pypi_badge = self.pypi_badge
+
+        if license_badge is None:
+            license_badge = self.license_badge
+
+        package_name = project_name.replace("_","-")
+
+        content = f"""# Intro
+
+{pypi_badge} {license_badge}
+
+{module_docstring}
+
+## Installation
+
+```bash
+pip install {package_name}
+```
+        """
+
+        mkdocs_index_path = os.path.join("temp_project","docs", "index.md")
+        with open(mkdocs_index_path, 'w', encoding='utf-8') as file:
+            file.write(content)
+        print(f"index.md has been created with site_name: {package_name}")
+
+
+
+    def generate_markdown_for_images(self, package_name: str = None, project_name: str = None):
+        """
+        Generate .md files for each .png file in the specified directory based on naming rules.
+
+        Args:
+            directory (str): Path to the directory containing .png files.
+            package_name (str): The package name to use for naming conventions.
+        """
+
+        if package_name is None:
+            package_name = self.package_name
+
+        if project_name is None:
+            project_name = self.project_name
+
+        directory = os.path.join(project_name, "docs")
+
+        if not os.path.exists(directory):
+            print(f"The directory {directory} does not exist.")
+            return
+
+        for filename in os.listdir(directory):
+            if filename.endswith('.png'):
+                cleaned_name = self._clean_filename(filename, package_name)
+                md_filename = f"{os.path.splitext(cleaned_name)[0]}.md"
+
+                md_filepath = os.path.join(directory, md_filename)
+
+                # Write Markdown content
+                with open(md_filepath, 'w') as md_file:
+                    md_content = f"![{filename}](./{filename})"
+                    md_file.write(md_content)
+                print(f"Created {md_filepath}")
+
+    def create_mkdocs_yml(self, package_name: str = None, project_name: str = None):
+        """
+        Create mkdocs.yml with a given site_name.
+        """
+
+        if project_name is None:
+            project_name = self.project_name
+
+        if package_name is None:
+            package_name = self.package_name
+
+        package_name = package_name.capitalize()
+        package_name = package_name.replace("_"," ")
+
+        content = f"""site_name: {package_name}
+
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      primary: green
+      accent: green
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: green
+      accent: green
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
+
+extra_css:
+  - css/extra.css
+        """
+
+        mkdocs_yml_path = os.path.join(project_name, "mkdocs.yml")
+        with open(mkdocs_yml_path, "w") as file:
+            file.write(content.strip())
+        print(f"mkdocs.yml has been created with site_name: {package_name}")
+
+        css_dir = os.path.join(project_name, "docs", "css")
+        if not os.path.exists(css_dir):
+            os.makedirs(css_dir)
+
+        css_content = """
+/* Ensure tables are scrollable horizontally */
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* Ensure tables and their parent divs don't overflow the content area */
+.dataframe {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.dataframe thead th {
+  text-align: right;
+}
+
+.dataframe tbody tr th {
+  vertical-align: top;
+}
+
+.dataframe tbody tr th:only-of-type {
+  vertical-align: middle;
+}
+
+/* Ensure the whole content area is scrollable */
+.md-content__inner {
+  overflow-x: auto;
+  padding: 20px; /* Add some padding for better readability */
+}
+
+/* Fix layout issues caused by the theme */
+.md-main__inner {
+  max-width: none;
+}
+        """
+
+        css_path = os.path.join(css_dir, "extra.css")
+        with open(css_path, "w") as file:
+            file.write(css_content.strip())
+        print(f"Custom CSS created at {css_path}")
+
+    def build_mkdocs_site(self, project_name: str = None):
+        """
+        Serve the MkDocs site.
+        """
+
+        if project_name is None:
+            project_name = self.project_name
+
+        os.chdir(project_name)
+        subprocess.run(["mkdocs", "build"])
+        os.chdir("..")
+
+    def serve_mkdocs_site(self, project_name: str = None):
+        """
+        Serve the MkDocs site.
+        """
+
+        if project_name is None:
+            project_name = self.project_name
+
+        try:
+            os.chdir(project_name)
+            subprocess.run(["mkdocs", "serve"])
+        except Exception as e:
+            print(e)
+        finally:
+            os.chdir("..")
 
 
 @attr.s
@@ -1851,10 +2217,14 @@ class PackageAutoAssembler:
                 output_path = output_path
             )
 
+
     def prep_setup_file(self,
+                       module_name : str = None,
                        metadata : dict = None,
                        requirements : str = None,
-                       classifiers : list = None):
+                       classifiers : list = None,
+                       module_filepath : str = None,
+                       module_docstring : str = None):
 
         """
         Assemble setup.py file.
@@ -1872,8 +2242,25 @@ class PackageAutoAssembler:
         if classifiers is None:
             classifiers = self.classifiers
 
+        if module_filepath is None:
+            module_filepath = self.module_filepath
+
+        if module_name is None:
+            module_name = self.module_name
+
+        if module_docstring is None:
+
+            if self.long_doc_h is None:
+                self._initialize_long_doc_handler()
+
+            module_content = self.long_doc_h.read_module_content(filepath = module_filepath)
+
+            module_docstring = self.long_doc_h.extract_module_docstring(module_content = module_content)
+
         # create setup.py
-        self.setup_dir_h.write_setup_file(metadata = metadata,
+        self.setup_dir_h.write_setup_file(module_name = module_name,
+                                          module_docstring = module_docstring,
+                                          metadata = metadata,
                                           requirements = requirements,
                                           classifiers = classifiers)
 

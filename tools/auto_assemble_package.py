@@ -10,7 +10,7 @@ args = parser.parse_args()
 module_name = args.module_name
 
 execute_notebook = True
-if module_name in ['parameterframe']:
+if module_name in ['parameterframe', 'package_auto_assembler']:
     execute_notebook = False
 
 
