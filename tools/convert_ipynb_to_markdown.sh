@@ -12,7 +12,7 @@ convert_to_markdown() {
   local relative_dir="${notebook_dir#$root_dir}"
 
   # Check if the notebook file is 'parameterframe' module
-  if [[ "$notebook_file" == *"parameterframe"* ]]; then
+  if [[ "$notebook_file" == *"parameterframe"* || "$notebook_file" == *"package_auto_assembler"* ]]; then
     echo "Skipping execution for module: $notebook_file"
     jupyter nbconvert --to markdown "$notebook_file" --output-dir="$output_dir"
     return
