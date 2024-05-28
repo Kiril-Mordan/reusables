@@ -42,7 +42,7 @@ jobs:
       - name: Install dependencies
         if: steps.changed-modules.outputs.files != ''
         run: |
-          pip install mkdocs mkdocs-material attrs nbformat
+          pip install mkdocs mkdocs-material attrs package_auto_assembler>=0.1.5
 
       - name: Build site
         if: steps.changed-modules.outputs.files != ''
