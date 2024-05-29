@@ -67,6 +67,9 @@ jobs:
       - name: Update README.md
         run: |
           sudo mv drawio/docs/* docs
+          chmod +x ./tools/update_README.sh
+          chmod +x ./tools/update_readme_alt_content.sh
+          chmod +x ./tools/update_gh_pages_links.sh
           ./tools/update_README.sh
 
       - name: Commit changes
