@@ -1172,6 +1172,7 @@ class SetupDirHandler:
     requirements = attr.ib(default='', type=str)
     classifiers = attr.ib(default=[], type=list)
     setup_directory = attr.ib(default='./setup_dir')
+    add_cli_tool = attr.ib(default=False, type = bool)
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Package Setup Dir Handler')
@@ -1258,7 +1259,8 @@ class SetupDirHandler:
                          metadata : dict = None,
                          requirements : str = None,
                          classifiers : list = None,
-                         setup_directory : str = None):
+                         setup_directory : str = None,
+                         add_cli_tool : bool = None):
 
         """
         Create setup.py for the package.
@@ -1282,6 +1284,9 @@ class SetupDirHandler:
         if setup_directory is None:
             setup_directory = self.setup_directory
 
+        if add_cli_tool is None:
+            add_cli_tool = self.add_cli_tool
+
         metadata_str = ', '.join([f'{key}="{value}"' for key, value in metadata.items()])
 
         title = module_name.capitalize()
@@ -1291,6 +1296,14 @@ class SetupDirHandler:
 
         if module_docstring:
             long_description_intro += f"""{module_docstring}\n\n"""
+
+        if add_cli_tool:
+            requirements += ['click']
+            entry_points = {
+                'console_scripts': [
+                    f'{module_name} = {module_name}.cli:cli',
+                ]
+            }
 
         setup_content = f"""from setuptools import setup
 import codecs
@@ -1316,9 +1329,19 @@ setup(
     classifiers={classifiers},
     long_description=long_description,
     long_description_content_type='text/markdown',
+"""
+
+        if add_cli_tool:
+            setup_content += f"""
+    entry_points = {entry_points},
+"""
+
+        setup_content += f"""
     {metadata_str}
 )
 """
+
+
         with open(os.path.join(setup_directory, 'setup.py'), 'w') as file:
             file.write(setup_content)
 
@@ -1895,6 +1918,52 @@ table {
         finally:
             os.chdir("..")
 
+@attr.s
+class CliHandler:
+
+    # inputs
+    cli_module_filepath = attr.ib()
+    setup_directory = attr.ib()
+
+    # processed
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='MkDocs Handler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+
+    def _initialize_logger(self):
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    def prepare_script(self,
+                       cli_module_filepath: str = None,
+                       setup_directory : str = None):
+
+        """
+        Prepare cli script for packaging.
+        """
+
+        if cli_module_filepath is None:
+            cli_module_filepath = self.cli_module_filepath
+
+        if setup_directory is None:
+            setup_directory = self.setup_directory
+
+        # Copying module to setup directory
+        shutil.copy(cli_module_filepath, os.path.join(setup_directory, "cli.py"))
+
+        return True
 
 @attr.s
 class PackageAutoAssembler:
@@ -1905,6 +1974,7 @@ class PackageAutoAssembler:
 
     ## paths
     module_filepath = attr.ib(type=str)
+    cli_module_filepath = attr.ib(default=None)
     mapping_filepath = attr.ib(default=None)
     dependencies_dir = attr.ib(default=None)
     example_notebook_path = attr.ib(default=None)
@@ -1938,6 +2008,7 @@ class PackageAutoAssembler:
     requirements_h_class = attr.ib(default=RequirementsHandler)
     metadata_h_class = attr.ib(default=MetadataHandler)
     long_doc_h_class = attr.ib(default=LongDocHandler)
+    cli_h_class = attr.ib(default=CliHandler)
 
     ## handlers
     setup_dir_h = attr.ib(default = None, type = SetupDirHandler)
@@ -1947,8 +2018,10 @@ class PackageAutoAssembler:
     requirements_h = attr.ib(default = None, type=RequirementsHandler)
     metadata_h = attr.ib(default = None, type=MetadataHandler)
     long_doc_h = attr.ib(default = None, type=LongDocHandler)
+    cli_h = attr.ib(default = None, type=CliHandler)
 
     ## output
+    add_cli_tool = attr.ib(default = None, type = bool)
     package_result = attr.ib(init=False)
     metadata = attr.ib(init=False)
 
@@ -2045,6 +2118,17 @@ class PackageAutoAssembler:
         self.setup_dir_h = self.setup_dir_h_class(
             module_name = self.module_name,
             module_filepath = self.module_filepath,
+            setup_directory = self.setup_directory,
+            logger = self.logger)
+
+    def _initialize_cli_handler(self):
+
+        """
+        Initialize cli handler with available parameters.
+        """
+
+        self.cli_h = self.cli_h_class(
+            cli_module_filepath = self.cli_module_filepath,
             setup_directory = self.setup_directory,
             logger = self.logger)
 
@@ -2220,6 +2304,7 @@ class PackageAutoAssembler:
 
     def prep_setup_file(self,
                        module_name : str = None,
+                       cli_module_filepath : str = None,
                        metadata : dict = None,
                        requirements : str = None,
                        classifiers : list = None,
@@ -2232,6 +2317,9 @@ class PackageAutoAssembler:
 
         if self.setup_dir_h is None:
             self._initialize_setup_dir_handler()
+
+        if cli_module_filepath is None:
+            cli_module_filepath = self.cli_module_filepath
 
         if metadata is None:
             metadata = self.metadata
@@ -2257,12 +2345,23 @@ class PackageAutoAssembler:
 
             module_docstring = self.long_doc_h.extract_module_docstring(module_content = module_content)
 
+        add_cli_tool = None
+        if cli_module_filepath:
+
+            if self.cli_h is None:
+                self._initialize_cli_handler()
+
+            add_cli_tool = self.cli_h.prepare_script(
+                cli_module_filepath = cli_module_filepath
+            )
+
         # create setup.py
         self.setup_dir_h.write_setup_file(module_name = module_name,
                                           module_docstring = module_docstring,
                                           metadata = metadata,
                                           requirements = requirements,
-                                          classifiers = classifiers)
+                                          classifiers = classifiers,
+                                          add_cli_tool = add_cli_tool)
 
     def make_package(self,
                      setup_directory : str = None):
