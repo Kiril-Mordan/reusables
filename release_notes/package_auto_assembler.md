@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.1.6
+
+    - initial cli scripts support
+
 ### 0.1.5
 
     - mkdocs handler to build package documentation
