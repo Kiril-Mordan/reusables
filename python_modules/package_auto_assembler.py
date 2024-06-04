@@ -2345,8 +2345,10 @@ class PackageAutoAssembler:
 
             module_docstring = self.long_doc_h.extract_module_docstring(module_content = module_content)
 
-        add_cli_tool = None
-        if cli_module_filepath:
+
+        if cli_module_filepath is not None \
+            and os.path.exists(cli_module_filepath) \
+                and os.path.isfile(cli_module_filepath):
 
             if self.cli_h is None:
                 self._initialize_cli_handler()
@@ -2354,6 +2356,8 @@ class PackageAutoAssembler:
             add_cli_tool = self.cli_h.prepare_script(
                 cli_module_filepath = cli_module_filepath
             )
+        else:
+            add_cli_tool = None
 
         # create setup.py
         self.setup_dir_h.write_setup_file(module_name = module_name,
