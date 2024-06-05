@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.1.8
+
+    - initial cli interface for packaging
+
 ### 0.1.7
 
     - fix that skips cli packaging if cli file does not exist
