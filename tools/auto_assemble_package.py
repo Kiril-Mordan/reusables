@@ -18,7 +18,7 @@ paa = PackageAutoAssembler(
     # required
     module_name = f"{module_name}",
     module_filepath  = f"./python_modules/{module_name}.py",
-    cli_module_filepath = f"./cli/{module_name}.py",
+    #cli_module_filepath = f"./cli/{module_name}.py",
     # optional
     mapping_filepath = "./env_spec/package_mapping.json",
     dependencies_dir = None,
