@@ -1,7 +1,6 @@
 import os
 import click
 import yaml
-
 from package_auto_assembler.package_auto_assembler import PackageAutoAssembler
 
 @click.group()
