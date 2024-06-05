@@ -1,5 +1,8 @@
 # Release notes
 
+### 0.2.1
+
+    - initial cli interface for packaging
 
 ### 0.1.7
 
