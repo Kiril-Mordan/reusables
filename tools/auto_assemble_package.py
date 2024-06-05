@@ -46,7 +46,6 @@ if paa.metadata_h.is_metadata_available():
     paa.logger.info(f"Assembling package: {module_name}")
     paa.logger.info("Files before:")
     print(os.listdir())
-
     paa.add_metadata_from_module()
     paa.add_or_update_version()
     paa.prep_setup_dir()
