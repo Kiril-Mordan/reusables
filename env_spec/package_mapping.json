@@ -11,6 +11,7 @@
     "stdlib_list": "stdlib-list",
     "sklearn" : "scikit-learn",
     "yaml" : "pyyaml",
-    "package_auto_assembler" : "package-auto-assembler"
+    "package_auto_assembler" : "package-auto-assembler",
+    "git" : "gitpython"
 }
 

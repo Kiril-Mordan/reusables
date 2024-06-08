@@ -375,6 +375,7 @@ class RequirementsHandler:
     requirements_output_path  = attr.ib(default='./')
     output_requirements_prefix = attr.ib(default="requirements_")
     custom_modules_filepath = attr.ib(default=None)
+    add_header = attr.ib(default=True, type = bool)
     python_version = attr.ib(default='3.8')
 
     # output
@@ -519,7 +520,8 @@ class RequirementsHandler:
                              module_filepath : str = None,
                              custom_modules : list = None,
                              package_mappings : dict = None,
-                             python_version : str = None):
+                             python_version : str = None,
+                             add_header : bool = None):
 
         """
         Extract requirements from the module.
@@ -541,6 +543,9 @@ class RequirementsHandler:
         if python_version is None:
             python_version = self.python_version
 
+        if add_header is None:
+            add_header = self.add_header
+
         file_path = module_filepath
         module_name = os.path.basename(module_filepath)
 
@@ -552,8 +557,11 @@ class RequirementsHandler:
 
         from_import_pattern = re.compile(r"from (\S+) import [^#]+(?:#\s*(==|>=|<=|>|<)\s*([0-9.]+))?")
 
-
-        requirements = [f'### {module_name}']
+        requirements = []
+        if add_header:
+            new_header = [f'### {module_name}']
+        else:
+            new_header = []
 
         with open(file_path, 'r') as file:
             for line in file:
@@ -594,7 +602,12 @@ class RequirementsHandler:
                 # deduplicate requirements
                 requirements = [requirements[0]] + list(set(requirements[1:]))
 
-        self.requirements_list += requirements
+        if self.requirements_list:
+            header = [self.requirements_list.pop(0)]
+        else:
+            header = []
+
+        self.requirements_list = header + new_header + list(set(self.requirements_list + requirements))
 
         return requirements
 
@@ -1999,6 +2012,7 @@ class PackageAutoAssembler:
     default_version = attr.ib(default="0.0.1", type = str)
     kernel_name = attr.ib(default = 'python', type = str)
     check_vulnerabilities = attr.ib(default=True, type = bool)
+    add_requirements_header = attr.ib(default=True, type = bool)
 
     ## handler classes
     setup_dir_h_class = attr.ib(default=SetupDirHandler)
@@ -2233,8 +2247,10 @@ class PackageAutoAssembler:
 
     def add_requirements_from_module(self,
                                      module_filepath : str = None,
+                                     custom_modules : list = None,
                                      import_mappings : str = None,
-                                     check_vulnerabilities : bool = None):
+                                     check_vulnerabilities : bool = None,
+                                     add_header : bool = None):
 
         """
         Extract and add requirements from the module.
@@ -2256,14 +2272,23 @@ class PackageAutoAssembler:
             else:
                 import_mappings = self.import_mapping_h.load_package_mappings()
 
-        custom_modules = self.requirements_h.list_custom_modules()
+        if add_header is None:
+            add_header = self.add_requirements_header
+
+        custom_modules_list = self.requirements_h.list_custom_modules()
+
+        if custom_modules:
+            custom_modules_list += custom_modules
 
         # extracting package requirements
-        self.requirements_list = self.requirements_list + \
-            self.requirements_h.extract_requirements(
-                package_mappings=import_mappings,
-                module_filepath=module_filepath,
-                custom_modules=custom_modules)
+        self.requirements_h.extract_requirements(
+            package_mappings=import_mappings,
+            module_filepath=module_filepath,
+            custom_modules=custom_modules_list,
+            add_header = add_header)
+
+        self.requirements_list = self.requirements_h.requirements_list
+
         if check_vulnerabilities:
             self.requirements_h.check_vulnerabilities()
 
