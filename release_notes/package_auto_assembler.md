@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.2.2
+
+    - minor fixes for requirements extraction in preparations for cli packaging
+
 ### 0.2.1
 
     - initial cli interface for packaging
