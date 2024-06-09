@@ -63,9 +63,7 @@ pv.get_versions(
 
 
 
-    {'another_new_package': '0.0.1',
-     'example_module': '0.0.1',
-     'new_package': '0.0.2'}
+    {'another_new_package': '0.0.1', 'new_package': '0.0.2'}
 
 
 
@@ -120,25 +118,19 @@ pv.get_logs(
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-01-06 00:54:04</td>
-      <td>example_module</td>
+      <td>2024-06-08 23:26:10</td>
+      <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-05-28 01:28:20</td>
-      <td>new_package</td>
-      <td>0.0.1</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>2024-05-28 01:28:20</td>
+      <td>2024-06-08 23:26:11</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
-      <th>3</th>
-      <td>2024-05-28 01:28:20</td>
+      <th>2</th>
+      <td>2024-06-08 23:26:11</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -220,7 +212,8 @@ rh = RequirementsHandler(
     requirements_output_path = "../tests/package_auto_assembler/",
     output_requirements_prefix = "requirements_",
     custom_modules_filepath = "../tests/package_auto_assembler/dependancies",
-    python_version = '3.8'
+    python_version = '3.8',
+    add_header = True
 )
 ```
 
@@ -237,7 +230,7 @@ rh.list_custom_modules(
 
 
 
-    ['example_local_dependacy_2', 'example_local_dependacy_1']
+    ['example_local_dependacy_1', 'example_local_dependacy_2']
 
 
 
@@ -296,8 +289,21 @@ rh.extract_requirements(
                         'stdlib_list': 'stdlib-list',
                         'sklearn': 'scikit-learn',
                         'yaml': 'pyyaml'},
-    python_version = '3.8'
+    python_version = '3.8',
+    add_header=True
 )
+```
+
+
+
+
+    ['### example_module.py', 'attrs>=22.2.0']
+
+
+
+
+```python
+rh.requirements_list
 ```
 
 
@@ -719,7 +725,8 @@ paa = PackageAutoAssembler(
     python_version = "3.8",
     version_increment_type = "patch",
     default_version = "0.0.1",
-    check_vulnerabilities = True
+    check_vulnerabilities = True,
+    add_requirements_header = True
 )
 ```
 
@@ -783,7 +790,8 @@ paa.add_requirements_from_module(
                         'flask': 'Flask',
                         'stdlib_list': 'stdlib-list',
                         'sklearn': 'scikit-learn',
-                        'yaml': 'pyyaml'}
+                        'yaml': 'pyyaml',
+                        'git' : 'gitpython'}
 )
 ```
 
