@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="..">
+        <link rel="prev" href="../flow/">
       
       
-        <link rel="next" href="../package_auto_assembler-cli/">
+        <link rel="next" href="../release-notes/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Flow - Package auto assembler</title>
+        <title>Package auto assembler cli - Package auto assembler</title>
       
     
     
@@ -105,7 +105,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Flow
+              Package auto assembler cli
             
           </span>
         </div>
@@ -241,6 +241,26 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../flow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Flow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -255,32 +275,12 @@
         
   
   <span class="md-ellipsis">
-    Flow
-  </span>
-  
-
-      </a>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../package_auto_assembler-cli/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
     Package auto assembler cli
   </span>
   
 
       </a>
+      
     </li>
   
 
@@ -376,9 +376,86 @@
                   
 
 
-  <h1>Flow</h1>
+  <h1>Package auto assembler cli</h1>
 
-<p><img alt="package_auto_assembler-flow.png" src="../package_auto_assembler-flow.png" /></p>
+<pre><code class="language-bash">package_auto_assembler --help
+</code></pre>
+<pre><code>Usage: paa [OPTIONS] COMMAND [ARGS]...
+
+  Package Auto Assembler CLI tool.
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  init-config   Initialize config file
+  make-package  Package with package-auto-assembler.
+  test-install  Test install module for .py file in local environment
+</code></pre>
+<p>Creating config file could be useful to avoid providing parameters manually. If no config file will be provided, by default values from <code>.paa_config</code> will be used.</p>
+<pre><code class="language-bash">package_auto_assembler init-config  --help
+</code></pre>
+<pre><code>Usage: paa init-config [OPTIONS]
+
+  Initialize config file
+
+Options:
+  --help  Show this message and exit.
+</code></pre>
+<p>Making package based on provided parameters can be useful in ci/cd pipelines to streamline creation of packages before publishing from something that could be as simple as <code>.py</code> file.</p>
+<pre><code class="language-bash">package_auto_assembler make-package --help
+</code></pre>
+<pre><code>Usage: paa make-package [OPTIONS] MODULE_NAME
+
+  Package with package-auto-assembler.
+
+Options:
+  --config TEXT                   Path to config file for paa.
+  --module-filepath TEXT          Path to .py file to be packaged.
+  --mapping-filepath TEXT         Path to .json file that maps import to
+                                  install dependecy names.
+  --cli-module-filepath TEXT      Path to .py file that contains cli logic.
+  --include-local-dependecies     If checked, local dependecies will be
+                                  packaged.
+  --dependencies-dir TEXT         Path to directory with local dependencies of
+                                  the module.
+  --kernel-name TEXT              Kernel name.
+  --python-version TEXT           Python version.
+  --default-version TEXT          Default version.
+  --ignore-vulnerabilities-check  If checked, does not check module
+                                  dependencies with pip-audit for
+                                  vulnerabilities.
+  --example-notebook-path TEXT    Path to .ipynb file to be used as README.
+  --execute-notebook              If checked, executes notebook before turning
+                                  into README.
+  --log-filepath TEXT             Path to logfile to record version change.
+  --versions-filepath TEXT        Path to file where latest versions of the
+                                  packages are recorded.
+  --help                          Show this message and exit.
+</code></pre>
+<p>Installing packages for a test in local environemnts could be a useful step to make sure everything works as expected before pushing changes to publishing repo. This creates an instance of the package in local environment with default version, with a greatly simplified building process that avoids making documentationm, versioning and so on.</p>
+<pre><code class="language-bash">package_auto_assembler test-install [OPTIONS] MODULE_NAME
+</code></pre>
+<pre><code>Usage: paa test-install [OPTIONS] MODULE_NAME
+
+  Test install module for .py file in local environment
+
+Options:
+  --config TEXT                Path to config file for paa.
+  --module-filepath TEXT       Path to .py file to be packaged.
+  --mapping-filepath TEXT      Path to .json file that maps import to install
+                               dependecy names.
+  --cli-module-filepath TEXT   Path to .py file that contains cli logic.
+  --include-local-dependecies  If True, local dependecies will be packaged.
+  --dependencies-dir TEXT      Path to directory with local dependencies of
+                               the module.
+  --default-version TEXT       Default version.
+  --check-vulnerabilities      If checked, checks module dependencies with
+                               pip-audit for vulnerabilities.
+  --keep-temp-files            If checked, setup directory won't be removed
+                               after setup is done.
+  --help                       Show this message and exit.
+</code></pre>
 
 
 
