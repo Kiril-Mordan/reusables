@@ -644,6 +644,7 @@ class MetadataHandler:
 
 
     module_filepath = attr.ib(default=None)
+    header_name = attr.ib(default="__package_metadata__")
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Package Metadata Handler')
@@ -668,7 +669,9 @@ class MetadataHandler:
             self.logger = logger
 
 
-    def is_metadata_available(self, module_filepath : str = None):
+    def is_metadata_available(self,
+                              module_filepath : str = None,
+                              header_name : str = None):
 
         """
         Check is metadata is present in the module.
@@ -676,6 +679,9 @@ class MetadataHandler:
 
         if module_filepath is None:
             module_filepath = self.module_filepath
+
+        if header_name is None:
+            header_name = self.header_name
 
         if module_filepath is None:
             self.logger.error("Provide module_filepath!")
@@ -685,13 +691,15 @@ class MetadataHandler:
             with open(module_filepath, 'r') as file:
                 for line in file:
                     # Check if the line defines __package_metadata__
-                    if line.strip().startswith("__package_metadata__ ="):
+                    if line.strip().startswith(f"{header_name} ="):
                         return True
             return False
         except FileNotFoundError:
             return False
 
-    def get_package_metadata(self, module_filepath : str = None):
+    def get_package_metadata(self,
+                             module_filepath : str = None,
+                             header_name : str = None):
 
         """
         Extract metadata from the given module if available.
@@ -699,6 +707,9 @@ class MetadataHandler:
 
         if module_filepath is None:
             module_filepath = self.module_filepath
+
+        if header_name is None:
+            header_name = self.header_name
 
         if module_filepath is None:
             self.logger.error("Provide module_filepath!")
@@ -710,7 +721,7 @@ class MetadataHandler:
         try:
             with open(module_filepath, 'r') as file:
                 for line in file:
-                    if '__package_metadata__ =' in line:
+                    if f'{header_name} =' in line:
                         inside_metadata = True
                         metadata_str = line.split('#')[0]  # Ignore comments
                     elif inside_metadata:
@@ -1182,6 +1193,7 @@ class SetupDirHandler:
     module_filepath = attr.ib(type=str)
     module_name = attr.ib(default='', type=str)
     metadata = attr.ib(default={}, type=dict)
+    cli_metadata = attr.ib(default={}, type=dict)
     requirements = attr.ib(default='', type=str)
     classifiers = attr.ib(default=[], type=list)
     setup_directory = attr.ib(default='./setup_dir')
@@ -1270,6 +1282,7 @@ class SetupDirHandler:
                          module_name : str = None,
                          module_docstring : str = None,
                          metadata : dict = None,
+                         cli_metadata : dict = None,
                          requirements : str = None,
                          classifiers : list = None,
                          setup_directory : str = None,
@@ -1287,6 +1300,9 @@ class SetupDirHandler:
 
         if metadata is None:
             metadata = self.metadata
+
+        if cli_metadata is None:
+            cli_metadata = self.cli_metadata
 
         if requirements is None:
             requirements = self.requirements
@@ -1311,10 +1327,16 @@ class SetupDirHandler:
             long_description_intro += f"""{module_docstring}\n\n"""
 
         if add_cli_tool:
-            requirements += ['click']
             entry_points = {
                 'console_scripts': [
                     f'{module_name} = {module_name}.cli:cli',
+                ]
+            }
+
+            if "name" in cli_metadata.keys():
+                entry_points = {
+                'console_scripts': [
+                    f"{cli_metadata['name']} = {module_name}.cli:cli",
                 ]
             }
 
@@ -2035,9 +2057,11 @@ class PackageAutoAssembler:
     cli_h = attr.ib(default = None, type=CliHandler)
 
     ## output
+    cli_metadata = attr.ib(default={}, type = dict)
     add_cli_tool = attr.ib(default = None, type = bool)
     package_result = attr.ib(init=False)
     metadata = attr.ib(init=False)
+
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Package Auto Assembler')
@@ -2152,6 +2176,8 @@ class PackageAutoAssembler:
         Add metadata extracted from the module.
         """
 
+        self.logger.info(f"Adding metadata ...")
+
         if self.metadata_h is None:
             self._initialize_metadata_handler()
 
@@ -2160,6 +2186,33 @@ class PackageAutoAssembler:
 
         # extracting package metadata
         self.metadata = self.metadata_h.get_package_metadata(module_filepath = module_filepath)
+
+    def add_metadata_from_cli_module(self,
+                                     cli_module_filepath : str = None):
+
+        """
+        Add metadata extracted from the cli module.
+        """
+
+        self.logger.info(f"Adding cli metadata ...")
+
+        if self.metadata_h is None:
+            self._initialize_metadata_handler()
+
+        if cli_module_filepath is None:
+            cli_module_filepath = self.cli_module_filepath
+
+        if os.path.exists(cli_module_filepath) \
+            and os.path.isfile(cli_module_filepath) \
+                and self.metadata_h.is_metadata_available(
+                    module_filepath = cli_module_filepath,
+                    header_name = "__cli_metadata__"):
+
+                # extracting package metadata
+                self.cli_metadata = self.metadata_h.get_package_metadata(
+                    module_filepath = cli_module_filepath,
+                    header_name = "__cli_metadata__")
+
 
 
     def add_or_update_version(self,
@@ -2191,6 +2244,8 @@ class PackageAutoAssembler:
         if log_filepath is None:
             log_filepath = self.log_filepath
 
+        self.logger.info(f"Incrementing version ...")
+
         self.version_h.increment_version(package_name = module_name,
                                          increment_type = version_increment_type,
                                          default_version = version)
@@ -2202,6 +2257,8 @@ class PackageAutoAssembler:
         """
         Prepare setup directory.
         """
+
+        self.logger.info(f"Preparing setup directory ...")
 
         if self.setup_dir_h is None:
             self._initialize_setup_dir_handler()
@@ -2235,6 +2292,8 @@ class PackageAutoAssembler:
         if save_filepath is None:
             save_filepath = os.path.join(self.setup_directory, os.path.basename(main_module_filepath))
 
+        self.logger.info(f"Merging {main_module_filepath} with dependecies from {dependencies_dir} into {save_filepath}")
+
         # combime module with its dependacies
         self.local_dependacies_h.save_combined_modules(
             combined_module=self.local_dependacies_h.combine_modules(main_module_filepath = main_module_filepath,
@@ -2245,15 +2304,15 @@ class PackageAutoAssembler:
         # switch filepath for the combined one
         self.module_filepath = save_filepath
 
-    def add_requirements_from_module(self,
-                                     module_filepath : str = None,
-                                     custom_modules : list = None,
-                                     import_mappings : str = None,
-                                     check_vulnerabilities : bool = None,
-                                     add_header : bool = None):
+    def _add_requirements(self,
+                            module_filepath : str = None,
+                            custom_modules : list = None,
+                            import_mappings : str = None,
+                            check_vulnerabilities : bool = None,
+                            add_header : bool = None):
 
         """
-        Extract and add requirements from the module.
+        Extract and add requirements.
         """
 
         if self.requirements_h is None:
@@ -2280,6 +2339,8 @@ class PackageAutoAssembler:
         if custom_modules:
             custom_modules_list += custom_modules
 
+        self.logger.info(f"Adding requirements from {module_filepath}")
+
         # extracting package requirements
         self.requirements_h.extract_requirements(
             package_mappings=import_mappings,
@@ -2292,6 +2353,56 @@ class PackageAutoAssembler:
         if check_vulnerabilities:
             self.requirements_h.check_vulnerabilities()
 
+    def add_requirements_from_module(self,
+                                     module_filepath : str = None,
+                                     custom_modules : list = None,
+                                     import_mappings : str = None,
+                                     check_vulnerabilities : bool = None,
+                                     add_header : bool = None):
+
+        """
+        Extract and add requirements from the module.
+        """
+
+        self._add_requirements(
+            module_filepath = module_filepath,
+            custom_modules = custom_modules,
+            import_mappings = import_mappings,
+            check_vulnerabilities = check_vulnerabilities,
+            add_header = add_header
+        )
+
+    def add_requirements_from_cli_module(self,
+                                     module_name : str = None,
+                                     cli_module_filepath : str = None,
+                                     custom_modules : list = None,
+                                     import_mappings : str = None,
+                                     check_vulnerabilities : bool = None):
+
+        """
+        Extract and add requirements from the module.
+        """
+
+        if cli_module_filepath is None:
+            cli_module_filepath = self.cli_module_filepath
+
+        if module_name is None:
+            module_name = self.module_name
+
+        if custom_modules is None:
+            custom_modules = []
+
+        if os.path.exists(cli_module_filepath) \
+                and os.path.isfile(cli_module_filepath):
+
+            self._add_requirements(
+                module_filepath = cli_module_filepath,
+                custom_modules = custom_modules + [module_name],
+                import_mappings = import_mappings,
+                check_vulnerabilities = check_vulnerabilities,
+                add_header = False
+            )
+
     def add_readme(self,
                     example_notebook_path : str = None,
                     output_path : str = None,
@@ -2300,6 +2411,7 @@ class PackageAutoAssembler:
         """
         Make README file based on usage example.
         """
+
 
         if self.long_doc_h is None:
             self._initialize_long_doc_handler()
@@ -2310,6 +2422,8 @@ class PackageAutoAssembler:
         if output_path is None:
             output_path = os.path.join(self.setup_directory,
                                        "README.md")
+
+        self.logger.info(f"Adding README from {example_notebook_path} to {output_path}")
 
         if execute_notebook is None:
             execute_notebook = self.execute_readme_notebook
@@ -2331,6 +2445,7 @@ class PackageAutoAssembler:
                        module_name : str = None,
                        cli_module_filepath : str = None,
                        metadata : dict = None,
+                       cli_metadata : dict = None,
                        requirements : str = None,
                        classifiers : list = None,
                        module_filepath : str = None,
@@ -2340,6 +2455,8 @@ class PackageAutoAssembler:
         Assemble setup.py file.
         """
 
+        self.logger.info(f"Preparing setup file for {module_name} package ...")
+
         if self.setup_dir_h is None:
             self._initialize_setup_dir_handler()
 
@@ -2348,6 +2465,9 @@ class PackageAutoAssembler:
 
         if metadata is None:
             metadata = self.metadata
+
+        if cli_metadata is None:
+            cli_metadata = self.cli_metadata
 
         if requirements is None:
             requirements = self.requirements_list
@@ -2388,6 +2508,7 @@ class PackageAutoAssembler:
         self.setup_dir_h.write_setup_file(module_name = module_name,
                                           module_docstring = module_docstring,
                                           metadata = metadata,
+                                          cli_metadata = cli_metadata,
                                           requirements = requirements,
                                           classifiers = classifiers,
                                           add_cli_tool = add_cli_tool)
@@ -2401,6 +2522,8 @@ class PackageAutoAssembler:
 
         if setup_directory is None:
             setup_directory = self.setup_directory
+
+        self.logger.info(f"Making package from {setup_directory} ...")
 
         # Define the command as a list of arguments
         command = ["python", os.path.join(setup_directory, "setup.py"), "sdist", "bdist_wheel"]
@@ -2420,6 +2543,8 @@ class PackageAutoAssembler:
 
         if module_name is None:
             module_name = self.module_name
+
+        self.logger.info(f"Test installing {module_name} package ...")
 
         # Reinstall the module from the wheel file
         wheel_files = [f for f in os.listdir('dist') if f.endswith('-py3-none-any.whl')]
