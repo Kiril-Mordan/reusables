@@ -13,7 +13,6 @@ execute_notebook = True
 if module_name in ['parameterframe', 'package_auto_assembler']:
     execute_notebook = False
 
-
 paa = PackageAutoAssembler(
     # required
     module_name = f"{module_name}",

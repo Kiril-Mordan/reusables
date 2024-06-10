@@ -1,5 +1,21 @@
 # Release notes
 
+### 0.2.2
+
+    - minor fixes for requirements extraction in preparations for cli packaging
+
+### 0.2.1
+
+    - initial cli interface for packaging
+
+### 0.1.7
+
+    - fix that skips cli packaging if cli file does not exist
+
+### 0.1.6
+
+    - initial cli scripts support
+
 ### 0.1.5
 
     - mkdocs handler to build package documentation

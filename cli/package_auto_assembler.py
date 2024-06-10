@@ -2,12 +2,13 @@ import logging
 import os
 import click
 import yaml
-
 from package_auto_assembler.package_auto_assembler import PackageAutoAssembler
+
 
 __cli_metadata__ = {
     "name" : "paa"
 }
+
 
 @click.group()
 @click.pass_context

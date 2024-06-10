@@ -8,22 +8,6 @@ Google Drive API Utilities Module
 This module provides a set of functions for interacting with the Google Drive API.
 It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
 
-[module](../python_modules/package_auto_assembler.py) | [usage](../docs/package_auto_assembler.md) | [drawio: -flow](../docs/package_auto_assembler-flow.png) | [drawio: -usage](../docs/package_auto_assembler-usage.png) | [release notes](../release_notes/package_auto_assembler.md) | [![PyPiVersion](https://img.shields.io/pypi/v/package-auto-assembler)](https://pypi.org/project/package-auto-assembler/) - Package auto assembler 
-
-Package auto assembler is a tool that meant to streamline creation of single module packages.
-Its purpose is to automate as many aspects of python package creation as possible,
-to shorten a development cycle of reusable components, maintain certain standard of quality
-for reusable code. It provides tool to simplify the process of package creatrion
-to a point that it can be triggered automatically within ci/cd pipelines,
-with minimal preparations and requirements for new modules.
-
-[module](../python_modules/parameterframe.py) | [usage](../docs/parameterframe.md) | [drawio: -flow](../docs/parameterframe-flow.png) | [drawio: -schema](../docs/parameterframe-schema.png) | [drawio: -usage](../docs/parameterframe-usage.png) | [release notes](../release_notes/parameterframe.md) | [![PyPiVersion](https://img.shields.io/pypi/v/parameterframe)](https://pypi.org/project/parameterframe/) - Parameterframe 
-
-Parameterframe
-
-The module provides an interface for managing solution parameters.
-It allows for the structured storage and retrieval of parameter sets from a database.
-
 [module](../python_modules/comparisonframe.py) | [usage](../docs/comparisonframe.md) | [plantuml](../docs/comparisonframe_plantuml.png) - Comparisonframe 
 
 Comparison Frame
@@ -33,28 +17,6 @@ such as character and word count, punctuation usage, and semantic similarity.
 It's particularly useful for scenarios where consistent text analysis is required,
 such as evaluating the performance of natural language processing models, monitoring content quality,
 or tracking changes in textual data over time using manual evaluation.
-
-[module](../python_modules/shouterlog.py) | [usage](../docs/shouterlog.md) | [![PyPiVersion](https://img.shields.io/pypi/v/shouterlog)](https://pypi.org/project/shouterlog/) - Shouterlog 
-
-Shouter Log
-
-This class uses the logging module to create and manage a logger for displaying formatted messages.
-It provides a method to output various types of lines and headers, with customizable message and line lengths.
-The purpose is to be integrated into other classes that also use logger.
-
-[module](../python_modules/gridlooper.py) | [usage](../docs/gridlooper.md) | [drawio: -flow](../docs/gridlooper-flow.png) | [release notes](../release_notes/gridlooper.md) | [![PyPiVersion](https://img.shields.io/pypi/v/gridlooper)](https://pypi.org/project/gridlooper/) - Gridlooper 
-
-Grid Looper
-
-A tool to run experiments based on defined grid and function with single iteration.
-
-[module](../python_modules/mocker_db.py) | [usage](../docs/mocker_db.md) | [drawio: -flow](../docs/mocker_db-flow.png) | [release notes](../release_notes/mocker_db.md) | [![PyPiVersion](https://img.shields.io/pypi/v/mocker-db)](https://pypi.org/project/mocker-db/) - Mocker db 
-
-MockerDB
-
-A python module that contains mock vector database like solution built around
-dictionary data type. It contains methods necessary to interact with this 'database',
-embed, search and persist.
 
 [module](../python_modules/search_based_extractor.py) | [usage](../docs/search_based_extractor.md) - Search based extractor 
 

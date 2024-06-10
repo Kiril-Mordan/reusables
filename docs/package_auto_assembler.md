@@ -63,9 +63,7 @@ pv.get_versions(
 
 
 
-    {'another_new_package': '0.0.1',
-     'example_module': '0.0.1',
-     'new_package': '0.0.2'}
+    {'another_new_package': '0.0.1', 'new_package': '0.0.2'}
 
 
 
@@ -120,25 +118,19 @@ pv.get_logs(
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-01-06 00:54:04</td>
-      <td>example_module</td>
+      <td>2024-06-08 23:26:10</td>
+      <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-05-28 01:28:20</td>
-      <td>new_package</td>
-      <td>0.0.1</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>2024-05-28 01:28:20</td>
+      <td>2024-06-08 23:26:11</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
-      <th>3</th>
-      <td>2024-05-28 01:28:20</td>
+      <th>2</th>
+      <td>2024-06-08 23:26:11</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -220,7 +212,8 @@ rh = RequirementsHandler(
     requirements_output_path = "../tests/package_auto_assembler/",
     output_requirements_prefix = "requirements_",
     custom_modules_filepath = "../tests/package_auto_assembler/dependancies",
-    python_version = '3.8'
+    python_version = '3.8',
+    add_header = True
 )
 ```
 
@@ -237,7 +230,7 @@ rh.list_custom_modules(
 
 
 
-    ['example_local_dependacy_2', 'example_local_dependacy_1']
+    ['example_local_dependacy_1', 'example_local_dependacy_2']
 
 
 
@@ -296,8 +289,21 @@ rh.extract_requirements(
                         'stdlib_list': 'stdlib-list',
                         'sklearn': 'scikit-learn',
                         'yaml': 'pyyaml'},
-    python_version = '3.8'
+    python_version = '3.8',
+    add_header=True
 )
+```
+
+
+
+
+    ['### example_module.py', 'attrs>=22.2.0']
+
+
+
+
+```python
+rh.requirements_list
 ```
 
 
@@ -719,7 +725,8 @@ paa = PackageAutoAssembler(
     python_version = "3.8",
     version_increment_type = "patch",
     default_version = "0.0.1",
-    check_vulnerabilities = True
+    check_vulnerabilities = True,
+    add_requirements_header = True
 )
 ```
 
@@ -746,9 +753,6 @@ paa.add_or_update_version(
     log_filepath = '../tests/package_auto_assembler/version_logs.csv'
 )
 ```
-
-    There are no known versions of 'example_module', 0.0.1 will be used!
-
 
 #### Prepare setup directory
 
@@ -786,7 +790,8 @@ paa.add_requirements_from_module(
                         'flask': 'Flask',
                         'stdlib_list': 'stdlib-list',
                         'sklearn': 'scikit-learn',
-                        'yaml': 'pyyaml'}
+                        'yaml': 'pyyaml',
+                        'git' : 'gitpython'}
 )
 ```
 
@@ -832,7 +837,7 @@ paa.prep_setup_file(
                 'description': 'Example module',
                 'keywords': ['python']},
     requirements = ['### example_module.py',
-                    'attr>=22.2.0'],
+                    'attrs>=22.2.0'],
     classifiers = ['Development Status :: 3 - Alpha',
                     'Intended Audience :: Developers',
                     'Intended Audience :: Science/Research',
@@ -841,7 +846,8 @@ paa.prep_setup_file(
                     'Programming Language :: Python :: 3.10',
                     'Programming Language :: Python :: 3.11',
                     'License :: OSI Approved :: MIT License',
-                    'Topic :: Scientific/Engineering']
+                    'Topic :: Scientific/Engineering'],
+    cli_module_filepath = "../tests/package_auto_assembler/cli.py"
 
 )
 ```
@@ -859,7 +865,7 @@ paa.make_package(
 
 
 
-    CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=0, stdout="running sdist\nrunning egg_info\nwriting example_module.egg-info/PKG-INFO\nwriting dependency_links to example_module.egg-info/dependency_links.txt\nwriting requirements to example_module.egg-info/requires.txt\nwriting top-level names to example_module.egg-info/top_level.txt\nreading manifest file 'example_module.egg-info/SOURCES.txt'\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nrunning check\ncreating example_module-0.0.1\ncreating example_module-0.0.1/example_module\ncreating example_module-0.0.1/example_module.egg-info\ncopying files to example_module-0.0.1...\ncopying example_module/__init__.py -> example_module-0.0.1/example_module\ncopying example_module/example_module.py -> example_module-0.0.1/example_module\ncopying example_module/setup.py -> example_module-0.0.1/example_module\ncopying example_module.egg-info/PKG-INFO -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/dependency_links.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/requires.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/top_level.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -> example_module-0.0.1/example_module.egg-info\nWriting example_module-0.0.1/setup.cfg\nCreating tar archive\nremoving 'example_module-0.0.1' (and everything under it)\nrunning bdist_wheel\nrunning build\nrunning build_py\ncopying example_module/example_module.py -> build/lib/example_module\ncopying example_module/__init__.py -> build/lib/example_module\ncopying example_module/setup.py -> build/lib/example_module\ninstalling to build/bdist.macosx-10.9-x86_64/wheel\nrunning install\nrunning install_lib\ncreating build/bdist.macosx-10.9-x86_64/wheel\ncreating build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/example_module.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/__init__.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/setup.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\nrunning install_egg_info\nCopying example_module.egg-info to build/bdist.macosx-10.9-x86_64/wheel/example_module-0.0.1-py3.9.egg-info\nrunning install_scripts\ncreating build/bdist.macosx-10.9-x86_64/wheel/example_module-0.0.1.dist-info/WHEEL\ncreating 'dist/example_module-0.0.1-py3-none-any.whl' and adding 'build/bdist.macosx-10.9-x86_64/wheel' to it\nadding 'example_module/__init__.py'\nadding 'example_module/example_module.py'\nadding 'example_module/setup.py'\nadding 'example_module-0.0.1.dist-info/METADATA'\nadding 'example_module-0.0.1.dist-info/WHEEL'\nadding 'example_module-0.0.1.dist-info/top_level.txt'\nadding 'example_module-0.0.1.dist-info/RECORD'\nremoving build/bdist.macosx-10.9-x86_64/wheel\n", stderr='warning: sdist: standard file not found: should have one of README, README.rst, README.txt, README.md\n\n/Users/insani_dei/miniconda3/envs/testenv/lib/python3.9/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.\n!!\n\n        ********************************************************************************\n        Please avoid running ``setup.py`` directly.\n        Instead, use pypa/build, pypa/installer or other\n        standards-based tools.\n\n        See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.\n        ********************************************************************************\n\n!!\n  self.initialize_options()\n')
+    CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=0, stdout="running sdist\nrunning egg_info\nwriting example_module.egg-info/PKG-INFO\nwriting dependency_links to example_module.egg-info/dependency_links.txt\nwriting entry points to example_module.egg-info/entry_points.txt\nwriting requirements to example_module.egg-info/requires.txt\nwriting top-level names to example_module.egg-info/top_level.txt\nreading manifest file 'example_module.egg-info/SOURCES.txt'\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nrunning check\ncreating example_module-0.0.1\ncreating example_module-0.0.1/example_module\ncreating example_module-0.0.1/example_module.egg-info\ncopying files to example_module-0.0.1...\ncopying example_module/__init__.py -> example_module-0.0.1/example_module\ncopying example_module/cli.py -> example_module-0.0.1/example_module\ncopying example_module/example_module.py -> example_module-0.0.1/example_module\ncopying example_module/setup.py -> example_module-0.0.1/example_module\ncopying example_module.egg-info/PKG-INFO -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/dependency_links.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/entry_points.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/requires.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/top_level.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -> example_module-0.0.1/example_module.egg-info\nWriting example_module-0.0.1/setup.cfg\ncreating dist\nCreating tar archive\nremoving 'example_module-0.0.1' (and everything under it)\nrunning bdist_wheel\nrunning build\nrunning build_py\ncopying example_module/example_module.py -> build/lib/example_module\ncopying example_module/__init__.py -> build/lib/example_module\ncopying example_module/setup.py -> build/lib/example_module\ncopying example_module/cli.py -> build/lib/example_module\ninstalling to build/bdist.macosx-10.9-x86_64/wheel\nrunning install\nrunning install_lib\ncreating build/bdist.macosx-10.9-x86_64/wheel\ncreating build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/example_module.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/__init__.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/setup.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/cli.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\nrunning install_egg_info\nCopying example_module.egg-info to build/bdist.macosx-10.9-x86_64/wheel/example_module-0.0.1-py3.9.egg-info\nrunning install_scripts\ncreating build/bdist.macosx-10.9-x86_64/wheel/example_module-0.0.1.dist-info/WHEEL\ncreating 'dist/example_module-0.0.1-py3-none-any.whl' and adding 'build/bdist.macosx-10.9-x86_64/wheel' to it\nadding 'example_module/__init__.py'\nadding 'example_module/cli.py'\nadding 'example_module/example_module.py'\nadding 'example_module/setup.py'\nadding 'example_module-0.0.1.dist-info/METADATA'\nadding 'example_module-0.0.1.dist-info/WHEEL'\nadding 'example_module-0.0.1.dist-info/entry_points.txt'\nadding 'example_module-0.0.1.dist-info/top_level.txt'\nadding 'example_module-0.0.1.dist-info/RECORD'\nremoving build/bdist.macosx-10.9-x86_64/wheel\n", stderr='warning: sdist: standard file not found: should have one of README, README.rst, README.txt, README.md\n\n/Users/insani_dei/miniconda3/envs/testenv/lib/python3.9/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.\n!!\n\n        ********************************************************************************\n        Please avoid running ``setup.py`` directly.\n        Instead, use pypa/build, pypa/installer or other\n        standards-based tools.\n\n        See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.\n        ********************************************************************************\n\n!!\n  self.initialize_options()\n')
 
 
 

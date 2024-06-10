@@ -1,9 +1,9 @@
 ### package_auto_assembler.py
 nbconvert
-pyyaml
-attrs>=22.2.0
 pip_audit==2.7.3
-nbformat
-pandas
-stdlib-list
 requests
+pyyaml
+nbformat
+stdlib-list
+attrs>=22.2.0
+pandas
