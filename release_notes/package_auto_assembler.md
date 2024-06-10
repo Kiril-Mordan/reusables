@@ -1,5 +1,11 @@
 # Release notes
 
+### 0.2.4
+
+    - cli handler depiction in flow diagram
+
+    - cli name change to paa
+
 ### 0.2.3
 
     - initial docs for cli intefrace
