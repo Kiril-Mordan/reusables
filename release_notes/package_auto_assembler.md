@@ -1,5 +1,15 @@
 # Release notes
 
+### 0.2.3
+
+    - initial docs for cli intefrace
+
+    - initial  metadata extraction from cli modules to change their cli usage names from default
+
+    - splitting package into test-install and make-package
+
+    - adding method to initialize config
+
 ### 0.2.2
 
     - minor fixes for requirements extraction in preparations for cli packaging
