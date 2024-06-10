@@ -14,7 +14,6 @@ on:
 
 
 jobs:
-
   publish:
     runs-on: ubuntu-latest
     steps:
@@ -38,9 +37,11 @@ jobs:
           fi
 
       - name: Install jq
+        if: steps.changed-modules.outputs.files != ''
         run: sudo apt-get update && sudo apt-get install jq
 
       - name: Set up Python 3.10
+        if: steps.changed-modules.outputs.files != ''
         uses: actions/setup-python@v2
         with:
           python-version: '3.10'
@@ -121,4 +122,6 @@ jobs:
           else
             echo "No changes to commit"
           fi
+      - name: Wait for next workflow
+        run: sleep 10
 

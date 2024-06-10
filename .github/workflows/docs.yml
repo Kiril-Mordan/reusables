@@ -6,9 +6,9 @@ on:
   #     - main
   workflow_dispatch:
   workflow_run:
-      workflows: ["Generate PlantUML Diagrams"]
-      types:
-        - completed
+    workflows: ["Generate PlantUML Diagrams"]
+    types:
+      - completed
 
 jobs:
   documentation:
@@ -79,9 +79,9 @@ jobs:
           git pull origin HEAD:main
           git add docs README.md
           # Check if there are any changes in the working directory
-          if [ -n "$(git status --porcelain)" ]; then
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
             git commit -m "Update README"
             git push
-          else
-            echo "No changes to commit"
           fi
