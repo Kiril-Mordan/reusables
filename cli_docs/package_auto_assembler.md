@@ -1,6 +1,6 @@
 
 ``` bash
-package_auto_assembler --help
+paa --help
 ```
 
 ```
@@ -20,7 +20,7 @@ Commands:
 Creating config file could be useful to avoid providing parameters manually. If no config file will be provided, by default values from `.paa_config` will be used.
 
 ``` bash
-package_auto_assembler init-config  --help
+paa init-config  --help
 ```
 
 ```
@@ -35,7 +35,7 @@ Options:
 Making package based on provided parameters can be useful in ci/cd pipelines to streamline creation of packages before publishing from something that could be as simple as `.py` file.
 
 ``` bash
-package_auto_assembler make-package --help
+paa make-package --help
 ```
 
 ```
@@ -71,7 +71,7 @@ Options:
 Installing packages for a test in local environemnts could be a useful step to make sure everything works as expected before pushing changes to publishing repo. This creates an instance of the package in local environment with default version, with a greatly simplified building process that avoids making documentationm, versioning and so on.
 
 ``` bash
-package_auto_assembler test-install [OPTIONS] MODULE_NAME
+paa test-install [OPTIONS] MODULE_NAME
 ```
 
 ```

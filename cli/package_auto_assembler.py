@@ -15,7 +15,6 @@ def cli(ctx):
     """Package Auto Assembler CLI tool."""
     ctx.ensure_object(dict)
 
-
 test_install_config = {
         "module_dir" : "python_modules",
         "cli_dir" : "cli",
