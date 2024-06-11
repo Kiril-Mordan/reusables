@@ -47,6 +47,7 @@ jobs:
           format: png
           transparent: true
           output: docs
+          scale: 2
 
       - name: Create and activate virtual environment
         run: |

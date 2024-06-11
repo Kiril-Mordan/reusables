@@ -2292,17 +2292,18 @@ class PackageAutoAssembler:
         if save_filepath is None:
             save_filepath = os.path.join(self.setup_directory, os.path.basename(main_module_filepath))
 
-        self.logger.info(f"Merging {main_module_filepath} with dependecies from {dependencies_dir} into {save_filepath}")
+        if dependencies_dir:
+            self.logger.info(f"Merging {main_module_filepath} with dependecies from {dependencies_dir} into {save_filepath}")
 
-        # combime module with its dependacies
-        self.local_dependacies_h.save_combined_modules(
-            combined_module=self.local_dependacies_h.combine_modules(main_module_filepath = main_module_filepath,
-                                                                     dependencies_dir = dependencies_dir),
-            save_filepath=save_filepath
-        )
+            # combime module with its dependacies
+            self.local_dependacies_h.save_combined_modules(
+                combined_module=self.local_dependacies_h.combine_modules(main_module_filepath = main_module_filepath,
+                                                                        dependencies_dir = dependencies_dir),
+                save_filepath=save_filepath
+            )
 
-        # switch filepath for the combined one
-        self.module_filepath = save_filepath
+            # switch filepath for the combined one
+            self.module_filepath = save_filepath
 
     def _add_requirements(self,
                             module_filepath : str = None,
