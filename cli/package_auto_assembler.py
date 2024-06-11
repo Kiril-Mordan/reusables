@@ -45,7 +45,7 @@ test_install_config = {
 def init_config(ctx):
     """Initialize config file"""
 
-    config = ".paa_config"
+    config = ".paa.config"
 
     if not os.path.exists(config):
         with open(config, 'w', encoding='utf-8') as file:
@@ -64,7 +64,6 @@ def init_config(ctx):
 @click.option('--module-filepath', 'module_filepath', type=str, required=False, help='Path to .py file to be packaged.')
 @click.option('--mapping-filepath', 'mapping_filepath', type=str, required=False, help='Path to .json file that maps import to install dependecy names.')
 @click.option('--cli-module-filepath', 'cli_module_filepath',  type=str, required=False, help='Path to .py file that contains cli logic.')
-@click.option('--include-local-dependecies', 'include_local_dependecies', is_flag=True, type=bool, required=False, help='If True, local dependecies will be packaged.')
 @click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
 @click.option('--default-version', 'default_version', type=str, required=False, help='Default version.')
 @click.option('--check-vulnerabilities', 'check_vulnerabilities', is_flag=True, type=bool, required=False, help='If checked, checks module dependencies with pip-audit for vulnerabilities.')
@@ -76,7 +75,6 @@ def test_install(ctx,
         module_filepath,
         mapping_filepath,
         cli_module_filepath,
-        include_local_dependecies,
         dependencies_dir,
         default_version,
         check_vulnerabilities,
@@ -85,7 +83,7 @@ def test_install(ctx,
 
 
     if config is None:
-        config = ".paa_config"
+        config = ".paa.config"
 
     if os.path.exists(config):
         with open(config, 'r') as file:
@@ -113,9 +111,6 @@ def test_install(ctx,
     if mapping_filepath:
         paa_params["mapping_filepath"] = mapping_filepath
 
-    if include_local_dependecies is False:
-        include_local_dependecies = test_install_config["include_local_dependecies"]
-
     if dependencies_dir:
         paa_params["dependencies_dir"] = dependencies_dir
 
@@ -142,6 +137,10 @@ def test_install(ctx,
         paa.metadata['version'] = paa.default_version
 
         paa.prep_setup_dir()
+
+        if test_install_config["include_local_dependecies"]:
+            paa.merge_local_dependacies()
+
         paa.add_requirements_from_module()
         paa.add_requirements_from_cli_module()
 
@@ -161,7 +160,6 @@ def test_install(ctx,
 @click.option('--module-filepath', 'module_filepath', type=str, required=False, help='Path to .py file to be packaged.')
 @click.option('--mapping-filepath', 'mapping_filepath', type=str, required=False, help='Path to .json file that maps import to install dependecy names.')
 @click.option('--cli-module-filepath', 'cli_module_filepath',  type=str, required=False, help='Path to .py file that contains cli logic.')
-@click.option('--include-local-dependecies', 'include_local_dependecies', is_flag=True, type=bool, required=False, help='If checked, local dependecies will be packaged.')
 @click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
 @click.option('--kernel-name', 'kernel_name', type=str, required=False, help='Kernel name.')
 @click.option('--python-version', 'python_version', type=str, required=False, help='Python version.')
@@ -178,7 +176,6 @@ def make_package(ctx,
         module_filepath,
         mapping_filepath,
         cli_module_filepath,
-        include_local_dependecies,
         dependencies_dir,
         kernel_name,
         python_version,
@@ -192,7 +189,7 @@ def make_package(ctx,
 
 
     if config is None:
-        config = ".paa_config"
+        config = ".paa.config"
 
     if os.path.exists(config):
         with open(config, 'r') as file:
@@ -223,9 +220,6 @@ def make_package(ctx,
         paa_params["cli_module_filepath"] = cli_module_filepath
     if mapping_filepath:
         paa_params["mapping_filepath"] = mapping_filepath
-
-    if include_local_dependecies is False:
-        include_local_dependecies = test_install_config["include_local_dependecies"]
 
     if dependencies_dir:
         paa_params["dependencies_dir"] = dependencies_dir
@@ -261,6 +255,10 @@ def make_package(ctx,
         paa.add_metadata_from_cli_module()
         paa.add_or_update_version()
         paa.prep_setup_dir()
+
+        if test_install_config["include_local_dependecies"]:
+            paa.merge_local_dependacies()
+
         paa.add_requirements_from_module()
         paa.add_requirements_from_cli_module()
         paa.add_readme(execute_notebook = execute_notebook)

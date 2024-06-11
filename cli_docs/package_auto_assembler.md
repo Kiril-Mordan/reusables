@@ -17,7 +17,7 @@ Commands:
   test-install  Test install module for .py file in local environment
 ```
 
-Creating config file could be useful to avoid providing parameters manually. If no config file will be provided, by default values from `.paa_config` will be used.
+Creating config file could be useful to avoid providing parameters manually. If no config file will be provided, by default values from `.paa.config` will be used.
 
 ``` bash
 paa init-config  --help
@@ -49,8 +49,6 @@ Options:
   --mapping-filepath TEXT         Path to .json file that maps import to
                                   install dependecy names.
   --cli-module-filepath TEXT      Path to .py file that contains cli logic.
-  --include-local-dependecies     If checked, local dependecies will be
-                                  packaged.
   --dependencies-dir TEXT         Path to directory with local dependencies of
                                   the module.
   --kernel-name TEXT              Kernel name.
@@ -85,7 +83,6 @@ Options:
   --mapping-filepath TEXT      Path to .json file that maps import to install
                                dependecy names.
   --cli-module-filepath TEXT   Path to .py file that contains cli logic.
-  --include-local-dependecies  If True, local dependecies will be packaged.
   --dependencies-dir TEXT      Path to directory with local dependencies of
                                the module.
   --default-version TEXT       Default version.
