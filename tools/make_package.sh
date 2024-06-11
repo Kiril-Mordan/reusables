@@ -7,7 +7,7 @@ process_module() {
 
     echo "Assebling package for module: $module_name"
 
-    paa make-package "$module_name"
+    paa make-package "$module_name" --config .paa.config
 }
 
 for module_file in "$@"; do
