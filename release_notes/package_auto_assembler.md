@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.2.5
+
+    - minor fixes to local dependencies with cli
+
 ### 0.2.4
 
     - cli handler depiction in flow diagram
