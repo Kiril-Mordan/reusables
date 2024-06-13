@@ -1,7 +1,5 @@
 """
-Comparison Frame
-
-Designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
+Comparison Frame is designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
 such as character and word count, punctuation usage, and semantic similarity.
 It's particularly useful for scenarios where consistent text analysis is required,
 such as evaluating the performance of natural language processing models, monitoring content quality,
@@ -20,7 +18,13 @@ import attr #>=22.2.0
 from sentence_transformers import SentenceTransformer #==2.2.2
 from sklearn.metrics.pairwise import cosine_similarity #==1.3.1
 
-
+# Metadata for package creation
+__package_metadata__ = {
+    "author": "Kyrylo Mordan",
+    "author_email": "parachute.repo@gmail.com",
+    "description": "A simple tool to compare textual data against validation sets.",
+    # Add other metadata as needed
+}
 
 @attr.s
 class ComparisonFrame:
