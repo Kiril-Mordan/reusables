@@ -1,13 +1,14 @@
 requests
-sentence-transformers
 numpy
+sentence-transformers
+scikit-learn
 httpx
 google-auth-httplib2
 stdlib-list
-pandas
 hnswlib
-attrs
+pandas
 jupyter
+attrs
 nbformat
 tox
 mocker_db
@@ -24,6 +25,6 @@ pylint
 cryptography
 tqdm
 ipykernel
-dill
 package-auto-assembler
 python-dotenv
+dill
