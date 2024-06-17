@@ -8,11 +8,9 @@ Google Drive API Utilities Module
 This module provides a set of functions for interacting with the Google Drive API.
 It allows you to authenticate with the API, upload, download, and manage files and folders in Google Drive.
 
-[module](../python_modules/comparisonframe.py) | [usage](../docs/comparisonframe.md) | [plantuml](../docs/comparisonframe_plantuml.png) - Comparisonframe 
+[module](../python_modules/comparisonframe.py) | [usage](../docs/comparisonframe.md) | [plantuml](../docs/comparisonframe_plantuml.png) | [release notes](../release_notes/comparisonframe.md) | [![PyPiVersion](https://img.shields.io/pypi/v/comparisonframe)](https://pypi.org/project/comparisonframe/) - Comparisonframe 
 
-Comparison Frame
-
-Designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
+Comparison Frame is designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
 such as character and word count, punctuation usage, and semantic similarity.
 It's particularly useful for scenarios where consistent text analysis is required,
 such as evaluating the performance of natural language processing models, monitoring content quality,
