@@ -551,6 +551,9 @@ class RequirementsHandler:
 
         self.module_name = module_name
 
+        # Matches 'import module as alias' with optional version comment
+        import_pattern_as = re.compile(r"import (\S+)(?: as (\S+))?(?:\s+#(?:\s*(==|>=|<=|>|<)\s*([0-9.]+)))?")
+
         # Separate regex patterns for 'import' and 'from ... import ...' statements
         import_pattern = re.compile(r"import (\S+)(?:\s+#(?:\s*(==|>=|<=|>|<)\s*([0-9.]+)))?")
         #from_import_pattern = re.compile(r"from (\S+) import [^#]+#\s*(==|>=|<=|>|<)\s*([0-9.]+)")
@@ -567,11 +570,14 @@ class RequirementsHandler:
             for line in file:
                 import_match = import_pattern.match(line)
                 from_import_match = from_import_pattern.match(line)
+                import_as_match = import_pattern_as.match(line)
 
-                if import_match:
-                    module, version_constraint, version = import_match.groups()
+                if import_as_match:
+                    module, alias, version_constraint, version = import_as_match.groups()
                 elif from_import_match:
                     module, version_constraint, version = from_import_match.groups()
+                elif import_match:
+                    module, version_constraint, version = import_match.groups()
                 else:
                     continue
 
