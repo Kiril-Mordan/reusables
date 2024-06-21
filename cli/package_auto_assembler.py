@@ -1,4 +1,5 @@
 import logging
+import shutil
 import os
 import click
 import yaml
@@ -79,8 +80,9 @@ def test_install(ctx,
         default_version,
         check_vulnerabilities,
         keep_temp_files):
-    """Test install module for .py file in local environment"""
+    """Test install module into local environment."""
 
+    module_name = module_name.replace('-','_')
 
     if config is None:
         config = ".paa.config"
@@ -146,12 +148,12 @@ def test_install(ctx,
 
         paa.prep_setup_file()
         paa.make_package()
-        click.echo(f"Module {module_name} prepared as a package.")
+        click.echo(f"Module {module_name.replace('_','-')} prepared as a package.")
         paa.test_install_package(remove_temp_files = remove_temp_files)
-        click.echo(f"Module {module_name} installed in local environment, overwriting previous version!")
+        click.echo(f"Module {module_name.replace('_','-')} installed in local environment, overwriting previous version!")
 
     else:
-        paa.logger.info(f"Metadata condition was not fullfield for {module_name}")
+        paa.logger.info(f"Metadata condition was not fullfield for {module_name.replace('_','-')}")
 
 
 @click.command()
@@ -187,6 +189,7 @@ def make_package(ctx,
         versions_filepath):
     """Package with package-auto-assembler."""
 
+    module_name = module_name.replace('-','_')
 
     if config is None:
         config = ".paa.config"
@@ -264,14 +267,96 @@ def make_package(ctx,
         paa.add_readme(execute_notebook = execute_notebook)
         paa.prep_setup_file()
         paa.make_package()
-        click.echo(f"Module {module_name} prepared as a package.")
+        click.echo(f"Module {module_name.replace('_','-')} prepared as a package.")
 
     else:
-        paa.logger.info(f"Metadata condition was not fullfield for {module_name}")
+        paa.logger.info(f"Metadata condition was not fullfield for {module_name.replace('_','-')}")
+
+@click.command()
+@click.argument('module_name')
+@click.option('--config', type=str, required=False, help='Path to config file for paa.')
+@click.option('--module-filepath', 'module_filepath', type=str, required=False, help='Path to .py file to be packaged.')
+@click.option('--mapping-filepath', 'mapping_filepath', type=str, required=False, help='Path to .json file that maps import to install dependecy names.')
+@click.option('--cli-module-filepath', 'cli_module_filepath',  type=str, required=False, help='Path to .py file that contains cli logic.')
+@click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
+@click.pass_context
+def check_vulnerabilities(ctx,
+        config,
+        module_name,
+        module_filepath,
+        mapping_filepath,
+        cli_module_filepath,
+        dependencies_dir):
+    """Check vulnerabilities of the module."""
+
+    module_name = module_name.replace('-','_')
+
+    if config is None:
+        config = ".paa.config"
+
+    if os.path.exists(config):
+        with open(config, 'r') as file:
+            test_install_config_up = yaml.safe_load(file)
+
+        test_install_config.update(test_install_config_up)
+
+    test_install_config["loggerLvl"] = logging.INFO
+
+    paa_params = {
+        "module_name" : f"{module_name}",
+        "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
+        "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
+        "mapping_filepath" : test_install_config["mapping_filepath"],
+        "dependencies_dir" : test_install_config["dependencies_dir"],
+        "setup_directory" : f"./{module_name}",
+        "classifiers" : test_install_config["classifiers"],
+        "kernel_name" : test_install_config["kernel_name"],
+        "python_version" : test_install_config["python_version"],
+        "default_version" : test_install_config["default_version"],
+        "versions_filepath" : test_install_config["versions_filepath"],
+        "log_filepath" : test_install_config["log_filepath"],
+        "check_vulnerabilities" : True
+    }
+
+    if module_filepath:
+        paa_params["module_filepath"] = module_filepath
+    if cli_module_filepath:
+        paa_params["cli_module_filepath"] = cli_module_filepath
+    if mapping_filepath:
+        paa_params["mapping_filepath"] = mapping_filepath
+    if dependencies_dir:
+        paa_params["dependencies_dir"] = dependencies_dir
+
+    paa = PackageAutoAssembler(
+        **paa_params
+    )
+
+    if paa.metadata_h.is_metadata_available():
+
+
+        paa.add_metadata_from_module()
+        paa.add_metadata_from_cli_module()
+        paa.metadata['version'] = paa.default_version
+        paa.prep_setup_dir()
+
+        try:
+            if test_install_config["include_local_dependecies"]:
+                paa.merge_local_dependacies()
+
+            paa.add_requirements_from_module()
+            paa.add_requirements_from_cli_module()
+        except Exception as e:
+            print("")
+        finally:
+            shutil.rmtree(paa.setup_directory)
+
+    else:
+        paa.logger.info(f"Metadata condition was not fullfield for {module_name.replace('_','-')}")
 
 cli.add_command(init_config, "init-config")
 cli.add_command(test_install, "test-install")
 cli.add_command(make_package, "make-package")
+cli.add_command(check_vulnerabilities, "check-vulnerabilities")
 
 
 if __name__ == "__main__":

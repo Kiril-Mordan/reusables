@@ -21,6 +21,7 @@ import subprocess
 import shutil
 import pandas as pd #==2.1.1
 import yaml
+import numpy #==1.26.0
 import nbformat
 from nbconvert import MarkdownExporter
 from nbconvert.preprocessors import ExecutePreprocessor

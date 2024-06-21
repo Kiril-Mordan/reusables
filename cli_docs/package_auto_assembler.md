@@ -12,9 +12,10 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  init-config   Initialize config file
-  make-package  Package with package-auto-assembler.
-  test-install  Test install module for .py file in local environment
+  check-vulnerabilities  Check vulnerabilities of the module.
+  init-config            Initialize config file
+  make-package           Package with package-auto-assembler.
+  test-install           Test install module into local environment.
 ```
 
 Creating config file could be useful to avoid providing parameters manually. If no config file will be provided, by default values from `.paa.config` will be used.
@@ -91,4 +92,26 @@ Options:
   --keep-temp-files            If checked, setup directory won't be removed
                                after setup is done.
   --help                       Show this message and exit.
+```
+
+Checking vulnerabilities with `pip-audit` is usefull. This checks vulnerabilities of .py files and its local dependencies with `pip-audit`.
+
+``` bash
+paa check-vulnerabilities --help
+```
+
+```
+Usage: paa check-vulnerabilities [OPTIONS] MODULE_NAME
+
+  Check vulnerabilities of the module.
+
+Options:
+  --config TEXT               Path to config file for paa.
+  --module-filepath TEXT      Path to .py file to be packaged.
+  --mapping-filepath TEXT     Path to .json file that maps import to install
+                              dependecy names.
+  --cli-module-filepath TEXT  Path to .py file that contains cli logic.
+  --dependencies-dir TEXT     Path to directory with local dependencies of the
+                              module.
+  --help                      Show this message and exit.
 ```
