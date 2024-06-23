@@ -23,6 +23,7 @@ test_install_config = {
         "mapping_filepath" : "package_mapping.json",
         "include_local_dependecies" : True,
         "dependencies_dir" : None,
+        "release_notes_dir" : "./release_notes/",
         "example_notebooks_path" : "./example_notebooks/",
         "versions_filepath" : "lsts_package_versions.yml",
         "log_filepath" : "version_logs.csv",
@@ -38,7 +39,8 @@ test_install_config = {
         "kernel_name" : 'python3',
         "python_version" : "3.10",
         "default_version" : "0.0.0",
-        "version_increment_type" : "patch"
+        "version_increment_type" : "patch",
+        "use_commit_messages" : True
     }
 
 @click.command()
@@ -214,8 +216,13 @@ def make_package(ctx,
         "python_version" : test_install_config["python_version"],
         "default_version" : test_install_config["default_version"],
         "versions_filepath" : test_install_config["versions_filepath"],
-        "log_filepath" : test_install_config["log_filepath"]
+        "log_filepath" : test_install_config["log_filepath"],
+        "use_commit_messages" : test_install_config["use_commit_messages"]
     }
+
+    if test_install_config["release_notes_dir"]:
+        paa_params["release_notes_filepath"] = os.path.join(test_install_config["release_notes_dir"],
+                                                            f"{module_name}.md")
 
     if module_filepath:
         paa_params["module_filepath"] = module_filepath
@@ -257,6 +264,8 @@ def make_package(ctx,
         paa.add_metadata_from_module()
         paa.add_metadata_from_cli_module()
         paa.add_or_update_version()
+        if test_install_config["release_notes_dir"]:
+            paa.add_or_update_release_notes()
         paa.prep_setup_dir()
 
         if test_install_config["include_local_dependecies"]:
