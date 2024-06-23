@@ -4,7 +4,7 @@ import pytest
 @pytest.mark.parametrize("module_filepath,expected_requirements", [
     ("./tests/package_auto_assembler/test_module_1.py", ['### test_module_1.py',
  'dill==5.0.1',
- 'pandas',
+ 'pandas==2.1.1',
  'attrs>=22.2.0',
  'sentence-transformers==2.2.2',
  'scikit-learn==1.3.1']),
@@ -14,10 +14,10 @@ import pytest
  'google-api-python-client']),
 
  ("./tests/package_auto_assembler/test_module_3.py" , ['### test_module_3.py',
- 'numpy',
+ 'numpy==1.26.0',
  'dill==0.3.7',
  'attrs>=22.2.0',
- 'hnswlib',
+ 'hnswlib==0.8.0',
  'sentence-transformers==2.2.2']),
 
  ("./tests/package_auto_assembler/test_module_4.py" , ['### test_module_4.py',
@@ -25,7 +25,7 @@ import pytest
  'stdlib-list',
  'nbconvert',
  'pyyaml',
- 'pandas',
+ 'pandas==2.1.1',
  'attrs>=22.2.0']),
 
  ("./tests/package_auto_assembler/test_module_5.py" , ['### test_module_5.py', 'dill==0.3.7', 'attrs>=22.2.0'])
