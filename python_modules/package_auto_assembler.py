@@ -21,6 +21,7 @@ import subprocess
 import shutil
 import pandas as pd #==2.1.1
 import yaml
+import numpy #==1.26.0
 import nbformat
 from nbconvert import MarkdownExporter
 from nbconvert.preprocessors import ExecutePreprocessor
@@ -246,6 +247,7 @@ class VersionHandler:
 
     def increment_version(self,
                           package_name : str,
+                          version : str = None,
                           increment_type : str = None,
                           default_version : str = None):
 
@@ -260,17 +262,23 @@ class VersionHandler:
             increment_type = 'patch'
 
         if package_name in self.versions:
+
             prev_version = self.versions[package_name]
-            major, minor, patch = self._parse_version(prev_version)
+            if version is None:
+                major, minor, patch = self._parse_version(prev_version)
 
-            if increment_type == 'patch':
-                patch += 1
-            if increment_type == 'minor':
-                minor += 1
-            if increment_type == 'major':
-                major += 1
+                if increment_type == 'patch':
+                    patch += 1
+                if increment_type == 'minor':
+                    patch = 0
+                    minor += 1
+                if increment_type == 'major':
+                    patch = 0
+                    minor = 0
+                    major += 1
+                version = self._format_version(major, minor, patch)
 
-            new_version = self._format_version(major, minor, patch)
+            new_version = version
             self.update_version(package_name, new_version)
 
             self.logger.debug(f"Incremented {increment_type} of {package_name} \
@@ -1402,6 +1410,7 @@ class ReleaseNotesHandler:
     filtered_messages = attr.ib(default=None, type=list)
     processed_messages = attr.ib(default=None, type=list)
     processed_note_entries  = attr.ib(default=None, type=list)
+    version_update_label = attr.ib(default=None, type=str)
 
 
     logger = attr.ib(default=None)
@@ -1412,16 +1421,21 @@ class ReleaseNotesHandler:
     def __attrs_post_init__(self):
         self._initialize_logger()
 
-        if self.existing_contents is None:
-            self.existing_contents = self.get_release_notes_content()
+        if self.filepath:
+
+            self._initialize_notes()
+
+            if self.existing_contents is None:
+                self.existing_contents = self.get_release_notes_content()
+
         if self.commit_messages is None:
             self._get_commits_since_last_merge()
         if self.filtered_messages is not []:
             self._filter_commit_messages_by_package()
         if self.processed_messages is None:
             self._clean_and_split_commit_messages()
-        if self.processed_note_entries is None:
-            self._create_release_note_entry()
+        # if self.processed_note_entries is None:
+        #     self._create_release_note_entry()
 
 
     def _initialize_logger(self):
@@ -1436,6 +1450,15 @@ class ReleaseNotesHandler:
             logger.setLevel(self.loggerLvl)
 
             self.logger = logger
+
+    def _initialize_notes(self):
+
+        if not os.path.exists(self.filepath):
+            self.logger.warning(f"No release notes were found in {self.filepath}, new will be initialized!")
+
+            content = """# Release notes\n"""
+            with open(self.filepath, 'w', encoding='utf-8') as file:
+                file.write(content)
 
     def _deduplicate_with_exceptions(self,
                                      lst : list):
@@ -1553,11 +1576,65 @@ class ReleaseNotesHandler:
 
         self.processed_messages = cleaned_and_split_messages
 
+    # Function to convert version string to a tuple of integers
+    def _version_key(self, version : str):
+        return tuple(map(int, version.split('.')))
 
-    def _create_release_note_entry(self,
+    def extract_version_update(self, commit_messages : list = None):
+
+        """
+        Extract the second set of brackets and recognize version update.
+        """
+
+        if commit_messages is None:
+            commit_messages = self.filtered_messages
+
+        versions = []
+        major = None
+        minor = None
+        patch = None
+
+        for commit_message in commit_messages:
+            match = re.search(r'\[([^\]]+)]\[([^\]]+)]', commit_message)
+            if match:
+                second_bracket_content = match.group(2)
+                if re.match(r'^\d+\.\d+\.\d+$', second_bracket_content):
+                    version = second_bracket_content
+                    versions.append(version)
+                elif second_bracket_content in ['+','+.','+..']:
+                    major = 'major'
+                elif second_bracket_content in ['.+','.+.']:
+                    minor = 'minor'
+                elif second_bracket_content in ['..+']:
+                    patch = 'patch'
+
+        # Return the highest priority match
+        if versions:
+            # Sort the list using the custom key function
+            version = sorted(versions, key=self._version_key)[-1]
+
+            self.version = version
+            return version
+        elif major:
+            self.version_update_label = major
+            return major
+        elif minor:
+            self.version_update_label = minor
+            return minor
+        elif patch:
+            self.version_update_label = patch
+            return patch
+        else:
+            self.version_update_label = 'patch'
+            return patch
+
+    def create_release_note_entry(self,
                                   existing_contents : str = None,
                                   version : str = None,
                                   new_messages : list = None):
+
+        if self.processed_note_entries is not None:
+            self.logger.warning("Processed note entries already exist and will be overwritten!")
 
         if existing_contents is None:
             if self.existing_contents is not None:
@@ -2022,6 +2099,7 @@ class PackageAutoAssembler:
     versions_filepath = attr.ib(default='./lsts_package_versions.yml')
     log_filepath = attr.ib(default='./version_logs.csv')
     setup_directory = attr.ib(default='./setup_dir')
+    release_notes_filepath = attr.ib(default=None)
 
     # optional parameters
     classifiers = attr.ib(default=['Development Status :: 3 - Alpha',
@@ -2041,6 +2119,7 @@ class PackageAutoAssembler:
     kernel_name = attr.ib(default = 'python', type = str)
     check_vulnerabilities = attr.ib(default=True, type = bool)
     add_requirements_header = attr.ib(default=True, type = bool)
+    use_commit_messages = attr.ib(default=True, type = bool)
 
     ## handler classes
     setup_dir_h_class = attr.ib(default=SetupDirHandler)
@@ -2051,6 +2130,7 @@ class PackageAutoAssembler:
     metadata_h_class = attr.ib(default=MetadataHandler)
     long_doc_h_class = attr.ib(default=LongDocHandler)
     cli_h_class = attr.ib(default=CliHandler)
+    release_notes_h_class = attr.ib(default=ReleaseNotesHandler)
 
     ## handlers
     setup_dir_h = attr.ib(default = None, type = SetupDirHandler)
@@ -2061,6 +2141,7 @@ class PackageAutoAssembler:
     metadata_h = attr.ib(default = None, type=MetadataHandler)
     long_doc_h = attr.ib(default = None, type=LongDocHandler)
     cli_h = attr.ib(default = None, type=CliHandler)
+    release_notes_h = attr.ib(default = None, type=ReleaseNotesHandler)
 
     ## output
     cli_metadata = attr.ib(default={}, type = dict)
@@ -2176,6 +2257,21 @@ class PackageAutoAssembler:
             setup_directory = self.setup_directory,
             logger = self.logger)
 
+    def _initialize_release_notes_handler(self, version : str = None):
+
+        """
+        Initialize release notes handler with available parameters.
+        """
+
+        if version is None:
+            version = self.default_version
+
+        self.release_notes_h = self.release_notes_h_class(
+            filepath = self.release_notes_filepath,
+            label_name = self.module_name,
+            version = version,
+            logger = self.logger)
+
     def add_metadata_from_module(self, module_filepath : str = None):
 
         """
@@ -2226,14 +2322,33 @@ class PackageAutoAssembler:
                               version_increment_type : str = None,
                               version : str = None,
                               versions_filepath : str = None,
-                              log_filepath : str = None):
+                              log_filepath : str = None,
+                              use_commit_messages : bool = None):
 
         """
         Increment version and creates entry in version logs.
         """
 
+        self.logger.info(f"Incrementing version ...")
+
         if self.version_h is None:
             self._initialize_version_handler()
+
+        if use_commit_messages is None:
+            use_commit_messages = self.use_commit_messages
+
+        if use_commit_messages:
+            self._initialize_release_notes_handler(version = version)
+            self.release_notes_h.extract_version_update()
+
+            version_increment_type = self.release_notes_h.version_update_label
+
+            if self.release_notes_h.version != self.default_version:
+                version = self.release_notes_h.version
+
+        else:
+            version_increment_type = None
+
 
         if module_name is None:
             module_name = self.module_name
@@ -2241,22 +2356,47 @@ class PackageAutoAssembler:
         if version_increment_type is None:
             version_increment_type = self.version_increment_type
 
-        if version is None:
-            version = self.default_version
-
         if versions_filepath is None:
             versions_filepath = self.versions_filepath
 
         if log_filepath is None:
             log_filepath = self.log_filepath
 
-        self.logger.info(f"Incrementing version ...")
+
+
 
         self.version_h.increment_version(package_name = module_name,
-                                         increment_type = version_increment_type,
-                                         default_version = version)
+                                         version = version,
+                                        increment_type = version_increment_type,
+                                        default_version = version)
+        version = self.version_h.get_version(package_name=module_name)
 
-        self.metadata['version'] = self.version_h.get_version(package_name=module_name)
+        self.metadata['version'] = version
+        if self.release_notes_filepath:
+            self.release_notes_h.version = self.metadata['version']
+
+    def add_or_update_release_notes(self,
+                              filepath : str = None,
+                              version : str = None):
+
+        """
+        Increment version and creates entry in version logs.
+        """
+
+        self.logger.info(f"Updating release notes ...")
+
+        if self.release_notes_h is None:
+            self._initialize_release_notes_handler()
+
+        if filepath:
+            self.release_notes_h.filepath = filepath
+            self.release_notes_h._initialize_notes()
+
+        if version:
+            self.release_notes_h.version = version
+
+        self.release_notes_h.create_release_note_entry()
+        self.release_notes_h.save_release_notes()
 
     def prep_setup_dir(self):
 
