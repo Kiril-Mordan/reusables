@@ -1,5 +1,15 @@
 # Release notes
 
+### 0.3.1
+
+    - release notes integragration into version interation
+
+    - optional labels to interate version from commit messages
+
+    - fixes for initial release notes entry
+
+    - check-vulnerabilities with cli
+
 ### 0.2.6
 
     - fixes to requirements extraction from import .. as .. pattern
