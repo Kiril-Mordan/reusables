@@ -3,8 +3,8 @@ import shutil
 import yaml
 import click #==8.1.3
 from uvicorn import run as uvicorn_run #==0.29.0
-import fastapi #==0.109.0
-from git import Repo #==3.1.29
+import fastapi #==0.109.1
+from git import Repo #==3.1.41
 from mocker_db.mocker_db import MockerDB
 import appdirs #==1.4.3
 

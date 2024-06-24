@@ -1,5 +1,8 @@
 # Release notes
 
+### 0.1.2
+
+    - initital cli interface that allows to clone code from api version of mocker and run it
 
 ### 0.1.1
 
@@ -28,11 +31,13 @@
 ### 0.0.4
 
     - updating hnswlib 0.7.0 -> 0.8.0 to fix vulnerabilities issue
+
     - fixing a bug with resetting mocker inner state properly after search
 
 ### 0.0.3
 
     - slightly improving logic of embedding with batches in parallel for sentence transformer embedder (default embedder)
+
     - updating desciption
 
 ### 0.0.2

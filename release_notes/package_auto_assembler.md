@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.2.6
+
+    - fixes to requirements extraction from import .. as .. pattern
+
 ### 0.2.5
 
     - minor fixes to local dependencies with cli
