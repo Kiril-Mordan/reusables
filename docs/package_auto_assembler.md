@@ -694,7 +694,147 @@ sdh.write_setup_file(
 )
 ```
 
-### 8. Making a package
+### 8. Creating release notes from commit messages
+
+
+```python
+rnh = ReleaseNotesHandler(
+    # path to existing or new release notes file
+    filepath = '../tests/package_auto_assembler/release_notes.md',
+    # name of label in commit message [example_module] for filter
+    label_name = 'example_module',
+    # new version to be used in release notes
+    version = '0.0.1'
+)
+```
+
+    No release notes were found in ../tests/package_auto_assembler/release_notes.md, new will be initialized!
+    No relevant commit messages found!
+    ..trying depth 2 !
+    No relevant commit messages found!
+    No messages to clean were provided
+
+
+##### - overwritting commit messages from example
+
+
+```python
+# commit messages from last merge
+rnh.commit_messages
+```
+
+
+    ['fix to paa tests',
+     '[package_auto_assembler] check-vulnerabilities with cli',
+     '[mocker_db] initital cli interface that allows to clone code from api version of mocker and run it',
+     '[package_auto_assembler] fixes to requirements extraction from import .. as .. pattern',
+     'Update package version tracking files',
+     'Update requirements',
+     '[comparisonframe] initial version',
+     'preparing initial comparisonframe for packaging',
+     'Update package version tracking files',
+     'Update README',
+     'Update requirements']
+
+
+
+```python
+example_commit_messages = [
+    '[example_module] usage example for initial release notes; bugfixes for RNH',
+    '[BUGFIX] missing parameterframe usage example and reduntant png file',
+    '[example_module][0.1.2] initial release notes handler',
+    'Update README',
+    'Update requirements'
+]
+rnh.commit_messages = example_commit_messages
+```
+
+##### - internal methods that run on intialiazation of ReleaseNotesHandler
+
+
+```python
+# get messages relevant only for label
+rnh._filter_commit_messages_by_package()
+print("Example filtered_messaged:")
+print(rnh.filtered_messages)
+
+# clean messages
+rnh._clean_and_split_commit_messages()
+print("Example processed_messages:")
+print(rnh.processed_messages)
+```
+
+    Example filtered_messaged:
+    ['[example_module] usage example for initial release notes; bugfixes for RNH', '[example_module][0.1.2] initial release notes handler']
+    Example processed_messages:
+    ['usage example for initial release notes', 'bugfixes for RNH', 'initial release notes handler']
+
+
+##### - get version update from relevant messages
+
+
+```python
+version_update = rnh.extract_version_update()
+print(f"Example version_update: {version_update}")
+```
+
+    Example version_update: 0.1.2
+
+
+##### - augment existing release note with new entries or create new
+
+
+```python
+# augment existing release note with new entries or create new
+rnh.create_release_note_entry(
+    # optional
+    existing_contents=rnh.existing_contents,
+    version=rnh.version,
+    new_messages=rnh.processed_messages
+)
+print("Example processed_note_entries:")
+print(rnh.processed_note_entries)
+```
+
+    Example processed_note_entries:
+    ['# Release notes\n', '\n', '### 0.1.2\n', '\n', '    - usage example for initial release notes\n', '\n', '    - bugfixes for RNH\n', '\n', '    - initial release notes handler\n']
+
+
+##### - saving updated relese notes
+
+
+```python
+rnh.existing_contents
+```
+
+
+    ['# Release notes\n']
+
+
+
+```python
+rnh.save_release_notes()
+```
+
+
+```python
+# updated content
+rnh.get_release_notes_content()
+```
+
+
+    ['# Release notes\n',
+     '\n',
+     '### 0.1.2\n',
+     '\n',
+     '    - usage example for initial release notes\n',
+     '\n',
+     '    - bugfixes for RNH\n',
+     '\n',
+     '    - initial release notes handler\n']
+
+
+### 9. Making a package
 
 #### Initializing PackageAutoAssembler
 
@@ -711,6 +851,7 @@ paa = PackageAutoAssembler(
     versions_filepath = '../tests/package_auto_assembler/lsts_package_versions.yml',
     log_filepath = '../tests/package_auto_assembler/version_logs.csv',
     setup_directory = "./example_module",
+    release_notes_filepath = "../tests/package_auto_assembler/release_notes.md",
     classifiers = ['Development Status :: 3 - Alpha',
                     'Intended Audience :: Developers',
                     'Intended Audience :: Science/Research',
@@ -740,19 +881,40 @@ paa.add_metadata_from_module(
 )
 ```
 
+    Adding metadata ...
+
+
 #### Add or update version
 
 
 ```python
 paa.add_or_update_version(
+    # overwrites auto mode (not suggested)
+    version_increment_type = "patch",
+    version = "1.2.6",
     # optional
     module_name = "example_module",
-    version_increment_type = "patch",
-    version = "0.0.1",
     versions_filepath = '../tests/package_auto_assembler/lsts_package_versions.yml',
     log_filepath = '../tests/package_auto_assembler/version_logs.csv'
 )
 ```
+
+    Incrementing version ...
+
+
+#### Add release notes from commit messages
+
+
+```python
+paa.add_or_update_release_notes(
+    # optional
+    filepath="../tests/package_auto_assembler/release_notes.md",
+    version=paa.metadata['version']
+)
+```
+
+    Updating release notes ...
+
 
 #### Prepare setup directory
 
@@ -760,6 +922,9 @@ paa.add_or_update_version(
 ```python
 paa.prep_setup_dir()
 ```
+
+    Preparing setup directory ...
+
 
 #### Merge local dependacies
 
@@ -772,6 +937,9 @@ paa.merge_local_dependacies(
     save_filepath = "./example_module/example_module.py"
 )
 ```
+
+    Merging ../tests/package_auto_assembler/example_module.py with dependecies from ../tests/package_auto_assembler/dependancies/ into ./example_module/example_module.py
+
 
 #### Add requirements from module
 
@@ -795,6 +963,7 @@ paa.add_requirements_from_module(
 )
 ```
 
+    Adding requirements from ../tests/package_auto_assembler/example_module.py
     No known vulnerabilities found
     
 
@@ -826,6 +995,9 @@ paa.add_readme(
 )
 ```
 
+    Adding README from ../tests/package_auto_assembler/example_module.ipynb to ./example_module/README.md
+
+
 #### Prepare setup file
 
 
@@ -852,6 +1024,9 @@ paa.prep_setup_file(
 )
 ```
 
+    Preparing setup file for None package ...
+
+
 #### Make package
 
 
@@ -862,135 +1037,13 @@ paa.make_package(
 )
 ```
 
-
-
-
-    CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=0, stdout="running sdist\nrunning egg_info\nwriting example_module.egg-info/PKG-INFO\nwriting dependency_links to example_module.egg-info/dependency_links.txt\nwriting entry points to example_module.egg-info/entry_points.txt\nwriting requirements to example_module.egg-info/requires.txt\nwriting top-level names to example_module.egg-info/top_level.txt\nreading manifest file 'example_module.egg-info/SOURCES.txt'\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nrunning check\ncreating example_module-0.0.1\ncreating example_module-0.0.1/example_module\ncreating example_module-0.0.1/example_module.egg-info\ncopying files to example_module-0.0.1...\ncopying example_module/__init__.py -> example_module-0.0.1/example_module\ncopying example_module/cli.py -> example_module-0.0.1/example_module\ncopying example_module/example_module.py -> example_module-0.0.1/example_module\ncopying example_module/setup.py -> example_module-0.0.1/example_module\ncopying example_module.egg-info/PKG-INFO -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/dependency_links.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/entry_points.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/requires.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/top_level.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -> example_module-0.0.1/example_module.egg-info\nWriting example_module-0.0.1/setup.cfg\ncreating dist\nCreating tar archive\nremoving 'example_module-0.0.1' (and everything under it)\nrunning bdist_wheel\nrunning build\nrunning build_py\ncopying example_module/example_module.py -> build/lib/example_module\ncopying example_module/__init__.py -> build/lib/example_module\ncopying example_module/setup.py -> build/lib/example_module\ncopying example_module/cli.py -> build/lib/example_module\ninstalling to build/bdist.macosx-10.9-x86_64/wheel\nrunning install\nrunning install_lib\ncreating build/bdist.macosx-10.9-x86_64/wheel\ncreating build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/example_module.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/__init__.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/setup.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/cli.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\nrunning install_egg_info\nCopying example_module.egg-info to build/bdist.macosx-10.9-x86_64/wheel/example_module-0.0.1-py3.9.egg-info\nrunning install_scripts\ncreating build/bdist.macosx-10.9-x86_64/wheel/example_module-0.0.1.dist-info/WHEEL\ncreating 'dist/example_module-0.0.1-py3-none-any.whl' and adding 'build/bdist.macosx-10.9-x86_64/wheel' to it\nadding 'example_module/__init__.py'\nadding 'example_module/cli.py'\nadding 'example_module/example_module.py'\nadding 'example_module/setup.py'\nadding 'example_module-0.0.1.dist-info/METADATA'\nadding 'example_module-0.0.1.dist-info/WHEEL'\nadding 'example_module-0.0.1.dist-info/entry_points.txt'\nadding 'example_module-0.0.1.dist-info/top_level.txt'\nadding 'example_module-0.0.1.dist-info/RECORD'\nremoving build/bdist.macosx-10.9-x86_64/wheel\n", stderr='warning: sdist: standard file not found: should have one of README, README.rst, README.txt, README.md\n\n/Users/insani_dei/miniconda3/envs/testenv/lib/python3.9/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.\n!!\n\n        ********************************************************************************\n        Please avoid running ``setup.py`` directly.\n        Instead, use pypa/build, pypa/installer or other\n        standards-based tools.\n\n        See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.\n        ********************************************************************************\n\n!!\n  self.initialize_options()\n')
-
-
-
-### 9. Creating release notes from commit messages
-
-
-```python
-rnh = ReleaseNotesHandler(
-    # path to existing or new release notes file
-    filepath = '../tests/package_auto_assembler/release_notes.md',
-    # name of label in commit message [example_module] for filter
-    label_name = 'example_module',
-    # new version to be used in release notes
-    version = '0.0.2'
-)
-```
-
-    No relevant commit messages found!
-    ..trying depth 2 !
-    No relevant commit messages found!
-    No messages to clean were provided
-
-
-##### - overwritting commit messages from example
-
-
-```python
-# commit messages from last merge
-rnh.commit_messages
-```
+    Making package from ./example_module ...
 
 
 
 
-    ['slight changes to gh-pages workflow',
-     'adding package_auto_assembler to usage examples test run exceptions',
-     'updated gh-pages workflow',
-     'testing newer MkDocsHandler',
-     'updated workflows',
-     'package name parameter for gh-pages workflow']
 
-
-
-
-```python
-example_commit_messages = [
-    '[example_module] usage example for initial release notes; bugfixes for RNH',
-    '[BUGFIX] missing parameterframe usage example and reduntant png file',
-    '[example_module] initial release notes handler',
-    'Update README',
-    'Update requirements'
-]
-rnh.commit_messages = example_commit_messages
-```
-
-##### - internal methods that run on intialiazation of ReleaseNotesHandler
-
-
-```python
-# get messages relevant only for label
-rnh._filter_commit_messages_by_package()
-print("Example filtered_messaged:")
-print(rnh.filtered_messages)
-# clean messages
-rnh._clean_and_split_commit_messages()
-print("Example processed_messages:")
-print(rnh.processed_messages)
-# augment existing release note with new entries or create new
-rnh._create_release_note_entry()
-print("Example processed_note_entries:")
-print(rnh.processed_note_entries)
-```
-
-    Example filtered_messaged:
-    ['[example_module] usage example for initial release notes; bugfixes for RNH', '[example_module] initial release notes handler']
-    Example processed_messages:
-    ['usage example for initial release notes', 'bugfixes for RNH', 'initial release notes handler']
-    Example processed_note_entries:
-    ['# Release notes\n', '\n', '### 0.0.2\n', '\n', '    - usage example for initial release notes\n', '\n', '    - bugfixes for RNH\n', '\n', '    - initial release notes handler\n', '\n', '### 0.0.1\n', '\n', '    - initial version of example_module\n']
-
-
-##### - saving updated relese notes
-
-
-```python
-rnh.existing_contents
-```
-
-
-
-
-    ['# Release notes\n',
-     '\n',
-     '### 0.0.1\n',
-     '    - initial version of example_module\n']
-
-
-
-
-```python
-rnh.save_release_notes()
-```
-
-
-```python
-# updated content
-rnh.get_release_notes_content()
-```
-
-
-
-
-    ['# Release notes\n',
-     '\n',
-     '### 0.0.2\n',
-     '\n',
-     '    - usage example for initial release notes\n',
-     '\n',
-     '    - bugfixes for RNH\n',
-     '\n',
-     '    - initial release notes handler\n',
-     '\n',
-     '### 0.0.1\n',
-     '\n',
-     '    - initial version of example_module\n']
+    CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=0, stdout="running sdist\nrunning egg_info\ncreating example_module.egg-info\nwriting example_module.egg-info/PKG-INFO\nwriting dependency_links to example_module.egg-info/dependency_links.txt\nwriting entry points to example_module.egg-info/entry_points.txt\nwriting requirements to example_module.egg-info/requires.txt\nwriting top-level names to example_module.egg-info/top_level.txt\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nreading manifest file 'example_module.egg-info/SOURCES.txt'\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nrunning check\ncreating example_module-0.0.1\ncreating example_module-0.0.1/example_module\ncreating example_module-0.0.1/example_module.egg-info\ncopying files to example_module-0.0.1...\ncopying example_module/__init__.py -> example_module-0.0.1/example_module\ncopying example_module/cli.py -> example_module-0.0.1/example_module\ncopying example_module/example_module.py -> example_module-0.0.1/example_module\ncopying example_module/setup.py -> example_module-0.0.1/example_module\ncopying example_module.egg-info/PKG-INFO -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/dependency_links.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/entry_points.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/requires.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/top_level.txt -> example_module-0.0.1/example_module.egg-info\nWriting example_module-0.0.1/setup.cfg\ncreating dist\nCreating tar archive\nremoving 'example_module-0.0.1' (and everything under it)\nrunning bdist_wheel\nrunning build\nrunning build_py\ncreating build\ncreating build/lib\ncreating build/lib/example_module\ncopying example_module/example_module.py -> build/lib/example_module\ncopying example_module/__init__.py -> build/lib/example_module\ncopying example_module/setup.py -> build/lib/example_module\ncopying example_module/cli.py -> build/lib/example_module\ninstalling to build/bdist.macosx-10.9-x86_64/wheel\nrunning install\nrunning install_lib\ncreating build/bdist.macosx-10.9-x86_64\ncreating build/bdist.macosx-10.9-x86_64/wheel\ncreating build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/example_module.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/__init__.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/setup.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/cli.py -> build/bdist.macosx-10.9-x86_64/wheel/example_module\nrunning install_egg_info\nCopying example_module.egg-info to build/bdist.macosx-10.9-x86_64/wheel/example_module-0.0.1-py3.9.egg-info\nrunning install_scripts\ncreating build/bdist.macosx-10.9-x86_64/wheel/example_module-0.0.1.dist-info/WHEEL\ncreating 'dist/example_module-0.0.1-py3-none-any.whl' and adding 'build/bdist.macosx-10.9-x86_64/wheel' to it\nadding 'example_module/__init__.py'\nadding 'example_module/cli.py'\nadding 'example_module/example_module.py'\nadding 'example_module/setup.py'\nadding 'example_module-0.0.1.dist-info/METADATA'\nadding 'example_module-0.0.1.dist-info/WHEEL'\nadding 'example_module-0.0.1.dist-info/entry_points.txt'\nadding 'example_module-0.0.1.dist-info/top_level.txt'\nadding 'example_module-0.0.1.dist-info/RECORD'\nremoving build/bdist.macosx-10.9-x86_64/wheel\n", stderr='warning: sdist: standard file not found: should have one of README, README.rst, README.txt, README.md\n\n/Users/insani_dei/miniconda3/envs/testenv/lib/python3.9/site-packages/setuptools/command/install.py:34: SetuptoolsDeprecationWarning: setup.py install is deprecated. Use build and pip and other standards-based tools.\n  warnings.warn(\n')
 
 
 
