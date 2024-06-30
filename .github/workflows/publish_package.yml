@@ -99,8 +99,6 @@ jobs:
 
           LABEL_NAME=$(basename "${{ steps.changed-modules.outputs.files }}" .py)
 
-          python tools/update_release_notes.py "$LABEL_NAME" "$PACKAGE_VERSION"
-
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
