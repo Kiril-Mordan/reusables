@@ -1,7 +1,6 @@
 requests
-numpy
 sentence-transformers
-scikit-learn
+numpy
 httpx
 google-auth-httplib2
 stdlib-list
@@ -11,8 +10,8 @@ jupyter
 attrs
 nbformat
 tox
-mocker_db
 pytest
+mocker_db
 gridlooper
 openai
 pyyaml
