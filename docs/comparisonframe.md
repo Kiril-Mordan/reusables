@@ -1,10 +1,3 @@
-# Comparison Frame
-
-Utility designed to automate and streamline the process of comparing textual data with a use of various metrics
-such as character and word count, punctuation usage, and semantic similarity. Allow to not only compare results but also store validation data and test statuses.
-
-
-
 ```python
 import sys
 sys.path.append('../')
@@ -26,97 +19,22 @@ The examples contain:
 
 ```python
 comparer = ComparisonFrame(
-    # optionally 
-    ## provide name of the model from sentence_transformer package
-    model_name = "all-mpnet-base-v2",
+    # optionally
     ## provide filenames to persist state
     record_file = "record_file.csv",  # file where queries and expected results are stored
     results_file = "comparison_results.csv", # file where comparison results will be stored
-    embeddings_file = "embeddings.dill",
-    ## provide soup for scraping if was already defined externally
-    embedder = None
 )
 ```
-
-    INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: all-mpnet-base-v2
-
-
-
-    .gitattributes:   0%|          | 0.00/1.18k [00:00<?, ?B/s]
-
-
-
-    1_Pooling/config.json:   0%|          | 0.00/190 [00:00<?, ?B/s]
-
-
-
-    README.md:   0%|          | 0.00/10.6k [00:00<?, ?B/s]
-
-
-
-    config.json:   0%|          | 0.00/571 [00:00<?, ?B/s]
-
-
-
-    config_sentence_transformers.json:   0%|          | 0.00/116 [00:00<?, ?B/s]
-
-
-
-    data_config.json:   0%|          | 0.00/39.3k [00:00<?, ?B/s]
-
-
-
-    pytorch_model.bin:   0%|          | 0.00/438M [00:00<?, ?B/s]
-
-
-
-    sentence_bert_config.json:   0%|          | 0.00/53.0 [00:00<?, ?B/s]
-
-
-
-    special_tokens_map.json:   0%|          | 0.00/239 [00:00<?, ?B/s]
-
-
-
-    tokenizer.json:   0%|          | 0.00/466k [00:00<?, ?B/s]
-
-
-
-    tokenizer_config.json:   0%|          | 0.00/363 [00:00<?, ?B/s]
-
-
-
-    train_script.py:   0%|          | 0.00/13.1k [00:00<?, ?B/s]
-
-
-
-    vocab.txt:   0%|          | 0.00/232k [00:00<?, ?B/s]
-
-
-
-    modules.json:   0%|          | 0.00/349 [00:00<?, ?B/s]
-
-
-    INFO:sentence_transformers.SentenceTransformer:Use pytorch device: cpu
-
 
 #### 1.2 Recording queries and expected responses (validation set)
 
 
 ```python
-comparer.record_query(query = "Black metal", 
+comparer.record_query(query = "Black metal",
                       expected_text = "Black metal is an extreme subgenre of heavy metal music.")
-comparer.record_query(query = "Tribulation", 
+comparer.record_query(query = "Tribulation",
                       expected_text = "Tribulation are a Swedish heavy metal band from Arvika that formed in 2005.")
 ```
-
-
-    Batches:   0%|          | 0/1 [00:00<?, ?it/s]
-
-
-
-    Batches:   0%|          | 0/1 [00:00<?, ?it/s]
-
 
 ### 2. Comparing with expected results
 
@@ -126,10 +44,6 @@ comparer.record_query(query = "Tribulation",
 ```python
 comparer = ComparisonFrame()
 ```
-
-    INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: all-mpnet-base-v2
-    INFO:sentence_transformers.SentenceTransformer:Use pytorch device: cpu
-
 
 ### 2.2 Show validation set
 
@@ -182,7 +96,7 @@ comparer.get_all_records()
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>2023-12-17 22:03:14</td>
+      <td>2024-07-01 02:22:37</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>no</td>
@@ -191,7 +105,7 @@ comparer.get_all_records()
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>2023-12-17 22:03:15</td>
+      <td>2024-07-01 02:22:37</td>
       <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
       <td>no</td>
@@ -215,40 +129,16 @@ unexpected_answer_query_1 = "Black metals are beautiful and are often used in je
 
 ```python
 # with no entry to records
-comparer.compare_with_record(query = "Black metal", 
-                             provided_text = valid_answer_query_1, 
+comparer.compare_with_record(query = "Black metal",
+                             provided_text = valid_answer_query_1,
                              mark_as_tested=False)
-comparer.compare_with_record(query = "Black metal", 
-                             provided_text = very_similar_answer_query_1, 
+comparer.compare_with_record(query = "Black metal",
+                             provided_text = very_similar_answer_query_1,
                              mark_as_tested=False)
-comparer.compare_with_record(query = "Black metal", 
-                             provided_text = unexpected_answer_query_1, 
+comparer.compare_with_record(query = "Black metal",
+                             provided_text = unexpected_answer_query_1,
                              mark_as_tested=False)
 ```
-
-
-    Batches:   0%|          | 0/1 [00:00<?, ?it/s]
-
-
-
-    Batches:   0%|          | 0/1 [00:00<?, ?it/s]
-
-
-
-    Batches:   0%|          | 0/1 [00:00<?, ?it/s]
-
-
-
-    Batches:   0%|          | 0/1 [00:00<?, ?it/s]
-
-
-
-    Batches:   0%|          | 0/1 [00:00<?, ?it/s]
-
-
-
-    Batches:   0%|          | 0/1 [00:00<?, ?it/s]
-
 
 #### 2.4 Check comparison results
 
@@ -309,7 +199,7 @@ comparer.get_comparison_results()
       <td>1</td>
       <td>0</td>
       <td>0</td>
-      <td>0.974236</td>
+      <td>0.985985</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>Black metal is a subgenre of heavy metal music.</td>
       <td>1</td>
@@ -321,7 +211,7 @@ comparer.get_comparison_results()
       <td>1</td>
       <td>0</td>
       <td>0</td>
-      <td>0.499244</td>
+      <td>0.494053</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>Black metals are beautiful and are often used ...</td>
       <td>1</td>
@@ -336,18 +226,10 @@ comparer.get_comparison_results()
 
 
 ```python
-comparer.compare_with_record(query = "Black metal", 
-                             provided_text = very_similar_answer_query_1, 
+comparer.compare_with_record(query = "Black metal",
+                             provided_text = very_similar_answer_query_1,
                              mark_as_tested=True)
 ```
-
-
-    Batches:   0%|          | 0/1 [00:00<?, ?it/s]
-
-
-
-    Batches:   0%|          | 0/1 [00:00<?, ?it/s]
-
 
 
 ```python
@@ -387,7 +269,7 @@ comparer.get_all_records()
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>2023-12-17 22:03:14</td>
+      <td>2024-07-01 02:22:37</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>yes</td>
@@ -396,7 +278,7 @@ comparer.get_all_records()
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>2023-12-17 22:03:15</td>
+      <td>2024-07-01 02:22:37</td>
       <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
       <td>no</td>
@@ -458,7 +340,7 @@ comparer.get_all_records()
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>2023-12-17 22:03:14</td>
+      <td>2024-07-01 02:22:37</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>no</td>
@@ -467,7 +349,7 @@ comparer.get_all_records()
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>2023-12-17 22:03:15</td>
+      <td>2024-07-01 02:22:37</td>
       <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
       <td>no</td>
