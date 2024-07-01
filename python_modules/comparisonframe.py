@@ -12,11 +12,10 @@ import os
 import csv
 from collections import Counter
 from datetime import datetime #==5.2
-import dill #==5.0.1
+import dill #==0.3.7
 import pandas as pd #==2.1.1
 import attr #>=22.2.0
-from sentence_transformers import SentenceTransformer #==2.2.2
-from sklearn.metrics.pairwise import cosine_similarity #==1.3.1
+from mocker_db import MockerDB #==0.1.2
 
 # Metadata for package creation
 __package_metadata__ = {
@@ -30,73 +29,28 @@ __package_metadata__ = {
 class ComparisonFrame:
 
     """
-    Compares query:response pairs expected vs recieved with semantic similarity
-    and simple metrics of word count, line count etc.
-
-    ...
-
-    Attributes
-    ----------
-    embedder : SentenceTransformer
-        The model used to generate embeddings for semantic comparison.
-    record_file : str
-        The name of the CSV file where queries and expected results are stored.
-    results_file : str
-        The name of the CSV file where comparison results are stored.
-    embeddings_file : str
-        The name of the file where embeddings are stored.
-    margin_char_count_diff : int
-        The acceptable margin for character count difference.
-    margin_word_count_diff : int
-        The acceptable margin for word count difference.
-    margin_semantic_similarity : float
-        The minimum acceptable semantic similarity.
-
-    Methods
-    -------
-    record_query(query, expected_text, overwrite=True)
-        Records a new query and its expected result in the record file.
-    mark_query_as_tested(query, test_status)
-        Marks a query as tested and updates its test status in the record file.
-    save_embeddings(query, expected_text)
-        Saves the embeddings for the expected text of a query.
-    load_embeddings(query)
-        Loads the saved embeddings for a query.
-    get_all_queries(untested_only=False)
-        Retrieves all queries or only untested ones from the record file.
-    get_comparison_results()
-        Retrieves the comparison results as a DataFrame.
-    get_all_records()
-        Retrieves all records from the record file.
-    flush_records()
-        Clears all records from the record file.
-    flush_comparison_results()
-        Deletes the comparison results file.
-    compare_with_record(query, provided_text, mark_as_tested=True)
-        Compares a provided text with the recorded expected result of a query.
-    compare(exp_text, prov_text, query='')
-        Compares two texts and returns the comparison metrics.
-    compare_char_count(exp_text, prov_text)
-        Computes the difference in character count between two texts.
-    compare_word_count(exp_text, prov_text)
-        Computes the difference in word count between two texts.
-    compare_line_count(exp_text, prov_text)
-        Computes the difference in line count between two texts.
-    compare_punctuation(exp_text, prov_text)
-        Computes the difference in punctuation usage between two texts.
-    compare_semantic_similarity(exp_text, prov_text)
-        Computes the semantic similarity between two texts.
-    reset_record_statuses(record_ids=None)
-        Resets the 'tested' status of specific queries or all queries in the record file, making them available for re-testing. Accepts an optional list of record IDs to reset; otherwise, resets all records.
+    Comparison Frame is designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
+    such as character and word count, punctuation usage, and semantic similarity.
+    It's particularly useful for scenarios where consistent text analysis is required,
+    such as evaluating the performance of natural language processing models, monitoring content quality,
+    or tracking changes in textual data over time using manual evaluation.
     """
 
-    embedder = attr.ib(default=None)
-    model_name = attr.ib(default='all-mpnet-base-v2')
+    # MockerDB related parameters
+
+    ## mocker default parameters
+    mocker_params = attr.ib(default = {
+        'file_path' : "./comparisonframe_storage",
+         'persist' : True})
+    ## mockerdb instance
+    mocker_h_class = attr.ib(default = MockerDB)
+    ## initialized mocker instance
+    mocker_h = attr.ib(default=None)
+
 
     # Files saved to persist
     record_file = attr.ib(default="record_file.csv")  # file where queries and expected results are stored
     results_file = attr.ib(default="comparison_results.csv") # file where comparison results will be stored
-    embeddings_file = attr.ib(default="embeddings.dill")
 
     # Define acceptable margins
     margin_char_count_diff = attr.ib(default=10)
@@ -109,12 +63,13 @@ class ComparisonFrame:
     loggerLvl = attr.ib(default=logging.INFO)
 
     def __attrs_post_init__(self):
-        self.initialize_logger()
-        self.initialize_record_file()
-        self.initialize_embedder()
+        self._initialize_logger()
+        self._initialize_mocker()
+        self._initialize_record_file()
 
 
-    def initialize_logger(self):
+
+    def _initialize_logger(self):
 
         """
         Initialize a logger for the class instance based on
@@ -128,7 +83,7 @@ class ComparisonFrame:
 
             self.logger = logger
 
-    def initialize_record_file(self):
+    def _initialize_record_file(self):
 
         """
         Initialize empty records file and saves it locally
@@ -143,35 +98,17 @@ class ComparisonFrame:
                 writer.writerow(['id', 'timestamp', 'query', 'expected_text', 'tested', 'test_status'])  # Added 'test_status'
 
 
-    def initialize_embedder(self, model_name : str = None, reset : bool = True):
+    def _initialize_mocker(self):
 
         """
-        Initialize embedder for the class instance for a chosen model from sentence_transformer.
+        Initializes an instance of mockerdb if wasn't initialized already.
         """
+        if self.mocker_h is None:
 
-        if model_name is None:
-            model_name = self.model_name
+            self.mocker_h = self.mocker_h_class(**self.mocker_params)
 
-        if (self.embedder is None) or reset:
+        self.mocker_h.establish_connection()
 
-            if model_name:
-                try:
-                    self.embedder = SentenceTransformer(model_name)
-                    self.model_name = model_name
-                except Exception as e:
-                    self.logger.error("Provided model name was not loaded!")
-                    print(e)
-
-            else:
-                self.logger.error("Model name is missing!")
-                self.logger.error("Either provide 'embedder' parameter or 'model_name' parameter!")
-                raise ValueError("Missing 'model_name' parameter!")
-        else:
-
-            # check if embedder is from sentence transformer
-            if not isinstance(embedder, SentenceTransformer):
-                self.logger.warning("Provided embedder should be from sentence_transformer package!")
-                raise TypeError("embedder is not an instance of SentenceTransformer")
 
 
     def record_query(self, query, expected_text, overwrite=True):
@@ -288,50 +225,16 @@ class ComparisonFrame:
         Generates and stores the embeddings for the expected text of a specific query.
         """
 
-        # Generate embeddings
-        embeddings = self.embedder.encode(expected_text)
+        processed_entries = [{
+            "text" : query,
+        },
+                             {
+            "text" : expected_text,
+                             }]
 
-        # Load existing data or create new
-        if os.path.exists(self.embeddings_file):
-            with open(self.embeddings_file, 'rb') as file:
-                data = dill.load(file)
-        else:
-            data = {}
-
-        # Add new embeddings
-        data[query] = embeddings
-
-        # Save data
-
-        embeddings_with_model_name = {'model_name' : self.model_name,
-                                      'embeddings' : data}
-
-        with open(self.embeddings_file, 'wb') as file:
-            dill.dump(embeddings_with_model_name, file)
-
-    def load_embeddings(self, query):
-
-        """
-        Retrieves the stored embeddings for a specific query.
-        """
-
-        # Check if embeddings file exists
-        if not os.path.exists(self.embeddings_file):
-            raise FileNotFoundError("No embeddings file found. Please generate embeddings first.")
-
-        # Load data
-        with open(self.embeddings_file, 'rb') as file:
-            embeddings_with_model_name = dill.load(file)
-
-        self.logger.debug(f"Model name for the loaded embeddings: {embeddings_with_model_name['model_name']}")
-
-        # Retrieve embeddings for the given query
-        embeddings = embeddings_with_model_name['embeddings'].get(query)
-
-        if embeddings is None:
-            raise ValueError(f"No embeddings found for query: {query}")
-
-        return embeddings
+        self.mocker_h.insert_values(values_dict_list = processed_entries,
+                                                var_for_embedding_name = 'text',
+                                                embed = True)
 
 
     def get_all_queries(self, untested_only=False):
@@ -529,6 +432,20 @@ class ComparisonFrame:
         Computes the semantic similarity between two pieces of text using their embeddings.
         """
 
-        embedding1 = self.embedder.encode(exp_text).reshape(1, -1)
-        embedding2 = self.embedder.encode(prov_text).reshape(1, -1)
-        return cosine_similarity(embedding1, embedding2)[0][0]
+
+        self.mocker_h.insert_values(values_dict_list = [
+            {"text" : exp_text}
+            ],
+            var_for_embedding_name = 'text',
+            embed = True)
+
+        self.mocker_h.search_database(
+            query = prov_text,
+            filter_criteria = {
+                "text" : exp_text
+            }
+        )
+
+        distance = self.mocker_h.results_dictances
+
+        return distance[0]
