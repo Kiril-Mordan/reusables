@@ -8,6 +8,7 @@ or tracking changes in textual data over time using manual evaluation.
 
 import string
 import logging
+import uuid
 import os
 import csv
 from collections import Counter
@@ -16,6 +17,8 @@ import dill #==0.3.7
 import pandas as pd #==2.1.1
 import attr #>=22.2.0
 from mocker_db import MockerDB #==0.1.2
+
+import numpy as np
 
 # Metadata for package creation
 __package_metadata__ = {
@@ -163,7 +166,7 @@ class RecordsAnalyser:
 
         distance = self.mocker_h.results_dictances
 
-        return distance[0]
+        return distance[0].item()
 
 
 @attr.s
@@ -219,8 +222,6 @@ class ComparisonFrame:
         self._initialize_records_analyser()
         self._initialize_record_file()
 
-
-
     def _initialize_logger(self):
 
         """
@@ -271,45 +272,112 @@ class ComparisonFrame:
             mocker_h = self.mocker_h
         )
 
+    def _generate_unique_id(self):
+        """
+        Generate a unique identifier using UUID4.
 
-    def record_query(self, query, expected_text, overwrite=True):
+        Returns:
+            str: A unique identifier as a string.
+        """
+        return str(uuid.uuid4())
+
+
+    def record_queries(self, 
+                     queries : list, 
+                     expected_texts : list, 
+                     overwrite : bool = True):
 
         """
         Records a new query and its expected result in the record file.
         """
 
-        rows = []
-        max_id = 0
-        # Read the existing data
-        if os.path.isfile(self.record_file):
-            with open(self.record_file, mode='r', encoding='utf-8') as file:
-                reader = csv.reader(file)
-                rows = list(reader)
-                if len(rows) > 1:  # if there's more than just the header
-                    # find the maximum id (which is in the first column and convert it to int)
-                    max_id = max(int(row[0]) for row in rows[1:])
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        record_id = self._generate_unique_id()
 
-        new_id = max_id + 1
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # current time in string format
+        insert_queries = [{"collection" : "records",
+                                "table" : "queries",
+                                #"record_id" : record_id,
+                                "text" : query} \
+                                    for query in queries]
 
-        # If overwrite is True, update the existing record if the query exists; otherwise, append the new record
-        if overwrite:
-            for index, row in enumerate(rows):
-                if len(row) > 2 and row[2] == query:  # queries are in the third column
-                    rows[index] = [str(new_id), current_time, query, expected_text, 'no', '']  # 'no' indicates untested, '' for empty test_status
-                    break
-            else:
-                rows.append([str(new_id), current_time, query, expected_text, 'no', ''])  # 'no' indicates untested, '' for empty test_status
-        else:
-            rows.append([str(new_id), current_time, query, expected_text, 'no', ''])  # 'no' indicates untested, '' for empty test_status
+        insert_expected_text = [{"collection" : "records",
+                                "table" : "expected_text",
+                                #"record_id" : record_id,
+                                "query" : query,
+                                "text" : expected_text} \
+                                    for query, expected_text in zip(queries,expected_texts)]
 
-        self.save_embeddings(query=query,
-                             expected_text=expected_text)
+        # insert_entries = [{"table" : "records",
+        #                     "collection" : "test_statuses",
+        #                     "record_id" : record_id,
+        #                     "timestamp" : timestamp,
+        #                     "text" : None,
+        #                     "tested" : False,
+        #                     "test_status" : None}]
 
-        # Write the updated data back to the file
-        with open(self.record_file, mode='w', newline='', encoding='utf-8') as file:
-            writer = csv.writer(file)
-            writer.writerows(rows)
+        inserts = insert_queries + insert_expected_text #+ insert_entries
+
+        self.mocker_h.insert_values(values_dict_list = inserts,
+                                    var_for_embedding_name = 'text',
+                                    embed = True)
+
+        # rows = []
+        # max_id = 0
+        # # Read the existing data
+        # if os.path.isfile(self.record_file):
+        #     with open(self.record_file, mode='r', encoding='utf-8') as file:
+        #         reader = csv.reader(file)
+        #         rows = list(reader)
+        #         if len(rows) > 1:  # if there's more than just the header
+        #             # find the maximum id (which is in the first column and convert it to int)
+        #             max_id = max(int(row[0]) for row in rows[1:])
+
+        # new_id = max_id + 1
+        # current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # current time in string format
+
+        # # If overwrite is True, update the existing record if the query exists; otherwise, append the new record
+        # if overwrite:
+        #     for index, row in enumerate(rows):
+        #         if len(row) > 2 and row[2] == query:  # queries are in the third column
+        #             rows[index] = [str(new_id), current_time, query, expected_text, 'no', '']  # 'no' indicates untested, '' for empty test_status
+        #             break
+        #     else:
+        #         rows.append([str(new_id), current_time, query, expected_text, 'no', ''])  # 'no' indicates untested, '' for empty test_status
+        # else:
+        #     rows.append([str(new_id), current_time, query, expected_text, 'no', ''])  # 'no' indicates untested, '' for empty test_status
+
+        # self.save_embeddings(query=query,
+        #                      expected_text=expected_text)
+
+        # # Write the updated data back to the file
+        # with open(self.record_file, mode='w', newline='', encoding='utf-8') as file:
+        #     writer = csv.writer(file)
+        #     writer.writerows(rows)
+
+    def record_runs(self, 
+                   query : str,
+                   provided_texts : list):
+
+        """
+        Recods run of provided text for a given query.
+        """
+
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        run_id = self._generate_unique_id()
+
+        insert_provided_text = [{"collection" : "runs",
+                                "table" : "provided_text",
+                                "run_id" : run_id,
+                                "timestamp" : timestamp,
+                                "query" : query,
+                                "text" : provided_text} \
+                                    for provided_text in provided_texts]
+
+        inserts = insert_provided_text
+
+        self.mocker_h.insert_values(values_dict_list = inserts,
+                                    var_for_embedding_name = 'text',
+                                    embed = True)
 
     def mark_query_as_tested(self, query, test_status):
         """
@@ -405,14 +473,22 @@ class ComparisonFrame:
         """
 
         # Read the recorded data and retrieve all queries
-        queries = []
-        with open(self.record_file, mode='r', encoding='utf-8') as file:
-            reader = csv.reader(file)
-            next(reader)  # skip headers
-            if untested_only:
-                queries = [row[2] for row in reader if row[4] == 'no']  # select only untested queries
-            else:
-                queries = [row[2] for row in reader]  # select all queries
+        # queries = []
+        # with open(self.record_file, mode='r', encoding='utf-8') as file:
+        #     reader = csv.reader(file)
+        #     next(reader)  # skip headers
+        #     if untested_only:
+        #         queries = [row[2] for row in reader if row[4] == 'no']  # select only untested queries
+        #     else:
+        #         queries = [row[2] for row in reader]  # select all queries
+
+        queries_records = self.mocker_h.search_database(
+            filter_criteria = {"collection" : "records",
+                                "table" : "queries"},
+                                perform_similarity_search = False,
+                                return_keys_list = ['text'])
+
+        queries = [record['text'] for record in queries_records]
 
         return queries
 
@@ -436,20 +512,192 @@ class ComparisonFrame:
 
             return df
 
-    def get_all_records(self):
+    def get_all_records(self, queries : list = None):
+
+        """
+        Retrieves all query records from the stored file.
+        """
+
+        # # Check if the record file exists
+        # if not os.path.isfile(self.record_file):
+        #     raise FileNotFoundError("No record file found. Please record some queries first.")
+
+        # # Read the CSV file into a pandas DataFrame
+        # df = pd.read_csv(self.record_file)
+
+
+        if queries is None:
+            queries_records = self.mocker_h.search_database(
+                filter_criteria = {"collection" : "records",
+                                    "table" : "queries"},
+                                    perform_similarity_search = False,
+                                    return_keys_list = ['text'])
+        else:
+            queries_records = self.mocker_h.search_database(
+                filter_criteria = {"collection" : "records",
+                                    "table" : "queries",
+                                    "text" : queries},
+                                    perform_similarity_search = False,
+                                    return_keys_list = ['text'])
+
+        queries = [query['text'] for query in queries_records]
+
+        expected_text_records = self.mocker_h.search_database(
+            filter_criteria = {"collection" : "records",
+                                "table" : "expected_text",
+                                "query" : queries},
+                                perform_similarity_search = False,
+                                return_keys_list = ['query', 'text'])
+
+        expected_texts = [et['text'] for et in expected_text_records]
+
+        status_records = self.mocker_h.search_database(
+            filter_criteria = {"collection" : "records",
+                                "table" : "test_statuses",
+                                "query" : queries,
+                                "expected_text" : expected_texts},
+                                perform_similarity_search = False,
+                                return_keys_list = ['query', 
+                                                    'expected_text',
+                                                    'timestamp',
+                                                    'tested',
+                                                    'test_status'])
+
+        if status_records:
+            return status_records
+        elif expected_text_records:
+
+            updated_list_of_dicts = [
+                {**{'expected_text' if k == 'text' else k: v \
+                    for k, v in dictionary.items()}, 
+                        'timestamp' : None,
+                        'tested' : None,
+                        'test_status' : None}
+                for dictionary in expected_text_records
+            ]
+
+            return updated_list_of_dicts
+        else:
+            return [{
+                'query' : None, 
+                'expected_text' : None,
+                'timestamp' : None,
+                'tested' : None,
+                'test_status' : None
+            }]
+
+    def get_all_records_df(self):
 
         """
         Retrieves all query records as a DataFrame from the stored file.
         """
 
-        # Check if the record file exists
-        if not os.path.isfile(self.record_file):
-            raise FileNotFoundError("No record file found. Please record some queries first.")
+        return pd.DataFrame(self.get_all_records())
 
-        # Read the CSV file into a pandas DataFrame
-        df = pd.read_csv(self.record_file)
+    def _merge_lists_by_key(self, list1 : list, list2 : list, key : str):
+        # Create a dictionary for quick lookup from list2
+        dict2 = {item[key]: item for item in list2}
 
-        return df
+        # Iterate over list1 and merge with corresponding dict2 item if exists
+        merged_list = []
+        for item in list1:
+            run_id = item[key]
+            if run_id in dict2:
+                # If the run_id is in dict2, merge dictionaries
+                merged_item = {**item, **dict2[run_id]}
+            else:
+                # If the run_id is not in dict2, use item as is
+                merged_item = item
+            merged_list.append(merged_item)
+
+        return merged_list
+
+
+    def get_all_runs(self, queries : list = None):
+
+        """
+        Retrieves all query runs from the stored file.
+        """
+
+        # # Check if the record file exists
+        # if not os.path.isfile(self.record_file):
+        #     raise FileNotFoundError("No record file found. Please record some queries first.")
+
+        # # Read the CSV file into a pandas DataFrame
+        # df = pd.read_csv(self.record_file)
+
+
+        if queries is None:
+            run_records = self.mocker_h.search_database(
+                filter_criteria={
+                    "collection" : "runs",
+                    "table" : "provided_text"
+                },
+                perform_similarity_search = False,
+                return_keys_list = ['run_id', 
+                                    'query',
+                                    'text',
+                                    'timestamp']
+        )
+
+        else:
+            run_records = self.mocker_h.search_database(
+                filter_criteria={
+                    "collection" : "runs",
+                    "table" : "provided_text",
+                    "query" : queries
+                },
+                perform_similarity_search = False,
+                return_keys_list = ['run_id', 
+                                    'query',
+                                    'text',
+                                    'timestamp'])
+
+        run_ids = [run['run_id'] for run in run_records]
+
+        scores = self.mocker_h.search_database(
+            filter_criteria = {"collection" : "scores",
+                                "table" : "runs",
+                                "run_id" : run_ids},
+                                perform_similarity_search = False)
+
+        if scores:
+            run_records = self._merge_lists_by_key(
+                 scores,run_records, "run_id")
+
+            updated_list_of_dicts = [
+                {**{'provided_text' if k == 'text' else k: v \
+                    for k, v in dictionary.items()}}
+                for dictionary in run_records
+            ]
+
+            return updated_list_of_dicts
+            
+        elif run_records:
+
+            updated_list_of_dicts = [
+                {**{'provided_text' if k == 'text' else k: v \
+                    for k, v in dictionary.items()}}
+                for dictionary in run_records
+            ]
+
+            return updated_list_of_dicts
+        else:
+            return [{
+                'run_id' : None,
+                'query' : None, 
+                'expected_text' : None,
+                'provided_text' : None,
+                'timestamp' : None
+            }]
+
+    def get_all_runs_df(self):
+
+        """
+        Retrieves all runs as a DataFrame from the stored file.
+        """
+
+        return pd.DataFrame(self.get_all_runs())
 
     def flush_records(self):
 
@@ -474,12 +722,16 @@ class ComparisonFrame:
         else:
             raise FileNotFoundError("No results file found. There's nothing to flush.")
 
-    def compare_with_record(self,
-                            query : str,
-                            provided_text : str,
+    def compare_runs_with_records(self,
+                            # query : str,
+                            # provided_text : str,
+                            # compare_scores : list = None,
+                            # mark_as_tested : bool = True,
+                            # return_results : bool = False
+                            
+                            queries : list = None,
                             compare_scores : list = None,
-                            mark_as_tested : bool = True,
-                            return_results : bool = False):
+                            ):
 
         """
         Compares the provided text with all recorded expected results for a specific query and stores the comparison results.
@@ -488,63 +740,99 @@ class ComparisonFrame:
         if compare_scores is None:
             compare_scores = self.compare_scores
 
-        # Read the recorded data and find all records for the query, sorted by timestamp
-        with open(self.record_file, mode='r', encoding='utf-8') as file:
-            reader = csv.reader(file)
-            # Skip the header, find all rows with the matching query, and sort them by the timestamp
-            records = sorted(
-                (row for row in reader if len(row) > 2 and row[2] == query),
-                key=lambda x: x[1],
-                reverse=True  # most recent first
-            )
+        # # Read the recorded data and find all records for the query, sorted by timestamp
+        # with open(self.record_file, mode='r', encoding='utf-8') as file:
+        #     reader = csv.reader(file)
+        #     # Skip the header, find all rows with the matching query, and sort them by the timestamp
+        #     records = sorted(
+        #         (row for row in reader if len(row) > 2 and row[2] == query),
+        #         key=lambda x: x[1],
+        #         reverse=True  # most recent first
+        #     )
 
-        if not records:
+        # pull relevant records
+        records = self.get_all_records(queries=queries)
+
+        # pull relevant runs
+        runs = self.get_all_runs(queries=queries)
+
+        records_runs = self._merge_lists_by_key(runs,records, "query")
+
+        if not records_runs:
             raise ValueError("Query not found in records.")
 
         comparisons = []
-        for record in records:
-            expected_text = record[3]  # expected text is in the fourth column
+        for record_run in records_runs:
 
-            comparison = {}
-            comparison['id'] = record[0]  # id is in the first column
-            comparison['query'] = query
-            comparison['expected_text'] = expected_text
-            comparison['provided_text'] = provided_text
+            if record_run.get('run_id', None):
+
+                comparison = {"collection" : "scores",
+                              "table" : "runs",
+                              "run_id": record_run['run_id']}
+
+                comparison_scores = self.records_analyser.calculate_scores(
+                    method_names = compare_scores, 
+                    exp_text = record_run['expected_text'],
+                    prov_text = record_run['provided_text'])
+                
+                comparison.update(comparison_scores)
+                comparisons.append(comparison)
+
+        print(comparisons)
+        print(type(comparisons))
+        if comparisons:
+
+            self.mocker_h.insert_values(values_dict_list = comparisons,
+                                        embed = False)
+        else:
+            self.logger.warning("No comparisons were completed for queries!")
 
 
-            comparison_scores = self.records_analyser.calculate_scores(
-                method_names = compare_scores, 
-                exp_text = expected_text,
-                prov_text = provided_text)
-            comparison.update(comparison_scores)
 
-            comparisons.append(comparison)
+        # comparisons = []
+        # for record in records:
+        #     expected_text = record[3]  # expected text is in the fourth column
+
+        #     comparison = {}
+        #     comparison['id'] = record[0]  # id is in the first column
+        #     comparison['query'] = query
+        #     comparison['expected_text'] = expected_text
+        #     comparison['provided_text'] = provided_text
 
 
-        # After conducting the comparison
-        for comparison in comparisons:
-            # Check if differences are within acceptable margins
-            passed_char_count = comparison['char_count'] <= self.margin_char_count_diff
-            passed_word_count = comparison['word_count'] <= self.margin_word_count_diff
-            passed_semantic_similarity = comparison['semantic_similarity'] >= self.margin_semantic_similarity
+        #     comparison_scores = self.records_analyser.calculate_scores(
+        #         method_names = compare_scores, 
+        #         exp_text = expected_text,
+        #         prov_text = provided_text)
+        #     comparison.update(comparison_scores)
 
-            # If all checks pass, mark as 'pass'; otherwise, 'fail'
-            if passed_char_count and passed_word_count and passed_semantic_similarity:
-                test_status = 'pass'
-            else:
-                test_status = 'fail'
+        #     comparisons.append(comparison)
 
-            # If required, mark the query as tested with the test status
-            if mark_as_tested:
-                self.mark_query_as_tested(query, test_status)
 
-        # Convert results list to DataFrame
-        results_df = pd.DataFrame(comparisons)
+        # # After conducting the comparison
+        # for comparison in comparisons:
+        #     # Check if differences are within acceptable margins
+        #     passed_char_count = comparison['char_count'] <= self.margin_char_count_diff
+        #     passed_word_count = comparison['word_count'] <= self.margin_word_count_diff
+        #     passed_semantic_similarity = comparison['semantic_similarity'] >= self.margin_semantic_similarity
 
-        # Save results DataFrame to CSV
-        # 'mode='a'' will append the results to the existing file;
-        # 'header=not os.path.isfile(self.results_file)' will write headers only if the file doesn't already exist
-        results_df.to_csv(self.results_file, mode='a', header=not os.path.isfile(self.results_file), index=False)
+        #     # If all checks pass, mark as 'pass'; otherwise, 'fail'
+        #     if passed_char_count and passed_word_count and passed_semantic_similarity:
+        #         test_status = 'pass'
+        #     else:
+        #         test_status = 'fail'
 
-        if return_results:
-            return results_df
+        #     # If required, mark the query as tested with the test status
+        #     if mark_as_tested:
+        #         self.mark_query_as_tested(query, test_status)
+
+        # # Convert results list to DataFrame
+        # results_df = pd.DataFrame(comparisons)
+
+        # # Save results DataFrame to CSV
+        # # 'mode='a'' will append the results to the existing file;
+        # # 'header=not os.path.isfile(self.results_file)' will write headers only if the file doesn't already exist
+        # results_df.to_csv(self.results_file, mode='a', header=not os.path.isfile(self.results_file), index=False)
+
+        # if return_results:
+        #     return results_df
