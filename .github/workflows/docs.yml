@@ -20,6 +20,26 @@ jobs:
         with:
           fetch-depth: 0  # Fetches prev commits
 
+      - name: Install Draw.io Desktop and Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget xvfb
+          wget https://github.com/jgraph/drawio-desktop/releases/download/v20.8.15/drawio-amd64-20.8.15.deb
+          sudo dpkg -i drawio-amd64-20.8.15.deb
+          sudo apt-get install -f
+
+      - name: Export drawio files to png files
+        run: |
+          chmod +x ./tools/convert_drawio_to_png.sh
+          ./tools/convert_drawio_to_png.sh
+        # uses: rlespinasse/drawio-export-action@v2
+        # with:
+        #   path: drawio
+        #   format: png
+        #   transparent: true
+        #   output: docs
+        #   scale: 2
+        
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -40,15 +60,7 @@ jobs:
               echo "::set-output name=files::$(cat changed_files)"
           fi
 
-      - name: Export drawio files to png files
-        uses: rlespinasse/drawio-export-action@v2
-        with:
-          path: drawio
-          format: png
-          transparent: true
-          output: docs
-          scale: 2
-
+    
       - name: Create and activate virtual environment
         run: |
           python -m venv venv
