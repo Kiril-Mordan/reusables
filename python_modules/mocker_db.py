@@ -422,6 +422,7 @@ class MockerDB:
     ## for similarity search
     similarity_search_h = attr.ib(default=MockerSimilaritySearch)
     return_keys_list = attr.ib(default=None, type = list)
+    ignore_keys_list = attr.ib(default=["embedding", "distance"], type = list)
     search_results_n = attr.ib(default=3, type = int)
     similarity_search_type = attr.ib(default='linear', type = str)
     similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
@@ -801,26 +802,151 @@ class MockerDB:
             except Exception as e:
                 self.logger.error("Problem during extracting search pool embeddings!", e)
 
+    def _prepare_return_keys(self,
+                            return_keys_list : list = None, 
+                            remove_list : list = None, 
+                            add_list : list = None):
 
-    def get_dict_results(self, return_keys_list : list = None) -> list:
+        """
+        Prepare return keys.
+        """
+
+        if return_keys_list is None:
+            return_keys_list = self.return_keys_list
+        if remove_list is None:
+            remove_list = self.ignore_keys_list.copy()
+        if add_list is None:
+            add_list = []
+
+
+        return_distance = 0
+
+        if "&distance" in remove_list:
+            return_distance = 0
+            remove_list.remove("&distance")
+        if "&distance" in add_list:
+            return_distance = 1
+            add_list.remove("&distance")
+        
+        if return_keys_list:
+
+            ra_list = [s for s in return_keys_list \
+                if s.startswith("+") or s.startswith("-")]
+
+            if "embedding" in return_keys_list:
+                if "embedding" in remove_list:
+                    remove_list.remove("embedding")
+            
+            for el in ra_list:
+
+                if el[1:] == "&distance":
+
+                    if el.startswith("+"):
+                        return_distance = 1
+                    else:
+                        return_distance = 0
+
+                else:
+                    if el.startswith("+"):
+                        if el[1:] not in add_list:
+                            add_list.append(el[1:])
+                        if el[1:] in remove_list:
+                            remove_list.remove(el[1:])
+                    else:
+                        if el[1:] not in remove_list:
+                            remove_list.append(el[1:])
+                        if el[1:] in add_list:
+                            add_list.remove(el[1:])
+                
+                return_keys_list.remove(el)
+            
+            if "&distance" in return_keys_list:
+                return_keys_list.remove("&distance")
+                if return_keys_list:
+                    return_distance = 1
+                else:
+                    return_distance = 2
+
+        return add_list, remove_list, return_keys_list, return_distance
+
+    def _extract_from_data(self,
+                        data : dict, 
+                        distances : list,
+                        results_keys : list, 
+                        return_keys_list : list,
+                        add_list : list, 
+                        remove_list : list,
+                        return_distance : int):
+        """
+        Process and filter dictionaries based on specified return and removal lists.
+        """
+
+        if return_keys_list:
+            remove_set = set(remove_list)
+            return_keys_set = set(return_keys_list + add_list) - remove_set
+            results = []
+            
+            if return_distance >= 1:
+                for searched_doc, distance in zip(results_keys, distances):
+                    result = {key: data[searched_doc].get(key) \
+                        for key in return_keys_set}
+                    result['&distance'] = distance
+                    results.append(result)
+            else:
+                for searched_doc in results_keys:
+                    result = {key: data[searched_doc].get(key) \
+                        for key in return_keys_set}
+                    results.append(result)
+        else:
+            keys_to_remove_set = set(remove_list)
+            results = []
+
+            if return_distance == 1:
+                for searched_doc, distance in zip(results_keys, distances):
+                    filtered_dict = data[searched_doc].copy()
+                    for key in keys_to_remove_set:
+                        filtered_dict.pop(key, None)
+
+                    filtered_dict['&distance'] = distance
+                    results.append(filtered_dict)
+            elif return_distance == 2:
+                results = [{'&distance' : distance} for distance in distances]
+
+            else:
+                for searched_doc in results_keys:
+                    filtered_dict = data[searched_doc].copy()
+                    for key in keys_to_remove_set:
+                        filtered_dict.pop(key, None)
+                    results.append(filtered_dict)
+        
+        return results
+
+    def get_dict_results(self, 
+                         return_keys_list : list = None,
+                         ignore_keys_list : list = None) -> list:
 
         """
         Retrieves specified fields from the search results in the mock database.
         """
 
-        if return_keys_list is None:
-            return_keys_list = self.return_keys_list
-
+        (add_list, 
+        remove_list, 
+        return_keys_list, 
+        return_distance) = self._prepare_return_keys(
+            return_keys_list = return_keys_list,
+            remove_list = ignore_keys_list
+            )
+        
         # This method mimics the behavior of the original 'get_dict_results' method
-        results = []
-        if return_keys_list is not None:
-            for searched_doc in self.results_keys:
-                result = {key: self.data[searched_doc].get(key) for key in return_keys_list}
-                results.append(result)
-        else:
-            results = [self.data[searched_doc] for searched_doc in self.results_keys]
-
-        return results
+        return self._extract_from_data(
+            data = self.data, 
+            distances = self.results_dictances,
+            results_keys = self.results_keys, 
+            return_keys_list = return_keys_list,
+            add_list = add_list, 
+            remove_list = remove_list,
+            return_distance = return_distance
+        )
 
     def search_database(self,
                         query: str = None,
@@ -855,6 +981,6 @@ class MockerDB:
         # resetting search
         self.filtered_data = None
         self.keys_list = None
-        self.results_keys = []
+        self.results_keys = None
 
         return results
