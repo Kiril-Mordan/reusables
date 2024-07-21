@@ -1,21 +1,25 @@
 #!/bin/bash
 
-# Check if the operating system is macOS
-if [[ "$(uname)" == "Darwin" ]]; then
-    shopt -s expand_aliases
-    alias drawio='/Applications/draw.io.app/Contents/MacOS/draw.io'
-fi
+input_dir="drawio"
+output_dir="docs"
+format="png"
 
+# Ensure output directory exists
+mkdir -p "$output_dir"
 
-SOURCE_DIR="./drawio" # Path to the directory containing .drawio files
-TARGET_DIR="./docs" # Path to the directory where .png files should be saved
-
-# Create target directory if it doesn't exist
-mkdir -p "$TARGET_DIR"
-
-# Loop through all .drawio files in the source directory
-for file in "$SOURCE_DIR"/*.drawio; do
-    filename=$(basename "$file" .drawio)
-    # Use the draw.io CLI to convert each file to PNG
-    drawio --no-sandbox --disable-gpu -x -f png -o "$TARGET_DIR/$filename.drawio.png" "$file"
+# Find all .drawio files in the input directory
+find "$input_dir" -name '*.drawio' | while read -r input_file; do
+  base_name=$(basename "$input_file" .drawio)
+  
+  # Extract page names from the .drawio file
+  page_names=$(xmllint --xpath '//diagram/@name' "$input_file" | sed 's/name="\([^"]*\)"/\1\n/g')
+  
+  page_index=0
+  echo "$page_names" | while read -r page_name; do
+    if [ -n "$page_name" ]; then
+      output_file="${output_dir}/${base_name}-${page_name}.${format}"
+      xvfb-run -a drawio --export --format png --output "$output_file" --page-index "$page_index" "$input_file"
+      page_index=$((page_index + 1))
+    fi
+  done
 done
