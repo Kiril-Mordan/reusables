@@ -13,6 +13,10 @@ sys.path.append('../')
 from python_modules.mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
 ```
 
+    /home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+      from .autonotebook import tqdm as notebook_tqdm
+
+
 ## Usage examples
 
 The examples contain:
@@ -36,7 +40,7 @@ handler = MockerDB(
     embedder = SentenceTransformerEmbedder,
     ## optional/ for similarity search
     similarity_search_h = MockerSimilaritySearch,
-    return_keys_list = [],
+    return_keys_list = None,
     search_results_n = 3,
     similarity_search_type = 'linear',
     similarity_params = {'space':'cosine'},
@@ -50,74 +54,138 @@ handler.establish_connection()
 
 # Insert Data
 values_list = [
-    {"text": "Sample text 1"},
-    {"text": "Sample text 2"}
+    {"text": "Sample text 1",
+     "text2": "Sample text 1"},
+    {"text": "Sample text 2",
+     "text2": "Sample text 2"}
 ]
 handler.insert_values(values_list, "text")
 print(f"Items in the database {len(handler.data)}")
 
+```
+
+    Items in the database 4
+
+
+### Retrieve Data Basics
+
+
+```python
 # Retrieve Data
 handler.filter_keys(subkey="text", subvalue="Sample text 1")
 handler.search_database_keys(query='text')
 results = handler.get_dict_results(return_keys_list=["text"])
+distances = handler.results_dictances
 print(results)
+print(distances)
+```
+
+    [{'text': 'Sample text 1'}]
+    [0.6744726]
+
+
+### Search and retrieve data
+
+- get all keys
+
+
+```python
+results = handler.search_database(
+    query = "text",
+    filter_criteria = {
+        "text" : "Sample text 1",
+    },
+    return_keys_list=None
+)
+print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
+```
+
+    [{'text': 'Sample text 1...', 'text2': 'Sample text 1...'}]
+
+
+- get all key - text2
+
+
+```python
+results = handler.search_database(
+    query = "text",
+    filter_criteria = {
+        "text" : "Sample text 1",
+    },
+    return_keys_list=["-text2"])
+print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
+```
+
+    [{'text': 'Sample text 1...'}]
+
+
+- get all keys + distance
+
+
+```python
+results = handler.search_database(
+    query = "text",
+    filter_criteria = {
+        "text" : "Sample text 1"
+    },
+    return_keys_list=["+&distance"]
+)
+print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
+```
+
+    [{'text': 'Sample text 1...', 'text2': 'Sample text 1...', '&distance': '0.6744726...'}]
+
+
+- get distance
+
+
+```python
+results = handler.search_database(
+    query = "text",
+    filter_criteria = {
+        "text" : "Sample text 1"
+    },
+    return_keys_list=["&distance"]
+)
+print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
+```
+
+    [{'&distance': '0.6744726...'}]
+
+
+- get all keys + embeddings
+
+
+```python
+results = handler.search_database(
+    query = "text",
+    filter_criteria = {
+        "text" : "Sample text 1"
+    },
+    return_keys_list=["+embedding"]
+)
+print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
+```
+
+    [{'text': 'Sample text 1...', 'text2': 'Sample text 1...', 'embedding': '[-4.94665056e-02 -2.38676026e-...'}]
+
+
+- get embeddings
+
+
+```python
+results = handler.search_database(
+    query = "text",
+    filter_criteria = {
+        "text" : "Sample text 1"
+    },
+    return_keys_list=["embedding"]
+)
+print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
 
 ```
 
-
-    .gitattributes:   0%|          | 0.00/744 [00:00<?, ?B/s]
-
-
-
-    1_Pooling/config.json:   0%|          | 0.00/190 [00:00<?, ?B/s]
-
-
-
-    README.md:   0%|          | 0.00/4.13k [00:00<?, ?B/s]
-
-
-
-    config.json:   0%|          | 0.00/723 [00:00<?, ?B/s]
-
-
-
-    config_sentence_transformers.json:   0%|          | 0.00/122 [00:00<?, ?B/s]
-
-
-
-    model.safetensors:   0%|          | 0.00/1.11G [00:00<?, ?B/s]
-
-
-
-    pytorch_model.bin:   0%|          | 0.00/1.11G [00:00<?, ?B/s]
-
-
-
-    sentence_bert_config.json:   0%|          | 0.00/53.0 [00:00<?, ?B/s]
-
-
-
-    sentencepiece.bpe.model:   0%|          | 0.00/5.07M [00:00<?, ?B/s]
-
-
-
-    special_tokens_map.json:   0%|          | 0.00/239 [00:00<?, ?B/s]
-
-
-
-    tokenizer.json:   0%|          | 0.00/9.08M [00:00<?, ?B/s]
-
-
-
-    tokenizer_config.json:   0%|          | 0.00/402 [00:00<?, ?B/s]
-
-
-
-    modules.json:   0%|          | 0.00/229 [00:00<?, ?B/s]
-
-
-    Items in the database 2
-    [{'text': 'Sample text 1'}]
+    [{'embedding': '[-4.94665056e-02 -2.38676026e-...'}]
 
 
 ### 2. Text Embedding and Searching
@@ -142,15 +210,15 @@ embedded_query = ste.embed(query,
 print(embedded_query[0:50])
 ```
 
-    [-0.04973586  0.09520268 -0.01219508  0.09253863 -0.02301829 -0.02721018
-      0.0568395   0.09710983  0.10683874  0.05812277  0.1322755   0.01142832
-     -0.06957253  0.0698075  -0.05259365 -0.05755996  0.00816183 -0.0083684
-     -0.00861256  0.01442069  0.01188816 -0.09503672  0.07125735 -0.04827785
-      0.01473162  0.01084185 -0.1048248   0.07012521 -0.04720647  0.10030048
-      0.04455933  0.02131893  0.00667914 -0.05259187  0.06822995 -0.09520472
-     -0.00581363 -0.02451877 -0.00384987  0.02750723  0.06960277  0.2401375
-     -0.01220019  0.05890937 -0.08468664  0.11379692 -0.03594767 -0.0565297
-     -0.01621809  0.09546725]
+    [-0.04973587  0.09520266 -0.01219509  0.09253872 -0.02301828 -0.0272102
+      0.05683957  0.09710974  0.10683873  0.05812286  0.13227554  0.01142828
+     -0.06957257  0.06980742 -0.05259363 -0.05755996  0.00816178 -0.00836837
+     -0.00861246  0.01442065  0.01188813 -0.09503674  0.07125735 -0.04827795
+      0.01473159  0.01084172 -0.10482483  0.0701253  -0.0472064   0.10030049
+      0.04455939  0.0213189   0.00667923 -0.0525919   0.06822997 -0.09520472
+     -0.00581364 -0.02451883 -0.00384985  0.02750736  0.06960268  0.24013738
+     -0.01220023  0.05890927 -0.08468661  0.11379698 -0.03594772 -0.05652961
+     -0.01621804  0.09546741]
 
 
 
@@ -165,25 +233,25 @@ print("---")
 print(embedded_query[1][0:50])
 ```
 
-    [-0.04973584  0.09520271 -0.01219508  0.09253865 -0.0230183  -0.02721017
-      0.05683954  0.09710982  0.10683876  0.05812274  0.13227552  0.01142829
-     -0.06957256  0.06980743 -0.05259361 -0.05755996  0.00816183 -0.00836839
-     -0.00861252  0.01442068  0.01188819 -0.09503672  0.07125732 -0.04827787
-      0.01473164  0.01084186 -0.1048249   0.07012525 -0.04720649  0.10030047
-      0.04455935  0.02131895  0.00667912 -0.05259192  0.06822995 -0.09520471
-     -0.00581363 -0.02451887 -0.00384988  0.02750726  0.06960279  0.2401375
-     -0.01220022  0.05890937 -0.08468666  0.11379688 -0.03594765 -0.05652964
-     -0.0162181   0.09546735]
+    [-0.04973588  0.09520268 -0.01219508  0.09253875 -0.02301828 -0.02721018
+      0.05683955  0.09710979  0.10683873  0.05812287  0.13227554  0.01142833
+     -0.06957259  0.06980736 -0.05259363 -0.05755996  0.0081618  -0.00836839
+     -0.00861242  0.01442068  0.01188811 -0.09503674  0.07125735 -0.04827797
+      0.01473157  0.01084175 -0.10482486  0.07012529 -0.04720639  0.10030051
+      0.04455936  0.02131891  0.00667919 -0.05259192  0.06822997 -0.09520471
+     -0.00581361 -0.02451885 -0.00384985  0.02750732  0.06960279  0.24013741
+     -0.0122002   0.05890926 -0.08468664  0.11379691 -0.03594773 -0.05652963
+     -0.01621806  0.09546743]
     ---
-    [-0.05087024  0.1231768  -0.0139253   0.10524713 -0.07614321 -0.02349629
-      0.05829773  0.15128359  0.18119803  0.03745934  0.12174664  0.00639838
-     -0.04045055  0.12758303 -0.06155453 -0.06736137  0.04713943 -0.04134275
-     -0.12165949  0.0440988   0.01834145 -0.04796624  0.04922185 -0.00641203
-      0.01420631 -0.03602944 -0.01026761  0.09232258 -0.04927172  0.03985452
-      0.03566906  0.0833893   0.04922603 -0.09951889  0.0513812  -0.13344644
-      0.01626778 -0.01189724  0.0059921   0.05663403  0.04282105  0.26432782
-     -0.01122811  0.07177631 -0.11822144  0.08731946 -0.04965353  0.03697515
-      0.08965266  0.03107021]
+    [-0.05087035  0.12317687 -0.0139253   0.10524721 -0.07614311 -0.02349636
+      0.05829769  0.15128353  0.181198    0.03745941  0.12174654  0.00639845
+     -0.04045051  0.12758298 -0.06155458 -0.0673613   0.04713941 -0.04134275
+     -0.12165944  0.04409872  0.01834138 -0.04796622  0.04922184 -0.00641214
+      0.01420629 -0.03602948 -0.01026758  0.09232265 -0.04927171  0.0398545
+      0.03566905  0.08338926  0.04922605 -0.09951876  0.05138123 -0.13344647
+      0.01626777 -0.01189728  0.00599212  0.05663404  0.04282088  0.26432776
+     -0.01122816  0.07177623 -0.11822147  0.08731955 -0.04965367  0.03697514
+      0.08965278  0.03107026]
 
 
 
@@ -196,7 +264,7 @@ print(search_results)
 
 ```
 
-    [{'text': 'Sample text 1'}]
+    [{'text': 'Sample text 1'}, {'text': 'Sample text 1'}, {'text': 'Sample text 2'}]
 
 
 ### 3. Advanced Filtering and Removal
@@ -215,8 +283,8 @@ print(f"Items left in the database {len(handler.data)}")
 
 ```
 
-    Filtered data 1
-    Items left in the database 1
+    Filtered data 2
+    Items left in the database 3
 
 
 ### 4. Testing the HNSW Search Algorithm
@@ -248,7 +316,7 @@ print(labels, distances)
 
 ```
 
-    [0] [4.172325e-07]
+    [0] [1.1920929e-07]
 
 
 ### 5. Simulating Database Connection and Persistence
@@ -268,5 +336,5 @@ print(f"Items in the database {len(handler.data)}")
 
 ```
 
-    Items in the database 2
+    Items in the database 3
 
