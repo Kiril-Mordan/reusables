@@ -1,5 +1,11 @@
 # Release notes
 
+### 0.1.3
+
+    - option to add embedding and distance to output list
+
+    - option to remove output key while outputting the rest of keys
+
 ### 0.1.2
 
     - initital cli interface that allows to clone code from api version of mocker and run it
