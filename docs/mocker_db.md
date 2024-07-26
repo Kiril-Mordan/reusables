@@ -13,10 +13,6 @@ import numpy as np
 from mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
 ```
 
-    /home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-      from .autonotebook import tqdm as notebook_tqdm
-
-
 ## Usage examples
 
 The examples contain:
