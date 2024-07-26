@@ -22,6 +22,7 @@ import concurrent.futures
 import hnswlib #==0.8.0
 from sentence_transformers import SentenceTransformer #==2.2.2
 from gridlooper import GridLooper #==0.0.1
+from difflib import get_close_matches
 ## for connect to remote mocker
 import httpx
 
@@ -242,7 +243,6 @@ class MockerSimilaritySearch:
         if similarity_search_type == 'hnsw':
             return self.hnsw_search(search_emb = query_embedding, doc_embs = data_embeddings, k=k, **similarity_params)
 
-
 @attr.s
 class MockerConnector:
 
@@ -426,7 +426,8 @@ class MockerDB:
     search_results_n = attr.ib(default=3, type = int)
     similarity_search_type = attr.ib(default='linear', type = str)
     similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
-
+    keyword_check_cutoff = attr.ib(default=1, type = float)
+    
     ## inputs with defaults
     file_path = attr.ib(default="./mock_persist", type=str)
     embs_file_path = attr.ib(default="./mock_embs_persist", type=str)
@@ -681,21 +682,87 @@ class MockerDB:
         else:
             self.keys_list = self.data
 
-    def filter_database(self, filter_criteria : dict = None):
+    def _check_if_match(self, content : str, cutoff : float, keyword_set : list):
+        words = set(content.split())
+        match = any(get_close_matches(keyword, words, cutoff=cutoff) for keyword in keyword_set)
+        return match
+
+    def _get_close_matches_for_keywords(self, 
+                                        data_key : str, 
+                                        keywords : list, 
+                                        cutoff : float):
+        # Preprocess keywords into a set for faster membership checking
+        keyword_set = set(keywords)
+        matched_keys = set()
+
+        if cutoff < 1:
+            
+            keyword_set = [keyword.lower() for keyword in keyword_set]
+
+            matched_data = {key: value for key, value in self.data.items() \
+                if self._check_if_match(content = value[data_key].lower(),
+                                        cutoff = cutoff,
+                                        keyword_set = keyword_set)}
+        else:
+            matched_data = {key: value for key, value in self.data.items() \
+                if self._check_if_match(content = value[data_key],
+                                        cutoff = cutoff,
+                                        keyword_set = keyword_set)}
+        
+        return matched_data
+
+    def filter_database(self, 
+                        filter_criteria : dict = None,
+                        keyword_check_keys : list = None,
+                        keyword_check_cutoff : float = None):
 
         """
         Filters a dictionary based on multiple field criteria.
         """
 
-        if filter_criteria is None:
-            filter_criteria_list = []
-        else:
-            filter_criteria_list = self._prep_filter_criterias(filter_criteria = filter_criteria)
+        if keyword_check_cutoff is None:
+            keyword_check_cutoff = self.keyword_check_cutoff
 
-        self.filtered_data = {
-            key: value for key, value in self.data.items()
-            if any(all(value.get(k) == v for k, v in filter_dict.items()) \
-                for filter_dict in filter_criteria_list)}
+        if keyword_check_keys is None:
+            keyword_check_keys = []
+
+        keyword_check_dict = {}
+        
+        filter_criteria_list = []
+        if filter_criteria:
+            for key in keyword_check_keys:
+                keyword_check_dict[key] = filter_criteria[key]
+                del filter_criteria[key]
+
+            if filter_criteria:
+                filter_criteria_list = self._prep_filter_criterias(
+                    filter_criteria = filter_criteria)
+
+
+        self.filtered_data = {}
+        
+        if keyword_check_keys:
+
+            filtered_data = {}
+
+            for key, keywords in keyword_check_dict.items():
+                filtered_data = self._get_close_matches_for_keywords(
+                    data_key = key,
+                    keywords = keywords,
+                    cutoff=keyword_check_cutoff
+                )
+                self.filtered_data.update(filtered_data)
+
+        if filter_criteria_list:
+
+            filtered_data = {}
+
+            filtered_data = {
+                key: value for key, value in self.data.items()
+                if any(all(value.get(k) == v for k, v in filter_dict.items()) \
+                    for filter_dict in filter_criteria_list)}
+
+            self.filtered_data.update(filtered_data)
 
         if len(self.filtered_data) == 0:
             self.logger.warning("No data was found with applied filters!")
@@ -951,6 +1018,8 @@ class MockerDB:
     def search_database(self,
                         query: str = None,
                         search_results_n: int = None,
+                        keyword_check_keys : list = None,
+                        keyword_check_cutoff : float = None,
                         filter_criteria : dict = None,
                         similarity_search_type: str = None,
                         similarity_params: dict = None,
@@ -966,7 +1035,11 @@ class MockerDB:
             perform_similarity_search = False
 
         if filter_criteria:
-            self.filter_database(filter_criteria=filter_criteria)
+            self.filter_database(
+                filter_criteria=filter_criteria,
+                keyword_check_keys = keyword_check_keys,
+                keyword_check_cutoff = keyword_check_cutoff
+                )
         else:
             self.filtered_data = self.data
 
