@@ -695,10 +695,19 @@ class MockerDB:
         keyword_set = set(keywords)
         matched_keys = set()
 
-        matched_data = {key: value for key, value in self.data.items() \
-            if self._check_if_match(content = value[data_key],
-                                    cutoff = cutoff,
-                                    keyword_set = keyword_set)}
+        if cutoff < 1:
+            
+            keyword_set = [keyword.lower() for keyword in keyword_set]
+
+            matched_data = {key: value for key, value in self.data.items() \
+                if self._check_if_match(content = value[data_key].lower(),
+                                        cutoff = cutoff,
+                                        keyword_set = keyword_set)}
+        else:
+            matched_data = {key: value for key, value in self.data.items() \
+                if self._check_if_match(content = value[data_key],
+                                        cutoff = cutoff,
+                                        keyword_set = keyword_set)}
         
         return matched_data
 
