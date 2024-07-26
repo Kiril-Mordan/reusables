@@ -1,5 +1,11 @@
 # Release notes
 
+### 0.2.0
+
+    - precise keywords match with cutoff 1 and fuzzy match with < 1 through filters
+
+    - keywords search with difflib
+
 ### 0.1.3
 
     - option to add embedding and distance to output list
