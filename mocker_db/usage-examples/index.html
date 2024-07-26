@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.29">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.30">
     
     
       
@@ -22,7 +22,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.76a95c52.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.3cba04c6.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -561,10 +561,10 @@
 <p>This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
 It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
 and basic data management within a simulated environment resembling a vector database.</p>
-<pre><code class="language-python">import sys
+<pre><code class="language-python"># import sys
+# sys.path.append('../')
 import numpy as np
-sys.path.append('../')
-from python_modules.mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
+from mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
 </code></pre>
 <pre><code>/home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
@@ -637,6 +637,24 @@ print(distances)
 print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
 </code></pre>
 <pre><code>[{'text': 'Sample text 1...', 'text2': 'Sample text 1...'}]
+</code></pre>
+<ul>
+<li>get all keys with keywords search</li>
+</ul>
+<pre><code class="language-python">results = handler.search_database(
+    query = &quot;text&quot;,
+    # when keyword key is provided filter is used to pass keywords
+    filter_criteria = {
+        &quot;text&quot; : [&quot;1&quot;],
+    },
+    keyword_check_keys = ['text'],
+    # percentage of filter keyword allowed to be different
+    keyword_check_cutoff = 1,
+    return_keys_list=['text']
+)
+print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
+</code></pre>
+<pre><code>[{'text': 'Sample text 1...'}]
 </code></pre>
 <ul>
 <li>get all key - text2</li>
@@ -769,7 +787,7 @@ search_results = handler.search_database(query, return_keys_list=[&quot;text&quo
 print(search_results)
 
 </code></pre>
-<pre><code>[{'text': 'Sample text 1'}, {'text': 'Sample text 1'}, {'text': 'Sample text 2'}]
+<pre><code>[{'text': 'Sample text 1'}, {'text': 'Sample text 2'}, {'text': 'Sample text 2'}]
 </code></pre>
 <h3 id="3-advanced-filtering-and-removal">3. Advanced Filtering and Removal</h3>
 <pre><code class="language-python"># Advanced Filtering
@@ -783,7 +801,7 @@ handler.remove_from_database(filter_criteria)
 print(f&quot;Items left in the database {len(handler.data)}&quot;)
 
 </code></pre>
-<pre><code>Filtered data 2
+<pre><code>Filtered data 1
 Items left in the database 3
 </code></pre>
 <h3 id="4-testing-the-hnsw-search-algorithm">4. Testing the HNSW Search Algorithm</h3>
