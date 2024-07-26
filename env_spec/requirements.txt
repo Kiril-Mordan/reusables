@@ -1,6 +1,6 @@
 requests
-numpy
 sentence-transformers
+numpy
 httpx
 google-auth-httplib2
 stdlib-list
