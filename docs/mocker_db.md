@@ -7,10 +7,10 @@ and basic data management within a simulated environment resembling a vector dat
 
 
 ```python
-import sys
+# import sys
+# sys.path.append('../')
 import numpy as np
-sys.path.append('../')
-from python_modules.mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
+from mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
 ```
 
     /home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
@@ -101,6 +101,27 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 ```
 
     [{'text': 'Sample text 1...', 'text2': 'Sample text 1...'}]
+
+
+- get all keys with keywords search
+
+
+```python
+results = handler.search_database(
+    query = "text",
+    # when keyword key is provided filter is used to pass keywords
+    filter_criteria = {
+        "text" : ["1"],
+    },
+    keyword_check_keys = ['text'],
+    # percentage of filter keyword allowed to be different
+    keyword_check_cutoff = 1,
+    return_keys_list=['text']
+)
+print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
+```
+
+    [{'text': 'Sample text 1...'}]
 
 
 - get all key - text2
@@ -264,7 +285,7 @@ print(search_results)
 
 ```
 
-    [{'text': 'Sample text 1'}, {'text': 'Sample text 1'}, {'text': 'Sample text 2'}]
+    [{'text': 'Sample text 1'}, {'text': 'Sample text 2'}, {'text': 'Sample text 2'}]
 
 
 ### 3. Advanced Filtering and Removal
@@ -283,7 +304,7 @@ print(f"Items left in the database {len(handler.data)}")
 
 ```
 
-    Filtered data 2
+    Filtered data 1
     Items left in the database 3
 
 
