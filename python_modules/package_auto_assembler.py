@@ -922,16 +922,32 @@ class LocalDependaciesHandler:
 
         # List of dependency module names
         dependencies = [os.path.splitext(f)[0] for f in os.listdir(dependencies_dir) if f.endswith('.py')]
-        self.dependencies_names_list = dependencies
+        # List of dependency bundles
+        dependencies_folders = [os.path.splitext(f)[0] for f in os.listdir(dependencies_dir) if os.path.isdir(os.path.join(dependencies_dir,f))]
+        # List of dependencies from bundles
+        bundle_dependencies = [os.path.splitext(f)[0] for bundle in dependencies_folders for f in os.listdir(os.path.join(dependencies_dir, bundle)) if f.endswith('.py')]
+        bundle_dep_path = [os.path.join(bundle, f) for bundle in dependencies_folders for f in os.listdir(os.path.join(dependencies_dir, bundle)) if f.endswith('.py')]
+        
+        self.dependencies_names_list = dependencies + bundle_dependencies
+        # Filtering relevant dependencies
+        module_local_deps = [dep for dep in dependencies for module in main_module_imports if f'{dep} import' in module]
+        module_bundle_deps = [dep for dep in bundle_dependencies for module in main_module_imports if f'{dep} import' in module]
+
+
         # Remove specific dependency imports from the main module
-        for dep in dependencies:
+        for dep in module_local_deps:
             main_module_imports = [imp for imp in main_module_imports if f'{dep} import' not in imp]
+
+        for dep in module_bundle_deps:
+            main_module_imports = [imp for imp in main_module_imports if f'{dep} import' not in imp]
+
         main_module_content = self._remove_imports(main_module_content)
 
         # Process dependency modules
         combined_content = ""
         design_choices_list = []
-        for filename in dependencies:
+        for filename in module_local_deps:
+
             dep_content = self._read_module(os.path.join(dependencies_dir, f"{filename}.py"))
             # Extract design choices and add to list
             design_choices = self._extract_design_choices(dep_content, filename,add_empty_design_choices)
@@ -943,6 +959,23 @@ class LocalDependaciesHandler:
             dep_imports = self._extract_imports(dep_content)
             main_module_imports.extend(dep_imports)
             combined_content += self._remove_module_docstring(self._remove_imports(dep_content)) + "\n\n"
+
+        # Process bundle dependency modules
+        for file_path, filename in zip(bundle_dep_path, bundle_dependencies):
+
+            if filename in module_bundle_deps:
+
+                dep_content = self._read_module(os.path.join(dependencies_dir, file_path))
+                # Extract design choices and add to list
+                design_choices = self._extract_design_choices(dep_content, filename,add_empty_design_choices)
+                if design_choices:
+                    design_choices_list.append(design_choices)
+
+                dep_content = self._remove_module_docstring(dep_content)
+                dep_content = self._remove_metadata(dep_content)
+                dep_imports = self._extract_imports(dep_content)
+                main_module_imports.extend(dep_imports)
+                combined_content += self._remove_module_docstring(self._remove_imports(dep_content)) + "\n\n"
 
         # Combine design choices from all modules
         combined_design_choices = self._combine_design_choices(design_choices_list)
