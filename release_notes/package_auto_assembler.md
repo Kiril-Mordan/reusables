@@ -1,5 +1,13 @@
 # Release notes
 
+### 0.4.0
+
+    - getting latest version from pip and using local records as backup
+
+    - minor fixes for version handling in release notes and empty merge history
+
+    - support for components imports from bundles
+
 ### 0.3.1
 
     - release notes integragration into version interation
