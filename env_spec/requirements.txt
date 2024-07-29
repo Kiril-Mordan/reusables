@@ -9,6 +9,7 @@ pandas
 jupyter
 attrs
 nbformat
+mkdocs
 tox
 pytest
 mocker_db
@@ -18,12 +19,13 @@ pyyaml
 tox-gh-actions
 plotly
 sqlalchemy
-pip_audit
 nbconvert
+pip_audit
 pylint
 cryptography
 tqdm
 ipykernel
 package-auto-assembler
+mkdocs-material
 python-dotenv
 dill
