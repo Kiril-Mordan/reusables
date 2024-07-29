@@ -170,7 +170,9 @@ class VersionHandler:
         self._setup_logging()
 
 
-    def log_version_update(self, package_name, new_version):
+    def log_version_update(self, 
+                            package_name : str, 
+                            new_version : str):
 
         """
         Update version logs when change in the versions occured.
@@ -244,7 +246,40 @@ class VersionHandler:
             self._save_versions()
             self.log_version_update(package_name, version)
 
+    def get_latest_pip_version(self, package_name : str):
 
+        """
+        Extracts latest version of the packages wit pip if possible.
+        """
+
+        package_name = package_name.replace('_', '-')
+
+        try:
+
+            command = ["pip", "index", "versions", package_name]
+            
+            result = subprocess.run(command, capture_output=True, text=True)
+            
+            if result.returncode != 0:
+                raise Exception(f"Error fetching package versions: {result.stderr.strip()}")
+
+            output = result.stdout.strip()
+
+            # Extract versions using regex
+            version_pattern = re.compile(r'Available versions: (.+)')
+            match = version_pattern.search(output)
+
+            if match:
+                versions = match.group(1).split(", ")
+                latest_version = versions[0]
+                return latest_version
+            else:
+                raise Exception("No versions found for the package.")
+
+        except Exception as e:
+            self.logger.error("Failed to extract latest version with pip!")
+            self.logger.warning("Using latest version from provided file instead!")
+            return None
 
     def increment_version(self,
                           package_name : str,
@@ -264,7 +299,13 @@ class VersionHandler:
 
         if package_name in self.versions:
 
-            prev_version = self.versions[package_name]
+            prev_version = self.get_latest_pip_version(
+                package_name = package_name
+            )
+
+            if prev_version is None:
+                prev_version = self.versions[package_name]
+
             if version is None:
                 major, minor, patch = self._parse_version(prev_version)
 
