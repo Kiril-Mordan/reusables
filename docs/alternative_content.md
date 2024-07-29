@@ -9,7 +9,7 @@ A simple tool to compare and tune retriever performance, given a desired ranking
 The goal is to provide a simple metric to measure how a given retriver is close to the 'ideal', generated for example
 with a use of more expensive, slower or simply no-existant method.
 
-[module](../python_modules/proompter.py) | [usage](../docs/proompter.md) - Proompter 
+[module](../python_modules/proompter.py) | [usage](../docs/proompter.md) | [![PyPiVersion](https://img.shields.io/pypi/v/proompter)](https://pypi.org/project/proompter/) - Proompter 
 
 Proompter
 
@@ -39,12 +39,6 @@ It's particularly useful for scenarios where consistent text analysis is require
 such as evaluating the performance of natural language processing models, monitoring content quality,
 or tracking changes in textual data over time using manual evaluation.
 
-[module](../python_modules/prompt_strategies.py) - Prompt strategies 
 
-PromptHandler prepares inputs for the llm requests.
 
-[module](../python_modules/ollama.py) | [![PyPiVersion](https://img.shields.io/pypi/v/ollama)](https://pypi.org/project/ollama/) - Ollama 
-
-OllamaHandlerAsync is a simple connector to ollama.AsyncClient
-    meant to with LlmHandlerAsync in the role of llm_handler.
 
