@@ -23,13 +23,14 @@ import pandas as pd #==2.1.1
 import yaml
 import numpy #==1.26.0
 import nbformat
-from nbconvert import MarkdownExporter
+from nbconvert import MarkdownExporter #==7.16.4
 from nbconvert.preprocessors import ExecutePreprocessor
 import attr #>=22.2.0
 from stdlib_list import stdlib_list
 import tempfile
 import requests
 import pip_audit #==2.7.3
+import mkdocs #==1.6.0
 
 
 # Metadata for package creation
@@ -169,7 +170,9 @@ class VersionHandler:
         self._setup_logging()
 
 
-    def log_version_update(self, package_name, new_version):
+    def log_version_update(self, 
+                            package_name : str, 
+                            new_version : str):
 
         """
         Update version logs when change in the versions occured.
@@ -243,7 +246,40 @@ class VersionHandler:
             self._save_versions()
             self.log_version_update(package_name, version)
 
+    def get_latest_pip_version(self, package_name : str):
 
+        """
+        Extracts latest version of the packages wit pip if possible.
+        """
+
+        package_name = package_name.replace('_', '-')
+
+        try:
+
+            command = ["pip", "index", "versions", package_name]
+            
+            result = subprocess.run(command, capture_output=True, text=True)
+            
+            if result.returncode != 0:
+                raise Exception(f"Error fetching package versions: {result.stderr.strip()}")
+
+            output = result.stdout.strip()
+
+            # Extract versions using regex
+            version_pattern = re.compile(r'Available versions: (.+)')
+            match = version_pattern.search(output)
+
+            if match:
+                versions = match.group(1).split(", ")
+                latest_version = versions[0]
+                return latest_version
+            else:
+                raise Exception("No versions found for the package.")
+
+        except Exception as e:
+            self.logger.error("Failed to extract latest version with pip!")
+            self.logger.warning("Using latest version from provided file instead!")
+            return None
 
     def increment_version(self,
                           package_name : str,
@@ -263,7 +299,13 @@ class VersionHandler:
 
         if package_name in self.versions:
 
-            prev_version = self.versions[package_name]
+            prev_version = self.get_latest_pip_version(
+                package_name = package_name
+            )
+
+            if prev_version is None:
+                prev_version = self.versions[package_name]
+
             if version is None:
                 major, minor, patch = self._parse_version(prev_version)
 
@@ -918,20 +960,37 @@ class LocalDependaciesHandler:
 
         # Extract and preserve the main module's docstring and imports
         main_module_docstring = self._extract_module_docstring(main_module_content)
+        main_module_content = self._remove_module_docstring(main_module_content)
         main_module_imports = self._extract_imports(main_module_content)
 
         # List of dependency module names
         dependencies = [os.path.splitext(f)[0] for f in os.listdir(dependencies_dir) if f.endswith('.py')]
-        self.dependencies_names_list = dependencies
+        # List of dependency bundles
+        dependencies_folders = [os.path.splitext(f)[0] for f in os.listdir(dependencies_dir) if os.path.isdir(os.path.join(dependencies_dir,f))]
+        # List of dependencies from bundles
+        bundle_dependencies = [os.path.splitext(f)[0] for bundle in dependencies_folders for f in os.listdir(os.path.join(dependencies_dir, bundle)) if f.endswith('.py')]
+        bundle_dep_path = [os.path.join(bundle, f) for bundle in dependencies_folders for f in os.listdir(os.path.join(dependencies_dir, bundle)) if f.endswith('.py')]
+        
+        self.dependencies_names_list = dependencies + bundle_dependencies
+        # Filtering relevant dependencies
+        module_local_deps = [dep for dep in dependencies for module in main_module_imports if f'{dep} import' in module]
+        module_bundle_deps = [dep for dep in bundle_dependencies for module in main_module_imports if f'{dep} import' in module]
+
+
         # Remove specific dependency imports from the main module
-        for dep in dependencies:
+        for dep in module_local_deps:
             main_module_imports = [imp for imp in main_module_imports if f'{dep} import' not in imp]
+
+        for dep in module_bundle_deps:
+            main_module_imports = [imp for imp in main_module_imports if f'{dep} import' not in imp]
+
         main_module_content = self._remove_imports(main_module_content)
 
         # Process dependency modules
         combined_content = ""
         design_choices_list = []
-        for filename in dependencies:
+        for filename in module_local_deps:
+
             dep_content = self._read_module(os.path.join(dependencies_dir, f"{filename}.py"))
             # Extract design choices and add to list
             design_choices = self._extract_design_choices(dep_content, filename,add_empty_design_choices)
@@ -943,6 +1002,23 @@ class LocalDependaciesHandler:
             dep_imports = self._extract_imports(dep_content)
             main_module_imports.extend(dep_imports)
             combined_content += self._remove_module_docstring(self._remove_imports(dep_content)) + "\n\n"
+
+        # Process bundle dependency modules
+        for file_path, filename in zip(bundle_dep_path, bundle_dependencies):
+
+            if filename in module_bundle_deps:
+
+                dep_content = self._read_module(os.path.join(dependencies_dir, file_path))
+                # Extract design choices and add to list
+                design_choices = self._extract_design_choices(dep_content, filename,add_empty_design_choices)
+                if design_choices:
+                    design_choices_list.append(design_choices)
+
+                dep_content = self._remove_module_docstring(dep_content)
+                dep_content = self._remove_metadata(dep_content)
+                dep_imports = self._extract_imports(dep_content)
+                main_module_imports.extend(dep_imports)
+                combined_content += self._remove_module_docstring(self._remove_imports(dep_content)) + "\n\n"
 
         # Combine design choices from all modules
         combined_design_choices = self._combine_design_choices(design_choices_list)
@@ -1504,17 +1580,30 @@ class ReleaseNotesHandler:
         find_merge_command = ["git", "log", "--merges", "--format=%H", "-n", str(n_last_messages)]
         merge_result = subprocess.run(find_merge_command, capture_output=True, text=True)
         if merge_result.returncode != 0:
-            raise Exception("Failed to find last merge commit")
+            #raise Exception("Failed to find last merge commit")
+            self.logger.warning("Failed to find last merge commit")
+            self.commit_messages = []
+            return True
 
-        last_merge_commit_hash = merge_result.stdout.strip().split("\n")[n_last_messages-1]
+        merge_result_p = merge_result.stdout.strip().split("\n")
+
+        if len(merge_result_p) > (n_last_messages-1):
+            last_merge_commit_hash = merge_result_p[n_last_messages-1]
+        else:
+            last_merge_commit_hash = None
         if not last_merge_commit_hash:
-            raise Exception("No merge commits found")
+            self.logger.warning("No merge commits found")
+            self.commit_messages = []
+            return True
 
         # Now, get all commits after the last merge commit
         log_command = ["git", "log", f"{last_merge_commit_hash}..HEAD", "--no-merges", "--format=%s"]
         log_result = subprocess.run(log_command, capture_output=True, text=True)
         if log_result.returncode != 0:
-            raise Exception("Error running git log")
+            #raise Exception("Error running git log")
+            self.logger.warning("Error running git log")
+            self.commit_messages = []
+            return True
 
         # Each commit message is separated by newlines
         commit_messages = log_result.stdout.strip().split("\n")
@@ -1683,7 +1772,6 @@ class ReleaseNotesHandler:
             lst=existing_contents)
 
         self.processed_note_entries = existing_contents
-
 
     def get_release_notes_content(self,
                                   filepath : str = None) -> str:
@@ -2340,7 +2428,7 @@ class PackageAutoAssembler:
         if use_commit_messages:
             self._initialize_release_notes_handler(version = version)
             self.release_notes_h.extract_version_update()
-
+            
             version_increment_type = self.release_notes_h.version_update_label
 
             if self.release_notes_h.version != self.default_version:
@@ -2361,8 +2449,6 @@ class PackageAutoAssembler:
 
         if log_filepath is None:
             log_filepath = self.log_filepath
-
-
 
 
         self.version_h.increment_version(package_name = module_name,

@@ -13,6 +13,7 @@ import json
 import time
 import attr #>=22.2.0
 from .dependancies.example_local_dependacy_2 import *
+from .dependancies.bundle_1.dep_from_bundle_1 import *
 
 # Metadata for package creation
 __package_metadata__ = {

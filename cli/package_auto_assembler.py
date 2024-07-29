@@ -264,7 +264,7 @@ def make_package(ctx,
         paa.add_metadata_from_module()
         paa.add_metadata_from_cli_module()
         paa.add_or_update_version()
-        if test_install_config["release_notes_dir"]:
+        if test_install_config["use_commit_messages"]:
             paa.add_or_update_release_notes()
         paa.prep_setup_dir()
 
