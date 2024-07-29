@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.30">
     
     
       
@@ -24,7 +24,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.6543a935.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.3cba04c6.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -400,6 +400,15 @@
   <a href="#flush-versions-and-logs" class="md-nav__link">
     <span class="md-ellipsis">
       Flush versions and logs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-latest-available-version-with-pip" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get latest available version with pip
     </span>
   </a>
   
@@ -1021,6 +1030,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#get-latest-available-version-with-pip" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get latest available version with pip
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1628,19 +1646,19 @@ pv.increment_patch(
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-06-08 23:26:10</td>
+      <td>2024-07-29 03:26:39</td>
       <td>new_package</td>
       <td>0.0.1</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-06-08 23:26:11</td>
+      <td>2024-07-29 03:26:40</td>
       <td>new_package</td>
       <td>0.0.2</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-06-08 23:26:11</td>
+      <td>2024-07-29 03:26:40</td>
       <td>another_new_package</td>
       <td>0.0.1</td>
     </tr>
@@ -1651,6 +1669,11 @@ pv.increment_patch(
 <h4 id="flush-versions-and-logs">Flush versions and logs</h4>
 <pre><code class="language-python">pv.flush_versions()
 pv.flush_logs()
+</code></pre>
+<h4 id="get-latest-available-version-with-pip">Get latest available version with pip</h4>
+<pre><code class="language-python">pv.get_latest_pip_version(package_name = 'package-auto-assembler')
+</code></pre>
+<pre><code>'0.3.1'
 </code></pre>
 <h3 id="2-import-mapping">2. Import mapping</h3>
 <h4 id="initialize-importmappinghandler">Initialize ImportMappingHandler</h4>
@@ -1677,7 +1700,8 @@ pv.flush_logs()
  'stdlib_list': 'stdlib-list',
  'sklearn': 'scikit-learn',
  'yaml': 'pyyaml',
- 'package_auto_assembler': 'package-auto-assembler'}
+ 'package_auto_assembler': 'package-auto-assembler',
+ 'git': 'gitpython'}
 </code></pre>
 <h3 id="3-extracting-and-merging-requirements">3. Extracting and merging requirements</h3>
 <h4 id="initialize-requirementshandler">Initialize RequirementsHandler</h4>
@@ -1749,7 +1773,7 @@ pv.flush_logs()
     add_header=True
 )
 </code></pre>
-<pre><code>['### example_module.py', 'attrs&gt;=22.2.0']
+<pre><code>['attrs&gt;=22.2.0']
 </code></pre>
 <pre><code class="language-python">rh.requirements_list
 </code></pre>
@@ -1868,36 +1892,34 @@ import logging
 import json
 import time
 import attr #&gt;=22.2.0
-import string
-import os
-import csv
+import sklearn
 
 __design_choices__ = {}
 
-# Metadata for package creation
-
-
 @attr.s
-class ComparisonFrame:
+class Shouter:
 
     """
-    Compares query:response pairs expected vs recieved with semantic similarity
-    and simple metrics of word count, line count etc.
+    A class for managing and displaying formatted log messages.
 
-    ...
+    This class uses the logging module to create and manage a logger
+    for displaying formatted messages. It provides a method to output
+    various types of lines and headers, with customizable message and
+    line lengths.
+    """
 
-    Attributes
-    ----------
-    embedder : SentenceTransformer
-        The model used to generate embeddings for semantic comparison.
-    record_file : str
-        The name of the CSV file where queries and expected results are stored.
-    results_file : str
-        The name of the CSV file where comparison results
+    # Formatting settings
+    dotline_length = attr.ib(default=50)
+
+    # Logger settings
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='Shouter')
+    loggerLvl = attr.ib(default=logging.DEBUG)
+    log
 </code></pre>
 <pre><code class="language-python">ldh.dependencies_names_list
 </code></pre>
-<pre><code>['example_local_dependacy_1', 'example_local_dependacy_2']
+<pre><code>['example_local_dependacy_2', 'example_local_dependacy_1', 'dep_from_bundle_1']
 </code></pre>
 <h4 id="save-combined-module">Save combined module</h4>
 <pre><code class="language-python">ldh.save_combined_modules(
@@ -2020,8 +2042,7 @@ ldh = LongDocHandler(
     version = '0.0.1'
 )
 </code></pre>
-<pre><code>No release notes were found in ../tests/package_auto_assembler/release_notes.md, new will be initialized!
-No relevant commit messages found!
+<pre><code>No relevant commit messages found!
 ..trying depth 2 !
 No relevant commit messages found!
 No messages to clean were provided
@@ -2030,14 +2051,13 @@ No messages to clean were provided
 <pre><code class="language-python"># commit messages from last merge
 rnh.commit_messages
 </code></pre>
-<pre><code>['fix to paa tests',
- '[package_auto_assembler] check-vulnerabilities with cli',
- '[mocker_db] initital cli interface that allows to clone code from api version of mocker and run it',
- '[package_auto_assembler] fixes to requirements extraction from import .. as .. pattern',
+<pre><code>['[package_auto_assembler][.+.] minor fixes for version handling in release notes and empty merge history',
+ '[package_auto_assembler] support for components imports from bundles',
  'Update package version tracking files',
+ 'Update README',
  'Update requirements',
- '[comparisonframe] initial version',
- 'preparing initial comparisonframe for packaging',
+ '[mocker_db][.+.] precise keywords match with cutoff 1 and fuzzy match with &lt; 1 through filters',
+ '[mocker_db] keywords search with difflib',
  'Update package version tracking files',
  'Update README',
  'Update requirements']
@@ -2085,12 +2105,29 @@ print(&quot;Example processed_note_entries:&quot;)
 print(rnh.processed_note_entries)
 </code></pre>
 <pre><code>Example processed_note_entries:
-['# Release notes\n', '\n', '### 0.1.2\n', '\n', '    - usage example for initial release notes\n', '\n', '    - bugfixes for RNH\n', '\n', '    - initial release notes handler\n']
+['# Release notes\n', '\n', '### 0.1.2\n', '\n', '    - usage example for initial release notes\n', '\n', '    - bugfixes for RNH\n', '\n', '    - initial release notes handler\n', '\n', '### 0.0.1\n', '\n', '    - initial version of example_module\n']
 </code></pre>
 <h5 id="-saving-updated-relese-notes">- saving updated relese notes</h5>
 <pre><code class="language-python">rnh.existing_contents
 </code></pre>
-<pre><code>['# Release notes\n']
+<pre><code>['# Release notes\n',
+ '\n',
+ '### 0.1.2\n',
+ '\n',
+ '    - usage example for initial release notes\n',
+ '    - bugfixes for RNH\n',
+ '    - initial release notes handler\n',
+ '### 0.1.2\n',
+ '\n',
+ '    - usage example for initial release notes\n',
+ '\n',
+ '    - bugfixes for RNH\n',
+ '\n',
+ '    - initial release notes handler\n',
+ '\n',
+ '### 0.0.1\n',
+ '\n',
+ '    - initial version of example_module\n']
 </code></pre>
 <pre><code class="language-python">rnh.save_release_notes()
 </code></pre>
@@ -2105,7 +2142,11 @@ rnh.get_release_notes_content()
  '\n',
  '    - bugfixes for RNH\n',
  '\n',
- '    - initial release notes handler\n']
+ '    - initial release notes handler\n',
+ '\n',
+ '### 0.0.1\n',
+ '\n',
+ '    - initial version of example_module\n']
 </code></pre>
 <h3 id="9-making-a-package">9. Making a package</h3>
 <h4 id="initializing-packageautoassembler">Initializing PackageAutoAssembler</h4>
@@ -2159,6 +2200,11 @@ rnh.get_release_notes_content()
 )
 </code></pre>
 <pre><code>Incrementing version ...
+No relevant commit messages found!
+..trying depth 2 !
+No relevant commit messages found!
+No messages to clean were provided
+There are no known versions of 'example_module', 1.2.6 will be used!
 </code></pre>
 <h4 id="add-release-notes-from-commit-messages">Add release notes from commit messages</h4>
 <pre><code class="language-python">paa.add_or_update_release_notes(
@@ -2255,7 +2301,7 @@ No known vulnerabilities found
 
 
 
-CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=0, stdout="running sdist\nrunning egg_info\ncreating example_module.egg-info\nwriting example_module.egg-info/PKG-INFO\nwriting dependency_links to example_module.egg-info/dependency_links.txt\nwriting entry points to example_module.egg-info/entry_points.txt\nwriting requirements to example_module.egg-info/requires.txt\nwriting top-level names to example_module.egg-info/top_level.txt\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nreading manifest file 'example_module.egg-info/SOURCES.txt'\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nrunning check\ncreating example_module-0.0.1\ncreating example_module-0.0.1/example_module\ncreating example_module-0.0.1/example_module.egg-info\ncopying files to example_module-0.0.1...\ncopying example_module/__init__.py -&gt; example_module-0.0.1/example_module\ncopying example_module/cli.py -&gt; example_module-0.0.1/example_module\ncopying example_module/example_module.py -&gt; example_module-0.0.1/example_module\ncopying example_module/setup.py -&gt; example_module-0.0.1/example_module\ncopying example_module.egg-info/PKG-INFO -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/dependency_links.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/entry_points.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/requires.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/top_level.txt -&gt; example_module-0.0.1/example_module.egg-info\nWriting example_module-0.0.1/setup.cfg\ncreating dist\nCreating tar archive\nremoving 'example_module-0.0.1' (and everything under it)\nrunning bdist_wheel\nrunning build\nrunning build_py\ncreating build\ncreating build/lib\ncreating build/lib/example_module\ncopying example_module/example_module.py -&gt; build/lib/example_module\ncopying example_module/__init__.py -&gt; build/lib/example_module\ncopying example_module/setup.py -&gt; build/lib/example_module\ncopying example_module/cli.py -&gt; build/lib/example_module\ninstalling to build/bdist.macosx-10.9-x86_64/wheel\nrunning install\nrunning install_lib\ncreating build/bdist.macosx-10.9-x86_64\ncreating build/bdist.macosx-10.9-x86_64/wheel\ncreating build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/example_module.py -&gt; build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/__init__.py -&gt; build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/setup.py -&gt; build/bdist.macosx-10.9-x86_64/wheel/example_module\ncopying build/lib/example_module/cli.py -&gt; build/bdist.macosx-10.9-x86_64/wheel/example_module\nrunning install_egg_info\nCopying example_module.egg-info to build/bdist.macosx-10.9-x86_64/wheel/example_module-0.0.1-py3.9.egg-info\nrunning install_scripts\ncreating build/bdist.macosx-10.9-x86_64/wheel/example_module-0.0.1.dist-info/WHEEL\ncreating 'dist/example_module-0.0.1-py3-none-any.whl' and adding 'build/bdist.macosx-10.9-x86_64/wheel' to it\nadding 'example_module/__init__.py'\nadding 'example_module/cli.py'\nadding 'example_module/example_module.py'\nadding 'example_module/setup.py'\nadding 'example_module-0.0.1.dist-info/METADATA'\nadding 'example_module-0.0.1.dist-info/WHEEL'\nadding 'example_module-0.0.1.dist-info/entry_points.txt'\nadding 'example_module-0.0.1.dist-info/top_level.txt'\nadding 'example_module-0.0.1.dist-info/RECORD'\nremoving build/bdist.macosx-10.9-x86_64/wheel\n", stderr='warning: sdist: standard file not found: should have one of README, README.rst, README.txt, README.md\n\n/Users/insani_dei/miniconda3/envs/testenv/lib/python3.9/site-packages/setuptools/command/install.py:34: SetuptoolsDeprecationWarning: setup.py install is deprecated. Use build and pip and other standards-based tools.\n  warnings.warn(\n')
+CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=0, stdout="running sdist\nrunning egg_info\nwriting example_module.egg-info/PKG-INFO\nwriting dependency_links to example_module.egg-info/dependency_links.txt\nwriting entry points to example_module.egg-info/entry_points.txt\nwriting requirements to example_module.egg-info/requires.txt\nwriting top-level names to example_module.egg-info/top_level.txt\nreading manifest file 'example_module.egg-info/SOURCES.txt'\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nrunning check\ncreating example_module-0.0.1\ncreating example_module-0.0.1/example_module\ncreating example_module-0.0.1/example_module.egg-info\ncopying files to example_module-0.0.1...\ncopying example_module/__init__.py -&gt; example_module-0.0.1/example_module\ncopying example_module/cli.py -&gt; example_module-0.0.1/example_module\ncopying example_module/example_module.py -&gt; example_module-0.0.1/example_module\ncopying example_module/setup.py -&gt; example_module-0.0.1/example_module\ncopying example_module.egg-info/PKG-INFO -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/dependency_links.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/entry_points.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/requires.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/top_level.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -&gt; example_module-0.0.1/example_module.egg-info\nWriting example_module-0.0.1/setup.cfg\nCreating tar archive\nremoving 'example_module-0.0.1' (and everything under it)\nrunning bdist_wheel\nrunning build\nrunning build_py\ncopying example_module/example_module.py -&gt; build/lib/example_module\ncopying example_module/__init__.py -&gt; build/lib/example_module\ncopying example_module/setup.py -&gt; build/lib/example_module\ncopying example_module/cli.py -&gt; build/lib/example_module\ninstalling to build/bdist.linux-x86_64/wheel\nrunning install\nrunning install_lib\ncreating build/bdist.linux-x86_64/wheel\ncreating build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/example_module.py -&gt; build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/__init__.py -&gt; build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/setup.py -&gt; build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/cli.py -&gt; build/bdist.linux-x86_64/wheel/example_module\nrunning install_egg_info\nCopying example_module.egg-info to build/bdist.linux-x86_64/wheel/example_module-0.0.1-py3.10.egg-info\nrunning install_scripts\ncreating build/bdist.linux-x86_64/wheel/example_module-0.0.1.dist-info/WHEEL\ncreating 'dist/example_module-0.0.1-py3-none-any.whl' and adding 'build/bdist.linux-x86_64/wheel' to it\nadding 'example_module/__init__.py'\nadding 'example_module/cli.py'\nadding 'example_module/example_module.py'\nadding 'example_module/setup.py'\nadding 'example_module-0.0.1.dist-info/METADATA'\nadding 'example_module-0.0.1.dist-info/WHEEL'\nadding 'example_module-0.0.1.dist-info/entry_points.txt'\nadding 'example_module-0.0.1.dist-info/top_level.txt'\nadding 'example_module-0.0.1.dist-info/RECORD'\nremoving build/bdist.linux-x86_64/wheel\n", stderr='warning: sdist: standard file not found: should have one of README, README.rst, README.txt, README.md\n\n/home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.\n!!\n\n        ********************************************************************************\n        Please avoid running ``setup.py`` directly.\n        Instead, use pypa/build, pypa/installer or other\n        standards-based tools.\n\n        See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.\n        ********************************************************************************\n\n!!\n  self.initialize_options()\n')
 </code></pre>
 <h3 id="10-making-simple-mkdocs-site">10. Making simple MkDocs site</h3>
 <h5 id="-preparing-inputs">- preparing inputs</h5>
@@ -2305,8 +2351,8 @@ Custom CSS created at temp_project/docs/css/extra.css
 
 
 INFO    -  Cleaning site directory
-INFO    -  Building documentation to directory: /Users/user/reusables/example_notebooks/temp_project/site
-INFO    -  Documentation built in 0.80 seconds
+INFO    -  Building documentation to directory: /home/kyriosskia/Documents/nlp/reusables/example_notebooks/temp_project/site
+INFO    -  Documentation built in 0.12 seconds
 </code></pre>
 <h5 id="-test-runing-site">- test runing site</h5>
 <pre><code class="language-python">mdh.serve_mkdocs_site()
@@ -2360,7 +2406,7 @@ INFO    -  Documentation built in 0.80 seconds
     <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.ad660dcc.min.js"></script>
+      <script src="../assets/javascripts/bundle.fe8b6f2b.min.js"></script>
       
     
   </body>
