@@ -23,13 +23,14 @@ import pandas as pd #==2.1.1
 import yaml
 import numpy #==1.26.0
 import nbformat
-from nbconvert import MarkdownExporter
+from nbconvert import MarkdownExporter #==7.16.4
 from nbconvert.preprocessors import ExecutePreprocessor
 import attr #>=22.2.0
 from stdlib_list import stdlib_list
 import tempfile
 import requests
 import pip_audit #==2.7.3
+import mkdocs #==1.6.0
 
 
 # Metadata for package creation
@@ -918,6 +919,7 @@ class LocalDependaciesHandler:
 
         # Extract and preserve the main module's docstring and imports
         main_module_docstring = self._extract_module_docstring(main_module_content)
+        main_module_content = self._remove_module_docstring(main_module_content)
         main_module_imports = self._extract_imports(main_module_content)
 
         # List of dependency module names
@@ -1537,17 +1539,30 @@ class ReleaseNotesHandler:
         find_merge_command = ["git", "log", "--merges", "--format=%H", "-n", str(n_last_messages)]
         merge_result = subprocess.run(find_merge_command, capture_output=True, text=True)
         if merge_result.returncode != 0:
-            raise Exception("Failed to find last merge commit")
+            #raise Exception("Failed to find last merge commit")
+            self.logger.warning("Failed to find last merge commit")
+            self.commit_messages = []
+            return True
 
-        last_merge_commit_hash = merge_result.stdout.strip().split("\n")[n_last_messages-1]
+        merge_result_p = merge_result.stdout.strip().split("\n")
+
+        if len(merge_result_p) > (n_last_messages-1):
+            last_merge_commit_hash = merge_result_p[n_last_messages-1]
+        else:
+            last_merge_commit_hash = None
         if not last_merge_commit_hash:
-            raise Exception("No merge commits found")
+            self.logger.warning("No merge commits found")
+            self.commit_messages = []
+            return True
 
         # Now, get all commits after the last merge commit
         log_command = ["git", "log", f"{last_merge_commit_hash}..HEAD", "--no-merges", "--format=%s"]
         log_result = subprocess.run(log_command, capture_output=True, text=True)
         if log_result.returncode != 0:
-            raise Exception("Error running git log")
+            #raise Exception("Error running git log")
+            self.logger.warning("Error running git log")
+            self.commit_messages = []
+            return True
 
         # Each commit message is separated by newlines
         commit_messages = log_result.stdout.strip().split("\n")
@@ -1716,7 +1731,6 @@ class ReleaseNotesHandler:
             lst=existing_contents)
 
         self.processed_note_entries = existing_contents
-
 
     def get_release_notes_content(self,
                                   filepath : str = None) -> str:
@@ -2373,7 +2387,7 @@ class PackageAutoAssembler:
         if use_commit_messages:
             self._initialize_release_notes_handler(version = version)
             self.release_notes_h.extract_version_update()
-
+            
             version_increment_type = self.release_notes_h.version_update_label
 
             if self.release_notes_h.version != self.default_version:
@@ -2394,8 +2408,6 @@ class PackageAutoAssembler:
 
         if log_filepath is None:
             log_filepath = self.log_filepath
-
-
 
 
         self.version_h.increment_version(package_name = module_name,
