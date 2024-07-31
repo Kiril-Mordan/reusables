@@ -230,6 +230,23 @@ class PromptStrategyHandler():
         max_response = next(response for response in responses if response['message']['content'] == max_content)
         return max_response
 
+    async def last_call(self, 
+                        function: Callable,
+                        strategy_params: dict, 
+                        *args, **kwargs) -> Dict[str, Any]:
+        """
+        Calls function a given number of times and selects output of maximal length.
+        """
+        n_calls = max(strategy_params.get('n_calls', 1), 1)
+
+        responses = await self._call_n_times(
+            function=function, 
+            n_calls=n_calls, 
+            *args, **kwargs
+        )
+
+        return responses[-1]
+
         
     async def call_async(self, 
              function: Callable, 
@@ -256,6 +273,6 @@ class PromptStrategyHandler():
                     strategy_params=strategy_params,
                     *args, **kwargs)
             else:
-                raise AttributeError(f"Strategy '{strategy_name}' not found")
+                raise AttributeError(f"Strategy '{strategy_name}' not found")            
         else:
             return await function(*args, **kwargs)

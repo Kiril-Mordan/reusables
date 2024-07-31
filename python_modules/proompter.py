@@ -88,6 +88,15 @@ class Proompter():
     """
     Proompter is meant as a wrapper around some Llm handlers.
     Its purpose is to serve as extension component that abstract their usage.
+
+    Proompter consists of multiple dependecies, which could be initialized and passed to the class externally or parameters could be passed for class to initialize them.
+
+    These include:
+
+        - LLM handler: makes calls to llm
+        - Prompt handler: prepares input based on templates
+        - Prompt strategy handler: contains ways to call llm handler with selected strategy
+        - Tokenizer handler: tokenizes text
     """
 
     # Dependencies
@@ -230,7 +239,7 @@ class Proompter():
         messages = messages.copy()
 
         # apply prompt template
-        messages = self.prompt_h.apply_template(
+        processed_messages = self.prompt_h.apply_template(
             messages=messages,
             template=prompt_templates)
 
@@ -241,7 +250,7 @@ class Proompter():
             function = self.llm_handler_h.chat,
             strategy_name = call_strategy_name,
             strategy_params = call_strategy_params,
-            messages = messages, 
+            messages = processed_messages, 
             model_name = model_name
         ) 
         end_time = time.time()
@@ -251,7 +260,9 @@ class Proompter():
 
         # save message history
         messages.append(response['message'])
-        response['messages'] = messages
+        response['messages'] = self.prompt_h.apply_template(
+            messages=messages,
+            template=prompt_templates)
 
 
         # calculating token usage
@@ -268,7 +279,7 @@ class Proompter():
         response['total_tokens'] = total_tokens
 
         # saving responses
-        self.messages = response['messages']
+        self.messages = messages
         self.responses.append(response)
 
         return response
@@ -371,16 +382,22 @@ class Proompter():
 
         return responses
 
-    async def chat(self, prompt : str):
+    async def chat(self, 
+                   prompt : str, 
+                   new_dialog : bool = False):
 
         """
         Async chat method to pass new prompts and manage history.
         """
 
+
         if self.messages is None:
             messages = []
         else:
             messages = self.messages.copy()
+
+        if new_dialog:
+            messages = []
 
         messages.append({'role': 'user', 'content': prompt})
 
