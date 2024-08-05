@@ -406,3 +406,27 @@ class Proompter():
 
         return response['message']['content']
 
+    async def chat_stream(self, prompt: str, 
+                          new_dialog: bool = False):
+        """
+        Async chat method to pass new prompts and manage history.
+        """
+        if new_dialog or self.messages is None:
+            messages = []
+            self.messages = []
+        else:
+            messages = self.messages.copy()
+
+        messages.append({'role': 'user', 'content': prompt})
+
+        full_message = ''
+        async for message in self.llm_handler_h.chat_stream(messages=messages):
+            full_message += message
+            # Yield the message for streaming
+            yield message
+
+        # Append the response from the assistant to the messages list
+        messages.append({'role': 'assistant', 'content': full_message})
+        # Update the class-level message history
+        self.messages = messages
+

@@ -59,6 +59,26 @@ class OllamaHandlerAsync(AsyncClient):
 
         return response
 
+    async def chat_stream(self,
+                    messages : list, 
+                model_name : str = None):
+
+        """
+        Async stream chat method from ollama.AsyncClient extended with message history and optional token usage counter,
+        returns generator.
+        """
+        
+        # request chat
+        response = await super().chat(
+            model=model_name or self.model_name, 
+            messages=messages,
+            stream = True)
+
+
+        async for chunk in response:
+            yield chunk['message']['content']
+
+
     async def generate(self,
                     prompt : str, 
                 model_name : str = None):
