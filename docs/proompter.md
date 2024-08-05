@@ -7,6 +7,10 @@ sys.path.append('../')
 from proompter import Proompter
 ```
 
+    /home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+      from .autonotebook import tqdm as notebook_tqdm
+
+
 ### 1. Initializing instance
 
 Proompter consists of multiple dependecies, which could be initialized and passed to the class externally or parameters could be passed for class to initialize them.
@@ -92,24 +96,24 @@ response
 
 
     {'model': 'llama3',
-     'created_at': '2024-07-31T01:14:22.66494516Z',
+     'created_at': '2024-08-05T04:57:00.847696577Z',
      'message': {'role': 'assistant',
-      'content': "What a great question!\n\nThe sky appears blue because of a phenomenon called Rayleigh scattering, named after the British physicist Lord Rayleigh. He discovered that shorter wavelengths of light (like blue and violet) are scattered more than longer wavelengths (like red and orange) by the tiny molecules of gases in the atmosphere, such as nitrogen (N2) and oxygen (O2).\n\nHere's what happens:\n\n1. When sunlight enters Earth's atmosphere, it contains all the colors of the visible spectrum.\n2. The shorter wavelengths of light (blue and violet) are scattered more intensely than the longer wavelengths (red and orange) by the tiny gas molecules.\n3. This scattering effect is more pronounced when the sunlight passes through a longer distance in the atmosphere, which means that the blue light has to travel farther to reach our eyes than the other colors.\n4. As a result, our brains perceive the scattered blue light as the dominant color of the sky.\n\nWhy do we see more red during sunrise and sunset? Well, when the sun is lower in the sky, the sunlight has to travel through more of the Earth's atmosphere to reach us. This means that:\n\n1. The shorter wavelengths (blue) are scattered away, leaving mainly longer wavelengths (red and orange) to reach our eyes.\n2. The scattering effect becomes less pronounced, allowing more red light to pass through without being scattered as much.\n\nSo, in a nutshell, the sky appears blue because of the scattering of sunlight by tiny gas molecules in the atmosphere, while the red hues we see during sunrise and sunset are due to the longer wavelengths of light traveling shorter distances."},
+      'content': "The sky appears blue because of a phenomenon called scattering, which involves the interaction between light, tiny molecules in the atmosphere, and our eyes. Here's a simplified explanation:\n\n1. **Sunlight**: When sunlight enters Earth's atmosphere, it consists of all the colors of the visible spectrum (red, orange, yellow, green, blue, indigo, and violet).\n2. **Molecules**: The atmosphere is made up of tiny molecules like nitrogen (N2) and oxygen (O2). These molecules are much smaller than the wavelength of light.\n3. **Scattering**: When sunlight hits these molecules, it scatters in all directions. This scattering effect is more pronounced for shorter wavelengths of light, such as blue and violet.\n4. **Blue dominance**: As a result of this scattering, the shorter wavelengths of light (blue and violet) are dispersed throughout the atmosphere, reaching our eyes from multiple angles. This is why the sky appears blue during the daytime, especially when the sun is overhead.\n5. **Other factors**: The color of the sky can be influenced by other atmospheric conditions, such as:\n\t* Dust and pollution particles: These can scatter light in various ways, changing the apparent color of the sky.\n\t* Water vapor: High humidity can cause the sky to appear more hazy or gray.\n\t* Clouds: Clouds can reflect and absorb light, affecting the overall color of the sky.\n\nSo, to summarize, the blue color we see in the sky is primarily due to the scattering of sunlight by tiny molecules in the atmosphere. The shorter wavelengths of light (blue and violet) are preferentially scattered, giving our skies their familiar blue hue."},
      'done_reason': 'stop',
      'done': True,
-     'total_duration': 2799024799,
-     'load_duration': 572370,
-     'prompt_eval_count': 14,
-     'prompt_eval_duration': 22598000,
-     'eval_count': 327,
-     'eval_duration': 2650933000,
-     'response_time': 2.804267168045044,
+     'total_duration': 2893315343,
+     'load_duration': 763924,
+     'prompt_eval_count': 11,
+     'prompt_eval_duration': 22698000,
+     'eval_count': 339,
+     'eval_duration': 2745388000,
+     'response_time': 2.8988137245178223,
      'messages': [{'role': 'user', 'content': 'Why is the sky blue?'},
       {'role': 'assistant',
-       'content': "What a great question!\n\nThe sky appears blue because of a phenomenon called Rayleigh scattering, named after the British physicist Lord Rayleigh. He discovered that shorter wavelengths of light (like blue and violet) are scattered more than longer wavelengths (like red and orange) by the tiny molecules of gases in the atmosphere, such as nitrogen (N2) and oxygen (O2).\n\nHere's what happens:\n\n1. When sunlight enters Earth's atmosphere, it contains all the colors of the visible spectrum.\n2. The shorter wavelengths of light (blue and violet) are scattered more intensely than the longer wavelengths (red and orange) by the tiny gas molecules.\n3. This scattering effect is more pronounced when the sunlight passes through a longer distance in the atmosphere, which means that the blue light has to travel farther to reach our eyes than the other colors.\n4. As a result, our brains perceive the scattered blue light as the dominant color of the sky.\n\nWhy do we see more red during sunrise and sunset? Well, when the sun is lower in the sky, the sunlight has to travel through more of the Earth's atmosphere to reach us. This means that:\n\n1. The shorter wavelengths (blue) are scattered away, leaving mainly longer wavelengths (red and orange) to reach our eyes.\n2. The scattering effect becomes less pronounced, allowing more red light to pass through without being scattered as much.\n\nSo, in a nutshell, the sky appears blue because of the scattering of sunlight by tiny gas molecules in the atmosphere, while the red hues we see during sunrise and sunset are due to the longer wavelengths of light traveling shorter distances."}],
-     'input_tokens': 371,
-     'output_tokens': 326,
-     'total_tokens': 697}
+       'content': "The sky appears blue because of a phenomenon called scattering, which involves the interaction between light, tiny molecules in the atmosphere, and our eyes. Here's a simplified explanation:\n\n1. **Sunlight**: When sunlight enters Earth's atmosphere, it consists of all the colors of the visible spectrum (red, orange, yellow, green, blue, indigo, and violet).\n2. **Molecules**: The atmosphere is made up of tiny molecules like nitrogen (N2) and oxygen (O2). These molecules are much smaller than the wavelength of light.\n3. **Scattering**: When sunlight hits these molecules, it scatters in all directions. This scattering effect is more pronounced for shorter wavelengths of light, such as blue and violet.\n4. **Blue dominance**: As a result of this scattering, the shorter wavelengths of light (blue and violet) are dispersed throughout the atmosphere, reaching our eyes from multiple angles. This is why the sky appears blue during the daytime, especially when the sun is overhead.\n5. **Other factors**: The color of the sky can be influenced by other atmospheric conditions, such as:\n\t* Dust and pollution particles: These can scatter light in various ways, changing the apparent color of the sky.\n\t* Water vapor: High humidity can cause the sky to appear more hazy or gray.\n\t* Clouds: Clouds can reflect and absorb light, affecting the overall color of the sky.\n\nSo, to summarize, the blue color we see in the sky is primarily due to the scattering of sunlight by tiny molecules in the atmosphere. The shorter wavelengths of light (blue and violet) are preferentially scattered, giving our skies their familiar blue hue."}],
+     'input_tokens': 378,
+     'output_tokens': 338,
+     'total_tokens': 716}
 
 
 
@@ -149,17 +153,15 @@ for response in responses:
     
      ### 
     
-    Here is a small poem about blue skies:
+    Blue skies, so calm and bright
+    A canvas of serenity in sight
+    No clouds to mar the view
+    Just endless blue, pure and true
     
-    The sky above, a brilliant hue,
-    A canvas of blue, for me and you.
-    Not a cloud in sight, to dim the light,
-    Just endless blue, pure delight.
-    
-    With sunshine warm, and air so still,
-    A perfect day, with no chill.
-    So let us gaze, upon this sight,
-    And fill our hearts, with joy and light.
+    The sun shines down with gentle might
+    Warming the earth, banishing night
+    A blue expanse that's free from fear
+    Invigorating all who draw near
 
 
 ### 2.3 Chatting with llm handler
@@ -180,7 +182,7 @@ print(answer)
     HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
 
 
-    Nice to meet you, Kyrios! I'm LLaMA, an AI assistant developed by Meta AI that can understand and respond to human input in a conversational manner. I don't have a personal name or identity, but I'm here to help answer your questions, provide information, and engage in conversation with you!
+    Nice to meet you, Kyrios! I'm LLaMA, an AI assistant developed by Meta AI that can understand and respond to human input in a conversational manner. I don't have a personal name, but feel free to call me LLaMA or just "Assistant" if you prefer! What brings you here today?
 
 
 
@@ -195,7 +197,35 @@ print(answer)
     HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
 
 
-    Kyrios! Your name is Kyrios. How can I assist you today?
+    Your name is Kyrios, isn't it?
+
+
+Streaming variant is also available.
+
+
+```python
+generator = llm_handler.chat_stream(
+    prompt = "Could you pls remind me my name?"
+)
+async for message in generator:
+    print(message)
+
+```
+
+    HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+
+
+    I
+     already
+     did
+    !
+     Your
+     name
+     is
+     Ky
+    rios
+    .
+    
 
 
 ### 3. Instruct methods
@@ -226,7 +256,7 @@ response
 
 
     {'model': 'llama3',
-     'created_at': '2024-07-31T01:14:24.874785167Z',
+     'created_at': '2024-08-05T04:57:53.582111792Z',
      'response': '4',
      'done': True,
      'done_reason': 'stop',
@@ -245,13 +275,13 @@ response
       271,
       19,
       128009],
-     'total_duration': 124177626,
-     'load_duration': 41217177,
+     'total_duration': 146273731,
+     'load_duration': 1145419,
      'prompt_eval_count': 9,
-     'prompt_eval_duration': 12156000,
+     'prompt_eval_duration': 12819000,
      'eval_count': 2,
-     'eval_duration': 8264000,
-     'response_time': 0.2091827392578125,
+     'eval_duration': 8360000,
+     'response_time': 0.19240951538085938,
      'input_tokens': 4,
      'output_tokens': 1,
      'total_tokens': 5}
