@@ -1,0 +1,211 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.5 Chrome/126.0.6478.183 Electron/31.3.0 Safari/537.36" version="24.7.5">
+  <diagram name="Page-1" id="tNR1n5y9OZlqjCuNG1ge">
+    <mxGraphModel dx="3208" dy="1598" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-48" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="-598" y="30" width="508" height="414" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-47" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="-58" y="-1" width="220" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-45" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-843" y="-11" width="221" height="165" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-1" value="Records" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-801" y="9" width="140" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-23" value="record id : str" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-1">
+          <mxGeometry y="30" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-2" value="query : str" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-1">
+          <mxGeometry y="60" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-3" value="expected : list" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-1">
+          <mxGeometry y="90" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-6" value="Aggregate Scores" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-417" y="98" width="140" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-22" value="record status id : str" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-6">
+          <mxGeometry y="30" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-24" value="comparison id : list" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-6">
+          <mxGeometry y="60" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-9" value="..." style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-6">
+          <mxGeometry y="90" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-10" value="Runs" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-19" y="9" width="140" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-11" value="run_id : str" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-10">
+          <mxGeometry y="30" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-12" value="record_id : list" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-10">
+          <mxGeometry y="60" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-13" value="timestamp : datetime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-10">
+          <mxGeometry y="90" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-25" value="recorded : list" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-10">
+          <mxGeometry y="120" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-14" value="Comparison Scores" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-240" y="226" width="140" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-15" value="run id : str" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-14">
+          <mxGeometry y="30" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-40" value="comparison id" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-14">
+          <mxGeometry y="60" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-16" value="record id : list" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-14">
+          <mxGeometry y="90" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-44" value="timestamp : datetime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-14">
+          <mxGeometry y="120" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-17" value="..." style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-14">
+          <mxGeometry y="150" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-18" value="Record Statuses" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-595" y="177" width="140" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-19" value="record id : str" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-18">
+          <mxGeometry y="30" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-27" value="record status id : str" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-18">
+          <mxGeometry y="60" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-8" value="timestamp : datetime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-18">
+          <mxGeometry y="90" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-21" value="valid: bool" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-18">
+          <mxGeometry y="120" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-26" value="" style="endArrow=ERmany;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=0;" edge="1" parent="1" source="OIBrcTe9-NFZS3mEBpfI-23" target="OIBrcTe9-NFZS3mEBpfI-19">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-664" y="391" as="sourcePoint" />
+            <mxPoint x="-614" y="341" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-28" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;endFill=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="OIBrcTe9-NFZS3mEBpfI-27" target="OIBrcTe9-NFZS3mEBpfI-22">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-227" y="221" as="sourcePoint" />
+            <mxPoint x="-616" y="292" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-29" value="" style="endArrow=ERmany;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;endFill=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="OIBrcTe9-NFZS3mEBpfI-24" target="OIBrcTe9-NFZS3mEBpfI-40">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-502" y="465" as="sourcePoint" />
+            <mxPoint x="21" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-30" value="input records" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-793" y="-186" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-31" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-733" y="-115" as="sourcePoint" />
+            <mxPoint x="-733" y="-15" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-32" value="save run results" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-11" y="-186" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-34" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;" edge="1" parent="1" source="OIBrcTe9-NFZS3mEBpfI-35">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-913" y="201" as="sourcePoint" />
+            <mxPoint x="-258" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-35" value="calculate aggregate scores&lt;div&gt;(summarizes comparison scores with selected central measures ane measires of dispersion )&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-414" y="473" width="186" height="94" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-36" value="update record status&lt;div&gt;(applies rules to calculated scores)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-570" y="-57" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-37" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="OIBrcTe9-NFZS3mEBpfI-36">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-703" y="234.5" as="sourcePoint" />
+            <mxPoint x="-436" y="191" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-38" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;startArrow=none;startFill=0;" edge="1" parent="1" source="OIBrcTe9-NFZS3mEBpfI-11" target="OIBrcTe9-NFZS3mEBpfI-15">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="17" y="188" as="sourcePoint" />
+            <mxPoint x="67" y="138" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-39" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Comparisonframe&lt;/h1&gt;&lt;p&gt;Diagram shows initial draft of the internal solution structure, inputs, outputs etc.&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-1006" y="-344" width="307" height="136" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-41" value="calculate comparison scores&lt;div&gt;(calculates selected scores between expected and provided values)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-41" y="202" width="172" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-42" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" target="OIBrcTe9-NFZS3mEBpfI-41">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-70" y="188" as="sourcePoint" />
+            <mxPoint x="-214" y="-28" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-43" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="49" y="-108" as="sourcePoint" />
+            <mxPoint x="49" y="-8" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-49" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-1000" y="-165" width="33" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-50" value="&lt;b&gt;Legend&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-1003" y="-202" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-51" value="validation data" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-965" y="-167" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-52" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="-1000" y="-128" width="33" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-53" value="output data" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-965" y="-130" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-54" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="-1000" y="-92" width="33" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-55" value="measures" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-965" y="-94" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-60" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="OIBrcTe9-NFZS3mEBpfI-3">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-880" y="215" as="sourcePoint" />
+            <mxPoint x="-858" y="236.5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-62" value="expected could be one or many values" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-946" y="218" width="137" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-63" value="each run result is meant to be compared with a specific record" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="189" y="-85" width="137" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-64" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="OIBrcTe9-NFZS3mEBpfI-63">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="255" y="61" as="sourcePoint" />
+            <mxPoint x="57" y="-65" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-65" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="OIBrcTe9-NFZS3mEBpfI-25">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="209" y="144" as="sourcePoint" />
+            <mxPoint x="338" y="157" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-66" value="recorded as expected could be one or many values" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="216" y="129" width="137" height="42" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
