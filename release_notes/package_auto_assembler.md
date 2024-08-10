@@ -1,5 +1,13 @@
 # Release notes
 
+### 0.4.1
+
+    - additional descriptions for each component of the package
+
+    - fix for potential missing lines problem with setup.py creation
+
+    - --skip-dep-install flag for test-install to reuse installed dependencies
+
 ### 0.4.0
 
     - getting latest version from pip and using local records as backup
