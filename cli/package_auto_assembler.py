@@ -71,6 +71,7 @@ def init_config(ctx):
 @click.option('--default-version', 'default_version', type=str, required=False, help='Default version.')
 @click.option('--check-vulnerabilities', 'check_vulnerabilities', is_flag=True, type=bool, required=False, help='If checked, checks module dependencies with pip-audit for vulnerabilities.')
 @click.option('--keep-temp-files', 'keep_temp_files', is_flag=True, type=bool, required=False, help='If checked, setup directory won\'t be removed after setup is done.')
+@click.option('--skip-deps-install', 'skip_deps_install', is_flag=True, type=bool, required=False, help='If checked, existing dependencies from env will be reused.')
 @click.pass_context
 def test_install(ctx,
         config,
@@ -81,6 +82,7 @@ def test_install(ctx,
         dependencies_dir,
         default_version,
         check_vulnerabilities,
+        skip_deps_install,
         keep_temp_files):
     """Test install module into local environment."""
 
@@ -124,6 +126,9 @@ def test_install(ctx,
         paa_params["check_vulnerabilities"] = True
     else:
         paa_params["check_vulnerabilities"] = False
+
+    if skip_deps_install:
+        paa_params["skip_deps_install"] = True
 
     if keep_temp_files:
         remove_temp_files = False

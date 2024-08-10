@@ -1430,14 +1430,12 @@ class SetupDirHandler:
                 ]
             }
 
-        setup_content = f"""from setuptools import setup
-import codecs
-import os
+        setup_content = "from setuptools import setup\n\n"
 
-here = os.path.abspath(os.path.dirname(__file__))
-path_to_readme = os.path.join(here, "README.md")
-
-"""
+        setup_content += "import codecs\n"
+        setup_content += "import os\n\n"
+        setup_content += "here = os.path.abspath(os.path.dirname(__file__))\n"
+        setup_content += 'path_to_readme = os.path.join(here, "README.md")\n\n'
 
         setup_content += f'long_description = """{long_description_intro}"""'
 
@@ -2208,6 +2206,8 @@ class PackageAutoAssembler:
     check_vulnerabilities = attr.ib(default=True, type = bool)
     add_requirements_header = attr.ib(default=True, type = bool)
     use_commit_messages = attr.ib(default=True, type = bool)
+    remove_temp_files = attr.ib(default=True, type = bool)
+    skip_deps_install = attr.ib(default=False, type = bool)
 
     ## handler classes
     setup_dir_h_class = attr.ib(default=SetupDirHandler)
@@ -2688,8 +2688,7 @@ class PackageAutoAssembler:
         Assemble setup.py file.
         """
 
-        self.logger.info(f"Preparing setup file for {module_name} package ...")
-
+        
         if self.setup_dir_h is None:
             self._initialize_setup_dir_handler()
 
@@ -2737,6 +2736,8 @@ class PackageAutoAssembler:
         else:
             add_cli_tool = None
 
+        self.logger.info(f"Preparing setup file for {module_name.replace('_','-')} package ...")
+
         # create setup.py
         self.setup_dir_h.write_setup_file(module_name = module_name,
                                           module_docstring = module_docstring,
@@ -2768,7 +2769,8 @@ class PackageAutoAssembler:
 
     def test_install_package(self,
                              module_name : str = None,
-                             remove_temp_files : bool = True):
+                             remove_temp_files : bool = None,
+                             skip_deps_install : bool = None):
 
         """
         Test install package to environment and optional remove temp files.
@@ -2777,13 +2779,27 @@ class PackageAutoAssembler:
         if module_name is None:
             module_name = self.module_name
 
+        if remove_temp_files is None:
+            remove_temp_files = self.remove_temp_files
+
+        if skip_deps_install is None:
+            skip_deps_install = self.skip_deps_install
+
         self.logger.info(f"Test installing {module_name} package ...")
 
         # Reinstall the module from the wheel file
         wheel_files = [f for f in os.listdir('dist') if f.endswith('-py3-none-any.whl')]
+
         for wheel_file in wheel_files:
-            subprocess.run([sys.executable, "-m", "pip", "install", "--force-reinstall",
-                            os.path.join('dist', wheel_file)], check=True)
+            list_of_cmds = [sys.executable, 
+                            "-m", "pip", "install", "--force-reinstall"]
+
+            if skip_deps_install:
+                list_of_cmds.append("--no-deps")
+
+            list_of_cmds.append(os.path.join('dist', wheel_file))
+
+            subprocess.run(list_of_cmds, check=True)
 
         if remove_temp_files:
             # Clean up the build directories and other generated files
@@ -2791,3 +2807,4 @@ class PackageAutoAssembler:
             shutil.rmtree('dist', ignore_errors=True)
             shutil.rmtree(module_name, ignore_errors=True)
             shutil.rmtree(f"{module_name}.egg-info", ignore_errors=True)
+

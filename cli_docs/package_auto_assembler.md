@@ -67,7 +67,7 @@ Options:
   --help                          Show this message and exit.
 ```
 
-Installing packages for a test in local environemnts could be a useful step to make sure everything works as expected before pushing changes to publishing repo. This creates an instance of the package in local environment with default version, with a greatly simplified building process that avoids making documentationm, versioning and so on.
+Installing packages for a test in local environments could be a useful step to make sure everything works as expected before pushing changes to publishing repo. This creates an instance of the package in local environment with default version, with a greatly simplified building process that avoids making documentation, versioning and so on.
 
 ``` bash
 paa test-install [OPTIONS] MODULE_NAME
@@ -91,6 +91,8 @@ Options:
                                pip-audit for vulnerabilities.
   --keep-temp-files            If checked, setup directory won't be removed
                                after setup is done.
+  --skip-deps-install         If checked, existing dependencies from env will
+                              be reused.
   --help                       Show this message and exit.
 ```
 
