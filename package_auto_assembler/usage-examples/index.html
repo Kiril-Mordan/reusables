@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.30">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.31">
     
     
       
@@ -1573,6 +1573,10 @@ from python_modules.package_auto_assembler import (VersionHandler, \
             ReleaseNotesHandler, MkDocsHandler, PackageAutoAssembler)
 </code></pre>
 <h3 id="1-package-versioning">1. Package versioning</h3>
+<p>Package versioning within paa is done based on semantic versioning.</p>
+<p><code>major.minor.patch</code></p>
+<p>By default, patch is updated, but the minor and major could also be update based on, for example, commit messages or manually from the log file. </p>
+<p>Package auto assembler does try to pull latest version from package storage, but in case of failure uses version logs.</p>
 <h4 id="initialize-versionhandler">Initialize VersionHandler</h4>
 <pre><code class="language-python">pv = VersionHandler(
     # required
@@ -1676,6 +1680,7 @@ pv.flush_logs()
 <pre><code>'0.3.1'
 </code></pre>
 <h3 id="2-import-mapping">2. Import mapping</h3>
+<p>Install and import names of dependencies may vary. The mapping files maps import names to install names so that requirements extraction from <code>.py</code> files is possible.</p>
 <h4 id="initialize-importmappinghandler">Initialize ImportMappingHandler</h4>
 <pre><code class="language-python">im = ImportMappingHandler(
     # required
@@ -1704,6 +1709,21 @@ pv.flush_logs()
  'git': 'gitpython'}
 </code></pre>
 <h3 id="3-extracting-and-merging-requirements">3. Extracting and merging requirements</h3>
+<p>Maintaining requirements is much simpler, when done automatically based on the <code>.py</code> files. </p>
+<p>The actual requirements files is still constructed. Standard libraries are not added, others are added with their versions, if specified. Local files are also used as dependencies, from which imports are extracted as well. </p>
+<p>For example:</p>
+<pre><code class="language-python">import os
+import pandas
+import attr #&gt;=22.2.0
+from .components.local_dep import *
+</code></pre>
+<p>Produces </p>
+<pre><code>pandas
+attrs &gt;=22.2.0
+yaml
+</code></pre>
+<p>as requirements file, where <code>yaml</code> is extracted from <code>local_dep.py</code> file.</p>
+<p>Checking dependecies for vulnerabilities is usefull and it is done with <code>pip audit</code> which is integrated into the paa package and is used by default.</p>
 <h4 id="initialize-requirementshandler">Initialize RequirementsHandler</h4>
 <pre><code class="language-python">rh = RequirementsHandler(
     # optional/required later
@@ -1836,6 +1856,7 @@ Error: Found vulnerabilities, resolve them or ignore check to move forwards!
 <pre><code>['attrs&gt;=22.2.0']
 </code></pre>
 <h3 id="4-preparing-metadata">4. Preparing metadata</h3>
+<p>Since all of the necessary information for building a package needs to be contained within main component <code>.py</code> file, basic metadata is provided with the use of <code>__package_metadata__</code> dictionary object, defined within that <code>.py</code> file. It is also used as a trigger for package building within paa pipeline.</p>
 <h4 id="initializing-metadatahandler">Initializing MetadataHandler</h4>
 <pre><code class="language-python">mh = MetadataHandler(
     # optional/required later
@@ -1863,6 +1884,16 @@ Error: Found vulnerabilities, resolve them or ignore check to move forwards!
  'keywords': ['python', 'vector database', 'similarity search']}
 </code></pre>
 <h3 id="5-merging-local-dependacies-into-single-module">5. Merging local dependacies into single module</h3>
+<p>Package auto assembler creates <code>single module packages</code>, meaning that once package is built all of the object are imported from a single place. The packaging tool does allow for <code>local dependecies</code> which are <code>.py</code> files imported from specified dependencies directory and its subfolders. Packaging structure may look like the following:</p>
+<pre><code>packaging repo/
+└src/
+  ├ &lt;package names&gt;.py
+  └ components
+    ├local_dependecy.py
+    └subdir_1
+      └local_dependency_2.py 
+</code></pre>
+<p>During packaging process paa merges main module with its local dependies into a single file.</p>
 <h4 id="initializing-localdependacieshandler">Initializing LocalDependaciesHandler</h4>
 <pre><code class="language-python">ldh = LocalDependaciesHandler(
     # required
@@ -1929,6 +1960,7 @@ class Shouter:
 )
 </code></pre>
 <h3 id="6-prepare-readme">6. Prepare README</h3>
+<p>Package description is based on <code>.ipynb</code> with same name as the <code>.py</code>. By default it is converted to markdown as is, but there is also an option to execute it.</p>
 <pre><code class="language-python">import logging
 ldh = LongDocHandler(
     # optional/required later
@@ -1967,6 +1999,14 @@ ldh = LongDocHandler(
 )
 </code></pre>
 <h3 id="7-assembling-setup-directory">7. Assembling setup directory</h3>
+<p>Package are created following rather simple sequence of steps. At some point of the process a temporary directory is created to store the following files:</p>
+<ul>
+<li><code>__init__.py</code> is a simple import from a single module</li>
+<li><code>cli.py</code> is optional packaged cli tool</li>
+<li><code>&lt;package name&gt;.py</code> is a single module with all of the local dependecies</li>
+<li><code>README.md</code> is a package description file based on <code>.ipynb</code> file</li>
+<li><code>setup.py</code> is a setup file for making a package</li>
+</ul>
 <h4 id="initializing-setupdirhandler">Initializing SetupDirHandler</h4>
 <pre><code class="language-python">sdh = SetupDirHandler(
     # required
@@ -2033,6 +2073,16 @@ ldh = LongDocHandler(
 )
 </code></pre>
 <h3 id="8-creating-release-notes-from-commit-messages">8. Creating release notes from commit messages</h3>
+<p>Package versioning could be enhanced with release notes. Since the tool is mainly meant for ci/cd, it takes advantage of commit messages to construct a release note for every version. </p>
+<p>Commit history is analysed from the last merge, if nothiong found then the next and the next, until at least one of <code>[&lt;package name&gt;]</code> labels are found within commit messages. They are bundled together to for a note, where each commit message or messages deliminated with <code>;</code> are turned in a list element. Previos notes are used to establish which part of commit history to use as a starting point.</p>
+<p>Commit messages could also be used to increment version by something other then a default patch. </p>
+<ul>
+<li><code>[&lt;package name&gt;][..+]</code> increments patch (default behavior)</li>
+<li><code>[&lt;package name&gt;][.+.]</code> increments minor</li>
+<li><code>[&lt;package name&gt;][+..]</code> increments major</li>
+<li><code>[&lt;package name&gt;][0.1.2]</code> forces specific version <code>0.1.2</code></li>
+</ul>
+<p>* First release within new packaging repo may struggle to extract release note since commit messages are only analysed from merges in the commit history. </p>
 <pre><code class="language-python">rnh = ReleaseNotesHandler(
     # path to existing or new release notes file
     filepath = '../tests/package_auto_assembler/release_notes.md',
@@ -2149,6 +2199,8 @@ rnh.get_release_notes_content()
  '    - initial version of example_module\n']
 </code></pre>
 <h3 id="9-making-a-package">9. Making a package</h3>
+<p>Main wrapper for the package integrates described above components into a class that could be used to build package building pipelines within python scripts. </p>
+<p>To simplify usage <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/">cli interface</a> is recomended instead. </p>
 <h4 id="initializing-packageautoassembler">Initializing PackageAutoAssembler</h4>
 <pre><code class="language-python">paa = PackageAutoAssembler(
     # required
@@ -2304,6 +2356,9 @@ No known vulnerabilities found
 CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=0, stdout="running sdist\nrunning egg_info\nwriting example_module.egg-info/PKG-INFO\nwriting dependency_links to example_module.egg-info/dependency_links.txt\nwriting entry points to example_module.egg-info/entry_points.txt\nwriting requirements to example_module.egg-info/requires.txt\nwriting top-level names to example_module.egg-info/top_level.txt\nreading manifest file 'example_module.egg-info/SOURCES.txt'\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nrunning check\ncreating example_module-0.0.1\ncreating example_module-0.0.1/example_module\ncreating example_module-0.0.1/example_module.egg-info\ncopying files to example_module-0.0.1...\ncopying example_module/__init__.py -&gt; example_module-0.0.1/example_module\ncopying example_module/cli.py -&gt; example_module-0.0.1/example_module\ncopying example_module/example_module.py -&gt; example_module-0.0.1/example_module\ncopying example_module/setup.py -&gt; example_module-0.0.1/example_module\ncopying example_module.egg-info/PKG-INFO -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/dependency_links.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/entry_points.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/requires.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/top_level.txt -&gt; example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -&gt; example_module-0.0.1/example_module.egg-info\nWriting example_module-0.0.1/setup.cfg\nCreating tar archive\nremoving 'example_module-0.0.1' (and everything under it)\nrunning bdist_wheel\nrunning build\nrunning build_py\ncopying example_module/example_module.py -&gt; build/lib/example_module\ncopying example_module/__init__.py -&gt; build/lib/example_module\ncopying example_module/setup.py -&gt; build/lib/example_module\ncopying example_module/cli.py -&gt; build/lib/example_module\ninstalling to build/bdist.linux-x86_64/wheel\nrunning install\nrunning install_lib\ncreating build/bdist.linux-x86_64/wheel\ncreating build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/example_module.py -&gt; build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/__init__.py -&gt; build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/setup.py -&gt; build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/cli.py -&gt; build/bdist.linux-x86_64/wheel/example_module\nrunning install_egg_info\nCopying example_module.egg-info to build/bdist.linux-x86_64/wheel/example_module-0.0.1-py3.10.egg-info\nrunning install_scripts\ncreating build/bdist.linux-x86_64/wheel/example_module-0.0.1.dist-info/WHEEL\ncreating 'dist/example_module-0.0.1-py3-none-any.whl' and adding 'build/bdist.linux-x86_64/wheel' to it\nadding 'example_module/__init__.py'\nadding 'example_module/cli.py'\nadding 'example_module/example_module.py'\nadding 'example_module/setup.py'\nadding 'example_module-0.0.1.dist-info/METADATA'\nadding 'example_module-0.0.1.dist-info/WHEEL'\nadding 'example_module-0.0.1.dist-info/entry_points.txt'\nadding 'example_module-0.0.1.dist-info/top_level.txt'\nadding 'example_module-0.0.1.dist-info/RECORD'\nremoving build/bdist.linux-x86_64/wheel\n", stderr='warning: sdist: standard file not found: should have one of README, README.rst, README.txt, README.md\n\n/home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.\n!!\n\n        ********************************************************************************\n        Please avoid running ``setup.py`` directly.\n        Instead, use pypa/build, pypa/installer or other\n        standards-based tools.\n\n        See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.\n        ********************************************************************************\n\n!!\n  self.initialize_options()\n')
 </code></pre>
 <h3 id="10-making-simple-mkdocs-site">10. Making simple MkDocs site</h3>
+<p>Package documentation can be presented in a form of mkdocs static site, which could be either served or deployed to something like github packages. </p>
+<p>Main module docstring is used as intro package that contains something like optional pypi and license badges. Package description and realease notes are turned into separate tabs. Png with diagrams for example could be provided and displayed as their own separate tabs as well.</p>
+<p>The one for this package can be seen <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/">here</a></p>
 <h5 id="-preparing-inputs">- preparing inputs</h5>
 <pre><code class="language-python">package_name = &quot;example_module&quot;
 

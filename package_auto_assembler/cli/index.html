@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.30">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.31">
     
     
       
@@ -432,7 +432,7 @@ Options:
                                   packages are recorded.
   --help                          Show this message and exit.
 </code></pre>
-<p>Installing packages for a test in local environemnts could be a useful step to make sure everything works as expected before pushing changes to publishing repo. This creates an instance of the package in local environment with default version, with a greatly simplified building process that avoids making documentationm, versioning and so on.</p>
+<p>Installing packages for a test in local environments could be a useful step to make sure everything works as expected before pushing changes to publishing repo. This creates an instance of the package in local environment with default version, with a greatly simplified building process that avoids making documentation, versioning and so on.</p>
 <pre><code class="language-bash">paa test-install [OPTIONS] MODULE_NAME
 </code></pre>
 <pre><code>Usage: paa test-install [OPTIONS] MODULE_NAME
@@ -452,6 +452,8 @@ Options:
                                pip-audit for vulnerabilities.
   --keep-temp-files            If checked, setup directory won't be removed
                                after setup is done.
+  --skip-deps-install         If checked, existing dependencies from env will
+                              be reused.
   --help                       Show this message and exit.
 </code></pre>
 <p>Checking vulnerabilities with <code>pip-audit</code> is usefull. This checks vulnerabilities of .py files and its local dependencies with <code>pip-audit</code>.</p>
