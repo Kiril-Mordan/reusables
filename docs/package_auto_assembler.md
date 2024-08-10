@@ -9,6 +9,14 @@ from python_modules.package_auto_assembler import (VersionHandler, \
 
 ### 1. Package versioning
 
+Package versioning within paa is done based on semantic versioning.
+
+`major.minor.patch`
+
+By default, patch is updated, but the minor and major could also be update based on, for example, commit messages or manually from the log file. 
+
+Package auto assembler does try to pull latest version from package storage, but in case of failure uses version logs.
+
 #### Initialize VersionHandler
 
 
@@ -164,6 +172,8 @@ pv.get_latest_pip_version(package_name = 'package-auto-assembler')
 
 ### 2. Import mapping
 
+Install and import names of dependencies may vary. The mapping files maps import names to install names so that requirements extraction from `.py` files is possible.
+
 #### Initialize ImportMappingHandler
 
 
@@ -205,6 +215,31 @@ im.load_package_mappings(
 
 
 ### 3. Extracting and merging requirements
+
+Maintaining requirements is much simpler, when done automatically based on the `.py` files. 
+
+The actual requirements files is still constructed. Standard libraries are not added, others are added with their versions, if specified. Local files are also used as dependencies, from which imports are extracted as well. 
+
+For example:
+
+```python
+import os
+import pandas
+import attr #>=22.2.0
+from .components.local_dep import *
+```
+
+Produces 
+
+```
+pandas
+attrs >=22.2.0
+yaml
+```
+
+as requirements file, where `yaml` is extracted from `local_dep.py` file.
+
+Checking dependecies for vulnerabilities is usefull and it is done with `pip audit` which is integrated into the paa package and is used by default.
 
 #### Initialize RequirementsHandler
 
@@ -428,6 +463,8 @@ rh.read_requirements_file(
 
 ### 4. Preparing metadata
 
+Since all of the necessary information for building a package needs to be contained within main component `.py` file, basic metadata is provided with the use of `__package_metadata__` dictionary object, defined within that `.py` file. It is also used as a trigger for package building within paa pipeline.
+
 #### Initializing MetadataHandler
 
 
@@ -477,6 +514,20 @@ mh.get_package_metadata(
 
 
 ### 5. Merging local dependacies into single module
+
+Package auto assembler creates `single module packages`, meaning that once package is built all of the object are imported from a single place. The packaging tool does allow for `local dependecies` which are `.py` files imported from specified dependencies directory and its subfolders. Packaging structure may look like the following:
+
+```
+packaging repo/
+└src/
+  ├ <package names>.py
+  └ components
+    ├local_dependecy.py
+    └subdir_1
+      └local_dependency_2.py 
+```
+
+During packaging process paa merges main module with its local dependies into a single file.
 
 #### Initializing LocalDependaciesHandler
 
@@ -566,6 +617,8 @@ ldh.save_combined_modules(
 
 ### 6. Prepare README
 
+Package description is based on `.ipynb` with same name as the `.py`. By default it is converted to markdown as is, but there is also an option to execute it.
+
 
 ```python
 import logging
@@ -621,6 +674,14 @@ long_description = ldh.return_long_description(
 ```
 
 ### 7. Assembling setup directory
+
+Package are created following rather simple sequence of steps. At some point of the process a temporary directory is created to store the following files:
+
+- `__init__.py` is a simple import from a single module
+- `cli.py` is optional packaged cli tool
+- `<package name>.py` is a single module with all of the local dependecies
+- `README.md` is a package description file based on `.ipynb` file
+- `setup.py` is a setup file for making a package
 
 #### Initializing SetupDirHandler
 
@@ -708,6 +769,20 @@ sdh.write_setup_file(
 ```
 
 ### 8. Creating release notes from commit messages
+
+Package versioning could be enhanced with release notes. Since the tool is mainly meant for ci/cd, it takes advantage of commit messages to construct a release note for every version. 
+
+Commit history is analysed from the last merge, if nothiong found then the next and the next, until at least one of `[<package name>]` labels are found within commit messages. They are bundled together to for a note, where each commit message or messages deliminated with `;` are turned in a list element. Previos notes are used to establish which part of commit history to use as a starting point.
+
+Commit messages could also be used to increment version by something other then a default patch. 
+
+- `[<package name>][..+]` increments patch (default behavior)
+- `[<package name>][.+.]` increments minor
+- `[<package name>][+..]` increments major
+- `[<package name>][0.1.2]` forces specific version `0.1.2`
+
+\* First release within new packaging repo may struggle to extract release note since commit messages are only analysed from merges in the commit history. 
+
 
 
 ```python
@@ -876,6 +951,10 @@ rnh.get_release_notes_content()
 
 
 ### 9. Making a package
+
+Main wrapper for the package integrates described above components into a class that could be used to build package building pipelines within python scripts. 
+
+To simplify usage [cli interface](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/) is recomended instead. 
 
 #### Initializing PackageAutoAssembler
 
@@ -1094,6 +1173,12 @@ paa.make_package(
 
 
 ### 10. Making simple MkDocs site
+
+Package documentation can be presented in a form of mkdocs static site, which could be either served or deployed to something like github packages. 
+
+Main module docstring is used as intro package that contains something like optional pypi and license badges. Package description and realease notes are turned into separate tabs. Png with diagrams for example could be provided and displayed as their own separate tabs as well.
+ 
+The one for this package can be seen [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/)
 
 ##### - preparing inputs
 
