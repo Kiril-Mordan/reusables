@@ -335,29 +335,52 @@ class ComparisonFrame:
         return str(uuid.uuid4())
 
 
+### RECORDING QUERIES AND RUNS
+
     def record_queries(self, 
                      queries : list, 
                      expected_texts : list, 
-                     overwrite : bool = True):
+                     metadata : dict = {}):
 
         """
         Records a new query and its expected result in the record file.
         """
 
+        # Check if queries and expected texts are lists of same lenght
+        # or one of them is a single value
+        if (len(queries) != len(expected_texts)) and \
+            not (((len(queries) == 1) and (len(expected_texts) != 1)) or\
+                ((len(queries) != 1) and (len(expected_texts) == 1))):
+            raise ValueError(f"Queries len: {len(queries)}, Expected texts len: {len(expected_texts)}")
+
+        if (len(queries) != len(expected_texts)) and (len(queries) == 1):
+             queries = [queries[0] for _ in expected_texts]
+
+        if (len(queries) != len(expected_texts)) and (len(expected_texts) == 1):
+             expected_texts = [expected_texts[0] for _ in queries]
+
+
+        restricted_keys = ['collection', 'table', 'record_id', 'text', 'query'] 
+
+        # Check if any of the restricted keys are in the metadata
+        if any(key in metadata for key in restricted_keys):
+            raise ValueError(f"Metadata contains restricted keys: {[key for key in restricted_keys if key in metadata]}")
+
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        record_id = self._generate_unique_id()
 
         insert_queries = [{"collection" : "records",
                                 "table" : "queries",
-                                #"record_id" : record_id,
-                                "text" : query} \
+                                #"record_id" : self._generate_unique_id(),
+                                "text" : query,
+                                **metadata} \
                                     for query in queries]
 
         insert_expected_text = [{"collection" : "records",
                                 "table" : "expected_text",
-                                #"record_id" : record_id,
+                                #"record_id" : self._generate_unique_id(),
                                 "query" : query,
-                                "text" : expected_text} \
+                                "text" : expected_text,
+                                **metadata} \
                                     for query, expected_text in zip(queries,expected_texts)]
 
         # insert_entries = [{"table" : "records",
@@ -376,12 +399,33 @@ class ComparisonFrame:
 
 
     def record_runs(self, 
-                   query : str,
-                   provided_texts : list):
+                   queries : list,
+                   provided_texts : list,
+                   metadata : dict = {}):
 
         """
         Recods run of provided text for a given query.
         """
+
+        # Check if queries and expected texts are lists of same lenght
+        # or one of them is a single value
+        if (len(queries) != len(provided_texts)) and \
+            not (((len(queries) == 1) and (len(provided_texts) != 1)) or\
+                ((len(queries) != 1) and (len(provided_texts) == 1))):
+            raise ValueError(f"Queries len: {len(queries)}, Provided texts len: {len(expected_texts)}")
+
+        if (len(queries) != len(provided_texts)) and (len(queries) == 1):
+             queries = [queries[0] for _ in provided_texts]
+
+        if (len(queries) != len(provided_texts)) and (len(provided_texts) == 1):
+             provided_texts = [provided_texts[0] for _ in queries]
+
+
+        restricted_keys = ['collection', 'table', 'run_id', 'text', 'query',"timestamp"] 
+
+        # Check if any of the restricted keys are in the metadata
+        if any(key in metadata for key in restricted_keys):
+            raise ValueError(f"Metadata contains restricted keys: {[key for key in restricted_keys if key in metadata]}")
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -390,8 +434,9 @@ class ComparisonFrame:
                                 "run_id" : self._generate_unique_id(),
                                 "timestamp" : timestamp,
                                 "query" : query,
-                                "text" : provided_text} \
-                                    for provided_text in provided_texts]
+                                "text" : provided_text,
+                                **metadata} \
+                                    for query, provided_text in zip(queries,provided_texts)]
 
         inserts = insert_provided_text
 
@@ -468,7 +513,12 @@ class ComparisonFrame:
     #         writer = csv.writer(file)
     #         writer.writerows(new_rows)  # Write the updated rows back to CSV, including headers
 
-    def get_all_queries(self, untested_only : bool = False):
+### EXTRACTING TABLES
+
+    def get_all_queries(self, 
+        metadata_filters = None
+        #untested_only : bool = False
+        ):
 
         """
         Retrieves a list of all recorded queries, with an option to return only those that haven't been tested.
@@ -477,8 +527,11 @@ class ComparisonFrame:
         filter_criteria = {"collection" : "records",
                                 "table" : "queries"}
 
-        if untested_only:
-            filter_criteria['tested'] = None
+        if metadata_filters:
+            filter_criteria.update(metadata_filters)
+
+        # if untested_only:
+        #     filter_criteria['tested'] = None
 
         queries_records = self.mocker_h.search_database(
             filter_criteria = filter_criteria,
@@ -509,7 +562,58 @@ class ComparisonFrame:
 
     #         return df
 
-    def get_all_records(self, queries : list = None):
+    def get_all_records(self, 
+                        queries : list = None,
+                        metadata_filters : dict = {}):
+
+        """
+        Retrieves records with validation data.
+        """
+
+
+        if queries is None:
+            queries_records = self.mocker_h.search_database(
+                filter_criteria = {"collection" : "records",
+                                    "table" : "queries",
+                                    **metadata_filters},
+                                    perform_similarity_search = False,
+                                    return_keys_list = ['text'])
+        else:
+            queries_records = self.mocker_h.search_database(
+                filter_criteria = {"collection" : "records",
+                                    "table" : "queries",
+                                    "text" : queries,
+                                    **metadata_filters},
+                                    perform_similarity_search = False,
+                                    return_keys_list = ['text'])
+
+        queries = [query['text'] for query in queries_records]
+
+        expected_text_records = self.mocker_h.search_database(
+            filter_criteria = {"collection" : "records",
+                                "table" : "expected_text",
+                                "query" : queries,
+                                **metadata_filters},
+                                perform_similarity_search = False,
+                                return_keys_list = ['query', 'text'])
+
+        
+        # record ids will be added based mocker hash keys after mocker is updated with that ability
+
+        if expected_text_records:
+
+            updated_list_of_dicts = [
+                {**{'expected_text' if k == 'text' else k: v \
+                    for k, v in dictionary.items()}}
+                for dictionary in expected_text_records
+            ]
+
+        else:
+            updated_list_of_dicts = []
+
+        return updated_list_of_dicts
+
+    def get_all_record_statuses(self, queries : list = None):
 
         """
         Retrieves all query records from the stored file.
@@ -521,14 +625,14 @@ class ComparisonFrame:
                 filter_criteria = {"collection" : "records",
                                     "table" : "queries"},
                                     perform_similarity_search = False,
-                                    return_keys_list = ['text'])
+                                    return_keys_list = ['record_id','text'])
         else:
             queries_records = self.mocker_h.search_database(
                 filter_criteria = {"collection" : "records",
                                     "table" : "queries",
                                     "text" : queries},
                                     perform_similarity_search = False,
-                                    return_keys_list = ['text'])
+                                    return_keys_list = ['record_id','text'])
 
         queries = [query['text'] for query in queries_records]
 
@@ -537,7 +641,7 @@ class ComparisonFrame:
                                 "table" : "expected_text",
                                 "query" : queries},
                                 perform_similarity_search = False,
-                                return_keys_list = ['query', 'text'])
+                                return_keys_list = ['record_id','query', 'text'])
 
         expected_texts = [et['text'] for et in expected_text_records]
 
@@ -547,7 +651,8 @@ class ComparisonFrame:
                                 "query" : queries,
                                 "expected_text" : expected_texts},
                                 perform_similarity_search = False,
-                                return_keys_list = ['query', 
+                                return_keys_list = ['record_id',
+                                                    'query', 
                                                     'expected_text',
                                                     'timestamp',
                                                     'tested',
@@ -568,6 +673,7 @@ class ComparisonFrame:
 
         else:
             updated_list_of_dicts = [{
+                'record_id' : None,
                 'query' : None, 
                 'expected_text' : None,
                 'timestamp' : None,
@@ -585,29 +691,29 @@ class ComparisonFrame:
 
 
         if queries is None:
-            queries_records = self.mocker_h.search_database(
+            record_id_records = self.mocker_h.search_database(
                 filter_criteria = {"collection" : "records",
                                     "table" : "queries"},
                                     perform_similarity_search = False,
-                                    return_keys_list = ['text'])
+                                    return_keys_list = ['record_id'])
         else:
-            queries_records = self.mocker_h.search_database(
+            record_id_records = self.mocker_h.search_database(
                 filter_criteria = {"collection" : "records",
                                     "table" : "queries",
                                     "text" : queries},
                                     perform_similarity_search = False,
-                                    return_keys_list = ['text'])
+                                    return_keys_list = ['record_id'])
 
-        queries = [query['text'] for query in queries_records]
+        record_ids = [record['record_id'] for record in record_id_records]
 
-        expected_text_records = self.mocker_h.search_database(
-            filter_criteria = {"collection" : "records",
-                                "table" : "expected_text",
-                                "query" : queries},
-                                perform_similarity_search = False,
-                                return_keys_list = ['query', 'text'])
+        # expected_text_records = self.mocker_h.search_database(
+        #     filter_criteria = {"collection" : "records",
+        #                         "table" : "expected_text",
+        #                         "query" : queries},
+        #                         perform_similarity_search = False,
+        #                         return_keys_list = ['query', 'text'])
 
-        expected_texts = [et['text'] for et in expected_text_records]
+        # expected_texts = [et['text'] for et in expected_text_records]
 
         score_records = self.mocker_h.search_database(
             filter_criteria = {"collection" : "scores",
@@ -783,6 +889,8 @@ class ComparisonFrame:
     #         os.remove(self.results_file)
     #     else:
     #         raise FileNotFoundError("No results file found. There's nothing to flush.")
+
+### CALCULATING COMPARISON AND AGGREGATE SCORES
 
     def compare_runs_with_records(self,                        
                             queries : list = None,
