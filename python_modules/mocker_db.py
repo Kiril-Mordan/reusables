@@ -422,7 +422,7 @@ class MockerDB:
     ## for similarity search
     similarity_search_h = attr.ib(default=MockerSimilaritySearch)
     return_keys_list = attr.ib(default=None, type = list)
-    ignore_keys_list = attr.ib(default=["embedding", "distance"], type = list)
+    ignore_keys_list = attr.ib(default=["embedding", "&distance", "&id"], type = list)
     search_results_n = attr.ib(default=3, type = int)
     similarity_search_type = attr.ib(default='linear', type = str)
     similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
@@ -637,6 +637,7 @@ class MockerDB:
             self.logger.debug("Making unique keys")
             # make unique keys, taking embed parameter as a part of a key
             values_dict_all = {self._make_key(d = d, embed=embed) : d for d in values_dict_list}
+            values_dict_all = {key : {**values_dict_all[key], "&id" : key} for key in values_dict_all}
         except Exception as e:
             self.logger.error("Problem during making unique keys foir insert dicts!", e)
 
@@ -894,6 +895,7 @@ class MockerDB:
         if "&distance" in add_list:
             return_distance = 1
             add_list.remove("&distance")
+
         
         if return_keys_list:
 
