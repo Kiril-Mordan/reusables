@@ -82,13 +82,32 @@ jobs:
           name: updated-requirements
           path: env_spec/
 
+      - name: Cache pip dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('env_spec/requirements_tox.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: pip install -r env_spec/requirements_dev.txt
 
       - name: Test with tox
-        run: | 
-          if [ -d "tests/${{ needs.update-requirements.outputs.changed-files }}" ]; then
-            tox -- "tests/${{ needs.update-requirements.outputs.changed-files }}"
-          else
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            if [ -d "tests/${{ needs.update-requirements.outputs.changed-files }}" ]; then
+              tox -- "tests/${{ needs.update-requirements.outputs.changed-files }}"
+              ./tools/pylint_test.sh
+            else
               echo "No tests for module."
+            fi
+          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            if [ -d "tests/${{ needs.update-requirements.outputs.changed-files }}" ]; then
+              tox -- "tests/${{ needs.update-requirements.outputs.changed-files }}"
+            else
+              echo "No tests for module."
+            fi
           fi
+        shell: bash
+
