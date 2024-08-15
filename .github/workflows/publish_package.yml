@@ -29,7 +29,7 @@ jobs:
             echo "${{ github.event.inputs.package_name }}" > changed_files
           else
             chmod +x ./tools/find_and_process_changed_files.sh
-            ./tools/find_and_process_changed_files.sh 'cli/' 'python_modules/' 'example_notebooks/' 'python_modules' '.py'
+            ./tools/find_and_process_changed_files.sh 'cli/' 'python_modules/' 'example_notebooks/' 'python_modules/' '.py'
           fi
 
           if [ -s changed_files ]; then

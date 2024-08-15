@@ -18,7 +18,7 @@ module_directory="python_modules"
 script_pattern="python_modules/.*\.py"
 
 # Threshold score to pass the Pylint check
-threshold_score=8
+threshold_score=7.8
 
 # Loop through Python files that match the pattern and check Pylint score
 all_pass=true

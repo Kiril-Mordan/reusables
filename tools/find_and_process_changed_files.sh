@@ -43,7 +43,7 @@ else
                       sed 's/.*\///' |       # Remove directory path
                       sed 's/\.[^.]*$//' |   # Remove file extensions
                       sort | uniq |         # Sort and deduplicate
-                      awk -v dir="$output_directory" -v ext="$extension_to_add" '{print dir "/" $0 ext}')  # Prepend directory and append extension
+                      awk -v dir="$output_directory" -v ext="$extension_to_add" '{print dir "" $0 ext}')  # Prepend directory and append extension
     echo "Processed files:"
     echo "$processed_files"
     echo "$processed_files" > changed_files
