@@ -10,59 +10,34 @@ jobs:
 
   update-requirements:
     runs-on: ubuntu-latest
-    outputs:
-      changed-files: ${{ steps.changed-modules.outputs.files }}
     steps:
       - uses: actions/checkout@v2
-        with:
-            fetch-depth: 15  # Fetches prev commits
 
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
 
-      - name: Find Changed Modules
-        id: changed-modules
-        run: |
-          if [ "${{ github.event.inputs.package_name }}" != "" ]; then
-            echo "${{ github.event.inputs.package_name }}" > changed_files
-          else
-            chmod +x ./tools/find_and_process_changed_files.sh
-            ./tools/find_and_process_changed_files.sh 'cli/' 'python_modules/' '' ''
-          fi
-
-          if [ -s changed_files ]; then
-              echo "::set-output name=files::$(cat changed_files)"
-          fi
-
       - name: Install dependencies
-        if: steps.changed-modules.outputs.files != ''
         run: pip install -r env_spec/requirements_dev.txt
 
       - name: Update requirements
-        if: steps.changed-modules.outputs.files != ''
         run: |
-          chmod +x ./tools/update_module_requirements.sh
-          chmod +x ./tools/update_tox_requirements.sh
           ./tools/update_module_requirements.sh
-          ./tools/update_tox_requirements.sh "${{ steps.changed-modules.outputs.files }}"
+          ./tools/update_requirements.sh
 
       - name: Check requirements for vulnerabilities
-        if: steps.changed-modules.outputs.files != ''
         run: |
           ./tools/check_for_vulnerabilities.sh
 
       - name: Upload updated requirements
-        if: steps.changed-modules.outputs.files != ''
         uses: actions/upload-artifact@v2
         with:
           name: updated-requirements
-          path: env_spec/requirements_tox.txt
+          path: env_spec/requirements.txt
 
   test:
     needs: update-requirements
-    if: needs.update-requirements.outputs.changed-files != ''
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -82,32 +57,9 @@ jobs:
           name: updated-requirements
           path: env_spec/
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('env_spec/requirements_tox.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
       - name: Install dependencies
         run: pip install -r env_spec/requirements_dev.txt
 
       - name: Test with tox
-        run: |
-          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            if [ -d "tests/${{ needs.update-requirements.outputs.changed-files }}" ]; then
-              tox -- "tests/${{ needs.update-requirements.outputs.changed-files }}"
-              ./tools/pylint_test.sh
-            else
-              echo "No tests for module."
-            fi
-          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            if [ -d "tests/${{ needs.update-requirements.outputs.changed-files }}" ]; then
-              tox -- "tests/${{ needs.update-requirements.outputs.changed-files }}"
-            else
-              echo "No tests for module."
-            fi
-          fi
-        shell: bash
+        run: tox
 

@@ -13,10 +13,6 @@ import numpy as np
 from mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
 ```
 
-    /home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-      from .autonotebook import tqdm as notebook_tqdm
-
-
 ## Usage examples
 
 The examples contain:
@@ -64,11 +60,7 @@ print(f"Items in the database {len(handler.data)}")
 
 ```
 
-    /home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/transformers/tokenization_utils_base.py:1601: FutureWarning: `clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default. For more details check this issue: https://github.com/huggingface/transformers/issues/31884
-      warnings.warn(
-
-
-    Items in the database 2
+    Items in the database 4
 
 
 ### Retrieve Data Basics
@@ -144,23 +136,6 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
     [{'text': 'Sample text 1...'}]
 
 
-- get all keys + id
-
-
-```python
-results = handler.search_database(
-    query = "text",
-    filter_criteria = {
-        "text" : "Sample text 1"
-    },
-    return_keys_list=["+&id"]
-)
-print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
-```
-
-    [{'text': 'Sample text 1...', 'text2': 'Sample text 1...', '&id': '7457ad2519cabc9f414141172bcb8f...'}]
-
-
 - get all keys + distance
 
 
@@ -209,7 +184,7 @@ results = handler.search_database(
 print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
 ```
 
-    [{'text': 'Sample text 1...', 'text2': 'Sample text 1...', 'embedding': '[-4.94664945e-02 -2.38676071e-...'}]
+    [{'text': 'Sample text 1...', 'text2': 'Sample text 1...', 'embedding': '[-4.94665056e-02 -2.38676026e-...'}]
 
 
 - get embeddings
@@ -227,7 +202,7 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 
 ```
 
-    [{'embedding': '[-4.94664945e-02 -2.38676071e-...'}]
+    [{'embedding': '[-4.94665056e-02 -2.38676026e-...'}]
 
 
 ### 2. Text Embedding and Searching
@@ -306,7 +281,7 @@ print(search_results)
 
 ```
 
-    [{'text': 'Sample text 1'}, {'text': 'Sample text 2'}]
+    [{'text': 'Sample text 1'}, {'text': 'Sample text 2'}, {'text': 'Sample text 2'}]
 
 
 ### 3. Advanced Filtering and Removal
@@ -326,7 +301,7 @@ print(f"Items left in the database {len(handler.data)}")
 ```
 
     Filtered data 1
-    Items left in the database 1
+    Items left in the database 3
 
 
 ### 4. Testing the HNSW Search Algorithm
@@ -378,5 +353,5 @@ print(f"Items in the database {len(handler.data)}")
 
 ```
 
-    Items in the database 2
+    Items in the database 3
 

@@ -1,9 +1,5 @@
 # Release notes
 
-### 0.2.1
-
-    - ability to return unique hash key for each record, previously inaccesible
-
 ### 0.2.0
 
     - precise keywords match with cutoff 1 and fuzzy match with < 1 through filters

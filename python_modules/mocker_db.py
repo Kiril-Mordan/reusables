@@ -116,7 +116,7 @@ class SentenceTransformerEmbedder:
 @attr.s
 class MockerSimilaritySearch:
 
-    search_results_n = attr.ib(default=3, type=int)
+    search_results_n = attr.ib(default=10000, type=int)
     similarity_params = attr.ib(default={'space':'cosine'}, type=dict)
     similarity_search_type = attr.ib(default='linear')
 
@@ -384,6 +384,82 @@ class MockerConnector:
 
 
 @attr.s
+class LlmFilterConnector:
+
+    connection_string = attr.ib(default = "http://localhost:8000/prompt_chat_parallel")
+    system_message = attr.ib(default = """You are an advanced language model designed to search for specific content within a text snippet. Your task is to determine whether the provided text snippet contains information relevant to a given query. Your response should be strictly "true" if the relevant information is present and "false" if it is not. Do not provide any additional information or explanation. Here is how you should proceed:
+
+1. Carefully read the provided text snippet.
+2. Analyze the given query.
+3. Determine if the text snippet contains information relevant to the query.
+4. Respond only with "true" or "false" based on your determination.""")
+
+    template = attr.ib(default = "Query: Does the text mention {query}? \nText Snippet: '''\n {text} \n'''")
+
+
+    def __attrs_post_init__(self):
+        ""
+
+
+    def _make_inputs(self, query : str, inserts : list, search_key : str, system_message = None, template = user_template):
+
+        if system_message is None:
+            system_message = self.system_message
+
+        if template is None:
+            template = self.template
+
+        return [[{'role' : 'system',
+                'content' : system_message},
+                {'role' : 'user',
+                'content' : user_template.format(query = query, text = dd[search_key])}] for dd in inserts]
+
+    def _call_sync_llm(self, messages : list):
+
+        """
+        Calls llm.
+        """
+
+        request_body = {
+            "messages": messages
+        }
+
+
+        response = requests.post(self.connection_string, json=request_body)
+
+        return response.json()
+
+
+    def filter_data(self,
+                    query : str,
+                    data : list,
+                    search_key : str,
+                    system_message = None,
+                    template = None):
+
+        """
+        Prompts chat for search.
+        """
+
+        inserts = [value for _, value in data.items()]
+
+        messages = self._make_inputs(query = query,
+                                     inserts = inserts,
+                                     search_key = search_key,
+                                     system_message = system_message,
+                                     template = template)
+
+
+        responses = self._call_sync_llm(messages = messages)
+
+        outputs = [res['message']['content'] for res in responses]
+
+        output_filter = ['true' in out.lower() for out in outputs]
+
+        return {d : data[d] for d,b in zip(data,output_filter) if b}
+
+
+@attr.s
 class MockerDB:
     # pylint: disable=too-many-instance-attributes
 
@@ -418,16 +494,28 @@ class MockerDB:
                                        'tbatch_size' : 500})
     embedder = attr.ib(default=SentenceTransformerEmbedder)
 
+    ## for llm filter
+    llm_filter_params = attr.ib(default={})
+    llm_filter = attr.ib(default=LlmFilterConnector)
+
 
     ## for similarity search
-    similarity_search_h = attr.ib(default=MockerSimilaritySearch)
+    similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
+    similarity_search = attr.ib(default=MockerSimilaritySearch)
+
+
+    ## activate dependencies
+    llm_filter_h = attr.ib(default=None)
+    embedder_h = attr.ib(default=None)
+    similarity_search_h = attr.ib(default=None)
+
+    ##
     return_keys_list = attr.ib(default=None, type = list)
     ignore_keys_list = attr.ib(default=["embedding", "&distance", "&id"], type = list)
-    search_results_n = attr.ib(default=3, type = int)
+    search_results_n = attr.ib(default=10000, type = int)
     similarity_search_type = attr.ib(default='linear', type = str)
-    similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
     keyword_check_cutoff = attr.ib(default=1, type = float)
-    
+
     ## inputs with defaults
     file_path = attr.ib(default="./mock_persist", type=str)
     embs_file_path = attr.ib(default="./mock_embs_persist", type=str)
@@ -452,11 +540,11 @@ class MockerDB:
 
     def __attrs_post_init__(self):
         self._initialize_logger()
-        self.embedder = self.embedder(**self.embedder_params)
-        self.similarity_search_h = self.similarity_search_h(similarity_search_type = self.similarity_search_type,
-                                                            search_results_n = self.search_results_n,
-                                                            similarity_params = self.similarity_params,
-                                                            logger = self.logger)
+        self._initialize_llm_filter()
+        self._initialize_embedder()
+        self._initialize_sim_search()
+
+
         self.data = {}
 
     def _initialize_logger(self):
@@ -471,6 +559,36 @@ class MockerDB:
             logger.setLevel(self.loggerLvl)
 
             self.logger = logger
+
+    def _initialize_llm_filter(self):
+
+        """
+        Initializes llm_filter connector with provided parameters.
+        """
+
+        if self.llm_filter_h is None:
+            self.llm_filter_h = self.llm_filter(**self.llm_filter_params)
+
+    def _initialize_embedder(self):
+
+        """
+        Initializes embedder connector with provided parameters.
+        """
+
+        if self.embedder_h is None:
+            self.embedder_h = self.embedder(**self.embedder_params)
+
+    def _initialize_sim_search(self):
+
+        """
+        Initializes embedder connector with provided parameters.
+        """
+
+        if self.similarity_search_h is None:
+            self.similarity_search_h = self.similarity_search(similarity_search_type = self.similarity_search_type,
+                                                            search_results_n = self.search_results_n,
+                                                            similarity_params = self.similarity_params,
+                                                            logger = self.logger)
 
     def establish_connection(self, file_path : str = None, embs_file_path : str = None):
 
@@ -593,10 +711,10 @@ class MockerDB:
                     existing_list_of_embeddings.append(self.embs[model_name][new_hash])
 
             # embed new with embedder
-            if self.embedder.processing_type in ['parallel', 'batch']:
-                new_embedded_list_of_text = self.embedder.embed(text = filtered_list_of_text_to_embed)
+            if self.embedder_h.processing_type in ['parallel', 'batch']:
+                new_embedded_list_of_text = self.embedder_h.embed(text = filtered_list_of_text_to_embed)
             else:
-                new_embedded_list_of_text = [self.embedder.embed(text = text_to_embed) \
+                new_embedded_list_of_text = [self.embedder_h.embed(text = text_to_embed) \
                     for text_to_embed in filtered_list_of_text_to_embed]
 
             embedded_list_of_text = []
@@ -688,16 +806,16 @@ class MockerDB:
         match = any(get_close_matches(keyword, words, cutoff=cutoff) for keyword in keyword_set)
         return match
 
-    def _get_close_matches_for_keywords(self, 
-                                        data_key : str, 
-                                        keywords : list, 
+    def _get_close_matches_for_keywords(self,
+                                        data_key : str,
+                                        keywords : list,
                                         cutoff : float):
         # Preprocess keywords into a set for faster membership checking
         keyword_set = set(keywords)
         matched_keys = set()
 
         if cutoff < 1:
-            
+
             keyword_set = [keyword.lower() for keyword in keyword_set]
 
             matched_data = {key: value for key, value in self.data.items() \
@@ -709,11 +827,12 @@ class MockerDB:
                 if self._check_if_match(content = value[data_key],
                                         cutoff = cutoff,
                                         keyword_set = keyword_set)}
-        
+
         return matched_data
 
-    def filter_database(self, 
+    def filter_database(self,
                         filter_criteria : dict = None,
+                        llm_search_keys : list = None,
                         keyword_check_keys : list = None,
                         keyword_check_cutoff : float = None):
 
@@ -727,12 +846,20 @@ class MockerDB:
         if keyword_check_keys is None:
             keyword_check_keys = []
 
+        if llm_search_keys is None:
+            llm_search_keys = []
+
         keyword_check_dict = {}
-        
+        llm_search_check_dict = {}
+
         filter_criteria_list = []
         if filter_criteria:
             for key in keyword_check_keys:
                 keyword_check_dict[key] = filter_criteria[key]
+                del filter_criteria[key]
+
+            for key in llm_search_keys:
+                llm_search_check_dict[key] = filter_criteria[key]
                 del filter_criteria[key]
 
             if filter_criteria:
@@ -741,7 +868,7 @@ class MockerDB:
 
 
         self.filtered_data = {}
-        
+
         if keyword_check_keys:
 
             filtered_data = {}
@@ -764,6 +891,23 @@ class MockerDB:
                     for filter_dict in filter_criteria_list)}
 
             self.filtered_data.update(filtered_data)
+
+        if llm_search_keys:
+
+            filtered_data = self.filtered_data
+            if keyword_check_keys == [] and filter_criteria_list == []:
+                filtered_data = self.data
+
+            for key, queries in llm_search_check_dict.items():
+
+                for query in queries:
+
+                    filtered_data = self.llm_filter_h.filter_data(
+                        data = filtered_data,
+                        search_key = key,
+                        query = query)
+
+            self.filtered_data = filtered_data
 
         if len(self.filtered_data) == 0:
             self.logger.warning("No data was found with applied filters!")
@@ -826,12 +970,12 @@ class MockerDB:
                 if model_name in list(self.embs.keys()):
 
                     if query_hash not in list(self.embs[model_name].keys()):
-                        query_embedding = self.embedder.embed(query, processing_type='single')
+                        query_embedding = self.embedder_h.embed(query, processing_type='single')
                     else:
                         query_embedding = self.embs[model_name][query_hash]
                 else:
                     self.embs[model_name] = {}
-                    query_embedding = self.embedder.embed(query, processing_type='single')
+                    query_embedding = self.embedder_h.embed(query, processing_type='single')
                     self.embs[model_name][query_hash] = query_embedding
 
 
@@ -871,8 +1015,8 @@ class MockerDB:
                 self.logger.error("Problem during extracting search pool embeddings!", e)
 
     def _prepare_return_keys(self,
-                            return_keys_list : list = None, 
-                            remove_list : list = None, 
+                            return_keys_list : list = None,
+                            remove_list : list = None,
                             add_list : list = None):
 
         """
@@ -896,7 +1040,7 @@ class MockerDB:
             return_distance = 1
             add_list.remove("&distance")
 
-        
+
         if return_keys_list:
 
             ra_list = [s for s in return_keys_list \
@@ -905,7 +1049,7 @@ class MockerDB:
             if "embedding" in return_keys_list:
                 if "embedding" in remove_list:
                     remove_list.remove("embedding")
-            
+
             for el in ra_list:
 
                 if el[1:] == "&distance":
@@ -926,9 +1070,9 @@ class MockerDB:
                             remove_list.append(el[1:])
                         if el[1:] in add_list:
                             add_list.remove(el[1:])
-                
+
                 return_keys_list.remove(el)
-            
+
             if "&distance" in return_keys_list:
                 return_keys_list.remove("&distance")
                 if return_keys_list:
@@ -939,11 +1083,11 @@ class MockerDB:
         return add_list, remove_list, return_keys_list, return_distance
 
     def _extract_from_data(self,
-                        data : dict, 
+                        data : dict,
                         distances : list,
-                        results_keys : list, 
+                        results_keys : list,
                         return_keys_list : list,
-                        add_list : list, 
+                        add_list : list,
                         remove_list : list,
                         return_distance : int):
         """
@@ -954,7 +1098,7 @@ class MockerDB:
             remove_set = set(remove_list)
             return_keys_set = set(return_keys_list + add_list) - remove_set
             results = []
-            
+
             if return_distance >= 1:
                 for searched_doc, distance in zip(results_keys, distances):
                     result = {key: data[searched_doc].get(key) \
@@ -987,10 +1131,10 @@ class MockerDB:
                     for key in keys_to_remove_set:
                         filtered_dict.pop(key, None)
                     results.append(filtered_dict)
-        
+
         return results
 
-    def get_dict_results(self, 
+    def get_dict_results(self,
                          return_keys_list : list = None,
                          ignore_keys_list : list = None) -> list:
 
@@ -998,21 +1142,21 @@ class MockerDB:
         Retrieves specified fields from the search results in the mock database.
         """
 
-        (add_list, 
-        remove_list, 
-        return_keys_list, 
+        (add_list,
+        remove_list,
+        return_keys_list,
         return_distance) = self._prepare_return_keys(
             return_keys_list = return_keys_list,
             remove_list = ignore_keys_list
             )
-        
+
         # This method mimics the behavior of the original 'get_dict_results' method
         return self._extract_from_data(
-            data = self.data, 
+            data = self.data,
             distances = self.results_dictances,
-            results_keys = self.results_keys, 
+            results_keys = self.results_keys,
             return_keys_list = return_keys_list,
-            add_list = add_list, 
+            add_list = add_list,
             remove_list = remove_list,
             return_distance = return_distance
         )
@@ -1020,6 +1164,7 @@ class MockerDB:
     def search_database(self,
                         query: str = None,
                         search_results_n: int = None,
+                        llm_search_keys : list = None,
                         keyword_check_keys : list = None,
                         keyword_check_cutoff : float = None,
                         filter_criteria : dict = None,
@@ -1038,7 +1183,8 @@ class MockerDB:
 
         if filter_criteria:
             self.filter_database(
-                filter_criteria=filter_criteria,
+                filter_criteria = filter_criteria,
+                llm_search_keys = llm_search_keys,
                 keyword_check_keys = keyword_check_keys,
                 keyword_check_cutoff = keyword_check_cutoff
                 )
