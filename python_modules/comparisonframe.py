@@ -14,7 +14,7 @@ from collections import Counter
 from datetime import datetime #==5.2
 import pandas as pd #==2.1.1
 import attrs #>=23.2.0
-from mocker_db import MockerDB #==0.1.2
+from mocker_db import MockerDB #==0.2.1
 
 
 # Metadata for package creation
@@ -92,13 +92,12 @@ class RecordsAnalyser:
             method_names = self.compare_scores
 
         scores = {}
+
+        scores = {method_name : self.calculate_score(
+            method_name = method_name,
+            *args, 
+            **kwargs) for method_name in method_names}
         
-        for method_name in method_names:
-
-            scores[method_name] = self.calculate_score(method_name = method_name,
-                                        *args, 
-                                        **kwargs)
-
         return scores
 
     def calculate_aggr_scores(self, method_names : list = None, *args, **kwargs):
@@ -311,7 +310,8 @@ class ComparisonFrame:
         """
         if self.mocker_h is None:
 
-            self.mocker_h = self.mocker_h_class(**self.mocker_params)
+            self.mocker_h = self.mocker_h_class(**self.mocker_params,
+            logger = self.logger)
 
         self.mocker_h.establish_connection()
 
@@ -431,7 +431,7 @@ class ComparisonFrame:
 
         insert_provided_text = [{"collection" : "runs",
                                 "table" : "provided_text",
-                                "run_id" : self._generate_unique_id(),
+                                #"run_id" : self._generate_unique_id(),
                                 "timestamp" : timestamp,
                                 "query" : query,
                                 "text" : provided_text,
@@ -577,7 +577,7 @@ class ComparisonFrame:
                                     "table" : "queries",
                                     **metadata_filters},
                                     perform_similarity_search = False,
-                                    return_keys_list = ['text'])
+                                    return_keys_list = ['text','+&id'])
         else:
             queries_records = self.mocker_h.search_database(
                 filter_criteria = {"collection" : "records",
@@ -585,7 +585,7 @@ class ComparisonFrame:
                                     "text" : queries,
                                     **metadata_filters},
                                     perform_similarity_search = False,
-                                    return_keys_list = ['text'])
+                                    return_keys_list = ['text','+&id'])
 
         queries = [query['text'] for query in queries_records]
 
@@ -595,7 +595,7 @@ class ComparisonFrame:
                                 "query" : queries,
                                 **metadata_filters},
                                 perform_similarity_search = False,
-                                return_keys_list = ['query', 'text'])
+                                return_keys_list = ['+&id','query', 'text'])
 
         
         # record ids will be added based mocker hash keys after mocker is updated with that ability
@@ -603,8 +603,11 @@ class ComparisonFrame:
         if expected_text_records:
 
             updated_list_of_dicts = [
-                {**{'expected_text' if k == 'text' else k: v \
-                    for k, v in dictionary.items()}}
+                {**{
+                    'expected_text' if k == 'text' else 
+                    'record_id' if k == '&id' else k: v
+                    for k, v in dictionary.items()
+                }}
                 for dictionary in expected_text_records
             ]
 
@@ -781,82 +784,74 @@ class ComparisonFrame:
         return merged_list
 
 
-    def get_all_runs(self, queries : list = None):
+    def get_all_runs(self, 
+                     queries : list = None,
+                     run_ids : list = None):
 
         """
         Retrieves all query runs from the stored file.
         """
 
-        if queries is None:
-            run_records = self.mocker_h.search_database(
-                filter_criteria={
+
+        filter_criteria={
                     "collection" : "runs",
                     "table" : "provided_text"
-                },
-                perform_similarity_search = False,
-                return_keys_list = ['run_id', 
-                                    'query',
-                                    'text',
-                                    'timestamp']
-        )
+                }
 
-        else:
-            run_records = self.mocker_h.search_database(
-                filter_criteria={
-                    "collection" : "runs",
-                    "table" : "provided_text",
-                    "query" : queries
-                },
-                perform_similarity_search = False,
-                return_keys_list = ['run_id', 
-                                    'query',
-                                    'text',
-                                    'timestamp'])
+        if queries:
+            filter_criteria["query"] = queries
 
-        run_ids = [run['run_id'] for run in run_records]
+        if run_ids:
+            filter_criteria["&id"] = run_ids
 
-        scores = self.mocker_h.search_database(
-            filter_criteria = {"collection" : "scores",
-                                "table" : "runs",
-                                "run_id" : run_ids},
-                                perform_similarity_search = False)
+        run_records = self.mocker_h.search_database(
+            filter_criteria=filter_criteria,
+            perform_similarity_search = False,
+            return_keys_list = ['+&id', 
+                                'query',
+                                'text',
+                                'timestamp'])
 
-        scores = [
-            {k: v for k, v in d.items() if k not in ["collection",
-                                                    "table"]}
-            for d in scores
-        ]
+        # run_ids = [run['&id'] for run in run_records]
 
-        if scores:
-            run_records = self._merge_lists_by_key_full_left(
-                 run_records, scores, "run_id")
+        # scores = self.mocker_h.search_database(
+        #     filter_criteria = {"collection" : "scores",
+        #                         "table" : "runs",
+        #                         "run_id" : run_ids},
+        #                         perform_similarity_search = False)
 
-            updated_list_of_dicts = [
-                {**{'provided_text' if k == 'text' else k: v \
-                    for k, v in dictionary.items()}}
-                for dictionary in run_records
-            ]
+        # scores = [
+        #     {k: v for k, v in d.items() if k not in ["collection",
+        #                                             "table"]}
+        #     for d in scores
+        # ]
+
+        # if scores:
+        #     run_records = self._merge_lists_by_key_full_left(
+        #          run_records, scores, "run_id")
+
+        #     updated_list_of_dicts = [
+        #         {**{'provided_text' if k == 'text' else 
+        #             'run_id' if k == '&id' else k: v
+        #             for k, v in dictionary.items()}}
+        #         for dictionary in run_records
+        #     ]
 
             
-        elif run_records:
+        if run_records:
 
             updated_list_of_dicts = [
-                {**{'provided_text' if k == 'text' else k: v \
+                {**{'provided_text' if k == 'text' else 
+                    'run_id' if k == '&id' else k: v
                     for k, v in dictionary.items()}}
                 for dictionary in run_records
             ]
 
         else:
-            updated_list_of_dicts = [{
-                'run_id' : None,
-                'query' : None, 
-                'expected_text' : None,
-                'provided_text' : None,
-                'timestamp' : None
-            }]
+            updated_list_of_dicts = []
 
         return updated_list_of_dicts
-
+        
     def get_all_runs_df(self, queries = None):
 
         """
@@ -866,6 +861,95 @@ class ComparisonFrame:
         df = pd.DataFrame(self.get_all_runs(queries=queries))
    
         return df.replace({np.nan: None})
+
+
+    def get_all_run_scores(self, 
+                           queries : list = None,
+                           run_ids : list = None,
+                           comparison_ids : list = None):
+
+        """
+        Retrieves all query runs from the stored file.
+        """
+
+
+        filter_criteria={
+                    "collection" : "runs",
+                    "table" : "provided_text"
+                }
+
+        filter_criteria2={
+                    "collection" : "scores",
+                    "table" : "runs"
+                }
+
+        if queries:
+            filter_criteria["query"] = queries
+        if run_ids:
+            filter_criteria["run_id"] = run_ids
+        if comparison_ids:
+            filter_criteria2["comparison_id"] = comparison_ids
+
+        run_records = self.mocker_h.search_database(
+            filter_criteria=filter_criteria,
+            perform_similarity_search = False,
+            return_keys_list = ['+&id', 
+                                'query',
+                                'text',
+                                'timestamp'])
+
+        run_ids = [run['&id'] for run in run_records]
+
+        filter_criteria2["run_id"] = run_ids
+
+        scores = self.mocker_h.search_database(
+            filter_criteria = filter_criteria2,
+                                perform_similarity_search = False,
+                                return_keys_list = ['+&id',
+                                '-collection', '-table'])
+
+        # scores = [
+        #     {k: v for k, v in d.items() if k not in ["collection",
+        #                                             "table"]}
+        #     for d in scores
+        # ]
+
+        if scores:
+            
+            run_records = [
+                {**{'provided_text' if k == 'text' else 
+                    'run_id' if k == '&id' else k: v
+                    for k, v in dictionary.items()}}
+                for dictionary in run_records
+            ]
+
+            scores = [
+                {**{'comparison_id' if k == '&id' else k: v
+                    for k, v in dictionary.items()}}
+                for dictionary in scores
+            ]
+            
+            updated_list_of_dicts = self._merge_lists_by_key_full_left(
+                 run_records, scores, "run_id")
+
+            
+
+        else:
+            updated_list_of_dicts = []
+
+        return updated_list_of_dicts
+
+    def get_all_run_scores_df(self, 
+                              queries : list = None, 
+                              run_ids : list = None,
+                              comparison_ids : list = None):
+
+        ""
+
+        return pd.DataFrame(self.get_all_run_scores(
+            queries = queries,
+            run_ids = run_ids,
+            comparison_ids = comparison_ids))
 
     # def flush_records(self):
 
@@ -890,12 +974,75 @@ class ComparisonFrame:
     #     else:
     #         raise FileNotFoundError("No results file found. There's nothing to flush.")
 
+    def get_all_aggr_scores(self, 
+                           queries : list = None):
+
+        """
+        Retrieves all query runs from the stored file.
+        """
+
+
+        filter_criteria={
+                    "collection" : "scores",
+                    "table" : "records"
+                }
+
+        if queries:
+            filter_criteria["query"] = queries
+
+
+        scores = self.mocker_h.search_database(
+            filter_criteria=filter_criteria,
+            perform_similarity_search = False,
+            return_keys_list = ['+&id', '-collection', '-table'])
+
+
+        if scores:
+            
+            scores = [
+                {**{'record_status_id' if k == '&id' else k: v
+                    for k, v in dictionary.items()}}
+                for dictionary in scores
+            ]
+                        
+        else:
+            scores = []
+
+        return scores
+
+    def get_all_aggr_scores_df(self, 
+                              queries : list = None):
+
+        ""
+
+        return pd.DataFrame(self.get_all_aggr_scores(
+            queries = queries))
+
 ### CALCULATING COMPARISON AND AGGREGATE SCORES
+
+    def _call_comparer(self, record_run, timestamp, compare_scores):
+
+        if record_run.get('run_id', None) and record_run.get('record_id', None):
+
+            comparison = {"collection" : "scores",
+                            "table" : "runs",
+                            "timestamp" : timestamp,
+                            "record_id" : record_run['record_id'],
+                            "run_id": record_run['run_id']}
+
+            comparison_scores = self.records_analyser.calculate_scores(
+                method_names = compare_scores, 
+                exp_text = record_run['expected_text'],
+                prov_text = record_run['provided_text'])
+            
+            comparison.update(comparison_scores)
+
+        return comparison
 
     def compare_runs_with_records(self,                        
                             queries : list = None,
                             compare_scores : list = None,
-                            ):
+                            latest_runs : bool = True):
 
         """
         Compares the provided text with all recorded expected results for a specific query and stores the comparison results.
@@ -904,33 +1051,45 @@ class ComparisonFrame:
         if compare_scores is None:
             compare_scores = self.compare_scores
 
+        if latest_runs:
+
+            # pulling scores to determine which runs not to use again
+            scores = self.get_all_run_scores()
+            run_ids_to_exclude = [score['run_id'] for score in scores \
+                if score.get('record_id', False)]
+
+
+            # pull all runs
+            runs_all = self.get_all_runs(queries=queries)
+
+            run_ids = [run['run_id'] for run in runs_all \
+                if run['run_id'] not in run_ids_to_exclude]
+
+            # pull relevant runs
+            runs = self.get_all_runs(queries=queries,
+                                    run_ids=run_ids)
+        else:
+            # pull relevant runs
+            runs = self.get_all_runs(queries=queries)
+
+
         # pull relevant records
         records = self.get_all_records(queries=queries)
 
-        # pull relevant runs
-        runs = self.get_all_runs(queries=queries)
 
-        records_runs = self._merge_lists_by_key_full_left(runs,records, "query")
+        records_runs = self._merge_lists_by_key_full_left(
+            list1 = runs,
+            list2 = records, 
+            key = "query")
 
         if not records_runs:
             raise ValueError("Query not found in records.")
 
-        comparisons = []
-        for record_run in records_runs:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            if record_run.get('run_id', None):
-
-                comparison = {"collection" : "scores",
-                              "table" : "runs",
-                              "run_id": record_run['run_id']}
-
-                comparison_scores = self.records_analyser.calculate_scores(
-                    method_names = compare_scores, 
-                    exp_text = record_run['expected_text'],
-                    prov_text = record_run['provided_text'])
-                
-                comparison.update(comparison_scores)
-                comparisons.append(comparison)
+        comparisons = [self._call_comparer(record_run, 
+                                timestamp, 
+                                compare_scores) for record_run in records_runs]
 
         if comparisons:
 
@@ -941,39 +1100,79 @@ class ComparisonFrame:
 
     def calculate_aggr_scores(self,
                             queries : list = None,
+                            compare_scores : list = None,
                             aggr_scores : list = None,
+                            latest_runs : bool = True
                             ):
 
         """
         Calculate aggr scores for selected queries based on compare scores.
         """
 
+        if compare_scores is None:
+            compare_scores = self.compare_scores
+
         if aggr_scores is None:
             aggr_scores = self.aggr_scores
 
-        # pull relevant runs
-        df = self.get_all_runs_df(queries=queries)
+        if latest_runs:
 
-        # get relevant queries
-        queries = list(set(df['query']))
-        
+            # pulling scores to determine which runs not to use again
+            scores = self.get_all_aggr_scores()
+            run_scores = self.get_all_run_scores(queries=queries)
+
+            exclusion_cid = [d['comparison_id'] for d in run_scores if d.get('comparison_id', None)]
+
+            comparison_ids = []
+
+            for sc in scores:
+                comparison_ids += sc['comparison_id']
+
+            comparison_ids = [cid for cid in comparison_ids if cid not in exclusion_cid]
+
+            if comparison_ids:
+
+                # pull relevant runs
+                df = self.get_all_run_scores_df(
+                    queries=queries,
+                    comparison_ids=comparison_ids)
+            else:
+                df = pd.DataFrame([])
+        else:
+            # pull relevant runs
+            df = self.get_all_run_scores_df(
+                queries=queries)
+
+        # scores = self.get_all_aggr_scores()
         comparisons = []
-        for query in queries:
-            
-            # get score dataframe for each query
-            df_scores = df.query(f"query == '{query}'").iloc[:,4:]
+        if df.shape[0]>0:
 
-            comparison = {"collection" : "scores",
-                              "table" : "records",
-                              "query": query}
+            # get relevant queries
+            queries = list(set(df['query']))
 
-            comparison_scores = self.records_analyser.calculate_aggr_scores(
-                method_names = aggr_scores,
-                df = df_scores
-            )
+            for query in queries:
 
-            comparison.update(comparison_scores)
-            comparisons.append(comparison)
+                df_limited = df.query(f"query == '{query}'")
+                
+                # get score dataframe for each query
+                df_scores = df_limited[compare_scores]
+
+                comparison_ids = df_limited['comparison_id'].to_list()
+
+                comparison_ids = [cid for cid in comparison_ids if not pd.isna(cid)]
+
+                comparison = {"collection" : "scores",
+                                    "table" : "records",
+                                    "comparison_id" : comparison_ids,
+                                    "query": query}
+
+                comparison_scores = self.records_analyser.calculate_aggr_scores(
+                    method_names = aggr_scores,
+                    df = df_scores
+                )
+
+                comparison.update(comparison_scores)
+                comparisons.append(comparison)
 
         if comparisons:
 
