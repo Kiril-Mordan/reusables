@@ -1,5 +1,5 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.5 Chrome/126.0.6478.183 Electron/31.3.0 Safari/537.36" version="24.7.5">
-  <diagram name="Page-1" id="tNR1n5y9OZlqjCuNG1ge">
+  <diagram name="flow" id="tNR1n5y9OZlqjCuNG1ge">
     <mxGraphModel dx="2635" dy="1270" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
@@ -25,7 +25,7 @@
         <mxCell id="OIBrcTe9-NFZS3mEBpfI-3" value="expected : list" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OIBrcTe9-NFZS3mEBpfI-1" vertex="1">
           <mxGeometry y="90" width="140" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="MBPVJEblR_ISTUpEFrV3-1" value="**metadata" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-1">
+        <mxCell id="MBPVJEblR_ISTUpEFrV3-1" value="**metadata" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OIBrcTe9-NFZS3mEBpfI-1" vertex="1">
           <mxGeometry y="120" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="OIBrcTe9-NFZS3mEBpfI-6" value="Aggregate Scores" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
@@ -55,7 +55,7 @@
         <mxCell id="OIBrcTe9-NFZS3mEBpfI-25" value="recorded : list" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OIBrcTe9-NFZS3mEBpfI-10" vertex="1">
           <mxGeometry y="120" width="140" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="MBPVJEblR_ISTUpEFrV3-2" value="**metadata" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OIBrcTe9-NFZS3mEBpfI-10">
+        <mxCell id="MBPVJEblR_ISTUpEFrV3-2" value="**metadata" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OIBrcTe9-NFZS3mEBpfI-10" vertex="1">
           <mxGeometry y="150" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="OIBrcTe9-NFZS3mEBpfI-14" value="Comparison Scores" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
@@ -64,7 +64,7 @@
         <mxCell id="OIBrcTe9-NFZS3mEBpfI-15" value="run id : str" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OIBrcTe9-NFZS3mEBpfI-14" vertex="1">
           <mxGeometry y="30" width="140" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="OIBrcTe9-NFZS3mEBpfI-40" value="comparison id" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OIBrcTe9-NFZS3mEBpfI-14" vertex="1">
+        <mxCell id="OIBrcTe9-NFZS3mEBpfI-40" value="comparison id: str" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OIBrcTe9-NFZS3mEBpfI-14" vertex="1">
           <mxGeometry y="60" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="OIBrcTe9-NFZS3mEBpfI-16" value="record id : list" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OIBrcTe9-NFZS3mEBpfI-14" vertex="1">
@@ -211,19 +211,19 @@
         <mxCell id="OIBrcTe9-NFZS3mEBpfI-66" value="recorded as expected could be one or many values" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="216" y="129" width="137" height="42" as="geometry" />
         </mxCell>
-        <mxCell id="MBPVJEblR_ISTUpEFrV3-3" value="Additional fields to filter records when choosing valid set or inspecting record statuses" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="MBPVJEblR_ISTUpEFrV3-3" value="Additional fields to filter records when choosing valid set or inspecting record statuses" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="-753" y="268" width="127" height="59" as="geometry" />
         </mxCell>
-        <mxCell id="MBPVJEblR_ISTUpEFrV3-4" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0.418;entryY=0.917;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="MBPVJEblR_ISTUpEFrV3-1">
+        <mxCell id="MBPVJEblR_ISTUpEFrV3-4" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0.418;entryY=0.917;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" target="MBPVJEblR_ISTUpEFrV3-1" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="-716" y="261" as="sourcePoint" />
             <mxPoint x="-681" y="184" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="MBPVJEblR_ISTUpEFrV3-5" value="Additional fields to filter runs when choosing runs for comparison or inspecting them" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="MBPVJEblR_ISTUpEFrV3-5" value="Additional fields to filter runs when choosing runs for comparison or inspecting them" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="195" y="228" width="155" height="48" as="geometry" />
         </mxCell>
-        <mxCell id="MBPVJEblR_ISTUpEFrV3-7" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="MBPVJEblR_ISTUpEFrV3-2">
+        <mxCell id="MBPVJEblR_ISTUpEFrV3-7" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="MBPVJEblR_ISTUpEFrV3-2" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="190" y="223" as="sourcePoint" />
             <mxPoint x="124" y="193" as="targetPoint" />
