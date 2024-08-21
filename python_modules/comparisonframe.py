@@ -268,6 +268,7 @@ class ComparisonFrame:
     ## scores to calculate
     compare_scores = attrs.field(default = None)
     aggr_scores = attrs.field(default = None)
+    test_query = attrs.field(default = None)
     
     
     ## dependencies
@@ -567,7 +568,6 @@ class ComparisonFrame:
                         metadata_filters : dict = {}):
 
         """
-        Retrieves records with validation data.
         """
 
 
@@ -619,7 +619,6 @@ class ComparisonFrame:
     def get_all_record_statuses(self, queries : list = None):
 
         """
-        Retrieves all query records from the stored file.
         """
 
 
@@ -689,7 +688,6 @@ class ComparisonFrame:
     def get_all_records_scores(self, queries : list = None):
 
         """
-        Retrieves all query records from the stored file.
         """
 
 
@@ -760,7 +758,6 @@ class ComparisonFrame:
     def get_all_records_df(self, queries = None):
 
         """
-        Retrieves all query records as a DataFrame from the stored file.
         """
 
         return pd.DataFrame(self.get_all_records(queries=queries))
@@ -789,7 +786,6 @@ class ComparisonFrame:
                      run_ids : list = None):
 
         """
-        Retrieves all query runs from the stored file.
         """
 
 
@@ -855,7 +851,6 @@ class ComparisonFrame:
     def get_all_runs_df(self, queries = None):
 
         """
-        Retrieves all runs as a DataFrame from the stored file.
         """
 
         df = pd.DataFrame(self.get_all_runs(queries=queries))
@@ -869,7 +864,6 @@ class ComparisonFrame:
                            comparison_ids : list = None):
 
         """
-        Retrieves all query runs from the stored file.
         """
 
 
@@ -888,7 +882,7 @@ class ComparisonFrame:
         if run_ids:
             filter_criteria["run_id"] = run_ids
         if comparison_ids:
-            filter_criteria2["comparison_id"] = comparison_ids
+            filter_criteria2["&id"] = comparison_ids
 
         run_records = self.mocker_h.search_database(
             filter_criteria=filter_criteria,
@@ -944,7 +938,8 @@ class ComparisonFrame:
                               run_ids : list = None,
                               comparison_ids : list = None):
 
-        ""
+        """
+        """
 
         return pd.DataFrame(self.get_all_run_scores(
             queries = queries,
@@ -978,7 +973,6 @@ class ComparisonFrame:
                            queries : list = None):
 
         """
-        Retrieves all query runs from the stored file.
         """
 
 
@@ -1010,11 +1004,53 @@ class ComparisonFrame:
 
         return scores
 
+    def get_test_statuses(self, 
+                          queries : list = None):
+
+        """
+        """
+
+
+        filter_criteria={
+                    "collection" : "scores",
+                    "table" : "status"
+                }
+
+        if queries:
+            filter_criteria["query"] = queries
+
+
+        statuses = self.mocker_h.search_database(
+            filter_criteria=filter_criteria,
+            perform_similarity_search = False,
+            return_keys_list = ['-collection', '-table'])
+
+
+        # if statuses:
+            
+        #     statuses = [
+        #         {**{'record_status_id' if k == '&id' else k: v
+        #             for k, v in dictionary.items()}}
+        #         for dictionary in scores
+        #     ]
+                        
+        # else:
+        #     statuses = []
+
+        return statuses
+
+    def get_test_statuses_df(self, 
+                          queries : list = None):
+        """
+        """
+        return pd.DataFrame(self.get_test_statuses(queries=queries))
+
+
     def get_all_aggr_scores_df(self, 
                               queries : list = None):
 
-        ""
-
+        """
+        """
         return pd.DataFrame(self.get_all_aggr_scores(
             queries = queries))
 
@@ -1112,8 +1148,14 @@ class ComparisonFrame:
         if compare_scores is None:
             compare_scores = self.compare_scores
 
+        if compare_scores is None:
+            compare_scores = self.records_analyser.compare_scores
+
         if aggr_scores is None:
             aggr_scores = self.aggr_scores
+
+        if aggr_scores is None:
+            aggr_scores = self.records_analyser.aggr_scores
 
         if latest_runs:
 
@@ -1121,12 +1163,12 @@ class ComparisonFrame:
             scores = self.get_all_aggr_scores()
             run_scores = self.get_all_run_scores(queries=queries)
 
-            exclusion_cid = [d['comparison_id'] for d in run_scores if d.get('comparison_id', None)]
+            comparison_ids = [d['comparison_id'] for d in run_scores if d.get('comparison_id', None)]
 
-            comparison_ids = []
+            exclusion_cid = []
 
             for sc in scores:
-                comparison_ids += sc['comparison_id']
+                exclusion_cid += sc['comparison_id']
 
             comparison_ids = [cid for cid in comparison_ids if cid not in exclusion_cid]
 
@@ -1147,6 +1189,8 @@ class ComparisonFrame:
         comparisons = []
         if df.shape[0]>0:
 
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
             # get relevant queries
             queries = list(set(df['query']))
 
@@ -1163,6 +1207,7 @@ class ComparisonFrame:
 
                 comparison = {"collection" : "scores",
                                     "table" : "records",
+                                    "timestamp" : timestamp,
                                     "comparison_id" : comparison_ids,
                                     "query": query}
 
@@ -1172,6 +1217,64 @@ class ComparisonFrame:
                 )
 
                 comparison.update(comparison_scores)
+                comparisons.append(comparison)
+
+        if comparisons:
+
+            self.mocker_h.insert_values(values_dict_list = comparisons,
+                                        embed = False)
+        else:
+            self.logger.warning("No comparisons were completed for queries!")
+
+    def calculate_test_statuses(self,
+                            queries : list = None,
+                            test_query : str = None
+                            ):
+
+        """
+        """
+
+        if test_query is None:
+            test_query = self.test_query
+        if test_query is None:
+            raise ValueError("Provide test query!")
+
+
+        # pull relevant runs
+        df = self.get_all_aggr_scores_df(
+                queries=queries)
+
+
+        comparisons = []
+        if df.shape[0]>0:
+
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            queries = list(set(df['query']))
+
+            for query in queries:
+
+                record_id_d = self.get_all_records(queries=[query])
+                
+                if record_id_d:
+                    record_id = record_id_d[0]['record_id']
+                else:
+                    raise ValueError(f"No record in records for query: {query}")
+
+                df_sorted = df.query(f"query == '{query}'")\
+                    .sort_values(by='timestamp', ascending=False).head(1)
+
+                status = df_sorted.query(test_query).shape[0] > 0
+                
+
+                comparison = {"collection" : "scores",
+                                "table" : "status",
+                                "timestamp" : timestamp,
+                                "record_id" : record_id,
+                                "record_status_id" : df_sorted['record_status_id'][0],
+                                "query": query,
+                                "valid" : status}
+
                 comparisons.append(comparison)
 
         if comparisons:
