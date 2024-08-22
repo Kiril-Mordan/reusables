@@ -6,7 +6,7 @@ such as evaluating the performance of natural language processing models, monito
 or tracking changes in textual data over time using manual evaluation.
 """
 
-import numpy as np
+import numpy as np #==1.26.0
 import string
 import logging
 from collections import Counter
