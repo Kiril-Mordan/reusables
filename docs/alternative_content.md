@@ -26,7 +26,7 @@ PromptHandler prepares inputs for the llm requests.
 OllamaHandlerAsync is a simple connector to ollama.AsyncClient
     meant to with LlmHandlerAsync in the role of llm_handler.
 
-[module](../python_modules/comparisonframe.py) | [usage](../docs/comparisonframe.md) | [release notes](../release_notes/comparisonframe.md) | [![PyPiVersion](https://img.shields.io/pypi/v/comparisonframe)](https://pypi.org/project/comparisonframe/) - Comparisonframe 
+[module](../python_modules/comparisonframe.py) | [usage](../docs/comparisonframe.md) | [drawio: -flow](../docs/comparisonframe-flow.png) | [release notes](../release_notes/comparisonframe.md) | [![PyPiVersion](https://img.shields.io/pypi/v/comparisonframe)](https://pypi.org/project/comparisonframe/) - Comparisonframe 
 
 Comparison Frame is designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
 such as character and word count, punctuation usage, and semantic similarity.

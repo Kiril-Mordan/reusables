@@ -31,4 +31,5 @@ Links to the extended documentation of packaged modules, available through gh-pa
 - [![MkDocs](https://img.shields.io/static/v1?label=&message=Proompter&color=darkgreen&logo=mkdocs)](https://kiril-mordan.github.io/reusables/proompter) [![PyPiVersion](https://img.shields.io/pypi/v/proompter)](https://pypi.org/project/proompter/) 
 - [![MkDocs](https://img.shields.io/static/v1?label=&message=Shouterlog&color=darkgreen&logo=mkdocs)](https://kiril-mordan.github.io/reusables/shouterlog) [![PyPiVersion](https://img.shields.io/pypi/v/shouterlog)](https://pypi.org/project/shouterlog/) 
  
+ 
 Other content can be found [here](./docs/alternative_content.md).
