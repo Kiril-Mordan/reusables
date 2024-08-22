@@ -9,7 +9,6 @@ or tracking changes in textual data over time using manual evaluation.
 import numpy as np
 import string
 import logging
-import uuid
 from collections import Counter
 from datetime import datetime #==5.2
 import pandas as pd #==2.1.1
@@ -326,14 +325,42 @@ class ComparisonFrame:
             mocker_h = self.mocker_h
         )
 
-    def _generate_unique_id(self):
-        """
-        Generate a unique identifier using UUID4.
+    def _merge_lists_by_key_full_left(self, list1 : list, list2 : list, key : str):
+        # Create a dictionary for quick lookup from list2
+        dict2 = {item[key]: item for item in list2}
 
-        Returns:
-            str: A unique identifier as a string.
-        """
-        return str(uuid.uuid4())
+        # Iterate over list1 and merge with corresponding dict2 item if exists
+        merged_list = []
+        for item in list1:
+            run_id = item[key]
+            if run_id in dict2:
+                # If the run_id is in dict2, merge dictionaries
+                merged_item = {**item, **dict2[run_id]}
+            else:
+                # If the run_id is not in dict2, use item as is
+                merged_item = item
+            merged_list.append(merged_item)
+
+        return merged_list
+
+    def _call_comparer(self, record_run, timestamp, compare_scores):
+
+        if record_run.get('run_id', None) and record_run.get('record_id', None):
+
+            comparison = {"collection" : "scores",
+                            "table" : "runs",
+                            "timestamp" : timestamp,
+                            "record_id" : record_run['record_id'],
+                            "run_id": record_run['run_id']}
+
+            comparison_scores = self.records_analyser.calculate_scores(
+                method_names = compare_scores, 
+                exp_text = record_run['expected_text'],
+                prov_text = record_run['provided_text'])
+            
+            comparison.update(comparison_scores)
+
+        return comparison
 
 
 ### RECORDING QUERIES AND RUNS
@@ -371,26 +398,16 @@ class ComparisonFrame:
 
         insert_queries = [{"collection" : "records",
                                 "table" : "queries",
-                                #"record_id" : self._generate_unique_id(),
                                 "text" : query,
                                 **metadata} \
                                     for query in queries]
 
         insert_expected_text = [{"collection" : "records",
                                 "table" : "expected_text",
-                                #"record_id" : self._generate_unique_id(),
                                 "query" : query,
                                 "text" : expected_text,
                                 **metadata} \
                                     for query, expected_text in zip(queries,expected_texts)]
-
-        # insert_entries = [{"table" : "records",
-        #                     "collection" : "test_statuses",
-        #                     "record_id" : record_id,
-        #                     "timestamp" : timestamp,
-        #                     "text" : None,
-        #                     "tested" : False,
-        #                     "test_status" : None}]
 
         inserts = insert_queries + insert_expected_text #+ insert_entries
 
@@ -432,7 +449,6 @@ class ComparisonFrame:
 
         insert_provided_text = [{"collection" : "runs",
                                 "table" : "provided_text",
-                                #"run_id" : self._generate_unique_id(),
                                 "timestamp" : timestamp,
                                 "query" : query,
                                 "text" : provided_text,
@@ -445,84 +461,14 @@ class ComparisonFrame:
                                     var_for_embedding_name = 'text',
                                     embed = True)
 
-    # def mark_query_as_tested(self, query, test_status):
-    #     """
-    #     Updates the 'tested' status and 'test_status' of a specific query in the record file.
-    #     """
-
-    #     # Read the existing data
-    #     rows = []
-    #     with open(self.record_file, mode='r', encoding='utf-8') as file:
-    #         reader = csv.reader(file)
-    #         rows = list(reader)
-
-    #     headers = rows[0]  # Extract the headers
-    #     # Check if 'test_status' is in headers, if not, add it
-    #     if 'test_status' not in headers:
-    #         headers.append('test_status')
-
-    #     # Find the query and mark it as tested, and update the test status
-    #     for row in rows[1:]:  # Skip the header row
-    #         if row[2] == query:  # if the query matches
-    #             row[4] = 'yes'  # 'yes' indicates tested
-    #             if len(row) >= 6:  # if 'test_status' column exists
-    #                 row[5] = test_status  # update the 'test_status' column
-    #             else:
-    #                 row.append(test_status)  # if 'test_status' column doesn't exist, append the status
-
-    #     # Write the updated data back to the file, including the headers
-    #     with open(self.record_file, mode='w', newline='', encoding='utf-8') as file:
-    #         writer = csv.writer(file)
-    #         writer.writerow(headers)  # Write the headers first
-    #         writer.writerows(rows[1:])  # Write the data rows
-
-
-    # def reset_record_statuses(self, record_ids=None):
-    #     """
-    #     Resets the 'tested' status of specific queries or all queries in the record file, making them available for re-testing.
-
-    #     Parameters:
-    #     record_ids (list of int): Optional. A list of record IDs for which to reset the statuses. If None, all records are reset.
-    #     """
-
-    #     # Read the existing data
-    #     with open(self.record_file, mode='r', encoding='utf-8') as file:
-    #         reader = csv.reader(file)
-    #         rows = list(reader)
-
-    #     # Check for the right headers and adjust the data rows
-    #     headers = rows[0]  # Extract the headers
-    #     if 'test_status' not in headers:
-    #         headers.append('test_status')  # Add 'test_status' to headers if it's missing
-
-    #     new_rows = [headers]  # Include the headers as the first row
-
-    #     for row in rows[1:]:  # Skip the header row
-    #         if record_ids is None or int(row[0]) in record_ids:  # Check if resetting all or specific IDs
-    #             new_row = row[:5]  # Select columns 'id' through 'tested'
-    #             new_row[4] = 'no'  # 'no' indicates untested
-    #             if len(row) == 6:  # if 'test_status' column exists
-    #                 new_row.append('')  # reset 'test_status' to an empty string
-    #             else:
-    #                 new_row.append('')  # if 'test_status' column doesn't exist, still add an empty string placeholder
-    #             new_rows.append(new_row)
-    #         else:
-    #             new_rows.append(row)  # If the ID is not in the list, keep the row unchanged
-
-    #     # Write the updated data back to the file, including the headers
-    #     with open(self.record_file, mode='w', newline='', encoding='utf-8') as file:
-    #         writer = csv.writer(file)
-    #         writer.writerows(new_rows)  # Write the updated rows back to CSV, including headers
-
 ### EXTRACTING TABLES
 
     def get_all_queries(self, 
         metadata_filters = None
-        #untested_only : bool = False
         ):
 
         """
-        Retrieves a list of all recorded queries, with an option to return only those that haven't been tested.
+        Retrieves a list of all recorded queries, with optional filters.
         """
 
         filter_criteria = {"collection" : "records",
@@ -543,31 +489,13 @@ class ComparisonFrame:
 
         return queries
 
-    # def get_comparison_results(self, throw_error : bool = False):
-
-    #     """
-    #     Retrieves the comparison results as a DataFrame from the stored file.
-    #     """
-
-    #     # Check if the results file exists
-    #     if not os.path.isfile(self.results_file):
-    #         error_mess = "No results file found. Please perform some comparisons first."
-    #         if throw_error:
-    #             raise FileNotFoundError(error_mess)
-    #         else:
-    #             self.logger.error(error_mess)
-
-    #     else:
-    #         # Read the CSV file into a pandas DataFrame
-    #         df = pd.read_csv(self.results_file)
-
-    #         return df
 
     def get_all_records(self, 
                         queries : list = None,
                         metadata_filters : dict = {}):
 
         """
+        Retrieves a list of records, with optional filters.
         """
 
 
@@ -616,176 +544,24 @@ class ComparisonFrame:
 
         return updated_list_of_dicts
 
-    def get_all_record_statuses(self, queries : list = None):
+    def get_all_records_df(self, 
+                          queries : list = None,
+                          metadata_filters : dict = {}):
 
         """
+        Retrieves records dataframe, with optional filters.
         """
 
-
-        if queries is None:
-            queries_records = self.mocker_h.search_database(
-                filter_criteria = {"collection" : "records",
-                                    "table" : "queries"},
-                                    perform_similarity_search = False,
-                                    return_keys_list = ['record_id','text'])
-        else:
-            queries_records = self.mocker_h.search_database(
-                filter_criteria = {"collection" : "records",
-                                    "table" : "queries",
-                                    "text" : queries},
-                                    perform_similarity_search = False,
-                                    return_keys_list = ['record_id','text'])
-
-        queries = [query['text'] for query in queries_records]
-
-        expected_text_records = self.mocker_h.search_database(
-            filter_criteria = {"collection" : "records",
-                                "table" : "expected_text",
-                                "query" : queries},
-                                perform_similarity_search = False,
-                                return_keys_list = ['record_id','query', 'text'])
-
-        expected_texts = [et['text'] for et in expected_text_records]
-
-        status_records = self.mocker_h.search_database(
-            filter_criteria = {"collection" : "records",
-                                "table" : "test_statuses",
-                                "query" : queries,
-                                "expected_text" : expected_texts},
-                                perform_similarity_search = False,
-                                return_keys_list = ['record_id',
-                                                    'query', 
-                                                    'expected_text',
-                                                    'timestamp',
-                                                    'tested',
-                                                    'test_status'])
-
-        if status_records:
-            updated_list_of_dicts = status_records
-        elif expected_text_records:
-
-            updated_list_of_dicts = [
-                {**{'expected_text' if k == 'text' else k: v \
-                    for k, v in dictionary.items()}, 
-                        'timestamp' : None,
-                        'tested' : None,
-                        'test_status' : None}
-                for dictionary in expected_text_records
-            ]
-
-        else:
-            updated_list_of_dicts = [{
-                'record_id' : None,
-                'query' : None, 
-                'expected_text' : None,
-                'timestamp' : None,
-                'tested' : None,
-                'test_status' : None
-            }]
-
-        return updated_list_of_dicts
-
-    def get_all_records_scores(self, queries : list = None):
-
-        """
-        """
-
-
-        if queries is None:
-            record_id_records = self.mocker_h.search_database(
-                filter_criteria = {"collection" : "records",
-                                    "table" : "queries"},
-                                    perform_similarity_search = False,
-                                    return_keys_list = ['record_id'])
-        else:
-            record_id_records = self.mocker_h.search_database(
-                filter_criteria = {"collection" : "records",
-                                    "table" : "queries",
-                                    "text" : queries},
-                                    perform_similarity_search = False,
-                                    return_keys_list = ['record_id'])
-
-        record_ids = [record['record_id'] for record in record_id_records]
-
-        # expected_text_records = self.mocker_h.search_database(
-        #     filter_criteria = {"collection" : "records",
-        #                         "table" : "expected_text",
-        #                         "query" : queries},
-        #                         perform_similarity_search = False,
-        #                         return_keys_list = ['query', 'text'])
-
-        # expected_texts = [et['text'] for et in expected_text_records]
-
-        score_records = self.mocker_h.search_database(
-            filter_criteria = {"collection" : "scores",
-                                "table" : "records",
-                                "query" : queries},
-                                perform_similarity_search = False)
-
-        scores = [
-            {k: v for k, v in d.items() if k not in ["collection",
-                                                    "table"]}
-            for d in scores
-        ]
-
-        if score_records:
-
-            updated_list_of_dicts = [
-                {**{'expected_text' if k == 'text' else k: v \
-                    for k, v in dictionary.items()}}
-                for dictionary in expected_text_records
-            ]
-
-            updated_list_of_dicts = self._merge_lists_by_key_full_left(
-                 updated_list_of_dicts, score_records, "query")
-
-        elif expected_text_records:
-
-            updated_list_of_dicts = [
-                {**{'expected_text' if k == 'text' else k: v \
-                    for k, v in dictionary.items()}}
-                for dictionary in expected_text_records
-            ]
-
-        else:
-            updated_list_of_dicts = [{
-                'query' : None, 
-                'expected_text' : None
-            }]
-
-        return updated_list_of_dicts
-
-    def get_all_records_df(self, queries = None):
-
-        """
-        """
-
-        return pd.DataFrame(self.get_all_records(queries=queries))
-
-    def _merge_lists_by_key_full_left(self, list1 : list, list2 : list, key : str):
-        # Create a dictionary for quick lookup from list2
-        dict2 = {item[key]: item for item in list2}
-
-        # Iterate over list1 and merge with corresponding dict2 item if exists
-        merged_list = []
-        for item in list1:
-            run_id = item[key]
-            if run_id in dict2:
-                # If the run_id is in dict2, merge dictionaries
-                merged_item = {**item, **dict2[run_id]}
-            else:
-                # If the run_id is not in dict2, use item as is
-                merged_item = item
-            merged_list.append(merged_item)
-
-        return merged_list
-
+        return pd.DataFrame(self.get_all_records(
+            queries=queries,
+            metadata_filters=metadata_filters))
 
     def get_all_runs(self, 
                      queries : list = None,
                      run_ids : list = None):
 
         """
+        Retrieves run lists for selected filters.
         """
 
 
@@ -807,32 +583,6 @@ class ComparisonFrame:
                                 'query',
                                 'text',
                                 'timestamp'])
-
-        # run_ids = [run['&id'] for run in run_records]
-
-        # scores = self.mocker_h.search_database(
-        #     filter_criteria = {"collection" : "scores",
-        #                         "table" : "runs",
-        #                         "run_id" : run_ids},
-        #                         perform_similarity_search = False)
-
-        # scores = [
-        #     {k: v for k, v in d.items() if k not in ["collection",
-        #                                             "table"]}
-        #     for d in scores
-        # ]
-
-        # if scores:
-        #     run_records = self._merge_lists_by_key_full_left(
-        #          run_records, scores, "run_id")
-
-        #     updated_list_of_dicts = [
-        #         {**{'provided_text' if k == 'text' else 
-        #             'run_id' if k == '&id' else k: v
-        #             for k, v in dictionary.items()}}
-        #         for dictionary in run_records
-        #     ]
-
             
         if run_records:
 
@@ -848,12 +598,17 @@ class ComparisonFrame:
 
         return updated_list_of_dicts
         
-    def get_all_runs_df(self, queries = None):
+    def get_all_runs_df(self, 
+                        queries : list = None,
+                        run_ids : list = None):
 
         """
+        Retrieves dataframe of runs for selected filters.
         """
 
-        df = pd.DataFrame(self.get_all_runs(queries=queries))
+        df = pd.DataFrame(self.get_all_runs(
+            queries=queries,
+            run_ids=run_ids))
    
         return df.replace({np.nan: None})
 
@@ -864,6 +619,7 @@ class ComparisonFrame:
                            comparison_ids : list = None):
 
         """
+        Retrieves list of comparison scores for selected filters.
         """
 
 
@@ -902,12 +658,6 @@ class ComparisonFrame:
                                 return_keys_list = ['+&id',
                                 '-collection', '-table'])
 
-        # scores = [
-        #     {k: v for k, v in d.items() if k not in ["collection",
-        #                                             "table"]}
-        #     for d in scores
-        # ]
-
         if scores:
             
             run_records = [
@@ -939,6 +689,7 @@ class ComparisonFrame:
                               comparison_ids : list = None):
 
         """
+        Retrieves dataframe of comparison scores for selected filters.
         """
 
         return pd.DataFrame(self.get_all_run_scores(
@@ -946,33 +697,12 @@ class ComparisonFrame:
             run_ids = run_ids,
             comparison_ids = comparison_ids))
 
-    # def flush_records(self):
-
-    #     """
-    #     Clears all query records from the stored file, leaving only the headers.
-    #     """
-
-    #     # Open the file in write mode to clear it, then write back only the headers
-    #     with open(self.record_file, mode='w', newline='', encoding='utf-8') as file:
-    #         writer = csv.writer(file)
-    #         writer.writerow(['id', 'timestamp', 'query', 'expected_text', 'tested', 'test_status'])  # column headers
-
-    # def flush_comparison_results(self):
-
-    #     """
-    #     Deletes the file containing the comparison results.
-    #     """
-
-    #     # Check if the results file exists
-    #     if os.path.isfile(self.results_file):
-    #         os.remove(self.results_file)
-    #     else:
-    #         raise FileNotFoundError("No results file found. There's nothing to flush.")
-
+    
     def get_all_aggr_scores(self, 
                            queries : list = None):
 
         """
+        Retrieves list for aggregate scores for selected filters.
         """
 
 
@@ -1004,10 +734,20 @@ class ComparisonFrame:
 
         return scores
 
+    def get_all_aggr_scores_df(self, 
+                              queries : list = None):
+
+        """
+        Retrieves dataframe for aggregate scores for selected filters.
+        """
+        return pd.DataFrame(self.get_all_aggr_scores(
+            queries = queries))
+
     def get_test_statuses(self, 
                           queries : list = None):
 
         """
+        Retrieves list of test statuses for selected filters.
         """
 
 
@@ -1025,55 +765,16 @@ class ComparisonFrame:
             perform_similarity_search = False,
             return_keys_list = ['-collection', '-table'])
 
-
-        # if statuses:
-            
-        #     statuses = [
-        #         {**{'record_status_id' if k == '&id' else k: v
-        #             for k, v in dictionary.items()}}
-        #         for dictionary in scores
-        #     ]
-                        
-        # else:
-        #     statuses = []
-
         return statuses
 
     def get_test_statuses_df(self, 
                           queries : list = None):
         """
+        Retrieves dataframe for test statuses for selected filters.
         """
         return pd.DataFrame(self.get_test_statuses(queries=queries))
 
-
-    def get_all_aggr_scores_df(self, 
-                              queries : list = None):
-
-        """
-        """
-        return pd.DataFrame(self.get_all_aggr_scores(
-            queries = queries))
-
 ### CALCULATING COMPARISON AND AGGREGATE SCORES
-
-    def _call_comparer(self, record_run, timestamp, compare_scores):
-
-        if record_run.get('run_id', None) and record_run.get('record_id', None):
-
-            comparison = {"collection" : "scores",
-                            "table" : "runs",
-                            "timestamp" : timestamp,
-                            "record_id" : record_run['record_id'],
-                            "run_id": record_run['run_id']}
-
-            comparison_scores = self.records_analyser.calculate_scores(
-                method_names = compare_scores, 
-                exp_text = record_run['expected_text'],
-                prov_text = record_run['provided_text'])
-            
-            comparison.update(comparison_scores)
-
-        return comparison
 
     def compare_runs_with_records(self,                        
                             queries : list = None,
@@ -1081,7 +782,14 @@ class ComparisonFrame:
                             latest_runs : bool = True):
 
         """
-        Compares the provided text with all recorded expected results for a specific query and stores the comparison results.
+        Compares the provided text with all recorded expected results 
+        for a specific query and stores the comparison results.
+
+        Parameters:
+            queries : list - queries from compare scores table
+            compare_scores : list - compare scores to calculate
+            latest_runs : bool - condition that selects only new runs
+                for which comparison scores do not exist yet
         """
 
         if compare_scores is None:
@@ -1143,6 +851,14 @@ class ComparisonFrame:
 
         """
         Calculate aggr scores for selected queries based on compare scores.
+
+        Parameters:
+            queries : list - queries from compare scores table
+            compare_scores : list - compare scores to use for 
+                calculating aggregate scores
+            aggr_scores : list - names of aggregate scores from pre defined
+            latest_runs : bool - condition that selects only new compare
+                scores for which aggregate scores do not exist yet
         """
 
         if compare_scores is None:
@@ -1227,11 +943,18 @@ class ComparisonFrame:
             self.logger.warning("No comparisons were completed for queries!")
 
     def calculate_test_statuses(self,
-                            queries : list = None,
-                            test_query : str = None
+                            test_query : str,
+                            queries : list = None
                             ):
 
         """
+        Calculates test statuses for selected queries and 
+        test condition.
+
+        Parameters:
+            queries : list - queries from aggr scores table
+            test_query : str - condition based on aggregate scores
+                for latest score
         """
 
         if test_query is None:
@@ -1273,6 +996,7 @@ class ComparisonFrame:
                                 "record_id" : record_id,
                                 "record_status_id" : df_sorted['record_status_id'][0],
                                 "query": query,
+                                "test" : test_query,
                                 "valid" : status}
 
                 comparisons.append(comparison)
@@ -1284,3 +1008,174 @@ class ComparisonFrame:
         else:
             self.logger.warning("No comparisons were completed for queries!")
 
+### FLUSHING 
+    def flush_records(self,
+                      queries : list = None,
+                      record_ids : list = None,
+                      expected_texts : list = None):
+
+        """
+        Removes selected records, all if no filters provided.
+
+        Parameters:
+            queries : list 
+            record_ids : list
+            expected_texts : list
+        """
+
+        filter_criterias = {
+            "collection" : "records",
+            "table" : "queries"
+        }
+
+        if queries:
+            filter_criterias['query'] = queries
+        if record_ids:
+            filter_criterias['record_id'] = record_ids
+        if expected_texts:
+            filter_criterias['expected_text'] = expected_texts
+
+        self.mocker_h.remove_from_database(
+            filter_criteria=filter_criterias)
+
+    def flush_runs(self,
+                    queries : list = None,
+                    run_ids : list = None,
+                    provided_texts : list = None,
+                    timestamps : list = None):
+
+        """
+        Removes selected runs, all if no filters provided.
+
+        Parameters:
+            queries : list 
+            run_ids : list
+            provided_texts : list
+            timestamps : list
+        """
+
+        filter_criterias = {
+            "collection" : "runs",
+            "table" : "provided_text"
+        }
+
+        if queries:
+            filter_criterias['query'] = queries
+        if run_ids:
+            filter_criterias['run_id'] = run_ids
+        if provided_texts:
+            filter_criterias['provided_text'] = provided_texts
+        if timestamps:
+            filter_criterias['timestamp'] = timestamps
+
+        self.mocker_h.remove_from_database(
+            filter_criteria=filter_criterias)
+
+    def flush_comparison_scores(self,
+                    record_ids : list = None,
+                    comparison_ids : list = None,
+                    queries : list = None,
+                    run_ids : list = None,
+                    provided_texts : list = None,
+                    timestamps : list = None):
+
+        """
+        Removes selected comparison results, all if no filters provided.
+
+        Parameters:
+            record_ids : list 
+            comparison_ids : list
+            queries : list
+            run_ids : list
+            provided_texts : list
+            timestamps : list
+        """
+
+        filter_criterias = {
+            "collection" : "scores",
+            "table" : "runs"
+        }
+
+        if comparison_ids:
+            filter_criterias['comparison_id'] = comparison_ids
+        if record_ids:
+            filter_criterias['record_id'] = record_ids
+        if queries:
+            filter_criterias['query'] = queries
+        if run_ids:
+            filter_criterias['run_id'] = run_ids
+        if provided_texts:
+            filter_criterias['provided_text'] = provided_texts
+        if timestamps:
+            filter_criterias['timestamp'] = timestamps
+
+        self.mocker_h.remove_from_database(
+            filter_criteria=filter_criterias)
+
+    def flush_aggregate_scores(self,
+                    comparison_ids : list = None,
+                    queries : list = None,
+                    timestamps : list = None):
+
+        """
+        Removes selected aggregate scores, all if no filters provided.
+
+        Parameters:
+            comparison_ids : list 
+            timestamps : list
+            queries : list
+        """
+
+        filter_criterias = {
+            "collection" : "scores",
+            "table" : "records"
+        }
+
+        if comparison_ids:
+            filter_criterias['comparison_id'] = comparison_ids
+        if queries:
+            filter_criterias['query'] = queries
+        if timestamps:
+            filter_criterias['timestamp'] = timestamps
+
+        self.mocker_h.remove_from_database(
+            filter_criteria=filter_criterias)
+
+    def flush_test_statuses(self,
+                    queries : list = None,
+                    timestamps : list = None,
+                    record_ids : list = None,
+                    record_status_ids : list = None,
+                    valid : bool = None):
+
+        """
+        Removes selected test statuses, all if no filters provided.
+
+        Parameters:
+            queries : list 
+            timestamps : list
+            record_ids : list
+            record_status_ids : list
+            valid : bool
+        """
+
+        filter_criterias = {
+            "collection" : "scores",
+            "table" : "status"
+        }
+
+        if queries:
+            filter_criterias['query'] = queries
+        if timestamps:
+            filter_criterias['timestamp'] = timestamps
+        if record_ids:
+            filter_criterias['record_id'] = record_ids
+        if record_status_ids:
+            filter_criterias['record_status_id'] = record_status_ids
+        if valid:
+            filter_criterias['valid'] = [valid]
+
+        self.mocker_h.remove_from_database(
+            filter_criteria=filter_criterias)
+
+        
