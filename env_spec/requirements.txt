@@ -1,5 +1,5 @@
-requests
 sentence-transformers
+requests
 numpy
 httpx
 google-auth-httplib2
