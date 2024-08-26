@@ -23,7 +23,8 @@ import hnswlib #==0.8.0
 from sentence_transformers import SentenceTransformer #==2.2.2
 from gridlooper import GridLooper #==0.0.1
 from difflib import get_close_matches
-## for connect to remote mocker
+## for connect to remote mocker and llm search
+import requests
 import httpx
 
 
@@ -116,7 +117,7 @@ class SentenceTransformerEmbedder:
 @attr.s
 class MockerSimilaritySearch:
 
-    search_results_n = attr.ib(default=3, type=int)
+    search_results_n = attr.ib(default=10000, type=int)
     similarity_params = attr.ib(default={'space':'cosine'}, type=dict)
     similarity_search_type = attr.ib(default='linear')
 
@@ -384,6 +385,82 @@ class MockerConnector:
 
 
 @attr.s
+class LlmFilterConnector:
+
+    connection_string = attr.ib(default = "http://localhost:8000/prompt_chat_parallel")
+    headers = attr.ib(default={})
+    system_message = attr.ib(default = """You are an advanced language model designed to search for specific content within a text snippet. Your task is to determine whether the provided text snippet contains information relevant to a given query. Your response should be strictly "true" if the relevant information is present and "false" if it is not. Do not provide any additional information or explanation. Here is how you should proceed:
+
+1. Carefully read the provided text snippet.
+2. Analyze the given query.
+3. Determine if the text snippet contains information relevant to the query.
+4. Respond only with "true" or "false" based on your determination.""")
+
+    template = attr.ib(default = "Query: Does the text mention {query}? \nText Snippet: '''\n {text} \n'''")
+
+
+
+    def _make_inputs(self, query : str, inserts : list, search_key : str, system_message = None, template = None):
+
+        if system_message is None:
+            system_message = self.system_message
+
+        if template is None:
+            template = self.template
+
+        return [[{'role' : 'system',
+                'content' : system_message},
+                {'role' : 'user',
+                'content' : template.format(query = query, text = dd[search_key])}] for dd in inserts]
+
+    def _call_sync_llm(self, messages : list):
+
+        """
+        Calls llm.
+        """
+
+        request_body = {
+            "messages": messages
+        }
+
+
+        response = requests.post(self.connection_string,
+                                 headers = self.headers,
+                                 json=request_body)
+
+        return response.json()
+
+
+    def filter_data(self,
+                    query : str,
+                    data : list,
+                    search_key : str,
+                    system_message = None,
+                    template = None):
+
+        """
+        Prompts chat for search.
+        """
+
+        inserts = [value for _, value in data.items()]
+
+        messages = self._make_inputs(query = query,
+                                     inserts = inserts,
+                                     search_key = search_key,
+                                     system_message = system_message,
+                                     template = template)
+
+
+        responses = self._call_sync_llm(messages = messages)
+
+        outputs = [res['message']['content'] for res in responses]
+
+        output_filter = ['true' in out.lower() for out in outputs]
+
+        return {d : data[d] for d,b in zip(data,output_filter) if b}
+
+
+@attr.s
 class MockerDB:
     # pylint: disable=too-many-instance-attributes
 
@@ -418,16 +495,31 @@ class MockerDB:
                                        'tbatch_size' : 500})
     embedder = attr.ib(default=SentenceTransformerEmbedder)
 
+    ## for llm filter
+    llm_filter_params = attr.ib(default={})
+    llm_filter = attr.ib(default=LlmFilterConnector)
+
 
     ## for similarity search
-    similarity_search_h = attr.ib(default=MockerSimilaritySearch)
-    return_keys_list = attr.ib(default=None, type = list)
-    ignore_keys_list = attr.ib(default=["embedding", "&distance", "&id"], type = list)
-    search_results_n = attr.ib(default=3, type = int)
-    similarity_search_type = attr.ib(default='linear', type = str)
     similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
+    similarity_search = attr.ib(default=MockerSimilaritySearch)
+
+
+    ## activate dependencies
+    llm_filter_h = attr.ib(default=None)
+    embedder_h = attr.ib(default=None)
+    similarity_search_h = attr.ib(default=None)
+
+    ##
+    return_keys_list = attr.ib(default=None, type = list)
+    ignore_keys_list = attr.ib(default=["embedding", 
+                                        "&distance", 
+                                        "&id",
+                                        "&embedded_field"], type = list)
+    search_results_n = attr.ib(default=10000, type = int)
+    similarity_search_type = attr.ib(default='linear', type = str)
     keyword_check_cutoff = attr.ib(default=1, type = float)
-    
+
     ## inputs with defaults
     file_path = attr.ib(default="./mock_persist", type=str)
     embs_file_path = attr.ib(default="./mock_embs_persist", type=str)
@@ -452,11 +544,11 @@ class MockerDB:
 
     def __attrs_post_init__(self):
         self._initialize_logger()
-        self.embedder = self.embedder(**self.embedder_params)
-        self.similarity_search_h = self.similarity_search_h(similarity_search_type = self.similarity_search_type,
-                                                            search_results_n = self.search_results_n,
-                                                            similarity_params = self.similarity_params,
-                                                            logger = self.logger)
+        self._initialize_llm_filter()
+        self._initialize_embedder()
+        self._initialize_sim_search()
+
+
         self.data = {}
 
     def _initialize_logger(self):
@@ -472,51 +564,38 @@ class MockerDB:
 
             self.logger = logger
 
-    def establish_connection(self, file_path : str = None, embs_file_path : str = None):
+    def _initialize_llm_filter(self):
 
         """
-        Simulates establishing a connection by loading data from a local file into the 'data' attribute.
+        Initializes llm_filter connector with provided parameters.
         """
 
-        if file_path is None:
-            file_path = self.file_path
+        if self.llm_filter_h is None:
+            self.llm_filter_h = self.llm_filter(**self.llm_filter_params)
 
-        if embs_file_path is None:
-            embs_file_path = self.embs_file_path
-
-        try:
-            with open(file_path, 'rb') as file:
-                self.data = dill.load(file)
-        except FileNotFoundError:
-            self.data = {}
-        except Exception as e:
-            self.logger.error("Error loading data from file: ", e)
-
-        try:
-            with open(embs_file_path, 'rb') as file:
-                self.embs = dill.load(file)
-        except FileNotFoundError:
-            self.embs = {}
-        except Exception as e:
-            self.logger.error("Error loading embeddings storage from file: ", e)
-
-    def save_data(self):
+    def _initialize_embedder(self):
 
         """
-        Saves the current state of 'data' back into a local file.
+        Initializes embedder connector with provided parameters.
         """
 
-        if self.persist:
-            try:
-                self.logger.debug("Persisting values")
-                with open(self.file_path, 'wb') as file:
-                    dill.dump(self.data, file)
-                with open(self.embs_file_path, 'wb') as file:
-                    dill.dump(self.embs, file)
-            except Exception as e:
-                self.logger.error("Error saving data to file: ", e)
+        if self.embedder_h is None:
+            self.embedder_h = self.embedder(**self.embedder_params)
 
-    def hash_string_sha256(self,input_string : str) -> str:
+    def _initialize_sim_search(self):
+
+        """
+        Initializes embedder connector with provided parameters.
+        """
+
+        if self.similarity_search_h is None:
+            self.similarity_search_h = self.similarity_search(similarity_search_type = self.similarity_search_type,
+                                                            search_results_n = self.search_results_n,
+                                                            similarity_params = self.similarity_params,
+                                                            logger = self.logger)
+
+    
+    def _hash_string_sha256(self,input_string : str) -> str:
         return hashlib.sha256(input_string.encode()).hexdigest()
 
     def _make_key(self,
@@ -525,7 +604,7 @@ class MockerDB:
 
         input_string = json.dumps(d) + str(embed)
 
-        return self.hash_string_sha256(input_string)
+        return self._hash_string_sha256(input_string)
 
     def _make_embs_key(self,
                        text : str,
@@ -533,7 +612,7 @@ class MockerDB:
 
         input_string = str(text) + str(model)
 
-        return self.hash_string_sha256(input_string)
+        return self._hash_string_sha256(input_string)
 
     def _prep_filter_criterias(self, filter_criteria : dict) -> list:
 
@@ -593,10 +672,10 @@ class MockerDB:
                     existing_list_of_embeddings.append(self.embs[model_name][new_hash])
 
             # embed new with embedder
-            if self.embedder.processing_type in ['parallel', 'batch']:
-                new_embedded_list_of_text = self.embedder.embed(text = filtered_list_of_text_to_embed)
+            if self.embedder_h.processing_type in ['parallel', 'batch']:
+                new_embedded_list_of_text = self.embedder_h.embed(text = filtered_list_of_text_to_embed)
             else:
-                new_embedded_list_of_text = [self.embedder.embed(text = text_to_embed) \
+                new_embedded_list_of_text = [self.embedder_h.embed(text = text_to_embed) \
                     for text_to_embed in filtered_list_of_text_to_embed]
 
             embedded_list_of_text = []
@@ -613,6 +692,7 @@ class MockerDB:
             # assing embeddings to data
             i = 0
             for insd in values_dicts:
+                values_dicts[insd]['&embedded_field'] = var_for_embedding_name
                 values_dicts[insd]['embedding'] = embedded_list_of_text[i]
                 i = i + 1
 
@@ -621,6 +701,395 @@ class MockerDB:
         # apply persist strategy
         self.save_data()
 
+
+    def _check_if_match(self, content : str, cutoff : float, keyword_set : list):
+        words = set(content.split())
+        match = any(get_close_matches(keyword, words, cutoff=cutoff) for keyword in keyword_set)
+        return match
+
+    def _get_close_matches_for_keywords(self,
+                                        data_key : str,
+                                        keywords : list,
+                                        cutoff : float):
+        # Preprocess keywords into a set for faster membership checking
+        keyword_set = set(keywords)
+        matched_keys = set()
+
+        if cutoff < 1:
+
+            keyword_set = [keyword.lower() for keyword in keyword_set]
+
+            matched_data = {key: value for key, value in self.data.items() \
+                if self._check_if_match(content = value[data_key].lower(),
+                                        cutoff = cutoff,
+                                        keyword_set = keyword_set)}
+        else:
+            matched_data = {key: value for key, value in self.data.items() \
+                if self._check_if_match(content = value[data_key],
+                                        cutoff = cutoff,
+                                        keyword_set = keyword_set)}
+
+        return matched_data
+
+    def _filter_database(self,
+                        filter_criteria : dict = None,
+                        llm_search_keys : list = None,
+                        keyword_check_keys : list = None,
+                        keyword_check_cutoff : float = None):
+
+        """
+        Filters a dictionary based on multiple field criteria.
+        """
+
+        if keyword_check_cutoff is None:
+            keyword_check_cutoff = self.keyword_check_cutoff
+
+        if keyword_check_keys is None:
+            keyword_check_keys = []
+
+        if llm_search_keys is None:
+            llm_search_keys = []
+
+        keyword_check_dict = {}
+        llm_search_check_dict = {}
+
+        filter_criteria_list = []
+        if filter_criteria:
+            for key in keyword_check_keys:
+                keyword_check_dict[key] = filter_criteria[key]
+                del filter_criteria[key]
+
+            for key in llm_search_keys:
+                llm_search_check_dict[key] = filter_criteria[key]
+                del filter_criteria[key]
+
+            if filter_criteria:
+                filter_criteria_list = self._prep_filter_criterias(
+                    filter_criteria = filter_criteria)
+
+
+        self.filtered_data = {}
+
+        if keyword_check_keys:
+
+            filtered_data = {}
+
+            for key, keywords in keyword_check_dict.items():
+                filtered_data = self._get_close_matches_for_keywords(
+                    data_key = key,
+                    keywords = keywords,
+                    cutoff=keyword_check_cutoff
+                )
+                self.filtered_data.update(filtered_data)
+
+        if filter_criteria_list:
+
+            filtered_data = {}
+
+            filtered_data = {
+                key: value for key, value in self.data.items()
+                if any(all(value.get(k) == v for k, v in filter_dict.items()) \
+                    for filter_dict in filter_criteria_list)}
+
+            self.filtered_data.update(filtered_data)
+
+        if llm_search_keys:
+
+            filtered_data = self.filtered_data
+            if keyword_check_keys == [] and filter_criteria_list == []:
+                filtered_data = self.data
+
+            for key, queries in llm_search_check_dict.items():
+
+                for query in queries:
+
+                    filtered_data = self.llm_filter_h.filter_data(
+                        data = filtered_data,
+                        search_key = key,
+                        query = query)
+
+            self.filtered_data = filtered_data
+
+        if len(self.filtered_data) == 0:
+            self.logger.warning("No data was found with applied filters!")
+
+    
+    def _search_database_keys(self,
+        query: str,
+        search_results_n: int = None,
+        similarity_search_type: str = None,
+        similarity_params: dict = None,
+        perform_similarity_search: bool = None):
+
+        """
+        Searches the mock database using embeddings and saves a list of entries that match the query.
+        """
+
+        if search_results_n is None:
+            search_results_n = self.search_results_n
+
+        if similarity_search_type is None:
+            similarity_search_type = self.similarity_search_type
+
+        if similarity_params is None:
+            similarity_params = self.similarity_params
+
+        if self.filtered_data is None:
+            self.filtered_data = self.data
+
+        if self.keys_list is None:
+            self.keys_list = [key for key in self.filtered_data]
+
+        if perform_similarity_search is None:
+            perform_similarity_search = True
+
+        if perform_similarity_search:
+
+
+            try:
+                model_name = self.embedder_params['model_name_or_path']
+                query_hash = self._make_embs_key(text = query, model = model_name)
+
+                if model_name in list(self.embs.keys()):
+
+                    if query_hash not in list(self.embs[model_name].keys()):
+                        query_embedding = self.embedder_h.embed(query, processing_type='single')
+                    else:
+                        query_embedding = self.embs[model_name][query_hash]
+                else:
+                    self.embs[model_name] = {}
+                    query_embedding = self.embedder_h.embed(query, processing_type='single')
+                    self.embs[model_name][query_hash] = query_embedding
+
+
+            except Exception as e:
+                self.logger.error("Problem during embedding search query!", e)
+
+            try:
+                data_embeddings = np.array([(self.filtered_data[d]['embedding']) \
+                    for d in self.keys_list if 'embedding' in self.filtered_data[d].keys()])
+            except Exception as e:
+                self.logger.error("Problem during extracting search pool embeddings!", e)
+
+            try:
+
+                if len(data_embeddings) > 0:
+                    labels, distances = self.similarity_search_h.search(query_embedding = query_embedding,
+                                                                        data_embeddings = data_embeddings,
+                                                                        k=search_results_n,
+                                                                        similarity_search_type = similarity_search_type,
+                                                                        similarity_params = similarity_params)
+
+                    self.results_keys = [self.keys_list[i] for i in labels]
+                    self.results_dictances = distances
+                else:
+                    self.results_keys = []
+                    self.results_dictances = None
+
+            except Exception as e:
+                self.logger.error("Problem during extracting results from the mock database!", e)
+
+        else:
+
+            try:
+                self.results_keys = [result_key for result_key in self.filtered_data]
+                self.results_dictances = np.array([0 for _ in self.filtered_data])
+            except Exception as e:
+                self.logger.error("Problem during extracting search pool embeddings!", e)
+
+    def _prepare_return_keys(self,
+                            return_keys_list : list = None,
+                            remove_list : list = None,
+                            add_list : list = None):
+
+        """
+        Prepare return keys.
+        """
+
+        if return_keys_list is None:
+            return_keys_list = self.return_keys_list
+        if remove_list is None:
+            remove_list = self.ignore_keys_list.copy()
+        if add_list is None:
+            add_list = []
+
+
+        return_distance = 0
+
+        if "&distance" in remove_list:
+            return_distance = 0
+            remove_list.remove("&distance")
+        if "&distance" in add_list:
+            return_distance = 1
+            add_list.remove("&distance")
+
+
+        if return_keys_list:
+
+            ra_list = [s for s in return_keys_list \
+                if s.startswith("+") or s.startswith("-")]
+
+            if "embedding" in return_keys_list:
+                if "embedding" in remove_list:
+                    remove_list.remove("embedding")
+
+            for el in ra_list:
+
+                if el[1:] == "&distance":
+
+                    if el.startswith("+"):
+                        return_distance = 1
+                    else:
+                        return_distance = 0
+
+                else:
+                    if el.startswith("+"):
+                        if el[1:] not in add_list:
+                            add_list.append(el[1:])
+                        if el[1:] in remove_list:
+                            remove_list.remove(el[1:])
+                    else:
+                        if el[1:] not in remove_list:
+                            remove_list.append(el[1:])
+                        if el[1:] in add_list:
+                            add_list.remove(el[1:])
+
+                return_keys_list.remove(el)
+
+            if "&distance" in return_keys_list:
+                return_keys_list.remove("&distance")
+                if return_keys_list:
+                    return_distance = 1
+                else:
+                    return_distance = 2
+
+        return add_list, remove_list, return_keys_list, return_distance
+
+    def _extract_from_data(self,
+                        data : dict,
+                        distances : list,
+                        results_keys : list,
+                        return_keys_list : list,
+                        add_list : list,
+                        remove_list : list,
+                        return_distance : int):
+        """
+        Process and filter dictionaries based on specified return and removal lists.
+        """
+
+        if return_keys_list:
+            remove_set = set(remove_list)
+            return_keys_set = set(return_keys_list + add_list) - remove_set
+            results = []
+
+            if return_distance >= 1:
+                for searched_doc, distance in zip(results_keys, distances):
+                    result = {key: data[searched_doc].get(key) \
+                        for key in return_keys_set}
+                    result['&distance'] = distance
+                    results.append(result)
+            else:
+                for searched_doc in results_keys:
+                    result = {key: data[searched_doc].get(key) \
+                        for key in return_keys_set}
+                    results.append(result)
+        else:
+            keys_to_remove_set = set(remove_list)
+            results = []
+
+            if return_distance == 1:
+                for searched_doc, distance in zip(results_keys, distances):
+                    filtered_dict = data[searched_doc].copy()
+                    for key in keys_to_remove_set:
+                        filtered_dict.pop(key, None)
+
+                    filtered_dict['&distance'] = distance
+                    results.append(filtered_dict)
+            elif return_distance == 2:
+                results = [{'&distance' : distance} for distance in distances]
+
+            else:
+                for searched_doc in results_keys:
+                    filtered_dict = data[searched_doc].copy()
+                    for key in keys_to_remove_set:
+                        filtered_dict.pop(key, None)
+                    results.append(filtered_dict)
+
+        return results
+
+    def _get_dict_results(self,
+                         return_keys_list : list = None,
+                         ignore_keys_list : list = None) -> list:
+
+        """
+        Retrieves specified fields from the search results in the mock database.
+        """
+
+        (add_list,
+        remove_list,
+        return_keys_list,
+        return_distance) = self._prepare_return_keys(
+            return_keys_list = return_keys_list,
+            remove_list = ignore_keys_list
+            )
+
+        # This method mimics the behavior of the original 'get_dict_results' method
+        return self._extract_from_data(
+            data = self.data,
+            distances = self.results_dictances,
+            results_keys = self.results_keys,
+            return_keys_list = return_keys_list,
+            add_list = add_list,
+            remove_list = remove_list,
+            return_distance = return_distance
+        )
+
+
+### EXPOSED METHODS FOR INTERACTION
+
+    def establish_connection(self, file_path : str = None, embs_file_path : str = None):
+
+        """
+        Simulates establishing a connection by loading data from a local file into the 'data' attribute.
+        """
+
+        if file_path is None:
+            file_path = self.file_path
+
+        if embs_file_path is None:
+            embs_file_path = self.embs_file_path
+
+        try:
+            with open(file_path, 'rb') as file:
+                self.data = dill.load(file)
+        except FileNotFoundError:
+            self.data = {}
+        except Exception as e:
+            self.logger.error("Error loading data from file: ", e)
+
+        try:
+            with open(embs_file_path, 'rb') as file:
+                self.embs = dill.load(file)
+        except FileNotFoundError:
+            self.embs = {}
+        except Exception as e:
+            self.logger.error("Error loading embeddings storage from file: ", e)
+
+    def save_data(self):
+
+        """
+        Saves the current state of 'data' back into a local file.
+        """
+
+        if self.persist:
+            try:
+                self.logger.debug("Persisting values")
+                with open(self.file_path, 'wb') as file:
+                    dill.dump(self.data, file)
+                with open(self.embs_file_path, 'wb') as file:
+                    dill.dump(self.embs, file)
+            except Exception as e:
+                self.logger.error("Error saving data to file: ", e)
 
     def insert_values(self,
                       values_dict_list : list,
@@ -672,101 +1141,50 @@ class MockerDB:
         except Exception as e:
             self.logger.error("Problem during flushing mock database", e)
 
-    def filter_keys(self, subkey=None, subvalue=None):
-
-        """
-        Filters data entries based on a specific subkey and subvalue.
-        """
-
-        if (subkey is not None) and (subvalue is not None):
-            self.keys_list = [d for d in self.data if self.data[d][subkey] == subvalue]
-        else:
-            self.keys_list = self.data
-
-    def _check_if_match(self, content : str, cutoff : float, keyword_set : list):
-        words = set(content.split())
-        match = any(get_close_matches(keyword, words, cutoff=cutoff) for keyword in keyword_set)
-        return match
-
-    def _get_close_matches_for_keywords(self, 
-                                        data_key : str, 
-                                        keywords : list, 
-                                        cutoff : float):
-        # Preprocess keywords into a set for faster membership checking
-        keyword_set = set(keywords)
-        matched_keys = set()
-
-        if cutoff < 1:
-            
-            keyword_set = [keyword.lower() for keyword in keyword_set]
-
-            matched_data = {key: value for key, value in self.data.items() \
-                if self._check_if_match(content = value[data_key].lower(),
-                                        cutoff = cutoff,
-                                        keyword_set = keyword_set)}
-        else:
-            matched_data = {key: value for key, value in self.data.items() \
-                if self._check_if_match(content = value[data_key],
-                                        cutoff = cutoff,
-                                        keyword_set = keyword_set)}
-        
-        return matched_data
-
-    def filter_database(self, 
-                        filter_criteria : dict = None,
+    def search_database(self,
+                        query: str = None,
+                        search_results_n: int = None,
+                        llm_search_keys : list = None,
                         keyword_check_keys : list = None,
-                        keyword_check_cutoff : float = None):
+                        keyword_check_cutoff : float = None,
+                        filter_criteria : dict = None,
+                        similarity_search_type: str = None,
+                        similarity_params: dict = None,
+                        perform_similarity_search: bool = None,
+                        return_keys_list : list = None) ->list:
 
         """
-        Filters a dictionary based on multiple field criteria.
+        Searches through keys and retrieves specified fields from the search results
+        in the mock database for a given filter.
         """
 
-        if keyword_check_cutoff is None:
-            keyword_check_cutoff = self.keyword_check_cutoff
+        if query is None:
+            perform_similarity_search = False
 
-        if keyword_check_keys is None:
-            keyword_check_keys = []
-
-        keyword_check_dict = {}
-        
-        filter_criteria_list = []
         if filter_criteria:
-            for key in keyword_check_keys:
-                keyword_check_dict[key] = filter_criteria[key]
-                del filter_criteria[key]
-
-            if filter_criteria:
-                filter_criteria_list = self._prep_filter_criterias(
-                    filter_criteria = filter_criteria)
-
-
-        self.filtered_data = {}
-        
-        if keyword_check_keys:
-
-            filtered_data = {}
-
-            for key, keywords in keyword_check_dict.items():
-                filtered_data = self._get_close_matches_for_keywords(
-                    data_key = key,
-                    keywords = keywords,
-                    cutoff=keyword_check_cutoff
+            self._filter_database(
+                filter_criteria = filter_criteria,
+                llm_search_keys = llm_search_keys,
+                keyword_check_keys = keyword_check_keys,
+                keyword_check_cutoff = keyword_check_cutoff
                 )
-                self.filtered_data.update(filtered_data)
+        else:
+            self.filtered_data = self.data
 
-        if filter_criteria_list:
+        self._search_database_keys(query = query,
+                                    search_results_n = search_results_n,
+                                    similarity_search_type = similarity_search_type,
+                                    similarity_params = similarity_params,
+                                    perform_similarity_search = perform_similarity_search)
 
-            filtered_data = {}
+        results = self._get_dict_results(return_keys_list = return_keys_list)
 
-            filtered_data = {
-                key: value for key, value in self.data.items()
-                if any(all(value.get(k) == v for k, v in filter_dict.items()) \
-                    for filter_dict in filter_criteria_list)}
+        # resetting search
+        self.filtered_data = None
+        self.keys_list = None
+        self.results_keys = None
 
-            self.filtered_data.update(filtered_data)
-
-        if len(self.filtered_data) == 0:
-            self.logger.warning("No data was found with applied filters!")
+        return results
 
     def remove_from_database(self, filter_criteria : dict = None):
         """
@@ -786,276 +1204,3 @@ class MockerDB:
         }
 
         self.save_data()
-
-    def search_database_keys(self,
-        query: str,
-        search_results_n: int = None,
-        similarity_search_type: str = None,
-        similarity_params: dict = None,
-        perform_similarity_search: bool = None):
-
-        """
-        Searches the mock database using embeddings and saves a list of entries that match the query.
-        """
-
-        if search_results_n is None:
-            search_results_n = self.search_results_n
-
-        if similarity_search_type is None:
-            similarity_search_type = self.similarity_search_type
-
-        if similarity_params is None:
-            similarity_params = self.similarity_params
-
-        if self.filtered_data is None:
-            self.filtered_data = self.data
-
-        if self.keys_list is None:
-            self.keys_list = [key for key in self.filtered_data]
-
-        if perform_similarity_search is None:
-            perform_similarity_search = True
-
-        if perform_similarity_search:
-
-
-            try:
-                model_name = self.embedder_params['model_name_or_path']
-                query_hash = self._make_embs_key(text = query, model = model_name)
-
-                if model_name in list(self.embs.keys()):
-
-                    if query_hash not in list(self.embs[model_name].keys()):
-                        query_embedding = self.embedder.embed(query, processing_type='single')
-                    else:
-                        query_embedding = self.embs[model_name][query_hash]
-                else:
-                    self.embs[model_name] = {}
-                    query_embedding = self.embedder.embed(query, processing_type='single')
-                    self.embs[model_name][query_hash] = query_embedding
-
-
-            except Exception as e:
-                self.logger.error("Problem during embedding search query!", e)
-
-            try:
-                data_embeddings = np.array([(self.filtered_data[d]['embedding']) \
-                    for d in self.keys_list if 'embedding' in self.filtered_data[d].keys()])
-            except Exception as e:
-                self.logger.error("Problem during extracting search pool embeddings!", e)
-
-            try:
-
-                if len(data_embeddings) > 0:
-                    labels, distances = self.similarity_search_h.search(query_embedding = query_embedding,
-                                                                        data_embeddings = data_embeddings,
-                                                                        k=search_results_n,
-                                                                        similarity_search_type = similarity_search_type,
-                                                                        similarity_params = similarity_params)
-
-                    self.results_keys = [self.keys_list[i] for i in labels]
-                    self.results_dictances = distances
-                else:
-                    self.results_keys = []
-                    self.results_dictances = None
-
-            except Exception as e:
-                self.logger.error("Problem during extracting results from the mock database!", e)
-
-        else:
-
-            try:
-                self.results_keys = [result_key for result_key in self.filtered_data]
-                self.results_dictances = np.array([0 for _ in self.filtered_data])
-            except Exception as e:
-                self.logger.error("Problem during extracting search pool embeddings!", e)
-
-    def _prepare_return_keys(self,
-                            return_keys_list : list = None, 
-                            remove_list : list = None, 
-                            add_list : list = None):
-
-        """
-        Prepare return keys.
-        """
-
-        if return_keys_list is None:
-            return_keys_list = self.return_keys_list
-        if remove_list is None:
-            remove_list = self.ignore_keys_list.copy()
-        if add_list is None:
-            add_list = []
-
-
-        return_distance = 0
-
-        if "&distance" in remove_list:
-            return_distance = 0
-            remove_list.remove("&distance")
-        if "&distance" in add_list:
-            return_distance = 1
-            add_list.remove("&distance")
-
-        
-        if return_keys_list:
-
-            ra_list = [s for s in return_keys_list \
-                if s.startswith("+") or s.startswith("-")]
-
-            if "embedding" in return_keys_list:
-                if "embedding" in remove_list:
-                    remove_list.remove("embedding")
-            
-            for el in ra_list:
-
-                if el[1:] == "&distance":
-
-                    if el.startswith("+"):
-                        return_distance = 1
-                    else:
-                        return_distance = 0
-
-                else:
-                    if el.startswith("+"):
-                        if el[1:] not in add_list:
-                            add_list.append(el[1:])
-                        if el[1:] in remove_list:
-                            remove_list.remove(el[1:])
-                    else:
-                        if el[1:] not in remove_list:
-                            remove_list.append(el[1:])
-                        if el[1:] in add_list:
-                            add_list.remove(el[1:])
-                
-                return_keys_list.remove(el)
-            
-            if "&distance" in return_keys_list:
-                return_keys_list.remove("&distance")
-                if return_keys_list:
-                    return_distance = 1
-                else:
-                    return_distance = 2
-
-        return add_list, remove_list, return_keys_list, return_distance
-
-    def _extract_from_data(self,
-                        data : dict, 
-                        distances : list,
-                        results_keys : list, 
-                        return_keys_list : list,
-                        add_list : list, 
-                        remove_list : list,
-                        return_distance : int):
-        """
-        Process and filter dictionaries based on specified return and removal lists.
-        """
-
-        if return_keys_list:
-            remove_set = set(remove_list)
-            return_keys_set = set(return_keys_list + add_list) - remove_set
-            results = []
-            
-            if return_distance >= 1:
-                for searched_doc, distance in zip(results_keys, distances):
-                    result = {key: data[searched_doc].get(key) \
-                        for key in return_keys_set}
-                    result['&distance'] = distance
-                    results.append(result)
-            else:
-                for searched_doc in results_keys:
-                    result = {key: data[searched_doc].get(key) \
-                        for key in return_keys_set}
-                    results.append(result)
-        else:
-            keys_to_remove_set = set(remove_list)
-            results = []
-
-            if return_distance == 1:
-                for searched_doc, distance in zip(results_keys, distances):
-                    filtered_dict = data[searched_doc].copy()
-                    for key in keys_to_remove_set:
-                        filtered_dict.pop(key, None)
-
-                    filtered_dict['&distance'] = distance
-                    results.append(filtered_dict)
-            elif return_distance == 2:
-                results = [{'&distance' : distance} for distance in distances]
-
-            else:
-                for searched_doc in results_keys:
-                    filtered_dict = data[searched_doc].copy()
-                    for key in keys_to_remove_set:
-                        filtered_dict.pop(key, None)
-                    results.append(filtered_dict)
-        
-        return results
-
-    def get_dict_results(self, 
-                         return_keys_list : list = None,
-                         ignore_keys_list : list = None) -> list:
-
-        """
-        Retrieves specified fields from the search results in the mock database.
-        """
-
-        (add_list, 
-        remove_list, 
-        return_keys_list, 
-        return_distance) = self._prepare_return_keys(
-            return_keys_list = return_keys_list,
-            remove_list = ignore_keys_list
-            )
-        
-        # This method mimics the behavior of the original 'get_dict_results' method
-        return self._extract_from_data(
-            data = self.data, 
-            distances = self.results_dictances,
-            results_keys = self.results_keys, 
-            return_keys_list = return_keys_list,
-            add_list = add_list, 
-            remove_list = remove_list,
-            return_distance = return_distance
-        )
-
-    def search_database(self,
-                        query: str = None,
-                        search_results_n: int = None,
-                        keyword_check_keys : list = None,
-                        keyword_check_cutoff : float = None,
-                        filter_criteria : dict = None,
-                        similarity_search_type: str = None,
-                        similarity_params: dict = None,
-                        perform_similarity_search: bool = None,
-                        return_keys_list : list = None) ->list:
-
-        """
-        Searches through keys and retrieves specified fields from the search results
-        in the mock database for a given filter.
-        """
-
-        if query is None:
-            perform_similarity_search = False
-
-        if filter_criteria:
-            self.filter_database(
-                filter_criteria=filter_criteria,
-                keyword_check_keys = keyword_check_keys,
-                keyword_check_cutoff = keyword_check_cutoff
-                )
-        else:
-            self.filtered_data = self.data
-
-        self.search_database_keys(query = query,
-                                    search_results_n = search_results_n,
-                                    similarity_search_type = similarity_search_type,
-                                    similarity_params = similarity_params,
-                                    perform_similarity_search = perform_similarity_search)
-
-        results = self.get_dict_results(return_keys_list = return_keys_list)
-
-        # resetting search
-        self.filtered_data = None
-        self.keys_list = None
-        self.results_keys = None
-
-        return results
