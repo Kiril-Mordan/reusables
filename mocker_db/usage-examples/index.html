@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.31">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.33">
     
     
       
@@ -363,45 +363,27 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-basic-data-insertion-and-retrieval" class="md-nav__link">
+  <a href="#1-inseting-values-into-the-database" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Basic Data Insertion and Retrieval
+      1. Inseting values into the database
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#retrieve-data-basics" class="md-nav__link">
+  <a href="#2-seaching-and-retrieving-values-from-the-database" class="md-nav__link">
     <span class="md-ellipsis">
-      Retrieve Data Basics
+      2. Seaching and retrieving values from the database
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#search-and-retrieve-data" class="md-nav__link">
+  <a href="#3-removing-values-from-the-database" class="md-nav__link">
     <span class="md-ellipsis">
-      Search and retrieve data
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-text-embedding-and-searching" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Text Embedding and Searching
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-advanced-filtering-and-removal" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Advanced Filtering and Removal
+      3. Removing values from the database
     </span>
   </a>
   
@@ -411,15 +393,6 @@
   <a href="#4-testing-the-hnsw-search-algorithm" class="md-nav__link">
     <span class="md-ellipsis">
       4. Testing the HNSW Search Algorithm
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-simulating-database-connection-and-persistence" class="md-nav__link">
-    <span class="md-ellipsis">
-      5. Simulating Database Connection and Persistence
     </span>
   </a>
   
@@ -475,45 +448,27 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-basic-data-insertion-and-retrieval" class="md-nav__link">
+  <a href="#1-inseting-values-into-the-database" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Basic Data Insertion and Retrieval
+      1. Inseting values into the database
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#retrieve-data-basics" class="md-nav__link">
+  <a href="#2-seaching-and-retrieving-values-from-the-database" class="md-nav__link">
     <span class="md-ellipsis">
-      Retrieve Data Basics
+      2. Seaching and retrieving values from the database
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#search-and-retrieve-data" class="md-nav__link">
+  <a href="#3-removing-values-from-the-database" class="md-nav__link">
     <span class="md-ellipsis">
-      Search and retrieve data
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-text-embedding-and-searching" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Text Embedding and Searching
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-advanced-filtering-and-removal" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Advanced Filtering and Removal
+      3. Removing values from the database
     </span>
   </a>
   
@@ -523,15 +478,6 @@
   <a href="#4-testing-the-hnsw-search-algorithm" class="md-nav__link">
     <span class="md-ellipsis">
       4. Testing the HNSW Search Algorithm
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-simulating-database-connection-and-persistence" class="md-nav__link">
-    <span class="md-ellipsis">
-      5. Simulating Database Connection and Persistence
     </span>
   </a>
   
@@ -566,17 +512,13 @@ and basic data management within a simulated environment resembling a vector dat
 import numpy as np
 from mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
 </code></pre>
-<pre><code>/home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-</code></pre>
 <h2 id="usage-examples">Usage examples</h2>
 <p>The examples contain:
-1. Basic data insertion and retrieval
-2. Text embedding and searching
-3. Advanced filtering and removal
-4. Testing the HNSW search algorithm
-5. Simulating database connection and persistence</p>
-<h3 id="1-basic-data-insertion-and-retrieval">1. Basic Data Insertion and Retrieval</h3>
+1. Inserting values into the database
+2. Seaching and retrieving values from the database
+3. Removing values from the database
+4. Testing the HNSW Search Algorithm</p>
+<h3 id="1-inseting-values-into-the-database">1. Inseting values into the database</h3>
 <pre><code class="language-python"># Initialization
 handler = MockerDB(
     # optional
@@ -585,7 +527,7 @@ handler = MockerDB(
                         'tbatch_size' : 500},
     embedder = SentenceTransformerEmbedder,
     ## optional/ for similarity search
-    similarity_search_h = MockerSimilaritySearch,
+    similarity_search = MockerSimilaritySearch,
     return_keys_list = None,
     search_results_n = 3,
     similarity_search_type = 'linear',
@@ -597,8 +539,8 @@ handler = MockerDB(
 )
 # Initialize empty database
 handler.establish_connection()
-
-# Insert Data
+</code></pre>
+<pre><code class="language-python"># Insert Data
 values_list = [
     {&quot;text&quot;: &quot;Sample text 1&quot;,
      &quot;text2&quot;: &quot;Sample text 1&quot;},
@@ -607,27 +549,10 @@ values_list = [
 ]
 handler.insert_values(values_list, &quot;text&quot;)
 print(f&quot;Items in the database {len(handler.data)}&quot;)
-
 </code></pre>
-<pre><code>/home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/transformers/tokenization_utils_base.py:1601: FutureWarning: `clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default. For more details check this issue: https://github.com/huggingface/transformers/issues/31884
-  warnings.warn(
-
-
-Items in the database 2
+<pre><code>Items in the database 2
 </code></pre>
-<h3 id="retrieve-data-basics">Retrieve Data Basics</h3>
-<pre><code class="language-python"># Retrieve Data
-handler.filter_keys(subkey=&quot;text&quot;, subvalue=&quot;Sample text 1&quot;)
-handler.search_database_keys(query='text')
-results = handler.get_dict_results(return_keys_list=[&quot;text&quot;])
-distances = handler.results_dictances
-print(results)
-print(distances)
-</code></pre>
-<pre><code>[{'text': 'Sample text 1'}]
-[0.6744726]
-</code></pre>
-<h3 id="search-and-retrieve-data">Search and retrieve data</h3>
+<h3 id="2-seaching-and-retrieving-values-from-the-database">2. Seaching and retrieving values from the database</h3>
 <ul>
 <li>get all keys</li>
 </ul>
@@ -635,8 +560,7 @@ print(distances)
     query = &quot;text&quot;,
     filter_criteria = {
         &quot;text&quot; : &quot;Sample text 1&quot;,
-    },
-    return_keys_list=None
+    }
 )
 print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
 </code></pre>
@@ -672,20 +596,6 @@ print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result 
 print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
 </code></pre>
 <pre><code>[{'text': 'Sample text 1...'}]
-</code></pre>
-<ul>
-<li>get all keys + id</li>
-</ul>
-<pre><code class="language-python">results = handler.search_database(
-    query = &quot;text&quot;,
-    filter_criteria = {
-        &quot;text&quot; : &quot;Sample text 1&quot;
-    },
-    return_keys_list=[&quot;+&amp;id&quot;]
-)
-print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
-</code></pre>
-<pre><code>[{'text': 'Sample text 1...', 'text2': 'Sample text 1...', '&amp;id': '7457ad2519cabc9f414141172bcb8f...'}]
 </code></pre>
 <ul>
 <li>get all keys + distance</li>
@@ -744,82 +654,28 @@ print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result 
 </code></pre>
 <pre><code>[{'embedding': '[-4.94664945e-02 -2.38676071e-...'}]
 </code></pre>
-<h3 id="2-text-embedding-and-searching">2. Text Embedding and Searching</h3>
-<pre><code class="language-python">ste = SentenceTransformerEmbedder(# optional / adaptor parameters
-                                  processing_type = '',
-                                  tbatch_size = 500,
-                                  max_workers = 2,
-                                  # sentence transformer parameters
-                                  model_name_or_path = 'paraphrase-multilingual-mpnet-base-v2',)
-</code></pre>
-<pre><code class="language-python"># Single Text Embedding
-query = &quot;Sample query&quot;
-embedded_query = ste.embed(query,
-                           # optional
-                           processing_type='')
-print(embedded_query[0:50])
-</code></pre>
-<pre><code>[-0.04973587  0.09520266 -0.01219509  0.09253872 -0.02301828 -0.0272102
-  0.05683957  0.09710974  0.10683873  0.05812286  0.13227554  0.01142828
- -0.06957257  0.06980742 -0.05259363 -0.05755996  0.00816178 -0.00836837
- -0.00861246  0.01442065  0.01188813 -0.09503674  0.07125735 -0.04827795
-  0.01473159  0.01084172 -0.10482483  0.0701253  -0.0472064   0.10030049
-  0.04455939  0.0213189   0.00667923 -0.0525919   0.06822997 -0.09520472
- -0.00581364 -0.02451883 -0.00384985  0.02750736  0.06960268  0.24013738
- -0.01220023  0.05890927 -0.08468661  0.11379698 -0.03594772 -0.05652961
- -0.01621804  0.09546741]
-</code></pre>
-<pre><code class="language-python"># Batch Text Embedding
-queries = [&quot;Sample query&quot;, &quot;Sample query 2&quot;]
-embedded_query = ste.embed(queries,
-                           # optional
-                           processing_type='batch')
-print(embedded_query[0][0:50])
-print(&quot;---&quot;)
-print(embedded_query[1][0:50])
-</code></pre>
-<pre><code>[-0.04973588  0.09520268 -0.01219508  0.09253875 -0.02301828 -0.02721018
-  0.05683955  0.09710979  0.10683873  0.05812287  0.13227554  0.01142833
- -0.06957259  0.06980736 -0.05259363 -0.05755996  0.0081618  -0.00836839
- -0.00861242  0.01442068  0.01188811 -0.09503674  0.07125735 -0.04827797
-  0.01473157  0.01084175 -0.10482486  0.07012529 -0.04720639  0.10030051
-  0.04455936  0.02131891  0.00667919 -0.05259192  0.06822997 -0.09520471
- -0.00581361 -0.02451885 -0.00384985  0.02750732  0.06960279  0.24013741
- -0.0122002   0.05890926 -0.08468664  0.11379691 -0.03594773 -0.05652963
- -0.01621806  0.09546743]
----
-[-0.05087035  0.12317687 -0.0139253   0.10524721 -0.07614311 -0.02349636
-  0.05829769  0.15128353  0.181198    0.03745941  0.12174654  0.00639845
- -0.04045051  0.12758298 -0.06155458 -0.0673613   0.04713941 -0.04134275
- -0.12165944  0.04409872  0.01834138 -0.04796622  0.04922184 -0.00641214
-  0.01420629 -0.03602948 -0.01026758  0.09232265 -0.04927171  0.0398545
-  0.03566905  0.08338926  0.04922605 -0.09951876  0.05138123 -0.13344647
-  0.01626777 -0.01189728  0.00599212  0.05663404  0.04282088  0.26432776
- -0.01122816  0.07177623 -0.11822147  0.08731955 -0.04965367  0.03697514
-  0.08965278  0.03107026]
-</code></pre>
-<pre><code class="language-python"># Search Database
-search_results = handler.search_database(query, return_keys_list=[&quot;text&quot;])
-
-# Display Results
-print(search_results)
+<ul>
+<li>get embeddings and embedded field</li>
+</ul>
+<pre><code class="language-python">results = handler.search_database(
+    query = &quot;text&quot;,
+    filter_criteria = {
+        &quot;text&quot; : &quot;Sample text 1&quot;
+    },
+    return_keys_list=[&quot;embedding&quot;, &quot;+&amp;embedded_field&quot;]
+)
+print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
 
 </code></pre>
-<pre><code>[{'text': 'Sample text 1'}, {'text': 'Sample text 2'}]
+<pre><code>[{'embedding': '[-4.94664945e-02 -2.38676071e-...', '&amp;field_to_embed': 'text...'}]
 </code></pre>
-<h3 id="3-advanced-filtering-and-removal">3. Advanced Filtering and Removal</h3>
-<pre><code class="language-python"># Advanced Filtering
-filter_criteria = {&quot;text&quot;: &quot;Sample text 1&quot;}
-handler.filter_database(filter_criteria)
-filtered_data = handler.filtered_data
-print(f&quot;Filtered data {len(filtered_data)}&quot;)
-
-# Data Removal
-handler.remove_from_database(filter_criteria)
+<h3 id="3-removing-values-from-the-database">3. Removing values from the database</h3>
+<pre><code class="language-python">print(f&quot;Items in the database {len(handler.data)}&quot;)
+handler.remove_from_database(filter_criteria = {&quot;text&quot;: &quot;Sample text 1&quot;})
 print(f&quot;Items left in the database {len(handler.data)}&quot;)
 
 </code></pre>
-<pre><code>Filtered data 1
+<pre><code>Items in the database 2
 Items left in the database 1
 </code></pre>
 <h3 id="4-testing-the-hnsw-search-algorithm">4. Testing the HNSW Search Algorithm</h3>
@@ -829,6 +685,13 @@ Items left in the database 1
     similarity_params = {'space':'cosine'},
     similarity_search_type ='linear'
 )
+
+ste = SentenceTransformerEmbedder(# optional / adaptor parameters
+                                  processing_type = '',
+                                  tbatch_size = 500,
+                                  max_workers = 2,
+                                  # sentence transformer parameters
+                                  model_name_or_path = 'paraphrase-multilingual-mpnet-base-v2',)
 </code></pre>
 <pre><code class="language-python"># Create embeddings
 embeddings = [ste.embed(&quot;example1&quot;), ste.embed(&quot;example2&quot;)]
@@ -845,21 +708,6 @@ print(labels, distances)
 
 </code></pre>
 <pre><code>[0] [1.1920929e-07]
-</code></pre>
-<h3 id="5-simulating-database-connection-and-persistence">5. Simulating Database Connection and Persistence</h3>
-<pre><code class="language-python"># Establish Connection
-handler.establish_connection()
-
-# Change and Persist Data
-handler.insert_values([{&quot;text&quot;: &quot;New sample text&quot;}], &quot;text&quot;)
-handler.save_data()
-
-# Reload Data
-handler.establish_connection()
-print(f&quot;Items in the database {len(handler.data)}&quot;)
-
-</code></pre>
-<pre><code>Items in the database 2
 </code></pre>
 
 
@@ -910,7 +758,7 @@ print(f&quot;Items in the database {len(handler.data)}&quot;)
     <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.fe8b6f2b.min.js"></script>
+      <script src="../assets/javascripts/bundle.af256bd8.min.js"></script>
       
     
   </body>
