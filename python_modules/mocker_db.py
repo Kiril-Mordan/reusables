@@ -23,7 +23,8 @@ import hnswlib #==0.8.0
 from sentence_transformers import SentenceTransformer #==2.2.2
 from gridlooper import GridLooper #==0.0.1
 from difflib import get_close_matches
-## for connect to remote mocker
+## for connect to remote mocker and llm search
+import requests
 import httpx
 
 
@@ -387,6 +388,7 @@ class MockerConnector:
 class LlmFilterConnector:
 
     connection_string = attr.ib(default = "http://localhost:8000/prompt_chat_parallel")
+    headers = attr.ib(default={})
     system_message = attr.ib(default = """You are an advanced language model designed to search for specific content within a text snippet. Your task is to determine whether the provided text snippet contains information relevant to a given query. Your response should be strictly "true" if the relevant information is present and "false" if it is not. Do not provide any additional information or explanation. Here is how you should proceed:
 
 1. Carefully read the provided text snippet.
@@ -397,11 +399,8 @@ class LlmFilterConnector:
     template = attr.ib(default = "Query: Does the text mention {query}? \nText Snippet: '''\n {text} \n'''")
 
 
-    def __attrs_post_init__(self):
-        ""
 
-
-    def _make_inputs(self, query : str, inserts : list, search_key : str, system_message = None, template = user_template):
+    def _make_inputs(self, query : str, inserts : list, search_key : str, system_message = None, template = None):
 
         if system_message is None:
             system_message = self.system_message
@@ -412,7 +411,7 @@ class LlmFilterConnector:
         return [[{'role' : 'system',
                 'content' : system_message},
                 {'role' : 'user',
-                'content' : user_template.format(query = query, text = dd[search_key])}] for dd in inserts]
+                'content' : template.format(query = query, text = dd[search_key])}] for dd in inserts]
 
     def _call_sync_llm(self, messages : list):
 
@@ -425,7 +424,9 @@ class LlmFilterConnector:
         }
 
 
-        response = requests.post(self.connection_string, json=request_body)
+        response = requests.post(self.connection_string,
+                                 headers = self.headers,
+                                 json=request_body)
 
         return response.json()
 
@@ -511,7 +512,10 @@ class MockerDB:
 
     ##
     return_keys_list = attr.ib(default=None, type = list)
-    ignore_keys_list = attr.ib(default=["embedding", "&distance", "&id"], type = list)
+    ignore_keys_list = attr.ib(default=["embedding", 
+                                        "&distance", 
+                                        "&id",
+                                        "&embedded_field"], type = list)
     search_results_n = attr.ib(default=10000, type = int)
     similarity_search_type = attr.ib(default='linear', type = str)
     keyword_check_cutoff = attr.ib(default=1, type = float)
@@ -590,51 +594,8 @@ class MockerDB:
                                                             similarity_params = self.similarity_params,
                                                             logger = self.logger)
 
-    def establish_connection(self, file_path : str = None, embs_file_path : str = None):
-
-        """
-        Simulates establishing a connection by loading data from a local file into the 'data' attribute.
-        """
-
-        if file_path is None:
-            file_path = self.file_path
-
-        if embs_file_path is None:
-            embs_file_path = self.embs_file_path
-
-        try:
-            with open(file_path, 'rb') as file:
-                self.data = dill.load(file)
-        except FileNotFoundError:
-            self.data = {}
-        except Exception as e:
-            self.logger.error("Error loading data from file: ", e)
-
-        try:
-            with open(embs_file_path, 'rb') as file:
-                self.embs = dill.load(file)
-        except FileNotFoundError:
-            self.embs = {}
-        except Exception as e:
-            self.logger.error("Error loading embeddings storage from file: ", e)
-
-    def save_data(self):
-
-        """
-        Saves the current state of 'data' back into a local file.
-        """
-
-        if self.persist:
-            try:
-                self.logger.debug("Persisting values")
-                with open(self.file_path, 'wb') as file:
-                    dill.dump(self.data, file)
-                with open(self.embs_file_path, 'wb') as file:
-                    dill.dump(self.embs, file)
-            except Exception as e:
-                self.logger.error("Error saving data to file: ", e)
-
-    def hash_string_sha256(self,input_string : str) -> str:
+    
+    def _hash_string_sha256(self,input_string : str) -> str:
         return hashlib.sha256(input_string.encode()).hexdigest()
 
     def _make_key(self,
@@ -643,7 +604,7 @@ class MockerDB:
 
         input_string = json.dumps(d) + str(embed)
 
-        return self.hash_string_sha256(input_string)
+        return self._hash_string_sha256(input_string)
 
     def _make_embs_key(self,
                        text : str,
@@ -651,7 +612,7 @@ class MockerDB:
 
         input_string = str(text) + str(model)
 
-        return self.hash_string_sha256(input_string)
+        return self._hash_string_sha256(input_string)
 
     def _prep_filter_criterias(self, filter_criteria : dict) -> list:
 
@@ -731,6 +692,7 @@ class MockerDB:
             # assing embeddings to data
             i = 0
             for insd in values_dicts:
+                values_dicts[insd]['&embedded_field'] = var_for_embedding_name
                 values_dicts[insd]['embedding'] = embedded_list_of_text[i]
                 i = i + 1
 
@@ -739,67 +701,6 @@ class MockerDB:
         # apply persist strategy
         self.save_data()
 
-
-    def insert_values(self,
-                      values_dict_list : list,
-                      var_for_embedding_name : str = None,
-                      embed : bool = True) -> None:
-
-        """
-        Simulates inserting key-value pairs into the mock Redis database.
-        """
-
-        values_dict_list = copy.deepcopy(values_dict_list)
-
-        try:
-            self.logger.debug("Making unique keys")
-            # make unique keys, taking embed parameter as a part of a key
-            values_dict_all = {self._make_key(d = d, embed=embed) : d for d in values_dict_list}
-            values_dict_all = {key : {**values_dict_all[key], "&id" : key} for key in values_dict_all}
-        except Exception as e:
-            self.logger.error("Problem during making unique keys foir insert dicts!", e)
-
-        try:
-            self.logger.debug("Remove values that already exist")
-            # check if keys exist in data
-            values_dict_filtered = {key : values_dict_all[key] for key in values_dict_all.keys() if key not in self.data.keys()}
-
-        except Exception as e:
-            self.logger.error("Problem during filtering out existing inserts!", e)
-
-        if values_dict_filtered != {}:
-            try:
-                self.logger.debug("Inserting values")
-                # insert new values
-                self._insert_values_dict(values_dicts = values_dict_filtered,
-                                                    var_for_embedding_name = var_for_embedding_name,
-                                                    embed = embed)
-
-            except Exception as e:
-                self.logger.error("Problem during inserting list of key-values dictionaries into mock database!", e)
-
-    def flush_database(self):
-
-        """
-        Clears all data in the mock database.
-        """
-
-        try:
-            self.data = {}
-            self.save_data()
-        except Exception as e:
-            self.logger.error("Problem during flushing mock database", e)
-
-    def filter_keys(self, subkey=None, subvalue=None):
-
-        """
-        Filters data entries based on a specific subkey and subvalue.
-        """
-
-        if (subkey is not None) and (subvalue is not None):
-            self.keys_list = [d for d in self.data if self.data[d][subkey] == subvalue]
-        else:
-            self.keys_list = self.data
 
     def _check_if_match(self, content : str, cutoff : float, keyword_set : list):
         words = set(content.split())
@@ -830,7 +731,7 @@ class MockerDB:
 
         return matched_data
 
-    def filter_database(self,
+    def _filter_database(self,
                         filter_criteria : dict = None,
                         llm_search_keys : list = None,
                         keyword_check_keys : list = None,
@@ -912,26 +813,8 @@ class MockerDB:
         if len(self.filtered_data) == 0:
             self.logger.warning("No data was found with applied filters!")
 
-    def remove_from_database(self, filter_criteria : dict = None):
-        """
-        Removes key-value pairs from a dictionary based on filter criteria.
-        """
-
-        if filter_criteria is None:
-            filter_criteria_list = []
-        else:
-            filter_criteria_list = self._prep_filter_criterias(filter_criteria = filter_criteria)
-
-        self.data = {
-            key: value
-            for key, value in self.data.items()
-            if not any(all(value.get(k) == v for k, v in filter_criteria.items()) \
-                for filter_criteria in filter_criteria_list)
-        }
-
-        self.save_data()
-
-    def search_database_keys(self,
+    
+    def _search_database_keys(self,
         query: str,
         search_results_n: int = None,
         similarity_search_type: str = None,
@@ -1134,7 +1017,7 @@ class MockerDB:
 
         return results
 
-    def get_dict_results(self,
+    def _get_dict_results(self,
                          return_keys_list : list = None,
                          ignore_keys_list : list = None) -> list:
 
@@ -1161,6 +1044,103 @@ class MockerDB:
             return_distance = return_distance
         )
 
+
+### EXPOSED METHODS FOR INTERACTION
+
+    def establish_connection(self, file_path : str = None, embs_file_path : str = None):
+
+        """
+        Simulates establishing a connection by loading data from a local file into the 'data' attribute.
+        """
+
+        if file_path is None:
+            file_path = self.file_path
+
+        if embs_file_path is None:
+            embs_file_path = self.embs_file_path
+
+        try:
+            with open(file_path, 'rb') as file:
+                self.data = dill.load(file)
+        except FileNotFoundError:
+            self.data = {}
+        except Exception as e:
+            self.logger.error("Error loading data from file: ", e)
+
+        try:
+            with open(embs_file_path, 'rb') as file:
+                self.embs = dill.load(file)
+        except FileNotFoundError:
+            self.embs = {}
+        except Exception as e:
+            self.logger.error("Error loading embeddings storage from file: ", e)
+
+    def save_data(self):
+
+        """
+        Saves the current state of 'data' back into a local file.
+        """
+
+        if self.persist:
+            try:
+                self.logger.debug("Persisting values")
+                with open(self.file_path, 'wb') as file:
+                    dill.dump(self.data, file)
+                with open(self.embs_file_path, 'wb') as file:
+                    dill.dump(self.embs, file)
+            except Exception as e:
+                self.logger.error("Error saving data to file: ", e)
+
+    def insert_values(self,
+                      values_dict_list : list,
+                      var_for_embedding_name : str = None,
+                      embed : bool = True) -> None:
+
+        """
+        Simulates inserting key-value pairs into the mock Redis database.
+        """
+
+        values_dict_list = copy.deepcopy(values_dict_list)
+
+        try:
+            self.logger.debug("Making unique keys")
+            # make unique keys, taking embed parameter as a part of a key
+            values_dict_all = {self._make_key(d = d, embed=embed) : d for d in values_dict_list}
+            values_dict_all = {key : {**values_dict_all[key], "&id" : key} for key in values_dict_all}
+        except Exception as e:
+            self.logger.error("Problem during making unique keys foir insert dicts!", e)
+
+        try:
+            self.logger.debug("Remove values that already exist")
+            # check if keys exist in data
+            values_dict_filtered = {key : values_dict_all[key] for key in values_dict_all.keys() if key not in self.data.keys()}
+
+        except Exception as e:
+            self.logger.error("Problem during filtering out existing inserts!", e)
+
+        if values_dict_filtered != {}:
+            try:
+                self.logger.debug("Inserting values")
+                # insert new values
+                self._insert_values_dict(values_dicts = values_dict_filtered,
+                                                    var_for_embedding_name = var_for_embedding_name,
+                                                    embed = embed)
+
+            except Exception as e:
+                self.logger.error("Problem during inserting list of key-values dictionaries into mock database!", e)
+
+    def flush_database(self):
+
+        """
+        Clears all data in the mock database.
+        """
+
+        try:
+            self.data = {}
+            self.save_data()
+        except Exception as e:
+            self.logger.error("Problem during flushing mock database", e)
+
     def search_database(self,
                         query: str = None,
                         search_results_n: int = None,
@@ -1182,7 +1162,7 @@ class MockerDB:
             perform_similarity_search = False
 
         if filter_criteria:
-            self.filter_database(
+            self._filter_database(
                 filter_criteria = filter_criteria,
                 llm_search_keys = llm_search_keys,
                 keyword_check_keys = keyword_check_keys,
@@ -1191,13 +1171,13 @@ class MockerDB:
         else:
             self.filtered_data = self.data
 
-        self.search_database_keys(query = query,
+        self._search_database_keys(query = query,
                                     search_results_n = search_results_n,
                                     similarity_search_type = similarity_search_type,
                                     similarity_params = similarity_params,
                                     perform_similarity_search = perform_similarity_search)
 
-        results = self.get_dict_results(return_keys_list = return_keys_list)
+        results = self._get_dict_results(return_keys_list = return_keys_list)
 
         # resetting search
         self.filtered_data = None
@@ -1205,3 +1185,22 @@ class MockerDB:
         self.results_keys = None
 
         return results
+
+    def remove_from_database(self, filter_criteria : dict = None):
+        """
+        Removes key-value pairs from a dictionary based on filter criteria.
+        """
+
+        if filter_criteria is None:
+            filter_criteria_list = []
+        else:
+            filter_criteria_list = self._prep_filter_criterias(filter_criteria = filter_criteria)
+
+        self.data = {
+            key: value
+            for key, value in self.data.items()
+            if not any(all(value.get(k) == v for k, v in filter_criteria.items()) \
+                for filter_criteria in filter_criteria_list)
+        }
+
+        self.save_data()
