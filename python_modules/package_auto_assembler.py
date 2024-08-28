@@ -2208,6 +2208,7 @@ class PackageAutoAssembler:
     use_commit_messages = attr.ib(default=True, type = bool)
     remove_temp_files = attr.ib(default=True, type = bool)
     skip_deps_install = attr.ib(default=False, type = bool)
+    max_git_search_depth = attr.ib(default=5, type = int)
 
     ## handler classes
     setup_dir_h_class = attr.ib(default=SetupDirHandler)
@@ -2358,6 +2359,7 @@ class PackageAutoAssembler:
             filepath = self.release_notes_filepath,
             label_name = self.module_name,
             version = version,
+            max_search_depth = self.max_git_search_depth,
             logger = self.logger)
 
     def add_metadata_from_module(self, module_filepath : str = None):
