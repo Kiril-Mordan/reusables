@@ -1,12 +1,12 @@
 ### package_auto_assembler.py
-requests
-mkdocs==1.6.0
-numpy==1.26.0
-attrs>=22.2.0
-pip_audit==2.7.3
-stdlib-list
-pyyaml
 nbformat
-pandas==2.1.1
+pip_audit==2.7.3
 nbconvert==7.16.4
+pandas==2.1.1
+stdlib-list
+attrs>=22.2.0
+pyyaml
 nbconvert
+numpy==1.26.0
+mkdocs==1.6.0
+requests
