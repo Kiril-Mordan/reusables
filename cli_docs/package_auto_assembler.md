@@ -16,6 +16,7 @@ Commands:
   init-config            Initialize config file
   make-package           Package with package-auto-assembler.
   test-install           Test install module into local environment.
+  update-release-notes   Update release notes.
 ```
 
 Creating config file could be useful to avoid providing parameters manually. If no config file will be provided, by default values from `.paa.config` will be used.
@@ -116,4 +117,28 @@ Options:
   --dependencies-dir TEXT     Path to directory with local dependencies of the
                               module.
   --help                      Show this message and exit.
+```
+
+Maintaining release notes could be very useful, but also tedious task. 
+Since commit messages are rather standard practice, by taking advantage of them and constructing release notes based on them, each release could contain notes with appropriate version automatically, when itegrated into ci/cd pipeline, given that commit messages are written in a specific way. 
+
+``` bash
+paa update-release-notes --help
+```
+
+```
+Usage: paa update-release-notes [OPTIONS] LABEL_NAME
+
+  Update release notes.
+
+Options:
+  --version TEXT           Version of new release.
+  --notes TEXT             Optional manually provided notes string, where each
+                           note is separated by ; and increment type is
+                           provide in accordance to paa documentation.
+  --notes-filepath TEXT    Path to .md wit release notes.
+  --max-search-depth TEXT  Max search depth in commit history.
+  --use-pip-latest         If checked, attempts to pull latest version from
+                           pip.
+  --help                   Show this message and exit.
 ```

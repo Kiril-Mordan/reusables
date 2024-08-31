@@ -3,7 +3,7 @@ import shutil
 import os
 import click
 import yaml
-from package_auto_assembler.package_auto_assembler import PackageAutoAssembler
+from package_auto_assembler.package_auto_assembler import PackageAutoAssembler, ReleaseNotesHandler, VersionHandler
 
 
 __cli_metadata__ = {
@@ -367,10 +367,104 @@ def check_vulnerabilities(ctx,
     else:
         paa.logger.info(f"Metadata condition was not fullfield for {module_name.replace('_','-')}")
 
+@click.command()
+@click.argument('label_name')
+@click.option('--version', type=str, required=False, help='Version of new release.')
+@click.option('--notes', type=str, required=False, help='Optional manually provided notes string, where each note is separated by ; and increment type is provide in accordance to paa documentation.')
+@click.option('--notes-filepath', 'notes_filepath', type=str, required=False, help='Path to .md wit release notes.')
+@click.option('--max-search-depth', 'max_search_depth', type=str, required=False, help='Max search depth in commit history.')
+@click.option('--use-pip-latest', 'usepip', is_flag=True, type=bool, required=False, help='If checked, attempts to pull latest version from pip.')
+@click.pass_context
+def update_release_notes(ctx,
+        label_name,
+        version,
+        notes,
+        notes_filepath,
+        max_search_depth,
+        usepip):
+    """Update release notes."""
+
+    label_name = label_name.replace('-','_')
+
+    if notes_filepath is None:
+        release_notes_path = "./release_notes"
+        notes_filepath = os.path.join(release_notes_path,
+                                            f"{label_name}.md")
+
+    if usepip:
+        usepip = True
+    else:
+        usepip = False
+    
+    rnh_params = {
+        'filepath' : notes_filepath,
+        'label_name' : label_name,
+        'version' : "0.0.1"
+    }
+
+    vh_params = {
+        'versions_filepath' : '',
+        'log_filepath' : '',
+        'read_files' : False,
+        'default_version' : "0.0.0"
+    }
+
+    if max_search_depth:
+        rnh_params['max_search_depth'] = max_search_depth
+
+    rnh = ReleaseNotesHandler(
+        **rnh_params
+    )
+
+    if notes:
+        if not notes.startswith('['):
+            notes = ' ' + notes
+
+        rnh.commit_messages = [f'[{label_name}]{notes}']
+        rnh._filter_commit_messages_by_package()
+        rnh._clean_and_split_commit_messages()
+
+    if version is None:
+
+        rnh.extract_version_update()
+
+        version_increment_type = rnh.version_update_label
+
+        version = rnh.extract_latest_version()
+
+        if rnh.version != '0.0.1':
+            version = rnh.version
+        else:
+
+            vh = VersionHandler(
+                **vh_params)
+
+            if version:
+                vh.versions[label_name] = version
+
+            vh.increment_version(package_name = label_name,
+                                                version = None,
+                                                increment_type = version_increment_type,
+                                                default_version = version,
+                                                save = False,
+                                                usepip = usepip)
+
+            version = vh.get_version(package_name=label_name)
+
+    rnh.version = version
+
+    rnh.create_release_note_entry()
+
+    rnh.save_release_notes()
+    click.echo(f"Release notes for {label_name} with version {version} were updated!")
+
+    
+
 cli.add_command(init_config, "init-config")
 cli.add_command(test_install, "test-install")
 cli.add_command(make_package, "make-package")
 cli.add_command(check_vulnerabilities, "check-vulnerabilities")
+cli.add_command(update_release_notes, "update-release-notes")
 
 
 if __name__ == "__main__":

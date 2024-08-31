@@ -1,6 +1,6 @@
-<mxfile host="Electron" modified="2024-06-24T00:27:53.277Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.1.5 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="RIrurHM3tgWFBAeFRHO9" version="23.1.5" type="device" pages="2">
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.5 Chrome/126.0.6478.183 Electron/31.3.0 Safari/537.36" version="24.7.5" pages="2">
   <diagram id="hOmXKEejxs12YvGsgwzY" name="usage">
-    <mxGraphModel dx="1460" dy="680" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="1654" math="0" shadow="0">
+    <mxGraphModel dx="1835" dy="870" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="1654" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -21,7 +21,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="OUoE7w_y1vDqKte6qC6K-1" value="Publishing repo" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
-          <mxGeometry x="145" y="310" width="250" height="240" as="geometry" />
+          <mxGeometry x="150" y="286" width="250" height="270" as="geometry" />
         </mxCell>
         <mxCell id="OUoE7w_y1vDqKte6qC6K-2" value="- CI/CD pipeline definition" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OUoE7w_y1vDqKte6qC6K-1" vertex="1">
           <mxGeometry y="30" width="250" height="30" as="geometry" />
@@ -41,8 +41,11 @@
         <mxCell id="nKNuT7gZOhR22zOLDPsV-13" value="- folder to store requirements files" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OUoE7w_y1vDqKte6qC6K-1" vertex="1">
           <mxGeometry y="180" width="250" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="mpo9OLShC69Xrk_bo134-1" value="- package names mapping file" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OUoE7w_y1vDqKte6qC6K-1" vertex="1">
+        <mxCell id="dIN7Fu5iDiAbNytZ2PMN-1" value="- folder to store release notes" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="OUoE7w_y1vDqKte6qC6K-1">
           <mxGeometry y="210" width="250" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="mpo9OLShC69Xrk_bo134-1" value="- package names mapping file" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OUoE7w_y1vDqKte6qC6K-1" vertex="1">
+          <mxGeometry y="240" width="250" height="30" as="geometry" />
         </mxCell>
         <mxCell id="nKNuT7gZOhR22zOLDPsV-1" value="&lt;h1&gt;Publishing repo&lt;/h1&gt;&lt;p&gt;Essentials of publish repository with package_auto_assembler package&lt;/p&gt;&lt;p&gt;* diagram contains only essentials for publishing, documentation building, unit tests and other elements of ci/cd are not included.&lt;/p&gt;" style="text;html=1;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="-300" y="68" width="233" height="161" as="geometry" />
@@ -220,19 +223,39 @@
             </Array>
           </mxGeometry>
         </mxCell>
+        <mxCell id="dIN7Fu5iDiAbNytZ2PMN-2" value="" style="curved=1;endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;dashed=1;" edge="1" parent="1" source="dIN7Fu5iDiAbNytZ2PMN-3" target="dIN7Fu5iDiAbNytZ2PMN-1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="392" y="819" as="sourcePoint" />
+            <mxPoint x="159" y="561" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="730" y="770" />
+              <mxPoint x="721" y="697" />
+              <mxPoint x="747" y="631" />
+              <mxPoint x="640" y="607" />
+              <mxPoint x="613" y="595" />
+              <mxPoint x="534" y="599" />
+              <mxPoint x="159" y="589" />
+              <mxPoint x="147" y="572" />
+              <mxPoint x="135" y="538" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dIN7Fu5iDiAbNytZ2PMN-3" value="Pipeline extracts commit messages (appropriately structured) and turns them into release note entries." style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="552" y="751" width="153" height="112" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
   <diagram name="flow" id="WLMHj4V7T1tkh2896ld8">
-    <mxGraphModel dx="2668" dy="2542" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="4070" dy="3340" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="rKDuYdVevO0EODqZjKq1-34" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="-1039" y="-1397" width="1524" height="1239" as="geometry" />
+          <mxGeometry x="-1045" y="-1411" width="1654" height="1239" as="geometry" />
         </mxCell>
         <mxCell id="gH9P8Dfxt6CHixhxEZe5-3" value="module_name.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
-          <mxGeometry x="-741" y="-523" width="114" height="127" as="geometry" />
+          <mxGeometry x="-851" y="-530" width="114" height="127" as="geometry" />
         </mxCell>
         <mxCell id="gH9P8Dfxt6CHixhxEZe5-9" value="extract metadata from module" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-591" y="-1150" width="120" height="60" as="geometry" />
@@ -244,19 +267,19 @@
           <mxGeometry x="-733" y="-1150" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="Jrc1zMWoi0aU3mgSClnk-44" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="-538" y="-447" width="326" height="192" as="geometry" />
+          <mxGeometry x="-648" y="-454" width="326" height="192" as="geometry" />
         </mxCell>
         <mxCell id="Jrc1zMWoi0aU3mgSClnk-46" value="dep_name_1.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
-          <mxGeometry x="-509" y="-398" width="114" height="127" as="geometry" />
+          <mxGeometry x="-619" y="-405" width="114" height="127" as="geometry" />
         </mxCell>
         <mxCell id="Jrc1zMWoi0aU3mgSClnk-47" value="dep_name_2.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
-          <mxGeometry x="-352" y="-401" width="114" height="127" as="geometry" />
+          <mxGeometry x="-462" y="-408" width="114" height="127" as="geometry" />
         </mxCell>
         <mxCell id="Jrc1zMWoi0aU3mgSClnk-48" value="Local dependacies" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="-530" y="-437" width="138" height="29" as="geometry" />
+          <mxGeometry x="-640" y="-444" width="138" height="29" as="geometry" />
         </mxCell>
         <mxCell id="Jrc1zMWoi0aU3mgSClnk-77" value="module_name.ipynb" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
-          <mxGeometry x="-535" y="-584" width="114" height="127" as="geometry" />
+          <mxGeometry x="-645" y="-591" width="114" height="127" as="geometry" />
         </mxCell>
         <mxCell id="wYXUj6ivM-F9wx3Gzz81-6" value="update release notes based on commit messages" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-729" y="-758" width="120" height="60" as="geometry" />
@@ -295,25 +318,25 @@
           <mxGeometry x="-509" y="-1070" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="rKDuYdVevO0EODqZjKq1-14" value="essential files" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="-718" y="-584" width="60" height="30" as="geometry" />
+          <mxGeometry x="-828" y="-591" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="rKDuYdVevO0EODqZjKq1-15" value="optional files" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="-347" y="-573" width="60" height="30" as="geometry" />
+          <mxGeometry x="-457" y="-580" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="rKDuYdVevO0EODqZjKq1-16" value="package_mapping.json" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
-          <mxGeometry x="47" y="-513" width="149" height="124" as="geometry" />
+          <mxGeometry x="-63" y="-520" width="149" height="124" as="geometry" />
         </mxCell>
         <mxCell id="rKDuYdVevO0EODqZjKq1-17" value="version_logs.csv" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
-          <mxGeometry x="-97" y="-577" width="106" height="121" as="geometry" />
+          <mxGeometry x="-207" y="-584" width="106" height="121" as="geometry" />
         </mxCell>
         <mxCell id="rKDuYdVevO0EODqZjKq1-18" value="lsts_package_versions.yml" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
-          <mxGeometry x="-121" y="-423" width="163" height="107" as="geometry" />
+          <mxGeometry x="-231" y="-430" width="163" height="107" as="geometry" />
         </mxCell>
         <mxCell id="rKDuYdVevO0EODqZjKq1-19" value="tracking files" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="26" y="-591" width="60" height="30" as="geometry" />
+          <mxGeometry x="-84" y="-598" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="rKDuYdVevO0EODqZjKq1-20" value="release_notes.md" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
-          <mxGeometry x="53" y="-349" width="163" height="107" as="geometry" />
+          <mxGeometry x="-57" y="-356" width="163" height="107" as="geometry" />
         </mxCell>
         <mxCell id="rKDuYdVevO0EODqZjKq1-21" value="extract readme from notebooks" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-89" y="-1070" width="120" height="60" as="geometry" />
@@ -342,29 +365,77 @@
             <mxPoint x="480" y="-626" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="JsM3wQNLNm2vINU3SBDa-2" value="check-vulnerabilities" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="JsM3wQNLNm2vINU3SBDa-2" value="check-vulnerabilities" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="-879" y="-936" width="131" height="29" as="geometry" />
         </mxCell>
-        <mxCell id="JsM3wQNLNm2vINU3SBDa-3" value="check of metadata is present" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="JsM3wQNLNm2vINU3SBDa-3" value="check of metadata is present" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-733" y="-949" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="JsM3wQNLNm2vINU3SBDa-4" value="extract metadata from module" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="JsM3wQNLNm2vINU3SBDa-4" value="extract metadata from module" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-588" y="-949" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="JsM3wQNLNm2vINU3SBDa-5" value="prepare setup dir" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="JsM3wQNLNm2vINU3SBDa-5" value="prepare setup dir" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-444" y="-951.5" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="JsM3wQNLNm2vINU3SBDa-6" value="extract requirements from module/cli" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="JsM3wQNLNm2vINU3SBDa-6" value="extract requirements from module/cli" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-158" y="-951.5" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="JsM3wQNLNm2vINU3SBDa-7" value="merge local dependecies" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="JsM3wQNLNm2vINU3SBDa-7" value="merge local dependecies" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-296" y="-951.5" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="JsM3wQNLNm2vINU3SBDa-8" value="remove setup dir" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="JsM3wQNLNm2vINU3SBDa-8" value="remove setup dir" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-21" y="-953" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="JsM3wQNLNm2vINU3SBDa-9" value="extract release notes from commit messages" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="JsM3wQNLNm2vINU3SBDa-9" value="extract release notes from commit messages" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-365" y="-1072" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="JQHpRhmS8jQEJa0AJP20-1" value="packaged files" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="334" y="-596" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="JQHpRhmS8jQEJa0AJP20-2" value="module_name.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
+          <mxGeometry x="440" y="-564" width="114" height="127" as="geometry" />
+        </mxCell>
+        <mxCell id="JQHpRhmS8jQEJa0AJP20-3" value="__init__.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
+          <mxGeometry x="176" y="-564" width="114" height="127" as="geometry" />
+        </mxCell>
+        <mxCell id="JQHpRhmS8jQEJa0AJP20-4" value="cli.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
+          <mxGeometry x="172" y="-399" width="114" height="127" as="geometry" />
+        </mxCell>
+        <mxCell id="JQHpRhmS8jQEJa0AJP20-5" value="README.md" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
+          <mxGeometry x="440" y="-396" width="114" height="127" as="geometry" />
+        </mxCell>
+        <mxCell id="JQHpRhmS8jQEJa0AJP20-6" value="setup.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
+          <mxGeometry x="304" y="-496" width="114" height="127" as="geometry" />
+        </mxCell>
+        <mxCell id="WT146gyAdV1CeAm7y7cq-1" value="update-release-notes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-883.5" y="-852" width="131" height="29" as="geometry" />
+        </mxCell>
+        <mxCell id="WT146gyAdV1CeAm7y7cq-2" value="extract messages from commit history with approprite label" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-665" y="-873" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="WT146gyAdV1CeAm7y7cq-3" value="" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-531" y="-821" as="sourcePoint" />
+            <mxPoint x="-531" y="-865" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WT146gyAdV1CeAm7y7cq-4" value="process provided notes" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-517" y="-873" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="WT146gyAdV1CeAm7y7cq-5" value="analyse notes or pull from pypi latest version and increment version" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-369" y="-873" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="WT146gyAdV1CeAm7y7cq-7" value="" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-236.14" y="-821" as="sourcePoint" />
+            <mxPoint x="-236.14" y="-865" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WT146gyAdV1CeAm7y7cq-8" value="assign version provided from messages or as parameter" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-224" y="-873" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="WT146gyAdV1CeAm7y7cq-9" value="create entry in release notes file with appropriate version and notes" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-79" y="-873" width="120" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

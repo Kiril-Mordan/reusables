@@ -49,6 +49,8 @@ class VersionHandler:
 
     default_version = attr.ib(default="0.0.1")
 
+    read_files = attr.ib(default=True)
+
     # output
     versions = attr.ib(init=False)
 
@@ -59,12 +61,15 @@ class VersionHandler:
 
     def __attrs_post_init__(self):
         self._initialize_logger()
-        try:
-            self.versions = self.get_versions()
-        except Exception as e:
-            self._create_versions()
+        if self.read_files:
+            try:
+                self.versions = self.get_versions()
+            except Exception as e:
+                self._create_versions()
+                self.versions = {}
+            self._setup_logging()
+        else:
             self.versions = {}
-        self._setup_logging()
 
 
     def _initialize_logger(self):
@@ -220,15 +225,19 @@ class VersionHandler:
             # Load the contents of the file
             return yaml.safe_load(file) or {}
 
-    def update_version(self, package_name, new_version):
+    def update_version(self, 
+                       package_name : str, 
+                       new_version : str,
+                       save : bool = True):
 
         """
         Update version of the named package with provided value and persist change.
         """
 
         self.versions[package_name] = new_version
-        self._save_versions()
-        self.log_version_update(package_name, new_version)
+        if save:
+            self._save_versions()
+            self.log_version_update(package_name, new_version)
 
     def add_package(self,
                     package_name : str,
@@ -285,7 +294,9 @@ class VersionHandler:
                           package_name : str,
                           version : str = None,
                           increment_type : str = None,
-                          default_version : str = None):
+                          default_version : str = None,
+                          save : bool = True,
+                          usepip : bool = True):
 
         """
         Increment versions of the given package with 1 for a given increment type.
@@ -297,37 +308,45 @@ class VersionHandler:
         if increment_type is None:
             increment_type = 'patch'
 
-        if package_name in self.versions:
-
+        prev_version = None
+        if usepip:
             prev_version = self.get_latest_pip_version(
                 package_name = package_name
             )
 
-            if prev_version is None:
-                prev_version = self.versions[package_name]
+        if prev_version is None:
+            prev_version = self.versions.get(package_name, self.default_version)
 
-            if version is None:
-                major, minor, patch = self._parse_version(prev_version)
+        if version is None:
+            major, minor, patch = self._parse_version(prev_version)
 
-                if increment_type == 'patch':
-                    patch += 1
-                if increment_type == 'minor':
-                    patch = 0
-                    minor += 1
-                if increment_type == 'major':
-                    patch = 0
-                    minor = 0
-                    major += 1
-                version = self._format_version(major, minor, patch)
+            if increment_type == 'patch':
+                patch += 1
+            if increment_type == 'minor':
+                patch = 0
+                minor += 1
+            if increment_type == 'major':
+                patch = 0
+                minor = 0
+                major += 1
+            version = self._format_version(major, minor, patch)
 
-            new_version = version
-            self.update_version(package_name, new_version)
+        new_version = version
+        self.update_version(package_name, new_version, save)
 
-            self.logger.debug(f"Incremented {increment_type} of {package_name} \
-                from {prev_version} to {new_version}")
-        else:
-            self.logger.warning(f"There are no known versions of '{package_name}', {default_version} will be used!")
-            self.update_version(package_name, default_version)
+        self.logger.debug(f"Incremented {increment_type} of {package_name} \
+            from {prev_version} to {new_version}")
+        # else:
+
+        #     if usepip:
+        #         prev_version = self.get_latest_pip_version(
+        #             package_name = package_name
+        #         )
+        #     if prev_version is None:
+        #         self.logger.warning(f"There are no known versions of '{package_name}', {default_version} will be used!")
+        #     else:
+        #         default_version = prev_version
+        #     self.update_version(package_name, default_version, save)
 
 
 
@@ -1715,6 +1734,28 @@ class ReleaseNotesHandler:
             self.version_update_label = 'patch'
             return patch
 
+    def extract_latest_version(self, release_notes : list = None):
+
+        """
+        Extracts latest version from provided release notes.
+        """
+
+        if release_notes is None:
+            release_notes = self.existing_contents
+
+        latest_version = None
+        
+        for line in release_notes:
+            line = line.strip()
+            if line.startswith("###"):
+                # Extract the version number after ###
+                version = line.split("###")[-1].strip()
+                # Update the latest version to the first version found
+                if latest_version is None or version > latest_version:
+                    latest_version = version
+
+        return latest_version
+
     def create_release_note_entry(self,
                                   existing_contents : str = None,
                                   version : str = None,
@@ -2208,6 +2249,7 @@ class PackageAutoAssembler:
     use_commit_messages = attr.ib(default=True, type = bool)
     remove_temp_files = attr.ib(default=True, type = bool)
     skip_deps_install = attr.ib(default=False, type = bool)
+    max_git_search_depth = attr.ib(default=5, type = int)
 
     ## handler classes
     setup_dir_h_class = attr.ib(default=SetupDirHandler)
@@ -2358,6 +2400,7 @@ class PackageAutoAssembler:
             filepath = self.release_notes_filepath,
             label_name = self.module_name,
             version = version,
+            max_search_depth = self.max_git_search_depth,
             logger = self.logger)
 
     def add_metadata_from_module(self, module_filepath : str = None):
