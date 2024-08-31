@@ -1,7 +1,7 @@
 ```python
 import sys
 sys.path.append('../')
-from python_modules.package_auto_assembler import (VersionHandler, \
+from package_auto_assembler import (VersionHandler, \
     ImportMappingHandler, RequirementsHandler, MetadataHandler, \
         LocalDependaciesHandler, LongDocHandler, SetupDirHandler, \
             ReleaseNotesHandler, MkDocsHandler, PackageAutoAssembler)
@@ -23,8 +23,8 @@ Package auto assembler does try to pull latest version from package storage, but
 ```python
 pv = VersionHandler(
     # required
-    versions_filepath = '../tests/package_auto_assembler/lsts_package_versions.yml',
-    log_filepath = '../tests/package_auto_assembler/version_logs.csv',
+    versions_filepath = '../tests/package_auto_assembler/other/lsts_package_versions.yml',
+    log_filepath = '../tests/package_auto_assembler/other/version_logs.csv',
     # optional
     default_version = "0.0.1")
 ```
@@ -64,7 +64,7 @@ pv.increment_patch(
 ```python
 pv.get_versions(
     # optional
-    versions_filepath = '../tests/package_auto_assembler/lsts_package_versions.yml'
+    versions_filepath = '../tests/package_auto_assembler/other/lsts_package_versions.yml'
 )
 ```
 
@@ -93,7 +93,7 @@ pv.get_version(
 ```python
 pv.get_logs(
     # optional
-    log_filepath = '../tests/package_auto_assembler/version_logs.csv'
+    log_filepath = '../tests/package_auto_assembler/other/version_logs.csv'
 )
 ```
 
@@ -247,7 +247,7 @@ Checking dependecies for vulnerabilities is usefull and it is done with `pip aud
 ```python
 rh = RequirementsHandler(
     # optional/required later
-    module_filepath = "../tests/package_auto_assembler/example_module.py",
+    module_filepath = "../tests/package_auto_assembler/other/example_module.py",
     package_mappings = {'PIL': 'Pillow',
                         'bs4': 'beautifulsoup4',
                         'fitz': 'PyMuPDF',
@@ -259,7 +259,7 @@ rh = RequirementsHandler(
                         'stdlib_list': 'stdlib-list',
                         'sklearn': 'scikit-learn',
                         'yaml': 'pyyaml'},
-    requirements_output_path = "../tests/package_auto_assembler/",
+    requirements_output_path = "../tests/package_auto_assembler/other/",
     output_requirements_prefix = "requirements_",
     custom_modules_filepath = "../tests/package_auto_assembler/dependancies",
     python_version = '3.8',
@@ -326,7 +326,7 @@ rh.is_standard_library(
 ```python
 rh.extract_requirements(
     # optional
-    module_filepath = "../tests/package_auto_assembler/example_module.py",
+    module_filepath = "../tests/package_auto_assembler/other/example_module.py",
     custom_modules = ['example_local_dependacy_2', 'example_local_dependacy_1'],
     package_mappings = {'PIL': 'Pillow',
                         'bs4': 'beautifulsoup4',
@@ -439,7 +439,7 @@ rh.write_requirements_file(
     # optional/required later
     module_name = 'example_module',
     requirements = ['### example_module.py', 'attrs>=22.2.0'],
-    output_path = "../tests/package_auto_assembler/",
+    output_path = "../tests/package_auto_assembler/other/",
     prefix = "requirements_"
 )
 ```
@@ -450,7 +450,7 @@ rh.write_requirements_file(
 ```python
 rh.read_requirements_file(
     # required
-    requirements_filepath = "../tests/package_auto_assembler/requirements_example_module.txt"
+    requirements_filepath = "../tests/package_auto_assembler/other/requirements_example_module.txt"
 )
 ```
 
@@ -471,7 +471,7 @@ Since all of the necessary information for building a package needs to be contai
 ```python
 mh = MetadataHandler(
     # optional/required later
-    module_filepath = "../tests/package_auto_assembler/example_module.py"
+    module_filepath = "../tests/package_auto_assembler/other/example_module.py"
 )
 ```
 
@@ -481,7 +481,7 @@ mh = MetadataHandler(
 ```python
 mh.is_metadata_available(
     # optional
-    module_filepath = "../tests/package_auto_assembler/example_module.py"
+    module_filepath = "../tests/package_auto_assembler/other/example_module.py"
 )
 ```
 
@@ -498,7 +498,7 @@ mh.is_metadata_available(
 ```python
 mh.get_package_metadata(
     # optional
-    module_filepath = "../tests/package_auto_assembler/example_module.py"
+    module_filepath = "../tests/package_auto_assembler/other/example_module.py"
 )
 ```
 
@@ -535,7 +535,7 @@ During packaging process paa merges main module with its local dependies into a 
 ```python
 ldh = LocalDependaciesHandler(
     # required
-    main_module_filepath = "../tests/package_auto_assembler/example_module.py",
+    main_module_filepath = "../tests/package_auto_assembler/other/example_module.py",
     dependencies_dir = "../tests/package_auto_assembler/dependancies/",
     # optional
     save_filepath = "./combined_example_module.py"
@@ -548,7 +548,7 @@ ldh = LocalDependaciesHandler(
 ```python
 print(ldh.combine_modules(
     # optional
-    main_module_filepath = "../tests/package_auto_assembler/example_module.py",
+    main_module_filepath = "../tests/package_auto_assembler/other/example_module.py",
     dependencies_dir = "../tests/package_auto_assembler/dependancies/",
     add_empty_design_choices = False
 )[0:1000])
@@ -624,7 +624,7 @@ Package description is based on `.ipynb` with same name as the `.py`. By default
 import logging
 ldh = LongDocHandler(
     # optional/required later
-    notebook_path = "../tests/package_auto_assembler/example_module.ipynb",
+    notebook_path = "../tests/package_auto_assembler/other/example_module.ipynb",
     markdown_filepath = "../example_module.md",
     timeout = 600,
     kernel_name = 'python3',
@@ -639,7 +639,7 @@ ldh = LongDocHandler(
 ```python
 ldh.convert_notebook_to_md(
     # optional
-    notebook_path = "../tests/package_auto_assembler/example_module.ipynb",
+    notebook_path = "../tests/package_auto_assembler/other/example_module.ipynb",
     output_path = "../example_module.md"
 )
 ```
@@ -653,7 +653,7 @@ ldh.convert_notebook_to_md(
 ```python
 ldh.convert_and_execute_notebook_to_md(
     # optional
-    notebook_path = "../tests/package_auto_assembler/example_module.ipynb",
+    notebook_path = "../tests/package_auto_assembler/other/example_module.ipynb",
     output_path = "../example_module.md",
     timeout = 600,
     kernel_name = 'python3'
@@ -689,7 +689,7 @@ Package are created following rather simple sequence of steps. At some point of 
 ```python
 sdh = SetupDirHandler(
     # required
-    module_filepath = "../tests/package_auto_assembler/example_module.py",
+    module_filepath = "../tests/package_auto_assembler/other/example_module.py",
     # optional/ required
     module_name = "example_module",
     metadata = {'author': 'Kyrylo Mordan',
@@ -788,7 +788,7 @@ Commit messages could also be used to increment version by something other then 
 ```python
 rnh = ReleaseNotesHandler(
     # path to existing or new release notes file
-    filepath = '../tests/package_auto_assembler/release_notes.md',
+    filepath = '../tests/package_auto_assembler/other/release_notes.md',
     # name of label in commit message [example_module] for filter
     label_name = 'example_module',
     # new version to be used in release notes
@@ -813,13 +813,11 @@ rnh.commit_messages
 
 
 
-    ['[package_auto_assembler][.+.] minor fixes for version handling in release notes and empty merge history',
-     '[package_auto_assembler] support for components imports from bundles',
-     'Update package version tracking files',
-     'Update README',
-     'Update requirements',
-     '[mocker_db][.+.] precise keywords match with cutoff 1 and fuzzy match with < 1 through filters',
-     '[mocker_db] keywords search with difflib',
+    ['fixing paa tests',
+     'fixing paa tests',
+     'fixing paa tests',
+     '[package_auto_assembler] increasing default max search depth for commit history to 5',
+     'fixing mocker-db release notes',
      'Update package version tracking files',
      'Update README',
      'Update requirements']
@@ -863,11 +861,22 @@ print(rnh.processed_messages)
 
 
 ```python
-version_update = rnh.extract_version_update()
+version_update = rnh.extract_latest_version()
 print(f"Example version_update: {version_update}")
 ```
 
     Example version_update: 0.1.2
+
+
+##### - get latest version from relevant release notes
+
+
+```python
+latest_version = rnh.extract_latest_version()
+print(f"Example latest_version: {latest_version}")
+```
+
+    Example latest_version: 0.1.2
 
 
 ##### - augment existing release note with new entries or create new
@@ -963,15 +972,15 @@ To simplify usage [cli interface](https://kiril-mordan.github.io/reusables/packa
 paa = PackageAutoAssembler(
     # required
     module_name = "example_module",
-    module_filepath  = "../tests/package_auto_assembler/example_module.py",
+    module_filepath  = "../tests/package_auto_assembler/other/example_module.py",
     # optional
     mapping_filepath = "../env_spec/package_mapping.json",
     dependencies_dir = "../tests/package_auto_assembler/dependancies/",
     example_notebook_path = "./mock_vector_database.ipynb",
-    versions_filepath = '../tests/package_auto_assembler/lsts_package_versions.yml',
-    log_filepath = '../tests/package_auto_assembler/version_logs.csv',
+    versions_filepath = '../tests/package_auto_assembler/other/lsts_package_versions.yml',
+    log_filepath = '../tests/package_auto_assembler/other/version_logs.csv',
     setup_directory = "./example_module",
-    release_notes_filepath = "../tests/package_auto_assembler/release_notes.md",
+    release_notes_filepath = "../tests/package_auto_assembler/other/release_notes.md",
     classifiers = ['Development Status :: 3 - Alpha',
                     'Intended Audience :: Developers',
                     'Intended Audience :: Science/Research',
