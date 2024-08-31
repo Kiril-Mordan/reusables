@@ -1,5 +1,11 @@
 # Release notes
 
+### 0.4.2
+
+    - independent cli tool for updating release notes with automatic versioning
+
+    - increasing default max search depth for commit history to 5
+
 ### 0.4.1
 
     - additional descriptions for each component of the package
