@@ -1,9 +1,73 @@
 import logging
 import shutil
 import os
-import click
+import click #==8.1.7
 import yaml
-from package_auto_assembler.package_auto_assembler import PackageAutoAssembler, ReleaseNotesHandler, VersionHandler
+import importlib
+import importlib.metadata
+import ast
+
+from package_auto_assembler.package_auto_assembler import (
+    PackageAutoAssembler, 
+    ReleaseNotesHandler, 
+    VersionHandler,
+    RequirementsHandler)
+
+
+def filter_packages_by_tags(tags):
+    import pkg_resources
+    matches = []
+    for dist in pkg_resources.working_set:
+        try:
+            metadata_lines = dist.get_metadata_lines('METADATA')
+            if all(any(tag in line for line in metadata_lines) for tag in tags):
+                matches.append((dist.project_name, dist.version))
+        except (FileNotFoundError, KeyError):
+            continue
+    return matches
+
+
+def get_package_metadata(package_name):
+    import pkg_resources
+    dist = pkg_resources.get_distribution(package_name)
+    metadata = dist.get_metadata_lines('METADATA')
+
+    try:
+        version = dist.version
+    except Exception as e:
+        version = None
+
+    keywords = None
+    author = None
+    author_email = None
+    paa_version = None
+    paa_cli = False
+    classifiers = []
+
+    for line in metadata:
+        if line.startswith("Keywords:"):
+            keywords = ast.literal_eval(line.split("Keywords: ")[1])
+        if line.startswith("Author:"):
+            author = line.split("Author: ")[1]
+        if line.startswith("Author-email:"):
+            author_email = line.split("Author-email: ")[1]
+        if line.startswith("Classifier:"):
+            classifiers.append(line.split("Classifier: ")[1])
+        if line.startswith("Classifier: PAA-Version ::"):
+            paa_version = line.split("Classifier: PAA-Version :: ")[1]
+        if line.startswith("Classifier: PAA-CLI ::"):
+            paa_cli = line.split("Classifier: PAA-CLI :: ")[1]
+
+    return keywords, version, author, author_email, classifiers, paa_version, paa_cli
+
+def get_package_requirements(package_name):
+
+    metadata = importlib.metadata.metadata(package_name)
+    requirements = metadata.get_all("Requires-Dist", [])
+    if requirements != []:
+        requirements = requirements
+
+    return requirements
 
 
 __cli_metadata__ = {
@@ -458,13 +522,232 @@ def update_release_notes(ctx,
     rnh.save_release_notes()
     click.echo(f"Release notes for {label_name} with version {version} were updated!")
 
+@click.command()
+@click.option('--tags', 
+              multiple=True, 
+              required=False, 
+              help='Keyword tag filters for the package.')
+@click.pass_context
+def show_module_list(ctx,
+        tags):
+    """Shows module list."""
+
+    tags = list(tags)
+
+    if tags == []:
+        tags = ['aa-paa-tool']
+    else:
+        tags.append('aa-paa-tool')
+
+    packages = filter_packages_by_tags(tags)
+    if packages:
+        # Calculate the maximum length of package names for formatting
+        max_name_length = max(len(pkg[0]) for pkg in packages) if packages else 0
+        max_version_length = max(len(pkg[1]) for pkg in packages) if packages else 0
+        
+        # Print the header
+        header_name = "Package"
+        header_version = "Version"
+        click.echo(f"{header_name:<{max_name_length}} {header_version:<{max_version_length}}")
+        click.echo(f"{'-' * max_name_length} {'-' * max_version_length}")
+
+        # Print each package and its version
+        for package, version in packages:
+            click.echo(f"{package:<{max_name_length}} {version:<{max_version_length}}")
+    else:
+        click.echo(f"No packages found matching all tags {tags}")
+
+@click.command()
+@click.argument('label_name')
+@click.option('--is-cli', 
+              'get_paa_cli_status', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, returns true when cli interface is available.')
+@click.option('--keywords', 
+              'get_keywords', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, returns keywords for the package.')
+@click.option('--classifiers', 
+              'get_classifiers', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, returns classfiers for the package.')
+@click.option('--docstring', 
+              'get_docstring', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, returns docstring of the package.')
+@click.option('--author', 
+              'get_author', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, returns author of the package.')
+@click.option('--author-email', 
+              'get_author_email', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, returns author email of the package.')
+@click.option('--version', 
+              'get_version', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, returns installed version of the package.')
+@click.option('--pip-version', 
+              'get_pip_version', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, returns pip latest version of the package.')
+@click.option('--paa-version', 
+              'get_paa_version', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, returns packaging tool version with which the package was packaged.')
+@click.pass_context
+def show_module_info(ctx,
+        label_name,
+        get_paa_cli_status,
+        get_keywords,
+        get_classifiers,
+        get_docstring,
+        get_author,
+        get_author_email,
+        get_version,
+        get_pip_version,
+        get_paa_version):
+    """Shows module info."""
+
+    label_name = label_name.replace('-','_')
+
+    try:
+        package = importlib.import_module(label_name)
+    except ImportError:
+        click.echo(f"No package with name {label_name} was installed!")
+
+    try:
+        (keywords, 
+        version, 
+        author, 
+        author_email, 
+        classifiers, 
+        paa_version,
+        paa_cli) = get_package_metadata(
+        label_name)
+    except Exception:
+        click.echo(f"Failed to extract {label_name} metadata!")
+
+    # get docstring
+    try:
+        docstring = package.__doc__
+    except ImportError:
+        docstring = None
+
+    try:
+        vh_params = {
+        'versions_filepath' : '',
+        'log_filepath' : '',
+        'read_files' : False,
+        'default_version' : "0.0.0"
+        }
+
+        vh = VersionHandler(**vh_params)
+
+        latest_version = vh.get_latest_pip_version(label_name)
+    except Exception as e:
+        latest_version = None
+
+    if not any([get_version, 
+                get_pip_version,
+                get_paa_version,
+                get_author, 
+                get_author_email, 
+                get_docstring,
+                get_classifiers,
+                get_keywords,
+                get_paa_cli_status]):
+
+        if docstring:
+            click.echo(docstring)
+
+        if version:
+            click.echo(f"Installed version: {version}")
+
+        if latest_version:
+            click.echo(f"Latest pip version: {latest_version}")
+        
+        if paa_version:
+            click.echo(f"Packaged with PAA version: {paa_version}")
+        
+        if paa_cli:
+            click.echo(f"Is cli interface available: {paa_cli}")
+
+        if author:
+            click.echo(f"Author: {author}")
+
+        if author_email:
+            click.echo(f"Author-email: {author_email}")
+
+        if keywords:
+            click.echo(f"Keywords: {keywords}")
+
+        if classifiers:
+            click.echo(f"Classifiers: {classifiers}")
     
+    if get_version:
+        click.echo(version)
+    if get_pip_version:
+        click.echo(latest_version)
+    if get_paa_version:
+        click.echo(paa_version)
+    if get_author:
+        click.echo(author)
+    if get_author_email:
+        click.echo(author_email)
+    if get_docstring:
+        click.echo(docstring)
+    if get_classifiers:
+        for cl in classifiers:
+            click.echo(f"{cl}")
+    if get_keywords:
+        for kw in keywords:
+            click.echo(f"{kw}")
+    if get_paa_cli_status:
+        click.echo(paa_cli)
+
+
+@click.command()
+@click.argument('label_name')
+@click.pass_context
+def show_module_requirements(ctx,
+        label_name):
+    """Shows module requirements."""
+
+    label_name = label_name.replace('-','_')
+    requirements = get_package_requirements(label_name)
+    
+    for req in requirements:
+        click.echo(f"{req}")
+
+
 
 cli.add_command(init_config, "init-config")
 cli.add_command(test_install, "test-install")
 cli.add_command(make_package, "make-package")
 cli.add_command(check_vulnerabilities, "check-vulnerabilities")
 cli.add_command(update_release_notes, "update-release-notes")
+cli.add_command(show_module_list, "show-module-list")
+cli.add_command(show_module_info, "show-module-info")
+cli.add_command(show_module_requirements, "show-module-requirements")
 
 
 if __name__ == "__main__":

@@ -12,11 +12,14 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  check-vulnerabilities  Check vulnerabilities of the module.
-  init-config            Initialize config file
-  make-package           Package with package-auto-assembler.
-  test-install           Test install module into local environment.
-  update-release-notes   Update release notes.
+  check-vulnerabilities     Check vulnerabilities of the module.
+  init-config               Initialize config file
+  make-package              Package with package-auto-assembler.
+  show-module-info          Shows module info.
+  show-module-list          Shows module list.
+  show-module-requirements  Shows module requirements.
+  test-install              Test install module into local environment.
+  update-release-notes      Update release notes.
 ```
 
 Creating config file could be useful to avoid providing parameters manually. If no config file will be provided, by default values from `.paa.config` will be used.
@@ -141,4 +144,57 @@ Options:
   --use-pip-latest         If checked, attempts to pull latest version from
                            pip.
   --help                   Show this message and exit.
+```
+
+Cli interface provides some additional tools to analyse locally installed packages if they were build with package-auto-assembler>0.4.2. These include methods to list modules, show module info, extract requirements.
+
+``` bash
+paa show-module-list --help
+```
+
+```
+Usage: paa show-module-list [OPTIONS]
+
+  Shows module list.
+
+Options:
+  --tags TEXT  Keyword tag filters for the package.
+  --help       Show this message and exit.
+```
+
+
+``` bash
+paa show-module-info --help
+```
+
+```
+Usage: paa show-module-info [OPTIONS] LABEL_NAME
+
+  Shows module info.
+
+Options:
+  --is-cli        If checked, returns true when cli interface is available.
+  --keywords      If checked, returns keywords for the package.
+  --classifiers   If checked, returns classfiers for the package.
+  --docstring     If checked, returns docstring of the package.
+  --author        If checked, returns author of the package.
+  --author-email  If checked, returns author email of the package.
+  --version       If checked, returns installed version of the package.
+  --pip-version   If checked, returns pip latest version of the package.
+  --paa-version   If checked, returns packaging tool version with which the
+                  package was packaged.
+  --help          Show this message and exit.
+```
+
+``` bash
+paa show-module-requirements --help
+```
+
+```
+Usage: paa show-module-requirements [OPTIONS] LABEL_NAME
+
+  Shows module requirements.
+
+Options:
+  --help  Show this message and exit.
 ```
