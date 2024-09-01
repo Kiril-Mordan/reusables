@@ -1,5 +1,15 @@
 # Release notes
 
+### 0.4.3
+
+    - tagging packages with additional metadata
+
+    - cli method to show packages in local env built with paa
+
+    - cli method to show extended package info for packages built with paa
+
+    - cli method to show package requirements
+
 ### 0.4.2
 
     - independent cli tool for updating release notes with automatic versioning
