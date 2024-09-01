@@ -490,6 +490,7 @@ class MockerDB:
     embedder_params = attr.ib(default={'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
                                        'processing_type' : 'batch',
                                        'tbatch_size' : 500})
+    use_embedder = attr.ib(default=True)
     embedder = attr.ib(default=SentenceTransformerEmbedder)
 
     ## for llm filter
@@ -575,9 +576,10 @@ class MockerDB:
         """
         Initializes embedder connector with provided parameters.
         """
+        if self.use_embedder:
 
-        if self.embedder_h is None:
-            self.embedder_h = self.embedder(**self.embedder_params)
+            if self.embedder_h is None:
+                self.embedder_h = self.embedder(**self.embedder_params)
 
     def _initialize_sim_search(self):
 
