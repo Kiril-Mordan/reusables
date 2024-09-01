@@ -247,7 +247,7 @@
     </mxGraphModel>
   </diagram>
   <diagram name="flow" id="WLMHj4V7T1tkh2896ld8">
-    <mxGraphModel dx="4070" dy="3340" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="3809" dy="3182" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -281,11 +281,8 @@
         <mxCell id="Jrc1zMWoi0aU3mgSClnk-77" value="module_name.ipynb" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
           <mxGeometry x="-645" y="-591" width="114" height="127" as="geometry" />
         </mxCell>
-        <mxCell id="wYXUj6ivM-F9wx3Gzz81-6" value="update release notes based on commit messages" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="-729" y="-758" width="120" height="60" as="geometry" />
-        </mxCell>
         <mxCell id="wYXUj6ivM-F9wx3Gzz81-12" value="build mkdocs documentation for package" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="-481" y="-758" width="120" height="60" as="geometry" />
+          <mxGeometry x="-305" y="-758" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="rKDuYdVevO0EODqZjKq1-1" value="test-install" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="-871" y="-1228" width="106" height="34" as="geometry" />
@@ -342,7 +339,7 @@
           <mxGeometry x="-89" y="-1070" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="rKDuYdVevO0EODqZjKq1-26" value="run mkdocs documentation for package" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="-232" y="-758" width="120" height="60" as="geometry" />
+          <mxGeometry x="-120" y="-758" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="rKDuYdVevO0EODqZjKq1-28" value="&lt;b&gt;Workflows&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="-939" y="-1140" width="60" height="30" as="geometry" />
@@ -407,35 +404,44 @@
         <mxCell id="JQHpRhmS8jQEJa0AJP20-6" value="setup.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
           <mxGeometry x="304" y="-496" width="114" height="127" as="geometry" />
         </mxCell>
-        <mxCell id="WT146gyAdV1CeAm7y7cq-1" value="update-release-notes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="WT146gyAdV1CeAm7y7cq-1" value="update-release-notes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="-883.5" y="-852" width="131" height="29" as="geometry" />
         </mxCell>
-        <mxCell id="WT146gyAdV1CeAm7y7cq-2" value="extract messages from commit history with approprite label" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="WT146gyAdV1CeAm7y7cq-2" value="extract messages from commit history with approprite label" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-665" y="-873" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="WT146gyAdV1CeAm7y7cq-3" value="" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1">
+        <mxCell id="WT146gyAdV1CeAm7y7cq-3" value="" style="endArrow=none;html=1;rounded=0;" parent="1" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="-531" y="-821" as="sourcePoint" />
             <mxPoint x="-531" y="-865" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="WT146gyAdV1CeAm7y7cq-4" value="process provided notes" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="WT146gyAdV1CeAm7y7cq-4" value="process provided notes" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-517" y="-873" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="WT146gyAdV1CeAm7y7cq-5" value="analyse notes or pull from pypi latest version and increment version" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="WT146gyAdV1CeAm7y7cq-5" value="analyse notes or pull from pypi latest version and increment version" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-369" y="-873" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="WT146gyAdV1CeAm7y7cq-7" value="" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1">
+        <mxCell id="WT146gyAdV1CeAm7y7cq-7" value="" style="endArrow=none;html=1;rounded=0;" parent="1" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="-236.14" y="-821" as="sourcePoint" />
             <mxPoint x="-236.14" y="-865" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="WT146gyAdV1CeAm7y7cq-8" value="assign version provided from messages or as parameter" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="WT146gyAdV1CeAm7y7cq-8" value="assign version provided from messages or as parameter" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-224" y="-873" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="WT146gyAdV1CeAm7y7cq-9" value="create entry in release notes file with appropriate version and notes" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="WT146gyAdV1CeAm7y7cq-9" value="create entry in release notes file with appropriate version and notes" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-79" y="-873" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rFOoan--pAJJMBuSx_o4-1" value="show list of paa packages" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-826" y="-755" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rFOoan--pAJJMBuSx_o4-2" value="show list of requirements for selected paa package" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-682" y="-755" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rFOoan--pAJJMBuSx_o4-3" value="show info for selected paa package" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-539" y="-755" width="120" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

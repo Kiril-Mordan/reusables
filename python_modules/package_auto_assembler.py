@@ -807,6 +807,9 @@ class MetadataHandler:
             if metadata_str:
                 try:
                     metadata = ast.literal_eval(metadata_str.split('=', 1)[1].strip())
+                    if 'keywords' not in metadata.keys():
+                        metadata['keywords'] = []
+                    metadata['keywords'].append('aa-paa-tool')
                     return metadata
                 except SyntaxError as e:
                     return f"Error parsing metadata: {e}"
@@ -1301,6 +1304,7 @@ class SetupDirHandler:
 
     module_filepath = attr.ib(type=str)
     module_name = attr.ib(default='', type=str)
+    docstring = attr.ib(default=None, type=str)
     metadata = attr.ib(default={}, type=dict)
     cli_metadata = attr.ib(default={}, type=dict)
     requirements = attr.ib(default='', type=str)
@@ -1360,6 +1364,7 @@ class SetupDirHandler:
 
         if setup_directory is None:
             setup_directory = self.setup_directory
+        
 
         # Copying module to setup directory
         shutil.copy(module_filepath, setup_directory)
@@ -1367,6 +1372,7 @@ class SetupDirHandler:
 
     def create_init_file(self,
                          module_name : str = None,
+                         docstring : str = None,
                          setup_directory : str = None):
 
         """
@@ -1381,11 +1387,19 @@ class SetupDirHandler:
 
         if setup_directory is None:
             setup_directory = self.setup_directory
+        
+        if docstring is None:
+            docstring = self.docstring
+
+        init_content = ''
+        if docstring:
+            init_content = f"""\n\"\"\"\n{docstring}\n\"\"\"\n"""
+        init_content += f"""from .{module_name} import *\n"""
 
         # Creating temporary __init__.py file
         init_file_path = os.path.join(setup_directory, '__init__.py')
         with open(init_file_path, 'w') as init_file:
-            init_file.write(f"from .{module_name} import *\n")
+            init_file.write(init_content)
 
     def write_setup_file(self,
                          module_name : str = None,
@@ -1400,6 +1414,8 @@ class SetupDirHandler:
         """
         Create setup.py for the package.
         """
+
+        import pkg_resources
 
         if module_name is None:
             if self.module_name == '':
@@ -1419,12 +1435,20 @@ class SetupDirHandler:
         if classifiers is None:
             classifiers = self.classifiers
 
-        if setup_directory is None:
-            setup_directory = self.setup_directory
-
         if add_cli_tool is None:
             add_cli_tool = self.add_cli_tool
 
+        paa_version = pkg_resources.get_distribution("package_auto_assembler").version
+        
+        if classifiers is None:
+            classifiers = [f"PAA-Version :: {paa_version}"]
+        else:
+            classifiers.append(f"PAA-Version :: {paa_version}")
+
+        classifiers.append(f"PAA-CLI :: {add_cli_tool}")
+
+        if setup_directory is None:
+            setup_directory = self.setup_directory
         metadata_str = ', '.join([f'{key}="{value}"' for key, value in metadata.items()])
 
         title = module_name.capitalize()
@@ -2527,7 +2551,9 @@ class PackageAutoAssembler:
         self.release_notes_h.create_release_note_entry()
         self.release_notes_h.save_release_notes()
 
-    def prep_setup_dir(self):
+    def prep_setup_dir(self, 
+                       module_filepath : str = None,
+                       module_docstring : str = None):
 
         """
         Prepare setup directory.
@@ -2538,6 +2564,20 @@ class PackageAutoAssembler:
         if self.setup_dir_h is None:
             self._initialize_setup_dir_handler()
 
+        if module_filepath is None:
+            module_filepath = self.module_filepath
+
+        if module_docstring is None:
+
+            if self.long_doc_h is None:
+                self._initialize_long_doc_handler()
+
+            module_content = self.long_doc_h.read_module_content(filepath = module_filepath)
+
+            module_docstring = self.long_doc_h.extract_module_docstring(module_content = module_content)
+
+        # add module docstring
+        self.setup_dir_h.docstring = module_docstring
         # create empty dir for setup
         self.setup_dir_h.flush_n_make_setup_dir()
         # copy module to dir
