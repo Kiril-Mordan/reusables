@@ -1,8 +1,6 @@
 """
-MockerDB
-
-A python module that contains mock vector database like solution built around
-dictionary data type. It contains methods necessary to interact with this 'database',
+MockerDB is a python module that contains mock vector database like solution built around
+python dictionary data type. It contains methods necessary to interact with this 'database',
 embed, search and persist.
 """
 
@@ -20,7 +18,6 @@ import hashlib
 ## for search
 import concurrent.futures
 import hnswlib #==0.8.0
-from sentence_transformers import SentenceTransformer #==2.2.2
 from gridlooper import GridLooper #==0.0.1
 from difflib import get_close_matches
 ## for connect to remote mocker and llm search
@@ -45,7 +42,7 @@ __design_choices__ = {
 
 class SentenceTransformerEmbedder:
 
-    def __init__(self,tbatch_size = 32, processing_type = 'batch', max_workers = 2, *args, **kwargs):
+    def __init__(self,SentenceTransformer, tbatch_size = 32, processing_type = 'batch', max_workers = 2, *args, **kwargs):
         # Suppress SentenceTransformer logging
         logging.getLogger('sentence_transformers').setLevel(logging.ERROR)
         self.tbatch_size = tbatch_size
