@@ -1,9 +1,8 @@
 ### mocker_db.py
-attrs>=22.2.0
-httpx
-numpy==1.26.0
-requests
-hnswlib==0.8.0
-gridlooper==0.0.1
-sentence-transformers==2.2.2
 dill==0.3.7
+requests
+attrs>=22.2.0
+gridlooper==0.0.1
+httpx
+hnswlib==0.8.0
+numpy==1.26.0
