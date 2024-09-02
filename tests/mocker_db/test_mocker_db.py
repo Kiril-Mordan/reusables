@@ -1,20 +1,25 @@
+from sentence_transformers import SentenceTransformer
 from python_modules.mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
 import numpy as np
 
 def test_initialization():
     # Test with default parameters
-    default_handler = MockerDB()
+    default_handler = MockerDB(use_embedder = False)
     assert default_handler.file_path == "./mock_persist", "Default file path should be './mock_persist'"
     assert default_handler.persist is False, "Default persist should be False"
 
     # Test with custom parameters
-    custom_handler = MockerDB(file_path="./custom_path", persist=True)
+    custom_handler = MockerDB(file_path="./custom_path", 
+    persist=True,
+    use_embedder = False)
     assert custom_handler.file_path == "./custom_path", "Custom file path should be './custom_path'"
     assert custom_handler.persist is True, "Custom persist should be True"
 
 
 def test_embedding():
-    handler = SentenceTransformerEmbedder(model_name_or_path = 'paraphrase-multilingual-mpnet-base-v2')
+    handler = SentenceTransformerEmbedder(
+        model_name_or_path = 'paraphrase-multilingual-mpnet-base-v2',
+        SentenceTransformer = SentenceTransformer)
     test_sentence = "This is a test."
     embedding = handler.embed(test_sentence, processing_type='')
     print(embedding)
@@ -29,7 +34,12 @@ def test_embedding():
 #     assert "key1" in handler.data, "Data insertion failed"
 
 def test_searching():
-    handler = MockerDB()
+    handler = MockerDB(
+        embedder_params = {'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
+                        'processing_type' : 'batch',
+                        'tbatch_size' : 500,
+                        'SentenceTransformer' : SentenceTransformer}
+    )
     handler.establish_connection()
     test_data = [{"text": "Sample text"}, {"text": "Another sample"}]
     handler.insert_values(test_data, "text")
@@ -37,7 +47,12 @@ def test_searching():
     assert len(results) > 0, "Search should return at least one result"
 
 def test_searching_with_filtering():
-    handler = MockerDB()
+    handler = MockerDB(
+        embedder_params = {'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
+                        'processing_type' : 'batch',
+                        'tbatch_size' : 500,
+                        'SentenceTransformer' : SentenceTransformer}
+    )
     handler.establish_connection()
     test_data = [{"text": "Sample text"}, {"text": "Another sample"}]
     handler.insert_values(test_data, "text")
@@ -46,7 +61,12 @@ def test_searching_with_filtering():
 
 
 def test_multiple_searching():
-    handler = MockerDB()
+    handler = MockerDB(
+        embedder_params = {'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
+                        'processing_type' : 'batch',
+                        'tbatch_size' : 500,
+                        'SentenceTransformer' : SentenceTransformer}
+    )
     handler.establish_connection()
     test_data = [{"text": "Sample text"}, {"text": "Another sample"}]
     handler.insert_values(test_data, "text")

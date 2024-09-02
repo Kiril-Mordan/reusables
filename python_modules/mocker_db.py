@@ -1,8 +1,6 @@
 """
-MockerDB
-
-A python module that contains mock vector database like solution built around
-dictionary data type. It contains methods necessary to interact with this 'database',
+MockerDB is a python module that contains mock vector database like solution built around
+python dictionary data type. It contains methods necessary to interact with this 'database',
 embed, search and persist.
 """
 
@@ -20,7 +18,6 @@ import hashlib
 ## for search
 import concurrent.futures
 import hnswlib #==0.8.0
-from sentence_transformers import SentenceTransformer #==2.2.2
 from gridlooper import GridLooper #==0.0.1
 from difflib import get_close_matches
 ## for connect to remote mocker and llm search
@@ -45,7 +42,7 @@ __design_choices__ = {
 
 class SentenceTransformerEmbedder:
 
-    def __init__(self,tbatch_size = 32, processing_type = 'batch', max_workers = 2, *args, **kwargs):
+    def __init__(self,SentenceTransformer, tbatch_size = 32, processing_type = 'batch', max_workers = 2, *args, **kwargs):
         # Suppress SentenceTransformer logging
         logging.getLogger('sentence_transformers').setLevel(logging.ERROR)
         self.tbatch_size = tbatch_size
@@ -493,6 +490,7 @@ class MockerDB:
     embedder_params = attr.ib(default={'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
                                        'processing_type' : 'batch',
                                        'tbatch_size' : 500})
+    use_embedder = attr.ib(default=True)
     embedder = attr.ib(default=SentenceTransformerEmbedder)
 
     ## for llm filter
@@ -578,9 +576,10 @@ class MockerDB:
         """
         Initializes embedder connector with provided parameters.
         """
+        if self.use_embedder:
 
-        if self.embedder_h is None:
-            self.embedder_h = self.embedder(**self.embedder_params)
+            if self.embedder_h is None:
+                self.embedder_h = self.embedder(**self.embedder_params)
 
     def _initialize_sim_search(self):
 

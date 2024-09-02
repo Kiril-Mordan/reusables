@@ -91,7 +91,9 @@ jobs:
       #       ${{ runner.os }}-pip-
 
       - name: Install dependencies
-        run: pip install -r env_spec/requirements_dev.txt
+        run: | 
+          pip install -r env_spec/requirements_dev.txt
+          echo "sentence_transformers" >> env_spec/requirements_tox.txt
 
       - name: Test with tox
         run: |
