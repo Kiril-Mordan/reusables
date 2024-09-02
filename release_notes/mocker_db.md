@@ -1,5 +1,13 @@
 # Release notes
 
+### 0.2.3
+
+    - providing flag to disable embedder initialization
+
+    - disabling old cli intefrace
+
+    - removing sentence_transformers from the list of default requirements so that SentenceTransformer needs to be provided externally if needed
+
 ### 0.2.2
 
     - option to get embedded field
