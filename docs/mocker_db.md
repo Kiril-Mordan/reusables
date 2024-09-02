@@ -10,6 +10,7 @@ and basic data management within a simulated environment resembling a vector dat
 # import sys
 # sys.path.append('../')
 import numpy as np
+from sentence_transformers import SentenceTransformer
 from mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
 ```
 
@@ -31,7 +32,9 @@ handler = MockerDB(
     # optional
     embedder_params = {'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
                         'processing_type' : 'batch',
-                        'tbatch_size' : 500},
+                        'tbatch_size' : 500,
+                        'SentenceTransformer' : SentenceTransformer},
+    use_embedder = True,
     embedder = SentenceTransformerEmbedder,
     ## optional/ for similarity search
     similarity_search = MockerSimilaritySearch,
@@ -167,7 +170,7 @@ results = handler.search_database(
 print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
 ```
 
-    [{'text': 'Sample text 1...', 'text2': 'Sample text 1...', 'embedding': '[-4.94664945e-02 -2.38676071e-...'}]
+    [{'text': 'Sample text 1...', 'text2': 'Sample text 1...', 'embedding': '[-4.94665056e-02 -2.38676026e-...'}]
 
 
 - get embeddings
@@ -185,7 +188,7 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 
 ```
 
-    [{'embedding': '[-4.94664945e-02 -2.38676071e-...'}]
+    [{'embedding': '[-4.94665056e-02 -2.38676026e-...'}]
 
 
 - get embeddings and embedded field
@@ -203,7 +206,7 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 
 ```
 
-    [{'embedding': '[-4.94664945e-02 -2.38676071e-...', '&field_to_embed': 'text...'}]
+    [{'&embedded_field': 'text...', 'embedding': '[-4.94665056e-02 -2.38676026e-...'}]
 
 
 ### 3. Removing values from the database
@@ -236,7 +239,8 @@ ste = SentenceTransformerEmbedder(# optional / adaptor parameters
                                   tbatch_size = 500,
                                   max_workers = 2,
                                   # sentence transformer parameters
-                                  model_name_or_path = 'paraphrase-multilingual-mpnet-base-v2',)
+                                  model_name_or_path = 'paraphrase-multilingual-mpnet-base-v2',
+                                  SentenceTransformer = SentenceTransformer)
 ```
 
 
