@@ -1307,7 +1307,8 @@ class SetupDirHandler:
     docstring = attr.ib(default=None, type=str)
     metadata = attr.ib(default={}, type=dict)
     cli_metadata = attr.ib(default={}, type=dict)
-    requirements = attr.ib(default='', type=str)
+    requirements = attr.ib(default=[], type=list)
+    optional_requirements = attr.ib(default=None, type=list)
     classifiers = attr.ib(default=[], type=list)
     setup_directory = attr.ib(default='./setup_dir')
     add_cli_tool = attr.ib(default=False, type = bool)
@@ -1406,7 +1407,8 @@ class SetupDirHandler:
                          module_docstring : str = None,
                          metadata : dict = None,
                          cli_metadata : dict = None,
-                         requirements : str = None,
+                         requirements : list = None,
+                         optional_requirements : list = None,
                          classifiers : list = None,
                          setup_directory : str = None,
                          add_cli_tool : bool = None):
@@ -1432,6 +1434,9 @@ class SetupDirHandler:
         if requirements is None:
             requirements = self.requirements
 
+        if optional_requirements is None:
+            optional_requirements = self.optional_requirements
+
         if classifiers is None:
             classifiers = self.classifiers
 
@@ -1455,6 +1460,12 @@ class SetupDirHandler:
         title = title.replace("_"," ")
 
         long_description_intro = f"""# {title}\n\n"""
+
+
+        if optional_requirements:
+
+            extras_require = {req : [req] for req in optional_requirements}
+            extras_require['all'] = optional_requirements
 
         if module_docstring:
             long_description_intro += f"""{module_docstring}\n\n"""
@@ -1501,9 +1512,9 @@ setup(
             setup_content += f"""
     entry_points = {entry_points},
 """
-
-        setup_content += f"""
-    {metadata_str}
+        if optional_requirements:
+            setup_content += f"""
+    extras_require = {extras_require},
 )
 """
 
@@ -2762,7 +2773,7 @@ class PackageAutoAssembler:
                        cli_module_filepath : str = None,
                        metadata : dict = None,
                        cli_metadata : dict = None,
-                       requirements : str = None,
+                       requirements : list = None,
                        classifiers : list = None,
                        module_filepath : str = None,
                        module_docstring : str = None):
