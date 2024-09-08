@@ -33,6 +33,7 @@ import pip_audit #==2.7.3
 import mkdocs #==1.6.0
 
 
+
 # Metadata for package creation
 __package_metadata__ = {
     "author": "Kyrylo Mordan",
@@ -450,6 +451,7 @@ class RequirementsHandler:
     # output
     module_name = attr.ib(init=False)
     requirements_list = attr.ib(default=[], type = list)
+    optional_requirements_list = attr.ib(default=[], type = list)
     vulnerabilities = attr.ib(default=[], type = list)
 
     logger = attr.ib(default=None)
@@ -485,7 +487,8 @@ class RequirementsHandler:
         """
 
         if requirements_list is None:
-            requirements_list = self.requirements_list
+            requirements_list = self.requirements_list + self.optional_requirements_list
+
 
         # Create a temporary requirements file
         with tempfile.NamedTemporaryFile(delete=True, mode='w', suffix='.txt') as temp_req_file:
@@ -629,7 +632,16 @@ class RequirementsHandler:
 
         from_import_pattern = re.compile(r"from (\S+) import [^#]+(?:#\s*(==|>=|<=|>|<)\s*([0-9.]+))?")
 
+        # optional requirements
+        optional_import_pattern_as = re.compile(r"#! import (\S+)(?: as (\S+))?(?:\s+#(?:\s*(==|>=|<=|>|<)\s*([0-9.]+)))?")
+        optional_import_pattern = re.compile(
+    r"#!\s*import\s+(\S+)(?:\s*#\s*(==|>=|<=|>|<)\s*([\d\.]+))?"
+)
+        optional_from_import_pattern = re.compile(r"#! from (\S+) import [^#]+(?:#\s*(==|>=|<=|>|<)\s*([0-9.]+))?")
+
+
         requirements = []
+        optional_requirements = []
         if add_header:
             new_header = [f'### {module_name}']
         else:
@@ -641,50 +653,106 @@ class RequirementsHandler:
                 from_import_match = from_import_pattern.match(line)
                 import_as_match = import_pattern_as.match(line)
 
+                optional_import_match = optional_import_pattern.match(line)
+                optional_from_import_match = optional_from_import_pattern.match(line)
+                optional_import_as_match = optional_import_pattern_as.match(line)
+
+                module = None
+                optional_module = None
+
                 if import_as_match:
                     module, alias, version_constraint, version = import_as_match.groups()
                 elif from_import_match:
                     module, version_constraint, version = from_import_match.groups()
                 elif import_match:
                     module, version_constraint, version = import_match.groups()
+                elif optional_import_match:
+                    optional_module, optional_version_constraint, optional_version = optional_import_match.groups()
+                elif optional_from_import_match:
+                    optional_module, optional_version_constraint, optional_version = optional_from_import_match.groups()
+                elif optional_import_as_match:
+                    optional_module, optional_version_constraint, optional_version = optional_import_as_match.groups()
                 else:
                     continue
 
-                # Skip local imports
-                if module.startswith('.'):
-                    continue
+                skip = False
+                    
+                if module:
 
-                # Extract the base package name
-                module_root = module.split('.')[0]
-                # Extracting package import leaf
-                module_leaf = module.split('.')[-1]
+                    # Skip local imports
+                    if module.startswith('.'):
+                        skip = True
 
-                # Skip standard library and custom modules
-                if self.is_standard_library(module_root, python_version) or module_root in custom_modules \
-                    or self.is_standard_library(module_leaf, python_version) or module_leaf in custom_modules:
-                    continue
+                    if not skip:
 
-                # Use the mapping to get the correct package name
-                module = package_mappings.get(module_root, module_root)
+                        # Extract the base package name
+                        module_root = module.split('.')[0]
+                        # Extracting package import leaf
+                        module_leaf = module.split('.')[-1]
 
-                version_info = f"{version_constraint}{version}" if version_constraint and version else ""
+                    # Skip standard library and custom modules
+                    if self.is_standard_library(module_root, python_version) or module_root in custom_modules \
+                        or self.is_standard_library(module_leaf, python_version) or module_leaf in custom_modules:
+                        skip = True
 
-                if version_info:
-                    requirements.append(f"{module}{version_info}")
-                else:
-                    requirements.append(module)
+                    if not skip:
 
-                # deduplicate requirements
-                requirements = [requirements[0]] + list(set(requirements[1:]))
+                        # Use the mapping to get the correct package name
+                        module = package_mappings.get(module_root, module_root)
+
+                        version_info = f"{version_constraint}{version}" if version_constraint and version else ""
+
+                        if version_info:
+                            requirements.append(f"{module}{version_info}")
+                        else:
+                            requirements.append(module)
+
+                        # deduplicate requirements
+                        requirements = [requirements[0]] + list(set(requirements[1:]))
+
+                skip = False
+
+                if optional_module:
+
+                    # Skip local imports
+                    if optional_module.startswith('.'):
+                        skip = True
+
+                    if not skip:
+
+                        # Extract the base package name
+                        module_root = optional_module.split('.')[0]
+                        # Extracting package import leaf
+                        module_leaf = optional_module.split('.')[-1]
+
+                    # Skip standard library and custom modules
+                    if self.is_standard_library(module_root, python_version) or module_root in custom_modules \
+                        or self.is_standard_library(module_leaf, python_version) or module_leaf in custom_modules:
+                        skip = True
+
+                    if not skip:
+
+                        # Use the mapping to get the correct package name
+                        optional_module = package_mappings.get(module_root, module_root)
+
+                        optional_version_info = f"{optional_version_constraint}{optional_version}" \
+                            if optional_version_constraint and optional_version else ""
+
+                        if version_info:
+                            optional_requirements.append(f"{optional_module}{optional_version_info}")
+                        else:
+                            optional_requirements.append(optional_module)
 
         if self.requirements_list:
             header = [self.requirements_list.pop(0)]
         else:
             header = []
 
-        self.requirements_list = header + new_header + list(set(self.requirements_list + requirements))
 
-        return requirements
+        self.requirements_list = header + new_header + list(set(self.requirements_list + requirements))
+        self.optional_requirements_list = list(set(self.optional_requirements_list + optional_requirements))
+
+        return requirements, optional_requirements
 
     def write_requirements_file(self,
                                 module_name : str = None,
@@ -792,16 +860,23 @@ class MetadataHandler:
 
         metadata_str = ""
         inside_metadata = False
+        expecting_closing_brackes = 0
 
         try:
             with open(module_filepath, 'r') as file:
                 for line in file:
+
+                    if '{' in line:
+                        expecting_closing_brackes += 1
+                    if '}' in line:
+                        expecting_closing_brackes -= 1
+
                     if f'{header_name} =' in line:
                         inside_metadata = True
                         metadata_str = line.split('#')[0]  # Ignore comments
                     elif inside_metadata:
                         metadata_str += line.split('#')[0]  # Ignore comments
-                        if '}' in line:
+                        if ('}' in line) and (expecting_closing_brackes <= 0):
                             break
 
             if metadata_str:
@@ -1305,6 +1380,9 @@ class SetupDirHandler:
     module_filepath = attr.ib(type=str)
     module_name = attr.ib(default='', type=str)
     docstring = attr.ib(default=None, type=str)
+    license_path = attr.ib(default=None, type=str)
+    license_label = attr.ib(default=None, type=str)
+    docs_url = attr.ib(default=None, type=str)
     metadata = attr.ib(default={}, type=dict)
     cli_metadata = attr.ib(default={}, type=dict)
     requirements = attr.ib(default=[], type=list)
@@ -1370,6 +1448,25 @@ class SetupDirHandler:
         # Copying module to setup directory
         shutil.copy(module_filepath, setup_directory)
 
+    def copy_license_to_setup_dir(self,
+                                 license_path : str = None,
+                                 setup_directory : str = None):
+
+        """
+        Copy module to new setup directory.
+        """
+
+
+        if license_path is None:
+            license_path = self.license_path
+
+        if setup_directory is None:
+            setup_directory = self.setup_directory
+        
+        if license_path:
+            # Copying module to setup directory
+            shutil.copy(license_path, setup_directory)
+
 
     def create_init_file(self,
                          module_name : str = None,
@@ -1406,6 +1503,8 @@ class SetupDirHandler:
                          module_name : str = None,
                          module_docstring : str = None,
                          metadata : dict = None,
+                         license_label : str = None,
+                         docs_url : str = None,
                          cli_metadata : dict = None,
                          requirements : list = None,
                          optional_requirements : list = None,
@@ -1416,6 +1515,7 @@ class SetupDirHandler:
         """
         Create setup.py for the package.
         """
+
 
         import pkg_resources
 
@@ -1434,11 +1534,22 @@ class SetupDirHandler:
         if requirements is None:
             requirements = self.requirements
 
+        if requirements is None:
+            requirements = []
+        else:
+            requirements = [req for req in requirements if not req.startswith("###")]
+
         if optional_requirements is None:
             optional_requirements = self.optional_requirements
 
         if classifiers is None:
             classifiers = self.classifiers
+
+        if license_label is None:
+            license_label = self.license_label
+
+        if docs_url is None:
+            docs_url = self.docs_url
 
         if add_cli_tool is None:
             add_cli_tool = self.add_cli_tool
@@ -1452,24 +1563,45 @@ class SetupDirHandler:
 
         classifiers.append(f"PAA-CLI :: {add_cli_tool}")
 
+        if 'classifiers' in metadata.keys():
+            classifiers+=metadata['classifiers']
+            del metadata['classifiers']
+
         if setup_directory is None:
             setup_directory = self.setup_directory
-        metadata_str = ', '.join([f'{key}="{value}"' for key, value in metadata.items()])
+
+        extras_require = None
+
+        if optional_requirements:
+
+            extras_require = {req.split("=")[0].split("<")[0] : [req] for req in optional_requirements}
+            extras_require['all'] = optional_requirements
+
+        if 'extras_require' in metadata.keys():
+
+            if extras_require is None:
+                extras_require = {}
+
+            extras_require.update(metadata['extras_require'])
+            del metadata['extras_require']
+
+        if 'install_requires' in metadata.keys():
+            requirements+=metadata['install_requires']
+            del metadata['install_requires']
+
+        metadata_str = None
+        metadata_str = ',\n    '.join([f'{key}="{value}"' for key, value in metadata.items()])
+
 
         title = module_name.capitalize()
         title = title.replace("_"," ")
 
         long_description_intro = f"""# {title}\n\n"""
 
-
-        if optional_requirements:
-
-            extras_require = {req : [req] for req in optional_requirements}
-            extras_require['all'] = optional_requirements
-
         if module_docstring:
             long_description_intro += f"""{module_docstring}\n\n"""
 
+    
         if add_cli_tool:
             entry_points = {
                 'console_scripts': [
@@ -1507,17 +1639,30 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
 """
+        if metadata_str:
+            setup_content += f"""    {metadata_str},"""
 
         if add_cli_tool:
             setup_content += f"""
     entry_points = {entry_points},
 """
-        if optional_requirements:
+        if extras_require:
             setup_content += f"""
     extras_require = {extras_require},
-)
+"""
+        if license_label and ('license' not in metadata.keys()):
+            setup_content += f"""
+    license = "{license_label}",
 """
 
+        if docs_url and ('url' not in metadata.keys()):
+            setup_content += f"""
+    url = {docs_url},
+"""
+
+        setup_content += f"""
+)
+"""
 
         with open(os.path.join(setup_directory, 'setup.py'), 'w') as file:
             file.write(setup_content)
@@ -2273,7 +2418,11 @@ class PackageAutoAssembler:
                                     'Programming Language :: Python :: 3.11',
                                     'License :: OSI Approved :: MIT License',
                                     'Topic :: Scientific/Engineering'])
+    license_path = attr.ib(default=None)
+    license_label = attr.ib(default=None)
+    docs_url = attr.ib(default=None)
     requirements_list = attr.ib(default=[])
+    optional_requirements_list = attr.ib(default=[])
     execute_readme_notebook = attr.ib(default=True, type = bool)
     python_version = attr.ib(default="3.8")
     version_increment_type = attr.ib(default="patch", type = str)
@@ -2409,6 +2558,9 @@ class PackageAutoAssembler:
             module_name = self.module_name,
             module_filepath = self.module_filepath,
             setup_directory = self.setup_directory,
+            license_path = self.license_path,
+            license_label = self.license_label,
+            docs_url = self.docs_url,
             logger = self.logger)
 
     def _initialize_cli_handler(self):
@@ -2593,6 +2745,8 @@ class PackageAutoAssembler:
         self.setup_dir_h.flush_n_make_setup_dir()
         # copy module to dir
         self.setup_dir_h.copy_module_to_setup_dir()
+        # copy license to dir
+        self.setup_dir_h.copy_license_to_setup_dir()
         # create init file for new package
         self.setup_dir_h.create_init_file()
 
@@ -2676,6 +2830,7 @@ class PackageAutoAssembler:
             add_header = add_header)
 
         self.requirements_list = self.requirements_h.requirements_list
+        self.optional_requirements_list = self.requirements_h.optional_requirements_list
 
         if check_vulnerabilities:
             self.requirements_h.check_vulnerabilities()
@@ -2774,6 +2929,7 @@ class PackageAutoAssembler:
                        metadata : dict = None,
                        cli_metadata : dict = None,
                        requirements : list = None,
+                       optional_requirements : list = None,
                        classifiers : list = None,
                        module_filepath : str = None,
                        module_docstring : str = None):
@@ -2797,6 +2953,9 @@ class PackageAutoAssembler:
 
         if requirements is None:
             requirements = self.requirements_list
+
+        if optional_requirements is None:
+            optional_requirements = self.optional_requirements_list
 
         if classifiers is None:
             classifiers = self.classifiers
@@ -2838,6 +2997,7 @@ class PackageAutoAssembler:
                                           metadata = metadata,
                                           cli_metadata = cli_metadata,
                                           requirements = requirements,
+                                          optional_requirements = optional_requirements,
                                           classifiers = classifiers,
                                           add_cli_tool = add_cli_tool)
 
