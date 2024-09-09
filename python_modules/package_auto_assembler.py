@@ -31,7 +31,9 @@ import tempfile
 import requests
 import pip_audit #==2.7.3
 import mkdocs #==1.6.0
-
+import difflib
+import importlib
+import importlib.metadata
 
 
 # Metadata for package creation
@@ -2389,6 +2391,160 @@ class CliHandler:
         shutil.copy(cli_module_filepath, os.path.join(setup_directory, "cli.py"))
 
         return True
+
+@attr.s
+class DependenciesAnalyser:
+
+    package_name = attr.ib(default=True)
+
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='Dependencies Analyser')
+    loggerLvl = attr.ib(default=logging.DEBUG)
+    logger_format = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+
+    def _initialize_logger(self):
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    def filter_packages_by_tags(self, tags : list):
+
+        """
+        Uses list of provided tags to search though installed 
+        dependencies and returns of names of those that match.
+        """
+
+        import pkg_resources
+        matches = []
+        for dist in pkg_resources.working_set:
+            try:
+                metadata_lines = dist.get_metadata_lines('METADATA')
+                if all(any(tag in line for line in metadata_lines) for tag in tags):
+                    matches.append((dist.project_name, dist.version))
+            except (FileNotFoundError, KeyError):
+                continue
+        return matches
+
+
+    def get_package_metadata(self, package_name : str = None):
+
+        """
+        Returns some preselected metadata fields if available, like:
+
+            - keywords 
+            - version
+            - author
+            - author_email
+            - classifiers
+            - paa_version
+            - paa_cli
+            - license_label
+
+        for provided package name.
+        """
+
+        if package_name is None:
+            package_name = self.package_name
+
+        if package_name is None:
+            raise ValueError(f"Provide package_name!")
+
+        import pkg_resources
+        dist = pkg_resources.get_distribution(package_name)
+        metadata = dist.get_metadata_lines('METADATA')
+
+        try:
+            version = dist.version
+        except Exception as e:
+            version = None
+
+        keywords = None
+        author = None
+        author_email = None
+        paa_version = None
+        paa_cli = False
+        classifiers = []
+
+        for line in metadata:
+            if line.startswith("Keywords:"):
+                keywords = ast.literal_eval(line.split("Keywords: ")[1])
+            if line.startswith("Author:"):
+                author = line.split("Author: ")[1]
+            if line.startswith("Author-email:"):
+                author_email = line.split("Author-email: ")[1]
+            if line.startswith("Classifier:"):
+                classifiers.append(line.split("Classifier: ")[1])
+            if line.startswith("Classifier: PAA-Version ::"):
+                paa_version = line.split("Classifier: PAA-Version :: ")[1]
+            if line.startswith("Classifier: PAA-CLI ::"):
+                paa_cli = line.split("Classifier: PAA-CLI :: ")[1]
+            if line.startswith("License:"):
+                license_label = line.split("License: ")[1]
+
+        return {'keywords' : keywords, 
+                'version' : version, 
+                'author' : author, 
+                'author_email' : author_email, 
+                'classifiers' : classifiers, 
+                'paa_version' : paa_version, 
+                'paa_cli' : paa_cli, 
+                'license_label' : license_label}
+
+    def get_package_requirements(self, package_name : str = None):
+
+        """
+        Returns a list of requirements for provided package name.
+        """
+
+        if package_name is None:
+            package_name = self.package_name
+
+        if package_name is None:
+            raise ValueError(f"Provide package_name!")
+
+        metadata = importlib.metadata.metadata(package_name)
+        requirements = metadata.get_all("Requires-Dist", [])
+        if requirements != []:
+            requirements = requirements
+
+        return requirements
+
+    def normalize_license_label(self, license_label : str):
+
+        """
+        For provided license label, attempts to match it with the following names:
+
+            "mit", "bsd-3-clause", "bsd-2-clause", "apache-2.0", "gpl-3.0", "lgpl-3.0",
+            "mpl-2.0", "agpl-3.0", "epl-2.0"
+        
+        and if nothing matches returns "unknown"
+        """
+
+        if license_label is None:
+            return "unknown"
+
+        # Simplified lowercase labels for matching
+        STANDARD_LICENSES = [
+            "mit", "bsd-3-clause", "bsd-2-clause", "apache-2.0", "gpl-3.0", "lgpl-3.0",
+            "mpl-2.0", "agpl-3.0", "epl-2.0"
+        ]
+        
+        # Normalize to lowercase
+        normalized_label = license_label.lower()
+        
+        # Match with the highest similarity
+        match = difflib.get_close_matches(normalized_label, STANDARD_LICENSES, n=1, cutoff=0.4)
+        return match[0] if match else "unknown"
 
 @attr.s
 class PackageAutoAssembler:
