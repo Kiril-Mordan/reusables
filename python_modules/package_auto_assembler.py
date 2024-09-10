@@ -2417,6 +2417,198 @@ class DependenciesAnalyser:
 
             self.logger = logger
 
+    def _extract_dependencies_names(self, requirements : list):
+
+        reqs = [req.split(" ")[0]\
+            .split("==")[0]\
+                .split("<=")[0]\
+                    .split("<")[0]\
+                        .split(">=")[0]\
+                            .split(">")[0]\
+                                .split(";")[0] \
+            for req in requirements if 'extra ==' not in req]
+
+        return reqs
+
+    def _get_licenses(self, dependencies : list):
+
+        licenses = {}
+        for req in dependencies:
+            try:
+                license_ = self.get_package_metadata(req)['license_label']
+                if license_:
+                    license_ = self.normalize_license_label(license_)
+                else:
+                    license_ = '-'
+            except Exception as e:
+                license_ = '-'
+
+            licenses[req] = license_
+
+        return licenses
+
+    def _count_keys(self, d):
+        if isinstance(d, dict):
+            return len(d) + sum(self._count_keys(v) for v in d.values() if isinstance(v, dict))
+        return 0
+
+    def _apply_to_lists(self, data, func):
+        for key, value in data.items():
+            if isinstance(value, list):
+                # Apply the function to the list
+                data[key] = func(value)
+            elif isinstance(value, dict):
+                # Recursively go deeper into the dictionary
+                self._apply_to_lists(value, func)
+            # If value is neither list nor dict, do nothing
+
+    def _extract_dependencies_layer(self, dependencies):
+
+        if dependencies == []:
+            return dependencies
+
+        requirements_dict = self.extract_requirements_for_dependencies(
+            dependencies = dependencies
+        )
+        dependencies_dict = {dep : self._extract_dependencies_names(reqs_) \
+            for dep, reqs_ in requirements_dict.items()}
+
+        return dependencies_dict
+
+    def _flatten_dict_with_subtrees(self, d, parent_key=''):
+        items = []
+        for k, v in d.items():
+            new_key = f"{parent_key}.{k}" if parent_key else k
+            # Add subtree or package
+            items.append(new_key)  
+            
+            if isinstance(v, dict):
+                # Recursively flatten subtrees
+                items.extend(self._flatten_dict_with_subtrees(v, new_key)) 
+            else:
+                for item in v:
+                    # Add individual packages
+                    items.append(f"{new_key}.{item}") 
+        return items
+
+    def extract_dependencies_tree(self, 
+                                    package_name : str = None, 
+                                    layers : int = 100):
+
+        """
+        Extracts dependencies tree for a package.
+        """
+
+        if package_name is None:
+            package_name = self.package_name
+
+        if package_name is None:
+            raise ValueError(f"Provide package_name!")
+
+
+        requirements = self.get_package_requirements(
+            package_name = package_name
+        )
+
+        dependencies = self._extract_dependencies_names(
+            requirements=requirements)
+
+        dependencies_dict = self._extract_dependencies_layer(
+            dependencies = dependencies)
+
+        if layers == 1:
+            return dependencies_dict
+
+
+        for layer in range(layers):
+            list_dim0 = self._count_keys(dependencies_dict)
+            self._apply_to_lists(data = dependencies_dict, 
+                        func = self._extract_dependencies_layer)
+
+            list_dim = self._count_keys(dependencies_dict)
+        
+            if list_dim == list_dim0:
+                break
+
+
+        return dependencies_dict
+
+    def add_license_labels_to_dep_tree(self, dependencies_tree):
+
+        """
+        Adds license labels to dependencies tree.
+        """
+
+        flattened_tree_deps = self._flatten_dict_with_subtrees(
+            dependencies_tree)
+
+        tree_dep_license = {ft : self._get_licenses([ft.split('.')[-1]])[ft.split('.')[-1]] \
+            for ft in flattened_tree_deps}
+
+        return tree_dep_license
+
+    def find_unexpected_licenses_in_deps_tree(self,  
+                                            tree_dep_license : dict,
+                                            allowed_licenses : list):
+
+        return {dep : license_label \
+            for dep, license_label in tree_dep_license.items() \
+                if license_label not in allowed_licenses}
+
+    def print_flattened_tree(self, flattened_dict):
+
+        """
+        Prints provided dependencies tree with provided values.
+        """
+
+        def recursive_build_tree(full_key, value, current_level):
+            keys = full_key.split(".")
+            for key in keys[:-1]:
+                if isinstance(current_level, str):
+                    current_level = {key: current_level}
+                if key not in current_level or isinstance(current_level[key], str):
+                    current_level[key] = {}
+                current_level = current_level[key]
+            current_level[keys[-1]] = value
+
+        tree = {}
+        for full_key, value in flattened_dict.items():
+            recursive_build_tree(full_key, value, tree)
+
+        def recursive_print(d, indent=0, is_last=False):
+            if isinstance(d, str):  # If `d` is a string, just return because it's a leaf node.
+                return
+            for i, (key, value) in enumerate(d.items()):
+                is_last_item = i == len(d) - 1
+                prefix = "└── " if is_last_item else "├── "
+                # Properly handle string (leaf) values here
+                if isinstance(value, dict):
+                    print("    " * indent + prefix + key + " : -")
+                    recursive_print(value, indent + 1, is_last_item)
+                else:
+                    print("    " * indent + prefix + key + f" : {value}")
+
+        # Print each root-level element along with its license
+        for i, (key, value) in enumerate(flattened_dict.items()):
+            if "." not in key:  # Root-level items
+                print(f"└── {key} : {value}")
+                # Recursively print sub-keys if they exist
+                if isinstance(tree.get(key), dict):
+                    recursive_print(tree.get(key), indent=1)
+
+    def extract_requirements_for_dependencies(self, dependencies : list):
+
+        """
+        Outputs a dictionary where key is dependency and value is 
+        a list of requirements for that dependency.
+        """
+    
+        requirements_dict = {dep : self.get_package_requirements(
+            package_name = dep
+        ) for dep in dependencies}
+
+        return requirements_dict
+
     def filter_packages_by_tags(self, tags : list):
 
         """
@@ -2474,6 +2666,7 @@ class DependenciesAnalyser:
         paa_version = None
         paa_cli = False
         classifiers = []
+        license_label = None
 
         for line in metadata:
             if line.startswith("Keywords:"):
@@ -2512,10 +2705,14 @@ class DependenciesAnalyser:
         if package_name is None:
             raise ValueError(f"Provide package_name!")
 
-        metadata = importlib.metadata.metadata(package_name)
-        requirements = metadata.get_all("Requires-Dist", [])
-        if requirements != []:
-            requirements = requirements
+        try:
+            metadata = importlib.metadata.metadata(package_name)
+            requirements = metadata.get_all("Requires-Dist", [])
+            if requirements != []:
+                requirements = requirements
+        except Exception as e:
+            self.logger.debug(f'No requirements found for {package_name}')
+            requirements = []
 
         return requirements
 
