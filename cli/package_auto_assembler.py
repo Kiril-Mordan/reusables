@@ -30,6 +30,7 @@ test_install_config = {
         "module_dir" : "python_modules",
         "cli_dir" : "cli",
         "mapping_filepath" : "package_mapping.json",
+        "licenses_filepath" : None,
         "include_local_dependecies" : True,
         "dependencies_dir" : None,
         "license_path" : None,
@@ -40,6 +41,8 @@ test_install_config = {
         "versions_filepath" : "lsts_package_versions.yml",
         "log_filepath" : "version_logs.csv",
         "classifiers" : ['Development Status :: 3 - Alpha'],
+        "allowed_licenses" : ['mit', 'apache-2.0', 'lgpl-3.0', 
+                              'bsd-3-clause', 'bsd-2-clause', '-', 'mpl-2.0'],
         "kernel_name" : 'python3',
         "python_version" : "3.10",
         "default_version" : "0.0.0",
@@ -74,6 +77,7 @@ def init_config(ctx):
 @click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
 @click.option('--default-version', 'default_version', type=str, required=False, help='Default version.')
 @click.option('--check-vulnerabilities', 'check_vulnerabilities', is_flag=True, type=bool, required=False, help='If checked, checks module dependencies with pip-audit for vulnerabilities.')
+@click.option('--check-licenses', 'check_licenses', is_flag=True, type=bool, required=False, help='If checked, checks module dependencies licenses.')
 @click.option('--keep-temp-files', 'keep_temp_files', is_flag=True, type=bool, required=False, help='If checked, setup directory won\'t be removed after setup is done.')
 @click.option('--skip-deps-install', 'skip_deps_install', is_flag=True, type=bool, required=False, help='If checked, existing dependencies from env will be reused.')
 @click.pass_context
@@ -86,6 +90,7 @@ def test_install(ctx,
         dependencies_dir,
         default_version,
         check_vulnerabilities,
+        check_licenses,
         skip_deps_install,
         keep_temp_files):
     """Test install module into local environment."""
@@ -108,6 +113,8 @@ def test_install(ctx,
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
         "mapping_filepath" : test_install_config["mapping_filepath"],
+        "licenses_filepath" : test_install_config["licenses_filepath"],
+        "allowed_licenses" : test_install_config["allowed_licenses"],
         "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
         "classifiers" : test_install_config["classifiers"],
@@ -130,7 +137,11 @@ def test_install(ctx,
         paa_params["check_vulnerabilities"] = True
     else:
         paa_params["check_vulnerabilities"] = False
-
+    check_licenses
+    if check_licenses:
+        paa_params["check_dependencies_licenses"] = True
+    else:
+        paa_params["check_dependencies_licenses"] = False
     if skip_deps_install:
         paa_params["skip_deps_install"] = True
 
@@ -178,6 +189,7 @@ def test_install(ctx,
 @click.option('--python-version', 'python_version', type=str, required=False, help='Python version.')
 @click.option('--default-version', 'default_version', type=str, required=False, help='Default version.')
 @click.option('--ignore-vulnerabilities-check', 'ignore_vulnerabilities_check', is_flag=True, type=bool, required=False, help='If checked, does not check module dependencies with pip-audit for vulnerabilities.')
+@click.option('--ignore-licenses-check', 'ignore_licenses_check', is_flag=True, type=bool, required=False, help='If checked, does not check module licenses for unexpected ones.')
 @click.option('--example-notebook-path', 'example_notebook_path', type=str, required=False, help='Path to .ipynb file to be used as README.')
 @click.option('--execute-notebook', 'execute_notebook', is_flag=True, type=bool, required=False, help='If checked, executes notebook before turning into README.')
 @click.option('--log-filepath', 'log_filepath', type=str, required=False, help='Path to logfile to record version change.')
@@ -194,6 +206,7 @@ def make_package(ctx,
         python_version,
         default_version,
         ignore_vulnerabilities_check,
+        ignore_licenses_check,
         example_notebook_path,
         execute_notebook,
         log_filepath,
@@ -218,6 +231,8 @@ def make_package(ctx,
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
         "mapping_filepath" : test_install_config["mapping_filepath"],
+        "licenses_filepath" : test_install_config["licenses_filepath"],
+        "allowed_licenses" : test_install_config["allowed_licenses"],
         "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
         "classifiers" : test_install_config["classifiers"],
@@ -256,6 +271,10 @@ def make_package(ctx,
         paa_params["check_vulnerabilities"] = False
     else:
         paa_params["check_vulnerabilities"] = True
+    if ignore_licenses_check:
+        paa_params["check_dependencies_licenses"] = False
+    else:
+        paa_params["check_dependencies_licenses"] = True
 
     if example_notebook_path:
         paa_params["example_notebook_path"] = example_notebook_path
@@ -351,6 +370,105 @@ def check_vulnerabilities(ctx,
     paa = PackageAutoAssembler(
         **paa_params
     )
+
+    if paa.metadata_h.is_metadata_available():
+
+
+        paa.add_metadata_from_module()
+        paa.add_metadata_from_cli_module()
+        paa.metadata['version'] = paa.default_version
+        paa.prep_setup_dir()
+
+        try:
+            if test_install_config["include_local_dependecies"]:
+                paa.merge_local_dependacies()
+
+            paa.add_requirements_from_module()
+            paa.add_requirements_from_cli_module()
+        except Exception as e:
+            print("")
+        finally:
+            shutil.rmtree(paa.setup_directory)
+
+    else:
+        paa.logger.info(f"Metadata condition was not fullfield for {module_name.replace('_','-')}")
+
+@click.command()
+@click.argument('module_name')
+@click.option('--config', type=str, required=False, help='Path to config file for paa.')
+@click.option('--module-filepath', 'module_filepath', type=str, required=False, help='Path to .py file to be packaged.')
+@click.option('--mapping-filepath', 'mapping_filepath', type=str, required=False, help='Path to .json file that maps import to install dependecy names.')
+@click.option('--license-mapping-filepath', 'licenses_filepath', type=str, required=False, help='Path to .json file that maps license labels to install dependecy names.')
+@click.option('--cli-module-filepath', 'cli_module_filepath',  type=str, required=False, help='Path to .py file that contains cli logic.')
+@click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
+@click.option('--skip-normalize-labels', 
+              'skip_normalize_labels', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, package license labels are not normalized.')
+@click.pass_context
+def check_licenses(ctx,
+        config,
+        module_name,
+        module_filepath,
+        mapping_filepath,
+        licenses_filepath,
+        cli_module_filepath,
+        dependencies_dir,
+        skip_normalize_labels):
+    """Check licenses of the module."""
+
+    module_name = module_name.replace('-','_')
+
+    if config is None:
+        config = ".paa.config"
+
+    if os.path.exists(config):
+        with open(config, 'r') as file:
+            test_install_config_up = yaml.safe_load(file)
+
+        test_install_config.update(test_install_config_up)
+
+    test_install_config["loggerLvl"] = logging.INFO
+
+    paa_params = {
+        "module_name" : f"{module_name}",
+        "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
+        "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
+        "mapping_filepath" : test_install_config["mapping_filepath"],
+        "licenses_filepath" : test_install_config["licenses_filepath"],
+        "dependencies_dir" : test_install_config["dependencies_dir"],
+        "setup_directory" : f"./{module_name}",
+        "classifiers" : test_install_config["classifiers"],
+        "kernel_name" : test_install_config["kernel_name"],
+        "python_version" : test_install_config["python_version"],
+        "default_version" : test_install_config["default_version"],
+        "versions_filepath" : test_install_config["versions_filepath"],
+        "log_filepath" : test_install_config["log_filepath"],
+        "check_vulnerabilities" : False,
+        "check_dependencies_licenses" : True
+    }
+
+    if module_filepath:
+        paa_params["module_filepath"] = module_filepath
+    if cli_module_filepath:
+        paa_params["cli_module_filepath"] = cli_module_filepath
+    if mapping_filepath:
+        paa_params["mapping_filepath"] = mapping_filepath
+    if licenses_filepath:
+        paa_params["licenses_filepath"] = licenses_filepath
+    if dependencies_dir:
+        paa_params["dependencies_dir"] = dependencies_dir
+
+    paa = PackageAutoAssembler(
+        **paa_params
+    )
+
+    if skip_normalize_labels:
+        normalize_labels = False
+    else:
+        normalize_labels = True
 
     if paa.metadata_h.is_metadata_available():
 
@@ -611,7 +729,7 @@ def show_module_info(ctx,
         import_name = label_name
 
     try:
-        package = importlib.import_module(import_name)
+        package = importlib.import_module(import_name.replace('-','_'))
     except ImportError:
         click.echo(f"No package with name {label_name} was installed or mapping does not support it!")
 
@@ -725,16 +843,55 @@ def show_module_requirements(ctx,
     for req in requirements:
         click.echo(f"{req}")
 
+@click.command()
+@click.argument('package_name')
+@click.option('--normalize-labels', 
+              'normalize_labels', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, package license labels are normalized.')
+@click.pass_context
+def show_module_licenses(ctx,
+        package_name,
+        normalize_labels):
+    """Shows module licenses."""
+
+    da = DependenciesAnalyser(loggerLvl = logging.INFO)
+    
+    package_name = package_name.replace('-','_')
+
+    if normalize_labels:
+        normalize_labels = True
+    else:
+        normalize_labels = False
+    
+
+    extracted_dependencies_tree = da.extract_dependencies_tree(
+        package_name = package_name
+    )
+
+    extracted_dependencies_tree_license = da.add_license_labels_to_dep_tree(
+        dependencies_tree = extracted_dependencies_tree,
+        normalize = normalize_labels
+    )
+
+    da.print_flattened_tree(extracted_dependencies_tree_license)
+
+
+
 
 
 cli.add_command(init_config, "init-config")
 cli.add_command(test_install, "test-install")
 cli.add_command(make_package, "make-package")
 cli.add_command(check_vulnerabilities, "check-vulnerabilities")
+cli.add_command(check_licenses, "check-licenses")
 cli.add_command(update_release_notes, "update-release-notes")
 cli.add_command(show_module_list, "show-module-list")
 cli.add_command(show_module_info, "show-module-info")
 cli.add_command(show_module_requirements, "show-module-requirements")
+cli.add_command(show_module_licenses, "show-module-licenses")
 
 
 if __name__ == "__main__":

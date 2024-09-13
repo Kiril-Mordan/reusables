@@ -41,7 +41,8 @@ __package_metadata__ = {
     "author": "Kyrylo Mordan",
     "author_email": "parachute.repo@gmail.com",
     "description": "A tool to automate package creation within ci based on just .py and optionally .ipynb file.",
-    "keywords" : ['python', 'packaging']
+    "keywords" : ['python', 'packaging'],
+    'license' : 'mit'
 }
 
 @attr.s
@@ -2396,6 +2397,15 @@ class CliHandler:
 class DependenciesAnalyser:
 
     package_name = attr.ib(default=True)
+    package_licenses_filepath = attr.ib(default=None)
+    allowed_licenses = attr.ib(default=[])
+
+    package_licenses = attr.ib(default=None)
+
+    standard_licenses = attr.ib(default=[
+            "mit", "bsd-3-clause", "bsd-2-clause", "apache-2.0", 
+            "gpl-3.0", "lgpl-3.0", "mpl-2.0", "agpl-3.0", "epl-2.0"
+        ])
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Dependencies Analyser')
@@ -2404,6 +2414,9 @@ class DependenciesAnalyser:
 
     def __attrs_post_init__(self):
         self._initialize_logger()
+        if self.allowed_licenses is None:
+            self.allowed_licenses = self.standard_licenses
+            self.allowed_licenses.append('-')
 
     def _initialize_logger(self):
         """
@@ -2430,18 +2443,35 @@ class DependenciesAnalyser:
 
         return reqs
 
-    def _get_licenses(self, dependencies : list):
+    def _get_licenses(self, 
+                      dependencies : list,
+                      package_licenses : dict = None, 
+                      normalize : bool = True):
+
+        if package_licenses is None:
+            package_licenses = self.package_licenses
+
+        if package_licenses is None:
+            package_licenses = self.load_package_mappings()
 
         licenses = {}
         for req in dependencies:
             try:
                 license_ = self.get_package_metadata(req)['license_label']
                 if license_:
-                    license_ = self.normalize_license_label(license_)
+                    if normalize:
+                        license_ = self._normalize_license_label(license_)
+                    else:
+                        license_ = license_[0:50]
                 else:
                     license_ = '-'
             except Exception as e:
                 license_ = '-'
+
+            if license_ == 'unknown':
+                license_ = package_licenses.get(req, 'unknown')
+            if license_ == '-':
+                license_ = package_licenses.get(req, '-')
 
             licenses[req] = license_
 
@@ -2491,8 +2521,29 @@ class DependenciesAnalyser:
                     items.append(f"{new_key}.{item}") 
         return items
 
+    def load_package_mappings(self,
+                              mapping_filepath : str = None):
+        """
+        Get file with mappings of package license labels.
+        """
+
+        if mapping_filepath is None:
+            mapping_filepath = self.package_licenses_filepath
+
+        if mapping_filepath is None:
+            self.logger.debug("No package mapping provided")
+            package_licenses = {}
+        else:
+            with open(mapping_filepath, 'r') as file:
+                package_licenses = json.load(file)
+
+        self.package_licenses = package_licenses
+            
+        return package_licenses
+
     def extract_dependencies_tree(self, 
                                     package_name : str = None, 
+                                    requirements : list = None,
                                     layers : int = 100):
 
         """
@@ -2505,10 +2556,11 @@ class DependenciesAnalyser:
         if package_name is None:
             raise ValueError(f"Provide package_name!")
 
+        if requirements is None:
 
-        requirements = self.get_package_requirements(
-            package_name = package_name
-        )
+            requirements = self.get_package_requirements(
+                package_name = package_name
+            )
 
         dependencies = self._extract_dependencies_names(
             requirements=requirements)
@@ -2533,7 +2585,9 @@ class DependenciesAnalyser:
 
         return dependencies_dict
 
-    def add_license_labels_to_dep_tree(self, dependencies_tree):
+    def add_license_labels_to_dep_tree(self, 
+                                        dependencies_tree : dict, 
+                                        normalize : bool = True):
 
         """
         Adds license labels to dependencies tree.
@@ -2542,21 +2596,58 @@ class DependenciesAnalyser:
         flattened_tree_deps = self._flatten_dict_with_subtrees(
             dependencies_tree)
 
-        tree_dep_license = {ft : self._get_licenses([ft.split('.')[-1]])[ft.split('.')[-1]] \
+        tree_dep_license = {ft : self._get_licenses([ft.split('.')[-1]], 
+        normalize = normalize)[ft.split('.')[-1]] \
             for ft in flattened_tree_deps}
 
         return tree_dep_license
 
     def find_unexpected_licenses_in_deps_tree(self,  
                                             tree_dep_license : dict,
-                                            allowed_licenses : list):
+                                            allowed_licenses : list = None,
+                                            raise_error : bool = True):
 
-        return {dep : license_label \
+        """
+        Returns a dictionary of packages that contained unexpected license labels.
+        If raise error is True, prints portion of dependencies tree.
+        """
+
+        if allowed_licenses is None:
+            allowed_licenses = self.allowed_licenses
+
+        
+        out = {dep : license_label \
             for dep, license_label in tree_dep_license.items() \
                 if license_label not in allowed_licenses}
 
-    def print_flattened_tree(self, flattened_dict):
+        requirements = list(set([req.split('.')[0] for req in out \
+            if req.split('.')[0] == req]))
 
+        tree_missing_links_update = {req.split('.')[0] : '' \
+            for req in out if req.split('.')[0] not in requirements} 
+
+      
+        for req_from_missing in tree_missing_links_update:
+
+            tree_partials = {req : license_label \
+                for req, license_label in out.items() \
+                    if req.split('.')[0] == req_from_missing}
+
+            for req_part in tree_partials:
+                del out[req_part]
+            
+            out[req_from_missing] = tree_missing_links_update[req_from_missing]
+            out.update(tree_partials)
+
+        if raise_error and out != {}:
+            self.print_flattened_tree(flattened_dict = out)
+            raise Exception("Found unexpected licenses!")
+        else:
+            self.logger.info("No unexpected licenses found")
+
+        return out
+
+    def print_flattened_tree(self, flattened_dict):
         """
         Prints provided dependencies tree with provided values.
         """
@@ -2564,37 +2655,44 @@ class DependenciesAnalyser:
         def recursive_build_tree(full_key, value, current_level):
             keys = full_key.split(".")
             for key in keys[:-1]:
-                if isinstance(current_level, str):
-                    current_level = {key: current_level}
-                if key not in current_level or isinstance(current_level[key], str):
+                if key not in current_level:
                     current_level[key] = {}
+                elif isinstance(current_level[key], str):
+                    # If it's a string, convert it into a dictionary to store the nested structure
+                    current_level[key] = {"_value": current_level[key]}
                 current_level = current_level[key]
-            current_level[keys[-1]] = value
+            # Store the value, handle if it's at a nested level or the root
+            if keys[-1] in current_level and isinstance(current_level[keys[-1]], dict):
+                current_level[keys[-1]]["_value"] = value
+            else:
+                current_level[keys[-1]] = value
 
         tree = {}
         for full_key, value in flattened_dict.items():
             recursive_build_tree(full_key, value, tree)
 
         def recursive_print(d, indent=0, is_last=False):
-            if isinstance(d, str):  # If `d` is a string, just return because it's a leaf node.
-                return
             for i, (key, value) in enumerate(d.items()):
                 is_last_item = i == len(d) - 1
                 prefix = "└── " if is_last_item else "├── "
-                # Properly handle string (leaf) values here
                 if isinstance(value, dict):
-                    print("    " * indent + prefix + key + " : -")
-                    recursive_print(value, indent + 1, is_last_item)
+                    # Check if there is a _value to print as the value of this key
+                    if "_value" in value:
+                        print("    " * indent + prefix + key + f" : {value['_value']}")
+                    else:
+                        print("    " * indent + prefix + key + " : -")
+                    recursive_print({k: v for k, v in value.items() if k != "_value"}, indent + 1, is_last_item)
                 else:
                     print("    " * indent + prefix + key + f" : {value}")
 
-        # Print each root-level element along with its license
-        for i, (key, value) in enumerate(flattened_dict.items()):
-            if "." not in key:  # Root-level items
+        # Start printing the tree, avoiding extra _value printing at the root level
+        for key, value in tree.items():
+            if isinstance(value, dict) and "_value" in value:
+                print(f"└── {key} : {value['_value']}")
+                recursive_print({k: v for k, v in value.items() if k != "_value"}, indent=1)
+            else:
                 print(f"└── {key} : {value}")
-                # Recursively print sub-keys if they exist
-                if isinstance(tree.get(key), dict):
-                    recursive_print(tree.get(key), indent=1)
+
 
     def extract_requirements_for_dependencies(self, dependencies : list):
 
@@ -2716,7 +2814,9 @@ class DependenciesAnalyser:
 
         return requirements
 
-    def normalize_license_label(self, license_label : str):
+    def _normalize_license_label(self, 
+                                license_label : str,
+                                standard_licenses : list = None):
 
         """
         For provided license label, attempts to match it with the following names:
@@ -2727,20 +2827,19 @@ class DependenciesAnalyser:
         and if nothing matches returns "unknown"
         """
 
+        if standard_licenses is None:
+            standard_licenses = self.standard_licenses
+
         if license_label is None:
             return "unknown"
-
-        # Simplified lowercase labels for matching
-        STANDARD_LICENSES = [
-            "mit", "bsd-3-clause", "bsd-2-clause", "apache-2.0", "gpl-3.0", "lgpl-3.0",
-            "mpl-2.0", "agpl-3.0", "epl-2.0"
-        ]
         
         # Normalize to lowercase
         normalized_label = license_label.lower()
+
+        normalized_label = normalized_label.replace('software license', '')
         
         # Match with the highest similarity
-        match = difflib.get_close_matches(normalized_label, STANDARD_LICENSES, n=1, cutoff=0.4)
+        match = difflib.get_close_matches(normalized_label, standard_licenses, n=1, cutoff=0.4)
         return match[0] if match else "unknown"
 
 @attr.s
@@ -2754,6 +2853,8 @@ class PackageAutoAssembler:
     module_filepath = attr.ib(type=str)
     cli_module_filepath = attr.ib(default=None)
     mapping_filepath = attr.ib(default=None)
+    licenses_filepath = attr.ib(default=None)
+    allowed_licenses = attr.ib(default=None)
     dependencies_dir = attr.ib(default=None)
     example_notebook_path = attr.ib(default=None)
     versions_filepath = attr.ib(default='./lsts_package_versions.yml')
@@ -2784,6 +2885,7 @@ class PackageAutoAssembler:
     check_vulnerabilities = attr.ib(default=True, type = bool)
     add_requirements_header = attr.ib(default=True, type = bool)
     use_commit_messages = attr.ib(default=True, type = bool)
+    check_dependencies_licenses = attr.ib(default=False, type = bool)
     remove_temp_files = attr.ib(default=True, type = bool)
     skip_deps_install = attr.ib(default=False, type = bool)
     max_git_search_depth = attr.ib(default=5, type = int)
@@ -2798,6 +2900,7 @@ class PackageAutoAssembler:
     long_doc_h_class = attr.ib(default=LongDocHandler)
     cli_h_class = attr.ib(default=CliHandler)
     release_notes_h_class = attr.ib(default=ReleaseNotesHandler)
+    dependencies_analyzer_h_class = attr.ib(default=DependenciesAnalyser)
 
     ## handlers
     setup_dir_h = attr.ib(default = None, type = SetupDirHandler)
@@ -2809,6 +2912,7 @@ class PackageAutoAssembler:
     long_doc_h = attr.ib(default = None, type=LongDocHandler)
     cli_h = attr.ib(default = None, type=CliHandler)
     release_notes_h = attr.ib(default = None, type=ReleaseNotesHandler)
+    dependencies_analyzer_h = attr.ib(default = None, type=DependenciesAnalyser)
 
     ## output
     cli_metadata = attr.ib(default={}, type = dict)
@@ -2927,6 +3031,17 @@ class PackageAutoAssembler:
             setup_directory = self.setup_directory,
             logger = self.logger)
 
+    def _initialize_dep_analyser_handler(self):
+
+        """
+        Initialize cli handler with available parameters.
+        """
+
+        self.dependencies_analyzer_h = self.dependencies_analyzer_h_class(
+            package_licenses_filepath = self.licenses_filepath,
+            allowed_licenses = self.allowed_licenses,
+            logger = self.logger)
+
     def _initialize_release_notes_handler(self, version : str = None):
 
         """
@@ -2949,7 +3064,7 @@ class PackageAutoAssembler:
         Add metadata extracted from the module.
         """
 
-        self.logger.info(f"Adding metadata ...")
+        self.logger.debug(f"Adding metadata ...")
 
         if self.metadata_h is None:
             self._initialize_metadata_handler()
@@ -2967,7 +3082,7 @@ class PackageAutoAssembler:
         Add metadata extracted from the cli module.
         """
 
-        self.logger.info(f"Adding cli metadata ...")
+        self.logger.debug(f"Adding cli metadata ...")
 
         if self.metadata_h is None:
             self._initialize_metadata_handler()
@@ -3000,7 +3115,7 @@ class PackageAutoAssembler:
         Increment version and creates entry in version logs.
         """
 
-        self.logger.info(f"Incrementing version ...")
+        self.logger.debug(f"Incrementing version ...")
 
         if self.version_h is None:
             self._initialize_version_handler()
@@ -3052,7 +3167,7 @@ class PackageAutoAssembler:
         Increment version and creates entry in version logs.
         """
 
-        self.logger.info(f"Updating release notes ...")
+        self.logger.debug(f"Updating release notes ...")
 
         if self.release_notes_h is None:
             self._initialize_release_notes_handler()
@@ -3075,7 +3190,7 @@ class PackageAutoAssembler:
         Prepare setup directory.
         """
 
-        self.logger.info(f"Preparing setup directory ...")
+        self.logger.debug(f"Preparing setup directory ...")
 
         if self.setup_dir_h is None:
             self._initialize_setup_dir_handler()
@@ -3126,7 +3241,7 @@ class PackageAutoAssembler:
             save_filepath = os.path.join(self.setup_directory, os.path.basename(main_module_filepath))
 
         if dependencies_dir:
-            self.logger.info(f"Merging {main_module_filepath} with dependecies from {dependencies_dir} into {save_filepath}")
+            self.logger.debug(f"Merging {main_module_filepath} with dependecies from {dependencies_dir} into {save_filepath}")
 
             # combime module with its dependacies
             self.local_dependacies_h.save_combined_modules(
@@ -3143,6 +3258,7 @@ class PackageAutoAssembler:
                             custom_modules : list = None,
                             import_mappings : str = None,
                             check_vulnerabilities : bool = None,
+                            check_dependencies_licenses : bool = None,
                             add_header : bool = None):
 
         """
@@ -3157,6 +3273,9 @@ class PackageAutoAssembler:
 
         if check_vulnerabilities is None:
             check_vulnerabilities = self.check_vulnerabilities
+
+        if check_dependencies_licenses is None:
+            check_dependencies_licenses = self.check_dependencies_licenses
 
         if import_mappings is None:
 
@@ -3173,7 +3292,7 @@ class PackageAutoAssembler:
         if custom_modules:
             custom_modules_list += custom_modules
 
-        self.logger.info(f"Adding requirements from {module_filepath}")
+        self.logger.debug(f"Adding requirements from {module_filepath}")
 
         # extracting package requirements
         self.requirements_h.extract_requirements(
@@ -3188,11 +3307,30 @@ class PackageAutoAssembler:
         if check_vulnerabilities:
             self.requirements_h.check_vulnerabilities()
 
+        if check_dependencies_licenses:
+            if self.dependencies_analyzer_h is None:
+                self._initialize_dep_analyser_handler()
+
+                edt = self.dependencies_analyzer_h.extract_dependencies_tree(
+                    requirements = self.requirements_list + self.optional_requirements_list
+                )
+
+                edtl = self.dependencies_analyzer_h.add_license_labels_to_dep_tree(
+                    dependencies_tree = edt
+                )
+
+                self.dependencies_analyzer_h.find_unexpected_licenses_in_deps_tree(
+                    tree_dep_license = edtl
+                )
+
+
+
     def add_requirements_from_module(self,
                                      module_filepath : str = None,
                                      custom_modules : list = None,
                                      import_mappings : str = None,
                                      check_vulnerabilities : bool = None,
+                                     check_dependencies_licenses : bool = None,
                                      add_header : bool = None):
 
         """
@@ -3204,6 +3342,7 @@ class PackageAutoAssembler:
             custom_modules = custom_modules,
             import_mappings = import_mappings,
             check_vulnerabilities = check_vulnerabilities,
+            check_dependencies_licenses = check_dependencies_licenses,
             add_header = add_header
         )
 
@@ -3212,7 +3351,8 @@ class PackageAutoAssembler:
                                      cli_module_filepath : str = None,
                                      custom_modules : list = None,
                                      import_mappings : str = None,
-                                     check_vulnerabilities : bool = None):
+                                     check_vulnerabilities : bool = None,
+                                     check_dependencies_licenses : bool = None):
 
         """
         Extract and add requirements from the module.
@@ -3235,6 +3375,7 @@ class PackageAutoAssembler:
                 custom_modules = custom_modules + [module_name],
                 import_mappings = import_mappings,
                 check_vulnerabilities = check_vulnerabilities,
+                check_dependencies_licenses = check_dependencies_licenses,
                 add_header = False
             )
 
