@@ -622,12 +622,12 @@ def show_module_list(ctx,
 
 @click.command()
 @click.argument('label_name')
-@click.option('--is-cli', 
-              'get_paa_cli_status', 
-              is_flag=True, 
-              type=bool, 
-              required=False, 
-              help='If checked, returns true when cli interface is available.')
+# @click.option('--is-cli', 
+#               'get_paa_cli_status', 
+#               is_flag=True, 
+#               type=bool, 
+#               required=False, 
+#               help='If checked, returns true when cli interface is available.')
 @click.option('--keywords', 
               'get_keywords', 
               is_flag=True, 
@@ -682,16 +682,16 @@ def show_module_list(ctx,
               type=bool, 
               required=False, 
               help='If checked, returns pip latest version of the package.')
-@click.option('--paa-version', 
-              'get_paa_version', 
-              is_flag=True, 
-              type=bool, 
-              required=False, 
-              help='If checked, returns packaging tool version with which the package was packaged.')
+# @click.option('--paa-version', 
+#               'get_paa_version', 
+#               is_flag=True, 
+#               type=bool, 
+#               required=False, 
+#               help='If checked, returns packaging tool version with which the package was packaged.')
 @click.pass_context
 def show_module_info(ctx,
         label_name,
-        get_paa_cli_status,
+        #get_paa_cli_status,
         get_keywords,
         get_classifiers,
         get_docstring,
@@ -699,7 +699,7 @@ def show_module_info(ctx,
         get_author_email,
         get_version,
         get_pip_version,
-        get_paa_version,
+        #get_paa_version,
         get_license_label,
         #get_license
         ):
@@ -762,13 +762,13 @@ def show_module_info(ctx,
 
     if not any([get_version, 
                 get_pip_version,
-                get_paa_version,
+                #get_paa_version,
                 get_author, 
                 get_author_email, 
                 get_docstring,
                 get_classifiers,
                 get_keywords,
-                get_paa_cli_status,
+                #get_paa_cli_status,
                 #get_license,
                 get_license_label]):
 
@@ -781,11 +781,11 @@ def show_module_info(ctx,
         if latest_version:
             click.echo(f"Latest pip version: {latest_version}")
         
-        if package_metadata.get('paa_version'):
-            click.echo(f"Packaged with PAA version: {package_metadata.get('paa_version')}")
+        # if package_metadata.get('paa_version'):
+        #     click.echo(f"Packaged with PAA version: {package_metadata.get('paa_version')}")
         
-        if package_metadata.get('paa_cli'):
-            click.echo(f"Is cli interface available: {package_metadata.get('paa_cli')}")
+        # if package_metadata.get('paa_cli'):
+        #     click.echo(f"Is cli interface available: {package_metadata.get('paa_cli')}")
 
         if package_metadata.get('author'):
             click.echo(f"Author: {package_metadata.get('author')}")
@@ -806,8 +806,8 @@ def show_module_info(ctx,
         click.echo(package_metadata.get('version'))
     if get_pip_version:
         click.echo(latest_version)
-    if get_paa_version:
-        click.echo(package_metadata.get('paa_version'))
+    # if get_paa_version:
+    #     click.echo(package_metadata.get('paa_version'))
     if get_author:
         click.echo(package_metadata.get('author'))
     if get_author_email:
@@ -820,8 +820,8 @@ def show_module_info(ctx,
     if get_keywords:
         for kw in package_metadata.get('keywords'):
             click.echo(f"{kw}")
-    if get_paa_cli_status:
-        click.echo(package_metadata.get('paa_cli'))
+    # if get_paa_cli_status:
+    #     click.echo(package_metadata.get('paa_cli'))
     if get_license_label:
         click.echo(package_metadata.get('license_label'))
     # if get_license:

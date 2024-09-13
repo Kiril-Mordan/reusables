@@ -198,7 +198,6 @@ Usage: paa show-module-info [OPTIONS] LABEL_NAME
   Shows module info.
 
 Options:
-  --is-cli        If checked, returns true when cli interface is available.
   --keywords      If checked, returns keywords for the package.
   --classifiers   If checked, returns classfiers for the package.
   --docstring     If checked, returns docstring of the package.
@@ -206,8 +205,6 @@ Options:
   --author-email  If checked, returns author email of the package.
   --version       If checked, returns installed version of the package.
   --pip-version   If checked, returns pip latest version of the package.
-  --paa-version   If checked, returns packaging tool version with which the
-                  package was packaged.
   --help          Show this message and exit.
 ```
 

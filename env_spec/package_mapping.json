@@ -12,6 +12,7 @@
     "sklearn" : "scikit-learn",
     "yaml" : "pyyaml",
     "package_auto_assembler" : "package-auto-assembler",
-    "git" : "gitpython"
+    "git" : "gitpython",
+    "scancode" : "scancode-toolkit"
 }
 

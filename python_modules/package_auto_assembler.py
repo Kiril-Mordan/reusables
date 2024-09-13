@@ -1560,11 +1560,12 @@ class SetupDirHandler:
         paa_version = pkg_resources.get_distribution("package_auto_assembler").version
         
         if classifiers is None:
-            classifiers = [f"PAA-Version :: {paa_version}"]
-        else:
-            classifiers.append(f"PAA-Version :: {paa_version}")
+            classfiers = []
+            #classifiers = [f"PAA-Version :: {paa_version}"]
+        # else:
+        #     classifiers.append(f"PAA-Version :: {paa_version}")
 
-        classifiers.append(f"PAA-CLI :: {add_cli_tool}")
+        #classifiers.append(f"PAA-CLI :: {add_cli_tool}")
 
         if 'classifiers' in metadata.keys():
             classifiers+=metadata['classifiers']
@@ -2775,10 +2776,10 @@ class DependenciesAnalyser:
                 author_email = line.split("Author-email: ")[1]
             if line.startswith("Classifier:"):
                 classifiers.append(line.split("Classifier: ")[1])
-            if line.startswith("Classifier: PAA-Version ::"):
-                paa_version = line.split("Classifier: PAA-Version :: ")[1]
-            if line.startswith("Classifier: PAA-CLI ::"):
-                paa_cli = line.split("Classifier: PAA-CLI :: ")[1]
+            # if line.startswith("Classifier: PAA-Version ::"):
+            #     paa_version = line.split("Classifier: PAA-Version :: ")[1]
+            # if line.startswith("Classifier: PAA-CLI ::"):
+            #     paa_cli = line.split("Classifier: PAA-CLI :: ")[1]
             if line.startswith("License:"):
                 license_label = line.split("License: ")[1]
 

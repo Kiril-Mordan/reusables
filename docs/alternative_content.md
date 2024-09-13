@@ -1,6 +1,15 @@
 ## Content:
  
  
+[module](../python_modules/ollama.py) | [![PyPiVersion](https://img.shields.io/pypi/v/ollama)](https://pypi.org/project/ollama/) - Ollama 
+
+OllamaHandlerAsync is a simple connector to ollama.AsyncClient
+    meant to with LlmHandlerAsync in the role of llm_handler.
+
+[module](../python_modules/prompt_strategies.py) - Prompt strategies 
+
+PromptHandler prepares inputs for the llm requests.
+
 [module](../python_modules/search_based_extractor.py) | [usage](../docs/search_based_extractor.md) - Search based extractor 
 
 Search Based Extractor
@@ -16,15 +25,6 @@ Retriever tunner
 A simple tool to compare and tune retriever performance, given a desired ranking to strive for.
 The goal is to provide a simple metric to measure how a given retriver is close to the 'ideal', generated for example
 with a use of more expensive, slower or simply no-existant method.
-
-[module](../python_modules/prompt_strategies.py) - Prompt strategies 
-
-PromptHandler prepares inputs for the llm requests.
-
-[module](../python_modules/ollama.py) | [![PyPiVersion](https://img.shields.io/pypi/v/ollama)](https://pypi.org/project/ollama/) - Ollama 
-
-OllamaHandlerAsync is a simple connector to ollama.AsyncClient
-    meant to with LlmHandlerAsync in the role of llm_handler.
 
 [module](../python_modules/google_drive_support.py) - Google drive support 
 

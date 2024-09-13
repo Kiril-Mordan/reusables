@@ -4,7 +4,8 @@ sys.path.append('../')
 from package_auto_assembler import (VersionHandler, \
     ImportMappingHandler, RequirementsHandler, MetadataHandler, \
         LocalDependaciesHandler, LongDocHandler, SetupDirHandler, \
-            ReleaseNotesHandler, MkDocsHandler, PackageAutoAssembler)
+            ReleaseNotesHandler, MkDocsHandler, PackageAutoAssembler, \
+                DependenciesAnalyser)
 ```
 
 ### 1. Package versioning
@@ -280,7 +281,7 @@ rh.list_custom_modules(
 
 
 
-    ['example_local_dependacy_1', 'example_local_dependacy_2']
+    ['example_local_dependacy_2', 'example_local_dependacy_1']
 
 
 
@@ -347,7 +348,8 @@ rh.extract_requirements(
 
 
 
-    ['attrs>=22.2.0']
+    (['attrs>=22.2.0'],
+     ['scikit-learn==1.5.1', 'scikit-learn', 'numpy', 'torch<1.8.0'])
 
 
 
@@ -360,6 +362,18 @@ rh.requirements_list
 
 
     ['### example_module.py', 'attrs>=22.2.0']
+
+
+
+
+```python
+rh.optional_requirements_list
+```
+
+
+
+
+    ['scikit-learn==1.5.1', 'torch<1.8.0', 'numpy', 'scikit-learn']
 
 
 
@@ -463,7 +477,16 @@ rh.read_requirements_file(
 
 ### 4. Preparing metadata
 
-Since all of the necessary information for building a package needs to be contained within main component `.py` file, basic metadata is provided with the use of `__package_metadata__` dictionary object, defined within that `.py` file. It is also used as a trigger for package building within paa pipeline.
+Since all of the necessary information for building a package needs to be contained within main component `.py` file, basic metadata is provided with the use of `__package_metadata__` dictionary object, defined within that `.py` file. It is also used as a trigger for package building within paa pipeline. 
+
+Even though some general information shared between packages could be provided through general config, but package specific info should be provided through `__package_metadata__`. It should support most text fields from setup file, but for others the following fields are available:
+
+- `classifiers`: adds classifiers to the general ones from config
+- `extras_require`: a dictionary of optional package that wouldn't be installed during normal installation. The key could be used during installation and the value would be a list of dependencies.
+- `install_requires` : adds requirements to the list read from imports
+
+\* Note that providing dependencies this way does not check them through pip-audit or translate them through package mapping
+
 
 #### Initializing MetadataHandler
 
@@ -697,6 +720,7 @@ sdh = SetupDirHandler(
                 'description': 'Example module.',
                 'long_description' : long_description,
                 'keywords': ['python']},
+    license_path = "../LICENSE",
     requirements = ['attrs>=22.2.0'],
     classifiers = ['Development Status :: 3 - Alpha',
                    'Intended Audience :: Developers',
@@ -728,6 +752,17 @@ sdh.flush_n_make_setup_dir(
 sdh.copy_module_to_setup_dir(
     # optional
     module_filepath = "./combined_example_module.py",
+    setup_directory = "./example_setup_dir"
+)
+```
+
+#### Copy license to setup dir
+
+
+```python
+sdh.copy_module_to_setup_dir(
+    # optional
+    license_path = "../LICENSE",
     setup_directory = "./example_setup_dir"
 )
 ```
@@ -959,7 +994,277 @@ rnh.get_release_notes_content()
 
 
 
-### 9. Making a package
+### 9. Analysing package dependencies
+
+Extracting info from installed dependencies can provide important insight into inner workings of a package and help avoid some of the licenses. 
+
+Licenses are extracted from package metadata and normalized for analysis. Missing labels are marked with `-` and not recognized licenses with `unknown`.
+
+Information about unrecognized license labels could be provided through package_licenses json file that contains install package name and corresponding license label.
+
+
+```python
+da = DependenciesAnalyser(
+    # optional
+    package_name = 'mocker-db',
+    package_licenses_filepath = '../tests/package_auto_assembler/other/package_licenses.json',
+    allowed_licenses = ['mit', 'apache-2.0', 'lgpl-3.0', 'bsd-3-clause', 'bsd-2-clause', '-', 'mpl-2.0']
+)
+```
+
+#### Finding installed packages with a list of tags
+
+
+```python
+da.filter_packages_by_tags(tags=['aa-paa-tool'])
+```
+
+
+
+
+    [('comparisonframe', '0.0.0'),
+     ('mocker-db', '0.0.1'),
+     ('package-auto-assembler', '0.0.0'),
+     ('proompter', '0.0.0')]
+
+
+
+#### Extracting some metadata from the installed package
+
+
+```python
+package_metadata = da.get_package_metadata(
+    package_name = 'mocker-db'
+)
+package_metadata
+```
+
+
+
+
+    {'keywords': ['aa-paa-tool'],
+     'version': '0.0.1',
+     'author': 'Kyrylo Mordan',
+     'author_email': 'parachute.repo@gmail.com',
+     'classifiers': ['Development Status :: 3 - Alpha',
+      'Intended Audience :: Developers',
+      'Intended Audience :: Science/Research',
+      'Programming Language :: Python :: 3',
+      'Programming Language :: Python :: 3.9',
+      'Programming Language :: Python :: 3.10',
+      'Programming Language :: Python :: 3.11',
+      'License :: OSI Approved :: MIT License',
+      'Topic :: Scientific/Engineering',
+      'PAA-Version :: 0.4.3',
+      'PAA-CLI :: False'],
+     'paa_version': '0.4.3',
+     'paa_cli': 'False',
+     'license_label': 'MIT'}
+
+
+
+#### Extracting package requirements
+
+
+```python
+package_requirements = da.get_package_requirements(
+    package_name = 'mocker-db'
+)
+package_requirements
+```
+
+
+
+
+    ['requests',
+     'attrs >=22.2.0',
+     'httpx',
+     'hnswlib ==0.8.0',
+     'gridlooper ==0.0.1',
+     'dill ==0.3.7',
+     'numpy ==1.26.0',
+     "sentence-transformers ; extra == 'sentence_transformers'"]
+
+
+
+#### Extracting tree of dependencies
+
+
+```python
+extracted_dependencies_tree = da.extract_dependencies_tree(
+    package_name = 'mocker-db'
+)
+extracted_dependencies_tree
+```
+
+
+
+
+    {'requests': {'charset-normalizer': [],
+      'idna': [],
+      'urllib3': [],
+      'certifi': []},
+     'attrs': {'importlib-metadata': {'zipp': [], 'typing-extensions': []}},
+     'httpx': {'anyio': {'idna': [],
+       'sniffio': [],
+       'exceptiongroup': [],
+       'typing-extensions': []},
+      'certifi': [],
+      'httpcore': {'certifi': [], 'h11': {'typing-extensions': []}},
+      'idna': [],
+      'sniffio': []},
+     'hnswlib': {'numpy': []},
+     'gridlooper': {'dill': [],
+      'attrs': {'importlib-metadata': {'zipp': [], 'typing-extensions': []}},
+      'tqdm': {'colorama': []}},
+     'dill': [],
+     'numpy': []}
+
+
+
+#### Addding license labels to tree of dependencies
+
+
+```python
+extracted_dependencies_tree_license = da.add_license_labels_to_dep_tree(
+    dependencies_tree = extracted_dependencies_tree
+)
+extracted_dependencies_tree_license
+```
+
+
+
+
+    {'requests': 'apache-2.0',
+     'requests.charset-normalizer': '-',
+     'requests.idna': '-',
+     'requests.urllib3': '-',
+     'requests.certifi': 'mpl-2.0',
+     'attrs': '-',
+     'attrs.importlib-metadata': '-',
+     'attrs.importlib-metadata.zipp': '-',
+     'attrs.importlib-metadata.typing-extensions': '-',
+     'httpx': '-',
+     'httpx.anyio': 'mit',
+     'httpx.anyio.idna': '-',
+     'httpx.anyio.sniffio': '-',
+     'httpx.anyio.exceptiongroup': '-',
+     'httpx.anyio.typing-extensions': '-',
+     'httpx.certifi': 'mpl-2.0',
+     'httpx.httpcore': '-',
+     'httpx.httpcore.certifi': 'mpl-2.0',
+     'httpx.httpcore.h11': 'mit',
+     'httpx.httpcore.h11.typing-extensions': '-',
+     'httpx.idna': '-',
+     'httpx.sniffio': '-',
+     'hnswlib': '-',
+     'hnswlib.numpy': 'bsd-3-clause',
+     'gridlooper': '-',
+     'gridlooper.dill': 'bsd-3-clause',
+     'gridlooper.attrs': '-',
+     'gridlooper.attrs.importlib-metadata': '-',
+     'gridlooper.attrs.importlib-metadata.zipp': '-',
+     'gridlooper.attrs.importlib-metadata.typing-extensions': '-',
+     'gridlooper.tqdm': '-',
+     'gridlooper.tqdm.colorama': '-',
+     'dill': 'bsd-3-clause',
+     'numpy': 'bsd-3-clause'}
+
+
+
+#### Printing extracted tree of dependencies
+
+
+```python
+da.print_flattened_tree(extracted_dependencies_tree_license)
+```
+
+    └── requests : apache-2.0
+        ├── charset-normalizer : -
+        ├── idna : -
+        ├── urllib3 : -
+        └── certifi : mpl-2.0
+    └── attrs : -
+        └── importlib-metadata : -
+            ├── zipp : -
+            └── typing-extensions : -
+    └── httpx : -
+        ├── anyio : mit
+            ├── idna : -
+            ├── sniffio : -
+            ├── exceptiongroup : -
+            └── typing-extensions : -
+        ├── certifi : mpl-2.0
+        ├── httpcore : -
+            ├── certifi : mpl-2.0
+            └── h11 : mit
+                └── typing-extensions : -
+        ├── idna : -
+        └── sniffio : -
+    └── hnswlib : -
+        └── numpy : bsd-3-clause
+    └── gridlooper : -
+        ├── dill : bsd-3-clause
+        ├── attrs : -
+            └── importlib-metadata : -
+                ├── zipp : -
+                └── typing-extensions : -
+        └── tqdm : -
+            └── colorama : -
+    └── dill : bsd-3-clause
+    └── numpy : bsd-3-clause
+
+
+#### Filtering for unexpected licenses in tree of dependencies
+
+
+```python
+allowed_licenses = ['mit', 'apache-2.0', 'lgpl-3.0', 'mpl-2.0', '-']
+
+da.find_unexpected_licenses_in_deps_tree(
+    tree_dep_license = extracted_dependencies_tree_license,
+    # optional
+    allowed_licenses = allowed_licenses,
+    raise_error = True
+)
+```
+
+    {'hnswlib': '', 'gridlooper': ''}
+    └── dill : bsd-3-clause
+    └── numpy : bsd-3-clause
+    └── hnswlib : 
+        └── numpy : bsd-3-clause
+    └── gridlooper : 
+        └── dill : bsd-3-clause
+
+
+
+    ---------------------------------------------------------------------------
+
+    Exception                                 Traceback (most recent call last)
+
+    Cell In[9], line 3
+          1 allowed_licenses = ['mit', 'apache-2.0', 'lgpl-3.0', 'mpl-2.0', '-']
+    ----> 3 da.find_unexpected_licenses_in_deps_tree(
+          4     tree_dep_license = extracted_dependencies_tree_license,
+          5     # optional
+          6     allowed_licenses = allowed_licenses,
+          7     raise_error = True
+          8 )
+
+
+    File ~/miniforge3/envs/testenv/lib/python3.10/site-packages/package_auto_assembler/package_auto_assembler.py:2670, in DependenciesAnalyser.find_unexpected_licenses_in_deps_tree(self, tree_dep_license, allowed_licenses, raise_error)
+       2668 if raise_error and out != {}:
+       2669     self.print_flattened_tree(flattened_dict = out)
+    -> 2670     raise Exception("Found unexpected licenses!")
+       2671 else:
+       2672     self.logger.info("No unexpected licenses found")
+
+
+    Exception: Found unexpected licenses!
+
+
+### 10. Making a package
 
 Main wrapper for the package integrates described above components into a class that could be used to build package building pipelines within python scripts. 
 
@@ -975,12 +1280,16 @@ paa = PackageAutoAssembler(
     module_filepath  = "../tests/package_auto_assembler/other/example_module.py",
     # optional
     mapping_filepath = "../env_spec/package_mapping.json",
+    licenses_filepath = "../tests/package_auto_assembler/other/package_licenses.json",
+    allowed_licenses = ['mit', 'apache-2.0', 'lgpl-3.0', 'mpl-2.0', '-'],
     dependencies_dir = "../tests/package_auto_assembler/dependancies/",
     example_notebook_path = "./mock_vector_database.ipynb",
     versions_filepath = '../tests/package_auto_assembler/other/lsts_package_versions.yml',
     log_filepath = '../tests/package_auto_assembler/other/version_logs.csv',
     setup_directory = "./example_module",
     release_notes_filepath = "../tests/package_auto_assembler/other/release_notes.md",
+    license_path = "../LICENSE",
+    license_label = "mit",
     classifiers = ['Development Status :: 3 - Alpha',
                     'Intended Audience :: Developers',
                     'Intended Audience :: Science/Research',
@@ -996,6 +1305,7 @@ paa = PackageAutoAssembler(
     version_increment_type = "patch",
     default_version = "0.0.1",
     check_vulnerabilities = True,
+    check_dependencies_licenses = False,
     add_requirements_header = True
 )
 ```
@@ -1006,7 +1316,7 @@ paa = PackageAutoAssembler(
 ```python
 paa.add_metadata_from_module(
     # optional
-    module_filepath  = "../tests/package_auto_assembler/example_module.py"
+    module_filepath  = "../tests/package_auto_assembler/other/example_module.py"
 )
 ```
 
@@ -1032,8 +1342,13 @@ paa.add_or_update_version(
     No relevant commit messages found!
     ..trying depth 2 !
     No relevant commit messages found!
+    ..trying depth 3 !
+    No relevant commit messages found!
+    ..trying depth 4 !
+    No relevant commit messages found!
+    ..trying depth 5 !
+    No relevant commit messages found!
     No messages to clean were provided
-    There are no known versions of 'example_module', 1.2.6 will be used!
 
 
 #### Add release notes from commit messages
@@ -1066,13 +1381,13 @@ paa.prep_setup_dir()
 ```python
 paa.merge_local_dependacies(
     # optional
-    main_module_filepath = "../tests/package_auto_assembler/example_module.py",
+    main_module_filepath = "../tests/package_auto_assembler/other/example_module.py",
     dependencies_dir= "../tests/package_auto_assembler/dependancies/",
     save_filepath = "./example_module/example_module.py"
 )
 ```
 
-    Merging ../tests/package_auto_assembler/example_module.py with dependecies from ../tests/package_auto_assembler/dependancies/ into ./example_module/example_module.py
+    Merging ../tests/package_auto_assembler/other/example_module.py with dependecies from ../tests/package_auto_assembler/dependancies/ into ./example_module/example_module.py
 
 
 #### Add requirements from module
@@ -1081,7 +1396,7 @@ paa.merge_local_dependacies(
 ```python
 paa.add_requirements_from_module(
     # optional
-    module_filepath = "../tests/package_auto_assembler/example_module.py",
+    module_filepath = "../tests/package_auto_assembler/other/example_module.py",
     import_mappings = {'PIL': 'Pillow',
                         'bs4': 'beautifulsoup4',
                         'fitz': 'PyMuPDF',
@@ -1097,7 +1412,7 @@ paa.add_requirements_from_module(
 )
 ```
 
-    Adding requirements from ../tests/package_auto_assembler/example_module.py
+    Adding requirements from ../tests/package_auto_assembler/other/example_module.py
     No known vulnerabilities found
     
 
@@ -1123,13 +1438,13 @@ paa.requirements_list
 ```python
 paa.add_readme(
     # optional
-    example_notebook_path = "../tests/package_auto_assembler/example_module.ipynb",
+    example_notebook_path = "../tests/package_auto_assembler/other/example_module.ipynb",
     output_path = "./example_module/README.md",
     execute_notebook=False,
 )
 ```
 
-    Adding README from ../tests/package_auto_assembler/example_module.ipynb to ./example_module/README.md
+    Adding README from ../tests/package_auto_assembler/other/example_module.ipynb to ./example_module/README.md
 
 
 #### Prepare setup file
@@ -1141,7 +1456,8 @@ paa.prep_setup_file(
     metadata = {'author': 'Kyrylo Mordan',
                 'version': '0.0.1',
                 'description': 'Example module',
-                'keywords': ['python']},
+                'keywords': ['python'],
+                'license' : 'mit'},
     requirements = ['### example_module.py',
                     'attrs>=22.2.0'],
     classifiers = ['Development Status :: 3 - Alpha',
@@ -1153,12 +1469,12 @@ paa.prep_setup_file(
                     'Programming Language :: Python :: 3.11',
                     'License :: OSI Approved :: MIT License',
                     'Topic :: Scientific/Engineering'],
-    cli_module_filepath = "../tests/package_auto_assembler/cli.py"
+    cli_module_filepath = "../tests/package_auto_assembler/other/cli.py"
 
 )
 ```
 
-    Preparing setup file for None package ...
+    Preparing setup file for example-module package ...
 
 
 #### Make package
@@ -1177,11 +1493,11 @@ paa.make_package(
 
 
 
-    CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=0, stdout="running sdist\nrunning egg_info\nwriting example_module.egg-info/PKG-INFO\nwriting dependency_links to example_module.egg-info/dependency_links.txt\nwriting entry points to example_module.egg-info/entry_points.txt\nwriting requirements to example_module.egg-info/requires.txt\nwriting top-level names to example_module.egg-info/top_level.txt\nreading manifest file 'example_module.egg-info/SOURCES.txt'\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nrunning check\ncreating example_module-0.0.1\ncreating example_module-0.0.1/example_module\ncreating example_module-0.0.1/example_module.egg-info\ncopying files to example_module-0.0.1...\ncopying example_module/__init__.py -> example_module-0.0.1/example_module\ncopying example_module/cli.py -> example_module-0.0.1/example_module\ncopying example_module/example_module.py -> example_module-0.0.1/example_module\ncopying example_module/setup.py -> example_module-0.0.1/example_module\ncopying example_module.egg-info/PKG-INFO -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/dependency_links.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/entry_points.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/requires.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/top_level.txt -> example_module-0.0.1/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -> example_module-0.0.1/example_module.egg-info\nWriting example_module-0.0.1/setup.cfg\nCreating tar archive\nremoving 'example_module-0.0.1' (and everything under it)\nrunning bdist_wheel\nrunning build\nrunning build_py\ncopying example_module/example_module.py -> build/lib/example_module\ncopying example_module/__init__.py -> build/lib/example_module\ncopying example_module/setup.py -> build/lib/example_module\ncopying example_module/cli.py -> build/lib/example_module\ninstalling to build/bdist.linux-x86_64/wheel\nrunning install\nrunning install_lib\ncreating build/bdist.linux-x86_64/wheel\ncreating build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/example_module.py -> build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/__init__.py -> build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/setup.py -> build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/cli.py -> build/bdist.linux-x86_64/wheel/example_module\nrunning install_egg_info\nCopying example_module.egg-info to build/bdist.linux-x86_64/wheel/example_module-0.0.1-py3.10.egg-info\nrunning install_scripts\ncreating build/bdist.linux-x86_64/wheel/example_module-0.0.1.dist-info/WHEEL\ncreating 'dist/example_module-0.0.1-py3-none-any.whl' and adding 'build/bdist.linux-x86_64/wheel' to it\nadding 'example_module/__init__.py'\nadding 'example_module/cli.py'\nadding 'example_module/example_module.py'\nadding 'example_module/setup.py'\nadding 'example_module-0.0.1.dist-info/METADATA'\nadding 'example_module-0.0.1.dist-info/WHEEL'\nadding 'example_module-0.0.1.dist-info/entry_points.txt'\nadding 'example_module-0.0.1.dist-info/top_level.txt'\nadding 'example_module-0.0.1.dist-info/RECORD'\nremoving build/bdist.linux-x86_64/wheel\n", stderr='warning: sdist: standard file not found: should have one of README, README.rst, README.txt, README.md\n\n/home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.\n!!\n\n        ********************************************************************************\n        Please avoid running ``setup.py`` directly.\n        Instead, use pypa/build, pypa/installer or other\n        standards-based tools.\n\n        See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.\n        ********************************************************************************\n\n!!\n  self.initialize_options()\n')
+    CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=0, stdout="running sdist\nrunning egg_info\nwriting example_module.egg-info/PKG-INFO\nwriting dependency_links to example_module.egg-info/dependency_links.txt\nwriting entry points to example_module.egg-info/entry_points.txt\nwriting requirements to example_module.egg-info/requires.txt\nwriting top-level names to example_module.egg-info/top_level.txt\nreading manifest file 'example_module.egg-info/SOURCES.txt'\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nrunning check\ncreating example_module-0.0.0\ncreating example_module-0.0.0/example_module\ncreating example_module-0.0.0/example_module.egg-info\ncopying files to example_module-0.0.0...\ncopying example_module/__init__.py -> example_module-0.0.0/example_module\ncopying example_module/cli.py -> example_module-0.0.0/example_module\ncopying example_module/example_module.py -> example_module-0.0.0/example_module\ncopying example_module/setup.py -> example_module-0.0.0/example_module\ncopying example_module.egg-info/PKG-INFO -> example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -> example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/dependency_links.txt -> example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/entry_points.txt -> example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/requires.txt -> example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/top_level.txt -> example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -> example_module-0.0.0/example_module.egg-info\nWriting example_module-0.0.0/setup.cfg\nCreating tar archive\nremoving 'example_module-0.0.0' (and everything under it)\nrunning bdist_wheel\nrunning build\nrunning build_py\ncopying example_module/example_module.py -> build/lib/example_module\ncopying example_module/__init__.py -> build/lib/example_module\ncopying example_module/setup.py -> build/lib/example_module\ncopying example_module/cli.py -> build/lib/example_module\ninstalling to build/bdist.linux-x86_64/wheel\nrunning install\nrunning install_lib\ncreating build/bdist.linux-x86_64/wheel\ncreating build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/example_module.py -> build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/__init__.py -> build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/setup.py -> build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/cli.py -> build/bdist.linux-x86_64/wheel/example_module\nrunning install_egg_info\nCopying example_module.egg-info to build/bdist.linux-x86_64/wheel/example_module-0.0.0-py3.10.egg-info\nrunning install_scripts\ncreating build/bdist.linux-x86_64/wheel/example_module-0.0.0.dist-info/WHEEL\ncreating 'dist/example_module-0.0.0-py3-none-any.whl' and adding 'build/bdist.linux-x86_64/wheel' to it\nadding 'example_module/__init__.py'\nadding 'example_module/cli.py'\nadding 'example_module/example_module.py'\nadding 'example_module/setup.py'\nadding 'example_module-0.0.0.dist-info/METADATA'\nadding 'example_module-0.0.0.dist-info/WHEEL'\nadding 'example_module-0.0.0.dist-info/entry_points.txt'\nadding 'example_module-0.0.0.dist-info/top_level.txt'\nadding 'example_module-0.0.0.dist-info/RECORD'\nremoving build/bdist.linux-x86_64/wheel\n", stderr='warning: sdist: standard file not found: should have one of README, README.rst, README.txt, README.md\n\n/home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.\n!!\n\n        ********************************************************************************\n        Please avoid running ``setup.py`` directly.\n        Instead, use pypa/build, pypa/installer or other\n        standards-based tools.\n\n        See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.\n        ********************************************************************************\n\n!!\n  self.initialize_options()\n')
 
 
 
-### 10. Making simple MkDocs site
+### 11. Making simple MkDocs site
 
 Package documentation can be presented in a form of mkdocs static site, which could be either served or deployed to something like github packages. 
 
