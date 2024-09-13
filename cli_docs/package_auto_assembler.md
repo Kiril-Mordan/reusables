@@ -12,10 +12,12 @@ Options:
   --help  Show this message and exit.
 
 Commands:
+  check-licenses            Check licenses of the module.
   check-vulnerabilities     Check vulnerabilities of the module.
   init-config               Initialize config file
   make-package              Package with package-auto-assembler.
   show-module-info          Shows module info.
+  show-module-licenses      Shows module requirements.
   show-module-list          Shows module list.
   show-module-requirements  Shows module requirements.
   test-install              Test install module into local environment.
@@ -122,6 +124,29 @@ Options:
   --help                      Show this message and exit.
 ```
 
+Checking license labels of module dependencies tree could be useful to prevent using some dependencies early on.
+
+```
+Usage: paa check-licenses [OPTIONS] MODULE_NAME
+
+  Check licenses of the module.
+
+Options:
+  --config TEXT                   Path to config file for paa.
+  --module-filepath TEXT          Path to .py file to be packaged.
+  --mapping-filepath TEXT         Path to .json file that maps import to
+                                  install dependecy names.
+  --license-mapping-filepath TEXT
+                                  Path to .json file that maps license labels
+                                  to install dependecy names.
+  --cli-module-filepath TEXT      Path to .py file that contains cli logic.
+  --dependencies-dir TEXT         Path to directory with local dependencies of
+                                  the module.
+  --skip-normalize-labels         If checked, package license labels are not
+                                  normalized.
+  --help                          Show this message and exit.
+```
+
 Maintaining release notes could be very useful, but also tedious task. 
 Since commit messages are rather standard practice, by taking advantage of them and constructing release notes based on them, each release could contain notes with appropriate version automatically, when itegrated into ci/cd pipeline, given that commit messages are written in a specific way. 
 
@@ -197,4 +222,18 @@ Usage: paa show-module-requirements [OPTIONS] LABEL_NAME
 
 Options:
   --help  Show this message and exit.
+```
+
+``` bash
+paa show-module-requirements --help
+```
+
+```
+Usage: paa show-module-licenses [OPTIONS] PACKAGE_NAME
+
+  Shows module licenses.
+
+Options:
+  --normalize-labels  If checked, package license labels are normalized.
+  --help              Show this message and exit.
 ```

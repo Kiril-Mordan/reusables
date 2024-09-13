@@ -55,7 +55,7 @@ jobs:
 
       - name: Upload updated requirements
         if: steps.changed-modules.outputs.files != ''
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: updated-requirements
           path: env_spec/requirements_tox.txt
@@ -77,7 +77,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Download updated requirements
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: updated-requirements
           path: env_spec/

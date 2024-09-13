@@ -11,63 +11,8 @@ from package_auto_assembler.package_auto_assembler import (
     PackageAutoAssembler, 
     ReleaseNotesHandler, 
     VersionHandler,
-    RequirementsHandler)
-
-
-def filter_packages_by_tags(tags):
-    import pkg_resources
-    matches = []
-    for dist in pkg_resources.working_set:
-        try:
-            metadata_lines = dist.get_metadata_lines('METADATA')
-            if all(any(tag in line for line in metadata_lines) for tag in tags):
-                matches.append((dist.project_name, dist.version))
-        except (FileNotFoundError, KeyError):
-            continue
-    return matches
-
-
-def get_package_metadata(package_name):
-    import pkg_resources
-    dist = pkg_resources.get_distribution(package_name)
-    metadata = dist.get_metadata_lines('METADATA')
-
-    try:
-        version = dist.version
-    except Exception as e:
-        version = None
-
-    keywords = None
-    author = None
-    author_email = None
-    paa_version = None
-    paa_cli = False
-    classifiers = []
-
-    for line in metadata:
-        if line.startswith("Keywords:"):
-            keywords = ast.literal_eval(line.split("Keywords: ")[1])
-        if line.startswith("Author:"):
-            author = line.split("Author: ")[1]
-        if line.startswith("Author-email:"):
-            author_email = line.split("Author-email: ")[1]
-        if line.startswith("Classifier:"):
-            classifiers.append(line.split("Classifier: ")[1])
-        if line.startswith("Classifier: PAA-Version ::"):
-            paa_version = line.split("Classifier: PAA-Version :: ")[1]
-        if line.startswith("Classifier: PAA-CLI ::"):
-            paa_cli = line.split("Classifier: PAA-CLI :: ")[1]
-
-    return keywords, version, author, author_email, classifiers, paa_version, paa_cli
-
-def get_package_requirements(package_name):
-
-    metadata = importlib.metadata.metadata(package_name)
-    requirements = metadata.get_all("Requires-Dist", [])
-    if requirements != []:
-        requirements = requirements
-
-    return requirements
+    RequirementsHandler,
+    DependenciesAnalyser)
 
 
 __cli_metadata__ = {
@@ -85,21 +30,19 @@ test_install_config = {
         "module_dir" : "python_modules",
         "cli_dir" : "cli",
         "mapping_filepath" : "package_mapping.json",
+        "licenses_filepath" : None,
         "include_local_dependecies" : True,
         "dependencies_dir" : None,
+        "license_path" : None,
+        "license_label" : None,
+        "docs_url" : None,
         "release_notes_dir" : "./release_notes/",
         "example_notebooks_path" : "./example_notebooks/",
         "versions_filepath" : "lsts_package_versions.yml",
         "log_filepath" : "version_logs.csv",
-        "classifiers" : ['Development Status :: 3 - Alpha',
-                        'Intended Audience :: Developers',
-                        'Intended Audience :: Science/Research',
-                        'Programming Language :: Python :: 3',
-                        'Programming Language :: Python :: 3.9',
-                        'Programming Language :: Python :: 3.10',
-                        'Programming Language :: Python :: 3.11',
-                        'License :: OSI Approved :: MIT License',
-                        'Topic :: Scientific/Engineering'],
+        "classifiers" : ['Development Status :: 3 - Alpha'],
+        "allowed_licenses" : ['mit', 'apache-2.0', 'lgpl-3.0', 
+                              'bsd-3-clause', 'bsd-2-clause', '-', 'mpl-2.0'],
         "kernel_name" : 'python3',
         "python_version" : "3.10",
         "default_version" : "0.0.0",
@@ -134,6 +77,7 @@ def init_config(ctx):
 @click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
 @click.option('--default-version', 'default_version', type=str, required=False, help='Default version.')
 @click.option('--check-vulnerabilities', 'check_vulnerabilities', is_flag=True, type=bool, required=False, help='If checked, checks module dependencies with pip-audit for vulnerabilities.')
+@click.option('--check-licenses', 'check_licenses', is_flag=True, type=bool, required=False, help='If checked, checks module dependencies licenses.')
 @click.option('--keep-temp-files', 'keep_temp_files', is_flag=True, type=bool, required=False, help='If checked, setup directory won\'t be removed after setup is done.')
 @click.option('--skip-deps-install', 'skip_deps_install', is_flag=True, type=bool, required=False, help='If checked, existing dependencies from env will be reused.')
 @click.pass_context
@@ -146,6 +90,7 @@ def test_install(ctx,
         dependencies_dir,
         default_version,
         check_vulnerabilities,
+        check_licenses,
         skip_deps_install,
         keep_temp_files):
     """Test install module into local environment."""
@@ -168,6 +113,8 @@ def test_install(ctx,
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
         "mapping_filepath" : test_install_config["mapping_filepath"],
+        "licenses_filepath" : test_install_config["licenses_filepath"],
+        "allowed_licenses" : test_install_config["allowed_licenses"],
         "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
         "classifiers" : test_install_config["classifiers"],
@@ -190,7 +137,11 @@ def test_install(ctx,
         paa_params["check_vulnerabilities"] = True
     else:
         paa_params["check_vulnerabilities"] = False
-
+    check_licenses
+    if check_licenses:
+        paa_params["check_dependencies_licenses"] = True
+    else:
+        paa_params["check_dependencies_licenses"] = False
     if skip_deps_install:
         paa_params["skip_deps_install"] = True
 
@@ -238,6 +189,7 @@ def test_install(ctx,
 @click.option('--python-version', 'python_version', type=str, required=False, help='Python version.')
 @click.option('--default-version', 'default_version', type=str, required=False, help='Default version.')
 @click.option('--ignore-vulnerabilities-check', 'ignore_vulnerabilities_check', is_flag=True, type=bool, required=False, help='If checked, does not check module dependencies with pip-audit for vulnerabilities.')
+@click.option('--ignore-licenses-check', 'ignore_licenses_check', is_flag=True, type=bool, required=False, help='If checked, does not check module licenses for unexpected ones.')
 @click.option('--example-notebook-path', 'example_notebook_path', type=str, required=False, help='Path to .ipynb file to be used as README.')
 @click.option('--execute-notebook', 'execute_notebook', is_flag=True, type=bool, required=False, help='If checked, executes notebook before turning into README.')
 @click.option('--log-filepath', 'log_filepath', type=str, required=False, help='Path to logfile to record version change.')
@@ -254,6 +206,7 @@ def make_package(ctx,
         python_version,
         default_version,
         ignore_vulnerabilities_check,
+        ignore_licenses_check,
         example_notebook_path,
         execute_notebook,
         log_filepath,
@@ -278,6 +231,8 @@ def make_package(ctx,
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
         "mapping_filepath" : test_install_config["mapping_filepath"],
+        "licenses_filepath" : test_install_config["licenses_filepath"],
+        "allowed_licenses" : test_install_config["allowed_licenses"],
         "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
         "classifiers" : test_install_config["classifiers"],
@@ -286,7 +241,10 @@ def make_package(ctx,
         "default_version" : test_install_config["default_version"],
         "versions_filepath" : test_install_config["versions_filepath"],
         "log_filepath" : test_install_config["log_filepath"],
-        "use_commit_messages" : test_install_config["use_commit_messages"]
+        "use_commit_messages" : test_install_config["use_commit_messages"],
+        "license_path" : test_install_config.get("license_path", None),
+        "license_label" : test_install_config.get("license_label", None),
+        "docs_url" : test_install_config.get("docs_url", None),
     }
 
     if test_install_config["release_notes_dir"]:
@@ -313,6 +271,10 @@ def make_package(ctx,
         paa_params["check_vulnerabilities"] = False
     else:
         paa_params["check_vulnerabilities"] = True
+    if ignore_licenses_check:
+        paa_params["check_dependencies_licenses"] = False
+    else:
+        paa_params["check_dependencies_licenses"] = True
 
     if example_notebook_path:
         paa_params["example_notebook_path"] = example_notebook_path
@@ -408,6 +370,105 @@ def check_vulnerabilities(ctx,
     paa = PackageAutoAssembler(
         **paa_params
     )
+
+    if paa.metadata_h.is_metadata_available():
+
+
+        paa.add_metadata_from_module()
+        paa.add_metadata_from_cli_module()
+        paa.metadata['version'] = paa.default_version
+        paa.prep_setup_dir()
+
+        try:
+            if test_install_config["include_local_dependecies"]:
+                paa.merge_local_dependacies()
+
+            paa.add_requirements_from_module()
+            paa.add_requirements_from_cli_module()
+        except Exception as e:
+            print("")
+        finally:
+            shutil.rmtree(paa.setup_directory)
+
+    else:
+        paa.logger.info(f"Metadata condition was not fullfield for {module_name.replace('_','-')}")
+
+@click.command()
+@click.argument('module_name')
+@click.option('--config', type=str, required=False, help='Path to config file for paa.')
+@click.option('--module-filepath', 'module_filepath', type=str, required=False, help='Path to .py file to be packaged.')
+@click.option('--mapping-filepath', 'mapping_filepath', type=str, required=False, help='Path to .json file that maps import to install dependecy names.')
+@click.option('--license-mapping-filepath', 'licenses_filepath', type=str, required=False, help='Path to .json file that maps license labels to install dependecy names.')
+@click.option('--cli-module-filepath', 'cli_module_filepath',  type=str, required=False, help='Path to .py file that contains cli logic.')
+@click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
+@click.option('--skip-normalize-labels', 
+              'skip_normalize_labels', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, package license labels are not normalized.')
+@click.pass_context
+def check_licenses(ctx,
+        config,
+        module_name,
+        module_filepath,
+        mapping_filepath,
+        licenses_filepath,
+        cli_module_filepath,
+        dependencies_dir,
+        skip_normalize_labels):
+    """Check licenses of the module."""
+
+    module_name = module_name.replace('-','_')
+
+    if config is None:
+        config = ".paa.config"
+
+    if os.path.exists(config):
+        with open(config, 'r') as file:
+            test_install_config_up = yaml.safe_load(file)
+
+        test_install_config.update(test_install_config_up)
+
+    test_install_config["loggerLvl"] = logging.INFO
+
+    paa_params = {
+        "module_name" : f"{module_name}",
+        "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
+        "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
+        "mapping_filepath" : test_install_config["mapping_filepath"],
+        "licenses_filepath" : test_install_config["licenses_filepath"],
+        "dependencies_dir" : test_install_config["dependencies_dir"],
+        "setup_directory" : f"./{module_name}",
+        "classifiers" : test_install_config["classifiers"],
+        "kernel_name" : test_install_config["kernel_name"],
+        "python_version" : test_install_config["python_version"],
+        "default_version" : test_install_config["default_version"],
+        "versions_filepath" : test_install_config["versions_filepath"],
+        "log_filepath" : test_install_config["log_filepath"],
+        "check_vulnerabilities" : False,
+        "check_dependencies_licenses" : True
+    }
+
+    if module_filepath:
+        paa_params["module_filepath"] = module_filepath
+    if cli_module_filepath:
+        paa_params["cli_module_filepath"] = cli_module_filepath
+    if mapping_filepath:
+        paa_params["mapping_filepath"] = mapping_filepath
+    if licenses_filepath:
+        paa_params["licenses_filepath"] = licenses_filepath
+    if dependencies_dir:
+        paa_params["dependencies_dir"] = dependencies_dir
+
+    paa = PackageAutoAssembler(
+        **paa_params
+    )
+
+    if skip_normalize_labels:
+        normalize_labels = False
+    else:
+        normalize_labels = True
 
     if paa.metadata_h.is_metadata_available():
 
@@ -536,10 +597,12 @@ def show_module_list(ctx,
 
     if tags == []:
         tags = ['aa-paa-tool']
-    else:
-        tags.append('aa-paa-tool')
+    # else:
+    #     tags.append('aa-paa-tool')
 
-    packages = filter_packages_by_tags(tags)
+    da = DependenciesAnalyser()
+
+    packages = da.filter_packages_by_tags(tags)
     if packages:
         # Calculate the maximum length of package names for formatting
         max_name_length = max(len(pkg[0]) for pkg in packages) if packages else 0
@@ -601,6 +664,18 @@ def show_module_list(ctx,
               type=bool, 
               required=False, 
               help='If checked, returns installed version of the package.')
+@click.option('--license_label', 
+              'get_license_label', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, returns license label of the package.')
+# @click.option('--license', 
+#               'get_license', 
+#               is_flag=True, 
+#               type=bool, 
+#               required=False, 
+#               help='If checked, returns license of the package.')
 @click.option('--pip-version', 
               'get_pip_version', 
               is_flag=True, 
@@ -624,25 +699,44 @@ def show_module_info(ctx,
         get_author_email,
         get_version,
         get_pip_version,
-        get_paa_version):
+        get_paa_version,
+        get_license_label,
+        #get_license
+        ):
     """Shows module info."""
 
-    label_name = label_name.replace('-','_')
+    package_mapping = {'PIL': 'Pillow',
+                        'bs4': 'beautifulsoup4',
+                        'fitz': 'PyMuPDF',
+                        'attr': 'attrs',
+                        'dotenv': 'python-dotenv',
+                        'googleapiclient': 'google-api-python-client',
+                        'google_auth_oauthlib': 'google-auth-oauthlib',
+                        'sentence_transformers': 'sentence-transformers',
+                        'flask': 'Flask',
+                        'stdlib_list': 'stdlib-list',
+                        'sklearn': 'scikit-learn',
+                        'yaml': 'pyyaml',
+                        'package_auto_assembler': 'package-auto-assembler',
+                        'git': 'gitpython'}
+
+    import_name = [key for key,value in package_mapping.items() \
+        if value == label_name]
+
+    if len(import_name)>0:
+        import_name = import_name[0]
+    else:
+        import_name = label_name
 
     try:
-        package = importlib.import_module(label_name)
+        package = importlib.import_module(import_name.replace('-','_'))
     except ImportError:
-        click.echo(f"No package with name {label_name} was installed!")
+        click.echo(f"No package with name {label_name} was installed or mapping does not support it!")
+
+    da = DependenciesAnalyser()
 
     try:
-        (keywords, 
-        version, 
-        author, 
-        author_email, 
-        classifiers, 
-        paa_version,
-        paa_cli) = get_package_metadata(
-        label_name)
+        package_metadata = da.get_package_metadata(label_name)
     except Exception:
         click.echo(f"Failed to extract {label_name} metadata!")
 
@@ -674,55 +768,64 @@ def show_module_info(ctx,
                 get_docstring,
                 get_classifiers,
                 get_keywords,
-                get_paa_cli_status]):
+                get_paa_cli_status,
+                #get_license,
+                get_license_label]):
 
         if docstring:
             click.echo(docstring)
 
-        if version:
-            click.echo(f"Installed version: {version}")
+        if package_metadata.get('version'):
+            click.echo(f"Installed version: {package_metadata.get('version')}")
 
         if latest_version:
             click.echo(f"Latest pip version: {latest_version}")
         
-        if paa_version:
-            click.echo(f"Packaged with PAA version: {paa_version}")
+        if package_metadata.get('paa_version'):
+            click.echo(f"Packaged with PAA version: {package_metadata.get('paa_version')}")
         
-        if paa_cli:
-            click.echo(f"Is cli interface available: {paa_cli}")
+        if package_metadata.get('paa_cli'):
+            click.echo(f"Is cli interface available: {package_metadata.get('paa_cli')}")
 
-        if author:
-            click.echo(f"Author: {author}")
+        if package_metadata.get('author'):
+            click.echo(f"Author: {package_metadata.get('author')}")
 
-        if author_email:
-            click.echo(f"Author-email: {author_email}")
+        if package_metadata.get('author_email'):
+            click.echo(f"Author-email: {package_metadata.get('author_email'):}")
 
-        if keywords:
-            click.echo(f"Keywords: {keywords}")
+        if package_metadata.get('keywords'):
+            click.echo(f"Keywords: {package_metadata.get('keywords')}")
 
-        if classifiers:
-            click.echo(f"Classifiers: {classifiers}")
+        if package_metadata.get('license_label'):
+            click.echo(f"License: {package_metadata.get('license_label')}")
+
+        if package_metadata.get('classifiers'):
+            click.echo(f"Classifiers: {package_metadata.get('classifiers')}")
     
     if get_version:
-        click.echo(version)
+        click.echo(package_metadata.get('version'))
     if get_pip_version:
         click.echo(latest_version)
     if get_paa_version:
-        click.echo(paa_version)
+        click.echo(package_metadata.get('paa_version'))
     if get_author:
-        click.echo(author)
+        click.echo(package_metadata.get('author'))
     if get_author_email:
-        click.echo(author_email)
+        click.echo(package_metadata.get('author_email'))
     if get_docstring:
         click.echo(docstring)
     if get_classifiers:
-        for cl in classifiers:
+        for cl in package_metadata.get('classifiers'):
             click.echo(f"{cl}")
     if get_keywords:
-        for kw in keywords:
+        for kw in package_metadata.get('keywords'):
             click.echo(f"{kw}")
     if get_paa_cli_status:
-        click.echo(paa_cli)
+        click.echo(package_metadata.get('paa_cli'))
+    if get_license_label:
+        click.echo(package_metadata.get('license_label'))
+    # if get_license:
+    #     click.echo(license_text)
 
 
 @click.command()
@@ -732,11 +835,50 @@ def show_module_requirements(ctx,
         label_name):
     """Shows module requirements."""
 
+    da = DependenciesAnalyser()
+
     label_name = label_name.replace('-','_')
-    requirements = get_package_requirements(label_name)
+    requirements = da.get_package_requirements(label_name)
     
     for req in requirements:
         click.echo(f"{req}")
+
+@click.command()
+@click.argument('package_name')
+@click.option('--normalize-labels', 
+              'normalize_labels', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, package license labels are normalized.')
+@click.pass_context
+def show_module_licenses(ctx,
+        package_name,
+        normalize_labels):
+    """Shows module licenses."""
+
+    da = DependenciesAnalyser(loggerLvl = logging.INFO)
+    
+    package_name = package_name.replace('-','_')
+
+    if normalize_labels:
+        normalize_labels = True
+    else:
+        normalize_labels = False
+    
+
+    extracted_dependencies_tree = da.extract_dependencies_tree(
+        package_name = package_name
+    )
+
+    extracted_dependencies_tree_license = da.add_license_labels_to_dep_tree(
+        dependencies_tree = extracted_dependencies_tree,
+        normalize = normalize_labels
+    )
+
+    da.print_flattened_tree(extracted_dependencies_tree_license)
+
+
 
 
 
@@ -744,10 +886,12 @@ cli.add_command(init_config, "init-config")
 cli.add_command(test_install, "test-install")
 cli.add_command(make_package, "make-package")
 cli.add_command(check_vulnerabilities, "check-vulnerabilities")
+cli.add_command(check_licenses, "check-licenses")
 cli.add_command(update_release_notes, "update-release-notes")
 cli.add_command(show_module_list, "show-module-list")
 cli.add_command(show_module_info, "show-module-info")
 cli.add_command(show_module_requirements, "show-module-requirements")
+cli.add_command(show_module_licenses, "show-module-licenses")
 
 
 if __name__ == "__main__":

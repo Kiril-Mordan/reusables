@@ -27,12 +27,11 @@ import pytest
  'pyyaml',
  'pandas==2.1.1',
  'attrs>=22.2.0']),
-
  ("./tests/package_auto_assembler/other/t_module_5.py" , ['### test_module_5.py', 'dill==0.3.7', 'attrs>=22.2.0'])
-    # Add more cases for other output_types
+
 ])
 def test_requirements_extractions(module_filepath, expected_requirements):
-    rh = RequirementsHandler(module_filepath=module_filepath,
+   rh = RequirementsHandler(module_filepath=module_filepath,
                          package_mappings = {
     "PIL": "Pillow",
     "bs4": "beautifulsoup4",
@@ -48,4 +47,5 @@ def test_requirements_extractions(module_filepath, expected_requirements):
     "yaml" : "pyyaml",
     "package_auto_assembler" : "package-auto-assembler"
     })
-    assert all([ req in expected_requirements for req in rh.extract_requirements()]) == True
+
+   assert all([ req in expected_requirements for req in rh.extract_requirements()[0]]) == True
