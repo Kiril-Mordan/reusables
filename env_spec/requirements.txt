@@ -19,8 +19,8 @@ pyyaml
 tox-gh-actions
 plotly
 sqlalchemy
-pip_audit
 nbconvert
+pip_audit
 pylint
 cryptography
 tqdm
