@@ -1,5 +1,19 @@
 # Release notes
 
+### 0.4.4
+
+    - license checking integrated into packaging pipeline
+
+    - additional cli tools to check dependencies tree and corresponding licenses
+
+    - initial support for license labels analysis of package dependencies and their dependencies
+
+    - initial DependenciesAnalyser for extracting info from dependencies
+
+    - reading optional requirements from module and metadata
+
+    - initial support for optional requirements in setup.py though extras_require
+
 ### 0.4.3
 
     - tagging packages with additional metadata
