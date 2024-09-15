@@ -47,7 +47,9 @@ test_install_config = {
         "python_version" : "3.10",
         "default_version" : "0.0.0",
         "version_increment_type" : "patch",
-        "use_commit_messages" : True
+        "use_commit_messages" : True,
+        "check_vulnerabilities" : True,
+        "check_dependencies_licenses" : False
     }
 
 @click.command()
@@ -269,12 +271,12 @@ def make_package(ctx,
 
     if ignore_vulnerabilities_check:
         paa_params["check_vulnerabilities"] = False
-    else:
-        paa_params["check_vulnerabilities"] = True
+    # else:
+    #     paa_params["check_vulnerabilities"] = True
     if ignore_licenses_check:
         paa_params["check_dependencies_licenses"] = False
-    else:
-        paa_params["check_dependencies_licenses"] = True
+    # else:
+    #     paa_params["check_dependencies_licenses"] = True
 
     if example_notebook_path:
         paa_params["example_notebook_path"] = example_notebook_path

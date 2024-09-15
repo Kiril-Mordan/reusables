@@ -53,6 +53,11 @@ jobs:
         run: |
           ./tools/check_for_vulnerabilities.sh
 
+      - name: Check module licenses
+        if: steps.changed-modules.outputs.files != ''
+        run: |
+          paa check-licenses "${{ steps.changed-modules.outputs.files }}"
+
       - name: Upload updated requirements
         if: steps.changed-modules.outputs.files != ''
         uses: actions/upload-artifact@v4
