@@ -51,7 +51,14 @@ jobs:
       - name: Check requirements for vulnerabilities
         if: steps.changed-modules.outputs.files != ''
         run: |
-          ./tools/check_for_vulnerabilities.sh
+          #./tools/check_for_vulnerabilities.sh
+          paa check-vulnerabilities "${{ steps.changed-modules.outputs.files }}"
+
+
+      - name: Check module licenses
+        if: steps.changed-modules.outputs.files != ''
+        run: |
+          paa check-licenses "${{ steps.changed-modules.outputs.files }}"
 
       - name: Upload updated requirements
         if: steps.changed-modules.outputs.files != ''

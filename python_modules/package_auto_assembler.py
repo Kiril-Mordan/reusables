@@ -34,6 +34,7 @@ import mkdocs #==1.6.0
 import difflib
 import importlib
 import importlib.metadata
+from packaging import version
 
 
 # Metadata for package creation
@@ -481,6 +482,47 @@ class RequirementsHandler:
 
             self.logger = logger
 
+    def _keep_most_constrained(self, requirements : list):
+
+        try:
+            # Regex to capture the package name, extras, version operator, and version
+            pattern = re.compile(r"(\S+?)(?:\[(\w+)\])?(?:(==|>=|<=|>|<)\s*([\d\.]+))?$")
+            
+            # Dictionary to hold the most constrained version for each package
+            package_constraints = {}
+
+            for req in requirements:
+                match = pattern.match(req)
+                if match:
+                    pkg_name, extra, operator, ver = match.groups()
+                    
+                    # Create a tuple representing the constraint: (extras, operator, version)
+                    constraint = (extra, operator, ver)
+                    
+                    # If the package is not already in the dictionary, or if the new requirement has more constraints
+                    if pkg_name not in package_constraints:
+                        package_constraints[pkg_name] = (req, constraint)
+                    else:
+                        # Extract the current best requirement
+                        current_req, current_constraint = package_constraints[pkg_name]
+                        
+                        # Compare the number of constraints
+                        new_constraints_count = sum(x is not None for x in constraint)
+                        current_constraints_count = sum(x is not None for x in current_constraint)
+                        
+                        if new_constraints_count > current_constraints_count:
+                            package_constraints[pkg_name] = (req, constraint)
+                        elif new_constraints_count == current_constraints_count:
+                            # If they have the same number of constraints, compare versions
+                            if ver and current_constraint[2]:
+                                if version.parse(ver) > version.parse(current_constraint[2]):
+                                    package_constraints[pkg_name] = (req, constraint)
+
+            # Return the most constrained requirements
+            return [req for req, _ in package_constraints.values()]
+        except Exception as e:
+            return requirements
+
     def check_vulnerabilities(self,
                               requirements_list : list = None,
                               raise_error : bool = True):
@@ -627,20 +669,27 @@ class RequirementsHandler:
         self.module_name = module_name
 
         # Matches 'import module as alias' with optional version comment
-        import_pattern_as = re.compile(r"import (\S+)(?: as (\S+))?(?:\s+#(?:\s*(==|>=|<=|>|<)\s*([0-9.]+)))?")
+        #import_pattern_as = re.compile(r"import (\S+)(?: as (\S+))?(?:\s+#(?:\s*(==|>=|<=|>|<)\s*([0-9.]+)))?")
+        import_pattern_as = re.compile(
+            r"import (\S+)(?: as (\S+))?(?:\s+#(?:\[(\w+)\])?(?:\s*(==|>=|<=|>|<)\s*([0-9.]+))?)?")
 
         # Separate regex patterns for 'import' and 'from ... import ...' statements
-        import_pattern = re.compile(r"import (\S+)(?:\s+#(?:\s*(==|>=|<=|>|<)\s*([0-9.]+)))?")
+        import_pattern = re.compile(
+            r"import (\S+)(?:\s+#(?:\[(\w+)\])?(?:\s*(==|>=|<=|>|<)\s*([0-9.]+))?)?")
+        
         #from_import_pattern = re.compile(r"from (\S+) import [^#]+#\s*(==|>=|<=|>|<)\s*([0-9.]+)")
-
-        from_import_pattern = re.compile(r"from (\S+) import [^#]+(?:#\s*(==|>=|<=|>|<)\s*([0-9.]+))?")
+        from_import_pattern = re.compile(
+            r"from (\S+) import \S+(?:\s+#(?:\[(\w+)\])?(?:\s*(==|>=|<=|>|<)\s*([0-9.]+))?)?")
 
         # optional requirements
-        optional_import_pattern_as = re.compile(r"#! import (\S+)(?: as (\S+))?(?:\s+#(?:\s*(==|>=|<=|>|<)\s*([0-9.]+)))?")
+        optional_import_pattern_as = re.compile(
+            r"#! import (\S+)(?: as (\S+))?(?:\s+#(?:\[(\w+)\])?(?:\s*(==|>=|<=|>|<)\s*([0-9.]+))?)?")
         optional_import_pattern = re.compile(
-    r"#!\s*import\s+(\S+)(?:\s*#\s*(==|>=|<=|>|<)\s*([\d\.]+))?"
-)
-        optional_from_import_pattern = re.compile(r"#! from (\S+) import [^#]+(?:#\s*(==|>=|<=|>|<)\s*([0-9.]+))?")
+            r"#!\s*import\s+(\S+)(?:\s+#(?:\[(\w+)\])?(?:\s*(==|>=|<=|>|<)\s*([\d\.]+))?)?"
+        )
+        optional_from_import_pattern = re.compile(
+            r"#!\s*from\s+(\S+)\s+import\s+\S+(?:\s+#(?:\[(\w+)\])?(?:\s*(==|>=|<=|>|<)\s*([0-9.]+))?)?"
+        )
 
 
         requirements = []
@@ -664,17 +713,17 @@ class RequirementsHandler:
                 optional_module = None
 
                 if import_as_match:
-                    module, alias, version_constraint, version = import_as_match.groups()
+                    module, alias, extra_require, version_constraint, version = import_as_match.groups()
                 elif from_import_match:
-                    module, version_constraint, version = from_import_match.groups()
+                    module, extra_require, version_constraint, version = from_import_match.groups()
                 elif import_match:
-                    module, version_constraint, version = import_match.groups()
+                    module, extra_require, version_constraint, version = import_match.groups()
                 elif optional_import_match:
-                    optional_module, optional_version_constraint, optional_version = optional_import_match.groups()
+                    optional_module, optional_extra_require, optional_version_constraint, optional_version = optional_import_match.groups()
                 elif optional_from_import_match:
-                    optional_module, optional_version_constraint, optional_version = optional_from_import_match.groups()
+                    optional_module, optional_extra_require, optional_version_constraint, optional_version = optional_from_import_match.groups()
                 elif optional_import_as_match:
-                    optional_module, optional_version_constraint, optional_version = optional_import_as_match.groups()
+                    optional_module, optional_alias, optional_extra_require, optional_version_constraint, optional_version = optional_import_as_match.groups()
                 else:
                     continue
 
@@ -703,10 +752,11 @@ class RequirementsHandler:
                         # Use the mapping to get the correct package name
                         module = package_mappings.get(module_root, module_root)
 
+                        extra_require_ad = f"[{extra_require}]" if extra_require else ""
                         version_info = f"{version_constraint}{version}" if version_constraint and version else ""
 
                         if version_info:
-                            requirements.append(f"{module}{version_info}")
+                            requirements.append(f"{module}{extra_require_ad}{version_info}")
                         else:
                             requirements.append(module)
 
@@ -738,11 +788,12 @@ class RequirementsHandler:
                         # Use the mapping to get the correct package name
                         optional_module = package_mappings.get(module_root, module_root)
 
+                        optional_extra_require_ad = f"[{optional_extra_require}]" if optional_extra_require else ""
                         optional_version_info = f"{optional_version_constraint}{optional_version}" \
                             if optional_version_constraint and optional_version else ""
 
-                        if version_info:
-                            optional_requirements.append(f"{optional_module}{optional_version_info}")
+                        if optional_version_info:
+                            optional_requirements.append(f"{optional_module}{optional_extra_require_ad}{optional_version_info}")
                         else:
                             optional_requirements.append(optional_module)
 
@@ -751,11 +802,16 @@ class RequirementsHandler:
         else:
             header = []
 
+        requirements_list = header + new_header + list(set(self.requirements_list + requirements))
+        optional_requirements_list = list(set(self.optional_requirements_list + optional_requirements))
 
-        self.requirements_list = header + new_header + list(set(self.requirements_list + requirements))
-        self.optional_requirements_list = list(set(self.optional_requirements_list + optional_requirements))
+        requirements_list = self._keep_most_constrained(requirements_list)
+        optional_requirements_list = self._keep_most_constrained(optional_requirements_list)
 
-        return requirements, optional_requirements
+        self.requirements_list = requirements_list
+        self.optional_requirements_list = optional_requirements_list
+
+        return requirements_list, optional_requirements_list
 
     def write_requirements_file(self,
                                 module_name : str = None,
@@ -2563,25 +2619,29 @@ class DependenciesAnalyser:
                 package_name = package_name
             )
 
-        dependencies = self._extract_dependencies_names(
-            requirements=requirements)
+        if requirements:
 
-        dependencies_dict = self._extract_dependencies_layer(
-            dependencies = dependencies)
+            dependencies = self._extract_dependencies_names(
+                requirements=requirements)
 
-        if layers == 1:
-            return dependencies_dict
+            dependencies_dict = self._extract_dependencies_layer(
+                dependencies = dependencies)
+
+            if layers == 1:
+                return dependencies_dict
 
 
-        for layer in range(layers):
-            list_dim0 = self._count_keys(dependencies_dict)
-            self._apply_to_lists(data = dependencies_dict, 
-                        func = self._extract_dependencies_layer)
+            for layer in range(layers):
+                list_dim0 = self._count_keys(dependencies_dict)
+                self._apply_to_lists(data = dependencies_dict, 
+                            func = self._extract_dependencies_layer)
 
-            list_dim = self._count_keys(dependencies_dict)
-        
-            if list_dim == list_dim0:
-                break
+                list_dim = self._count_keys(dependencies_dict)
+            
+                if list_dim == list_dim0:
+                    break
+        else:
+            dependencies_dict = {}
 
 
         return dependencies_dict
@@ -2831,6 +2891,9 @@ class DependenciesAnalyser:
         if standard_licenses is None:
             standard_licenses = self.standard_licenses
 
+        if "bsd-3-clause" in standard_licenses:
+            standard_licenses.append("new bsd")
+
         if license_label is None:
             return "unknown"
         
@@ -2841,7 +2904,14 @@ class DependenciesAnalyser:
         
         # Match with the highest similarity
         match = difflib.get_close_matches(normalized_label, standard_licenses, n=1, cutoff=0.4)
-        return match[0] if match else "unknown"
+
+        license_label = match[0] if match else "unknown"
+
+        # remapping licenses
+        if license_label == "new bsd":
+            license_label = "bsd-3-clause"
+
+        return license_label
 
 @attr.s
 class PackageAutoAssembler:

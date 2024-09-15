@@ -15,6 +15,13 @@ import attr #>=22.2.0
 from .dependancies.example_local_dependacy_2 import *
 from .dependancies.bundle_1.dep_from_bundle_1 import *
 
+#! import sklearn #==1.5.1 
+#! import sklearn 
+#! import numpy 
+#! import torch #<=2.4.1
+#! import fastapi #[all]
+
+
 # Metadata for package creation
 __package_metadata__ = {
     "author": "Kyrylo Mordan",
