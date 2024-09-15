@@ -1,3 +1,4 @@
+packaging
 sentence-transformers
 requests
 numpy
@@ -19,8 +20,8 @@ pyyaml
 tox-gh-actions
 plotly
 sqlalchemy
-nbconvert
 pip_audit
+nbconvert
 pylint
 cryptography
 tqdm
