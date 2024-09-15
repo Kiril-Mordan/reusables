@@ -1,4 +1,3 @@
-from sentence_transformers import SentenceTransformer
 from python_modules.mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
 import numpy as np
 
@@ -18,8 +17,7 @@ def test_initialization():
 
 def test_embedding():
     handler = SentenceTransformerEmbedder(
-        model_name_or_path = 'paraphrase-multilingual-mpnet-base-v2',
-        SentenceTransformer = SentenceTransformer)
+        model_name_or_path = 'paraphrase-multilingual-mpnet-base-v2')
     test_sentence = "This is a test."
     embedding = handler.embed(test_sentence, processing_type='')
     print(embedding)
@@ -37,8 +35,7 @@ def test_searching():
     handler = MockerDB(
         embedder_params = {'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
                         'processing_type' : 'batch',
-                        'tbatch_size' : 500,
-                        'SentenceTransformer' : SentenceTransformer}
+                        'tbatch_size' : 500}
     )
     handler.establish_connection()
     test_data = [{"text": "Sample text"}, {"text": "Another sample"}]
@@ -50,8 +47,7 @@ def test_searching_with_filtering():
     handler = MockerDB(
         embedder_params = {'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
                         'processing_type' : 'batch',
-                        'tbatch_size' : 500,
-                        'SentenceTransformer' : SentenceTransformer}
+                        'tbatch_size' : 500}
     )
     handler.establish_connection()
     test_data = [{"text": "Sample text"}, {"text": "Another sample"}]
@@ -64,8 +60,7 @@ def test_multiple_searching():
     handler = MockerDB(
         embedder_params = {'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
                         'processing_type' : 'batch',
-                        'tbatch_size' : 500,
-                        'SentenceTransformer' : SentenceTransformer}
+                        'tbatch_size' : 500}
     )
     handler.establish_connection()
     test_data = [{"text": "Sample text"}, {"text": "Another sample"}]
