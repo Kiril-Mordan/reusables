@@ -18,7 +18,7 @@
     
     
       
-        <title>Mocker DB - Mocker db</title>
+        <title>Usage examples - Mocker db</title>
       
     
     
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#mocker-db" class="md-skip">
+        <a href="#usage-examples" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Mocker DB
+              Usage examples
             
           </span>
         </div>
@@ -293,14 +293,12 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
-        
-      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
   
   <span class="md-ellipsis">
-    Mocker DB
+    Usage examples
   </span>
   
 
@@ -311,7 +309,7 @@
         
   
   <span class="md-ellipsis">
-    Mocker DB
+    Usage examples
   </span>
   
 
@@ -322,8 +320,6 @@
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
-  
-    
   
   
     <label class="md-nav__title" for="__toc">
@@ -408,8 +404,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -483,14 +477,11 @@
                   
 
 
-<h1 id="mocker-db">Mocker DB</h1>
-<p>This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
-It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
-and basic data management within a simulated environment resembling a vector database.</p>
+  <h1>Usage examples</h1>
+
 <pre><code class="language-python"># import sys
 # sys.path.append('../')
 import numpy as np
-from sentence_transformers import SentenceTransformer
 from mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
 </code></pre>
 <h2 id="usage-examples">Usage examples</h2>
@@ -505,8 +496,7 @@ handler = MockerDB(
     # optional
     embedder_params = {'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
                         'processing_type' : 'batch',
-                        'tbatch_size' : 500,
-                        'SentenceTransformer' : SentenceTransformer},
+                        'tbatch_size' : 500},
     use_embedder = True,
     embedder = SentenceTransformerEmbedder,
     ## optional/ for similarity search
@@ -650,7 +640,7 @@ print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result 
 print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
 
 </code></pre>
-<pre><code>[{'&amp;embedded_field': 'text...', 'embedding': '[-4.94665056e-02 -2.38676026e-...'}]
+<pre><code>[{'embedding': '[-4.94665056e-02 -2.38676026e-...', '&amp;embedded_field': 'text...'}]
 </code></pre>
 <h3 id="3-removing-values-from-the-database">3. Removing values from the database</h3>
 <pre><code class="language-python">print(f&quot;Items in the database {len(handler.data)}&quot;)
@@ -662,11 +652,13 @@ print(f&quot;Items left in the database {len(handler.data)}&quot;)
 Items left in the database 1
 </code></pre>
 <h3 id="4-testing-the-hnsw-search-algorithm">4. Testing the HNSW Search Algorithm</h3>
-<pre><code class="language-python">mss = MockerSimilaritySearch(
+<pre><code class="language-python">import hnswlib
+
+mss = MockerSimilaritySearch(
     # optional
     search_results_n = 3,
     similarity_params = {'space':'cosine'},
-    similarity_search_type ='linear'
+    similarity_search_type ='hnsw'
 )
 
 ste = SentenceTransformerEmbedder(# optional / adaptor parameters
@@ -674,8 +666,7 @@ ste = SentenceTransformerEmbedder(# optional / adaptor parameters
                                   tbatch_size = 500,
                                   max_workers = 2,
                                   # sentence transformer parameters
-                                  model_name_or_path = 'paraphrase-multilingual-mpnet-base-v2',
-                                  SentenceTransformer = SentenceTransformer)
+                                  model_name_or_path = 'paraphrase-multilingual-mpnet-base-v2')
 </code></pre>
 <pre><code class="language-python"># Create embeddings
 embeddings = [ste.embed(&quot;example1&quot;), ste.embed(&quot;example2&quot;)]
