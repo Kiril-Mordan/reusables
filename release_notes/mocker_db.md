@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.2.4
+
+    - making hnswlib optional dependency
+
 ### 0.2.3
 
     - providing flag to disable embedder initialization
