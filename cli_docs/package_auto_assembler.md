@@ -222,7 +222,7 @@ Options:
 ```
 
 ``` bash
-paa show-module-requirements --help
+paa show-module-licenses --help
 ```
 
 ```

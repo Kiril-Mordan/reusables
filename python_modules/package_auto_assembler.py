@@ -792,7 +792,7 @@ class RequirementsHandler:
                         optional_version_info = f"{optional_version_constraint}{optional_version}" \
                             if optional_version_constraint and optional_version else ""
 
-                        if version_info:
+                        if optional_version_info:
                             optional_requirements.append(f"{optional_module}{optional_extra_require_ad}{optional_version_info}")
                         else:
                             optional_requirements.append(optional_module)
