@@ -230,9 +230,9 @@ import attr #>=22.2.0
 from .components.local_dep import *
 ```
 
-Produces 
+produces 
 
-```
+``` txt
 pandas
 attrs >=22.2.0
 yaml
@@ -241,6 +241,24 @@ yaml
 as requirements file, where `yaml` is extracted from `local_dep.py` file.
 
 Checking dependecies for vulnerabilities is usefull and it is done with `pip audit` which is integrated into the paa package and is used by default.
+
+Optional requirements for `extras_require` could be probided the same way normal requirements are, but each like that contains an import like that should be commented out in a special way, starting with `#!`, for example:
+
+```python
+import os
+import pandas
+import attr #>=22.2.0
+#! import hnswlib #==0.8.0
+```
+
+produces
+
+``` txt
+pandas
+attrs >=22.2.0
+hnswlib==0.8.0; extra == "hnswlib"
+```
+
 
 #### Initialize RequirementsHandler
 
@@ -281,7 +299,7 @@ rh.list_custom_modules(
 
 
 
-    ['example_local_dependacy_2', 'example_local_dependacy_1']
+    ['example_local_dependacy_1', 'example_local_dependacy_2']
 
 
 
@@ -349,7 +367,7 @@ rh.extract_requirements(
 
 
     (['attrs>=22.2.0'],
-     ['scikit-learn==1.5.1', 'scikit-learn', 'numpy', 'torch<1.8.0'])
+     ['torch<=2.4.1', 'fastapi[all]', 'scikit-learn==1.5.1', 'numpy'])
 
 
 
@@ -361,7 +379,7 @@ rh.requirements_list
 
 
 
-    ['### example_module.py', 'attrs>=22.2.0']
+    ['attrs>=22.2.0']
 
 
 
@@ -373,7 +391,7 @@ rh.optional_requirements_list
 
 
 
-    ['scikit-learn==1.5.1', 'torch<1.8.0', 'numpy', 'scikit-learn']
+    ['torch<=2.4.1', 'fastapi[all]', 'scikit-learn==1.5.1', 'numpy']
 
 
 
