@@ -1,16 +1,7 @@
-# Mocker DB
-
-This class is a mock handler for simulating a vector database, designed primarily for testing and development scenarios.
-It offers functionalities such as text embedding, hierarchical navigable small world (HNSW) search,
-and basic data management within a simulated environment resembling a vector database.
-
-
-
 ```python
 # import sys
 # sys.path.append('../')
 import numpy as np
-from sentence_transformers import SentenceTransformer
 from mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
 ```
 
@@ -32,8 +23,7 @@ handler = MockerDB(
     # optional
     embedder_params = {'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
                         'processing_type' : 'batch',
-                        'tbatch_size' : 500,
-                        'SentenceTransformer' : SentenceTransformer},
+                        'tbatch_size' : 500},
     use_embedder = True,
     embedder = SentenceTransformerEmbedder,
     ## optional/ for similarity search
@@ -206,7 +196,7 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 
 ```
 
-    [{'&embedded_field': 'text...', 'embedding': '[-4.94665056e-02 -2.38676026e-...'}]
+    [{'embedding': '[-4.94665056e-02 -2.38676026e-...', '&embedded_field': 'text...'}]
 
 
 ### 3. Removing values from the database
@@ -227,11 +217,13 @@ print(f"Items left in the database {len(handler.data)}")
 
 
 ```python
+import hnswlib
+
 mss = MockerSimilaritySearch(
     # optional
     search_results_n = 3,
     similarity_params = {'space':'cosine'},
-    similarity_search_type ='linear'
+    similarity_search_type ='hnsw'
 )
 
 ste = SentenceTransformerEmbedder(# optional / adaptor parameters
@@ -239,8 +231,7 @@ ste = SentenceTransformerEmbedder(# optional / adaptor parameters
                                   tbatch_size = 500,
                                   max_workers = 2,
                                   # sentence transformer parameters
-                                  model_name_or_path = 'paraphrase-multilingual-mpnet-base-v2',
-                                  SentenceTransformer = SentenceTransformer)
+                                  model_name_or_path = 'paraphrase-multilingual-mpnet-base-v2')
 ```
 
 
