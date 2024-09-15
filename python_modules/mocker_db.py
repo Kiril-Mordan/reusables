@@ -12,12 +12,13 @@ import time
 import copy
 import numpy as np #==1.26.0
 import dill #==0.3.7
-import attr #>=22.2.0
+import attr #==23.2.0
 ## for making keys
 import hashlib
 ## for search
 import concurrent.futures
-import hnswlib #==0.8.0
+#! import hnswlib #==0.8.0
+#! import sentence_transformers #==2.2.2
 from gridlooper import GridLooper #==0.0.1
 from difflib import get_close_matches
 ## for connect to remote mocker and llm search
@@ -30,6 +31,7 @@ __package_metadata__ = {
     "author": "Kyrylo Mordan",
     "author_email": "parachute.repo@gmail.com",
     "description": "A mock handler for simulating a vector database.",
+    'license' : 'mit'
     # Add other metadata as needed
 }
 
@@ -42,8 +44,14 @@ __design_choices__ = {
 
 class SentenceTransformerEmbedder:
 
-    def __init__(self,SentenceTransformer, tbatch_size = 32, processing_type = 'batch', max_workers = 2, *args, **kwargs):
+    def __init__(self,tbatch_size = 32, processing_type = 'batch', max_workers = 2, *args, **kwargs):
         # Suppress SentenceTransformer logging
+
+        try:
+            from sentence_transformers import SentenceTransformer
+        except ImportError:
+            print("Please install `sentence_transformers` to use this feature.")
+
         logging.getLogger('sentence_transformers').setLevel(logging.ERROR)
         self.tbatch_size = tbatch_size
         self.processing_type = processing_type
@@ -130,6 +138,15 @@ class MockerSimilaritySearch:
     def __attrs_post_init__(self):
         self._initialize_logger()
 
+        if self.similarity_search_type == 'hnsw':
+            try:
+                from hnswlib import Index
+            except ImportError:
+                print("Please install `hnswlib` to use this feature.")
+
+            self.hnsw_index = Index
+
+
     def _initialize_logger(self):
 
         """
@@ -163,7 +180,7 @@ class MockerSimilaritySearch:
 
         # Declare index
         dim = len(search_emb)#.shape[1]
-        p = hnswlib.Index(space=space, dim=dim)
+        p = self.hnsw_index(space=space, dim=dim)
 
         # Initialize the index using the data
         p.init_index(max_elements=len(doc_embs), ef_construction=ef_construction, M=M)
@@ -174,7 +191,7 @@ class MockerSimilaritySearch:
         # Set the query ef parameter
         p.set_ef(ef_search)
 
-        self.hnsw_index = p
+        #self.hnsw_index = p
 
         # Query the index
         labels, distances = p.knn_query(search_emb, k=k)
