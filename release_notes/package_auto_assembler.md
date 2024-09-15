@@ -1,5 +1,11 @@
 # Release notes
 
+### 0.4.5
+
+    - minor fixes to license check
+
+    - extracting extra_require labels and filtering duplicates for requirements
+
 ### 0.4.4
 
     - license checking integrated into packaging pipeline
