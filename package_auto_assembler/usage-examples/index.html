@@ -1910,13 +1910,24 @@ import pandas
 import attr #&gt;=22.2.0
 from .components.local_dep import *
 </code></pre>
-<p>Produces </p>
-<pre><code>pandas
+<p>produces </p>
+<pre><code class="language-txt">pandas
 attrs &gt;=22.2.0
 yaml
 </code></pre>
 <p>as requirements file, where <code>yaml</code> is extracted from <code>local_dep.py</code> file.</p>
 <p>Checking dependecies for vulnerabilities is usefull and it is done with <code>pip audit</code> which is integrated into the paa package and is used by default.</p>
+<p>Optional requirements for <code>extras_require</code> could be probided the same way normal requirements are, but each like that contains an import like that should be commented out in a special way, starting with <code>#!</code>, for example:</p>
+<pre><code class="language-python">import os
+import pandas
+import attr #&gt;=22.2.0
+#! import hnswlib #==0.8.0
+</code></pre>
+<p>produces</p>
+<pre><code class="language-txt">pandas
+attrs &gt;=22.2.0
+hnswlib==0.8.0; extra == &quot;hnswlib&quot;
+</code></pre>
 <h4 id="initialize-requirementshandler">Initialize RequirementsHandler</h4>
 <pre><code class="language-python">rh = RequirementsHandler(
     # optional/required later
@@ -1945,7 +1956,7 @@ yaml
     custom_modules_filepath=&quot;../tests/package_auto_assembler/dependancies&quot;
 )
 </code></pre>
-<pre><code>['example_local_dependacy_2', 'example_local_dependacy_1']
+<pre><code>['example_local_dependacy_1', 'example_local_dependacy_2']
 </code></pre>
 <h4 id="check-if-module-is-a-standard-python-library">Check if module is a standard python library</h4>
 <pre><code class="language-python">rh.is_standard_library(
@@ -1987,15 +1998,15 @@ yaml
 )
 </code></pre>
 <pre><code>(['attrs&gt;=22.2.0'],
- ['scikit-learn==1.5.1', 'scikit-learn', 'numpy', 'torch&lt;1.8.0'])
+ ['torch&lt;=2.4.1', 'fastapi[all]', 'scikit-learn==1.5.1', 'numpy'])
 </code></pre>
 <pre><code class="language-python">rh.requirements_list
 </code></pre>
-<pre><code>['### example_module.py', 'attrs&gt;=22.2.0']
+<pre><code>['attrs&gt;=22.2.0']
 </code></pre>
 <pre><code class="language-python">rh.optional_requirements_list
 </code></pre>
-<pre><code>['scikit-learn==1.5.1', 'torch&lt;1.8.0', 'numpy', 'scikit-learn']
+<pre><code>['torch&lt;=2.4.1', 'fastapi[all]', 'scikit-learn==1.5.1', 'numpy']
 </code></pre>
 <h4 id="audit-dependencies">Audit dependencies</h4>
 <pre><code class="language-python">rh.check_vulnerabilities(
