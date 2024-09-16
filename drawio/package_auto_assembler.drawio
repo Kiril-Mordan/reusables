@@ -252,7 +252,7 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="rKDuYdVevO0EODqZjKq1-34" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="-1002" y="-1404" width="1654" height="1538" as="geometry" />
+          <mxGeometry x="-1014" y="-1412" width="1654" height="1538" as="geometry" />
         </mxCell>
         <mxCell id="gH9P8Dfxt6CHixhxEZe5-3" value="module_name.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
           <mxGeometry x="-828" y="-308" width="114" height="127" as="geometry" />
@@ -443,38 +443,50 @@
         <mxCell id="rFOoan--pAJJMBuSx_o4-3" value="show info for selected paa package" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-516" y="-533" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="UD8CBX8DBauUmHmr7sZU-1" value="check-licenses" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="UD8CBX8DBauUmHmr7sZU-1" value="check-licenses" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="-879" y="-846" width="131" height="29" as="geometry" />
         </mxCell>
-        <mxCell id="UD8CBX8DBauUmHmr7sZU-2" value="check of metadata is present" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="UD8CBX8DBauUmHmr7sZU-2" value="check of metadata is present" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-733" y="-859" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="UD8CBX8DBauUmHmr7sZU-3" value="extract metadata from module" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="UD8CBX8DBauUmHmr7sZU-3" value="extract metadata from module" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-588" y="-859" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="UD8CBX8DBauUmHmr7sZU-4" value="prepare setup dir" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="UD8CBX8DBauUmHmr7sZU-4" value="prepare setup dir" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-444" y="-861.5" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="UD8CBX8DBauUmHmr7sZU-5" value="extract requirements from module/cli" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="UD8CBX8DBauUmHmr7sZU-5" value="extract requirements from module/cli" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-158" y="-861.5" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="UD8CBX8DBauUmHmr7sZU-6" value="merge local dependecies" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="UD8CBX8DBauUmHmr7sZU-6" value="merge local dependecies" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-296" y="-861.5" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="UD8CBX8DBauUmHmr7sZU-7" value="remove setup dir" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="UD8CBX8DBauUmHmr7sZU-7" value="remove setup dir" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="343" y="-861.5" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="UD8CBX8DBauUmHmr7sZU-8" value="remove setup dir" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="UD8CBX8DBauUmHmr7sZU-8" value="remove setup dir" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="346" y="-1232" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="UD8CBX8DBauUmHmr7sZU-9" value="check licenses for modules" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="UD8CBX8DBauUmHmr7sZU-9" value="check licenses for modules" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-21" y="-861.5" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="UD8CBX8DBauUmHmr7sZU-10" value="show license labels in dependencies tree" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="UD8CBX8DBauUmHmr7sZU-10" value="show license labels in dependencies tree" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-371.5" y="-533" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="UD8CBX8DBauUmHmr7sZU-11" value="package_licenses.json" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" vertex="1" parent="1">
+        <mxCell id="UD8CBX8DBauUmHmr7sZU-11" value="package_licenses.json" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
           <mxGeometry x="-198" y="-68" width="149" height="124" as="geometry" />
+        </mxCell>
+        <mxCell id="JFXNRwP1D9T0VtGkk8EZ-1" value="run api routes" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="307" y="-533" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="JFXNRwP1D9T0VtGkk8EZ-2" value="extract api routes from packages" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="439" y="-533" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="JFXNRwP1D9T0VtGkk8EZ-3" value="routes.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" vertex="1" parent="1">
+          <mxGeometry x="330" y="-113" width="114" height="127" as="geometry" />
+        </mxCell>
+        <mxCell id="JFXNRwP1D9T0VtGkk8EZ-4" value="LICENSE" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" vertex="1" parent="1">
+          <mxGeometry x="466" y="-31" width="114" height="127" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

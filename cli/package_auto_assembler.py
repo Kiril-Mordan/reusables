@@ -12,7 +12,8 @@ from package_auto_assembler.package_auto_assembler import (
     ReleaseNotesHandler, 
     VersionHandler,
     RequirementsHandler,
-    DependenciesAnalyser)
+    DependenciesAnalyser,
+    FastApiHandler)
 
 
 __cli_metadata__ = {
@@ -29,6 +30,7 @@ def cli(ctx):
 test_install_config = {
         "module_dir" : "python_modules",
         "cli_dir" : "cli",
+        "api_routes_dir" : "api_routes",
         "mapping_filepath" : "package_mapping.json",
         "licenses_filepath" : None,
         "include_local_dependecies" : True,
@@ -76,6 +78,7 @@ def init_config(ctx):
 @click.option('--module-filepath', 'module_filepath', type=str, required=False, help='Path to .py file to be packaged.')
 @click.option('--mapping-filepath', 'mapping_filepath', type=str, required=False, help='Path to .json file that maps import to install dependecy names.')
 @click.option('--cli-module-filepath', 'cli_module_filepath',  type=str, required=False, help='Path to .py file that contains cli logic.')
+@click.option('--fastapi-routes-filepath', 'fastapi_routes_filepath',  type=str, required=False, help='Path to .py file that routes for fastapi.')
 @click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
 @click.option('--default-version', 'default_version', type=str, required=False, help='Default version.')
 @click.option('--check-vulnerabilities', 'check_vulnerabilities', is_flag=True, type=bool, required=False, help='If checked, checks module dependencies with pip-audit for vulnerabilities.')
@@ -89,6 +92,7 @@ def test_install(ctx,
         module_filepath,
         mapping_filepath,
         cli_module_filepath,
+        fastapi_routes_filepath,
         dependencies_dir,
         default_version,
         check_vulnerabilities,
@@ -114,19 +118,23 @@ def test_install(ctx,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
+        "fastapi_routes_filepath" : os.path.join(test_install_config['api_routes_dir'], f"{module_name}.py"),
         "mapping_filepath" : test_install_config["mapping_filepath"],
         "licenses_filepath" : test_install_config["licenses_filepath"],
         "allowed_licenses" : test_install_config["allowed_licenses"],
         "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
         "classifiers" : test_install_config["classifiers"],
-        "default_version" : test_install_config["default_version"]
+        "default_version" : test_install_config["default_version"],
+        "license_path" : test_install_config.get("license_path", None),
     }
 
     if module_filepath:
         paa_params["module_filepath"] = module_filepath
     if cli_module_filepath:
         paa_params["cli_module_filepath"] = cli_module_filepath
+    if fastapi_routes_filepath:
+        paa_params["fastapi_routes_filepath"] = fastapi_routes_filepath
     if mapping_filepath:
         paa_params["mapping_filepath"] = mapping_filepath
 
@@ -169,6 +177,7 @@ def test_install(ctx,
 
         paa.add_requirements_from_module()
         paa.add_requirements_from_cli_module()
+        paa.add_requirements_from_api_route()
 
         paa.prep_setup_file()
         paa.make_package()
@@ -186,6 +195,7 @@ def test_install(ctx,
 @click.option('--module-filepath', 'module_filepath', type=str, required=False, help='Path to .py file to be packaged.')
 @click.option('--mapping-filepath', 'mapping_filepath', type=str, required=False, help='Path to .json file that maps import to install dependecy names.')
 @click.option('--cli-module-filepath', 'cli_module_filepath',  type=str, required=False, help='Path to .py file that contains cli logic.')
+@click.option('--fastapi-routes-filepath', 'fastapi_routes_filepath',  type=str, required=False, help='Path to .py file that routes for fastapi.')
 @click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
 @click.option('--kernel-name', 'kernel_name', type=str, required=False, help='Kernel name.')
 @click.option('--python-version', 'python_version', type=str, required=False, help='Python version.')
@@ -203,6 +213,7 @@ def make_package(ctx,
         module_filepath,
         mapping_filepath,
         cli_module_filepath,
+        fastapi_routes_filepath,
         dependencies_dir,
         kernel_name,
         python_version,
@@ -232,6 +243,7 @@ def make_package(ctx,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
+        "fastapi_routes_filepath" : os.path.join(test_install_config['api_routes_dir'], f"{module_name}.py"),
         "mapping_filepath" : test_install_config["mapping_filepath"],
         "licenses_filepath" : test_install_config["licenses_filepath"],
         "allowed_licenses" : test_install_config["allowed_licenses"],
@@ -257,6 +269,8 @@ def make_package(ctx,
         paa_params["module_filepath"] = module_filepath
     if cli_module_filepath:
         paa_params["cli_module_filepath"] = cli_module_filepath
+    if fastapi_routes_filepath:
+        paa_params["fastapi_routes_filepath"] = fastapi_routes_filepath
     if mapping_filepath:
         paa_params["mapping_filepath"] = mapping_filepath
 
@@ -306,6 +320,8 @@ def make_package(ctx,
 
         paa.add_requirements_from_module()
         paa.add_requirements_from_cli_module()
+        paa.add_requirements_from_api_route()
+
         paa.add_readme(execute_notebook = execute_notebook)
         paa.prep_setup_file()
         paa.make_package()
@@ -880,7 +896,91 @@ def show_module_licenses(ctx,
 
     da.print_flattened_tree(extracted_dependencies_tree_license)
 
+@click.command()
+@click.option('--description-config','description_config', type=str, 
+             default=".paa.api.description",
+             required=False, 
+             help='Path to yml config file with app description, `.paa.api.description` is used by default.')
+@click.option('--middleware-config','middleware_config', type=str, 
+             default=".paa.api.middleware.config",
+             required=False, 
+             help='Path to yml config file with middleware parameters, `.paa.api.run.config` is used by default.')
+@click.option('--run-config','run_config', type=str, 
+             default=".paa.api.run.config",
+             required=False, 
+             help='Path to yml config file with run parameters, `.paa.api.run.config` is used by default.')
+@click.option('--package', 
+              'package_names',
+              multiple=True,
+              required=False, 
+              help='Package names from which routes will be added to the app.')
+@click.option('--route', 
+              'routes_paths', 
+              multiple=True, 
+              required=False, 
+              help='Paths to routes which will be added to the app.')
+@click.pass_context
+def run_api_routes(ctx,
+        description_config,
+        middleware_config,
+        run_config,
+        package_names,
+        routes_paths):
+    """Run fastapi with provided routes."""
 
+
+    if os.path.exists(description_config):
+        with open(description_config, 'r') as file:
+            description_config = yaml.safe_load(file)
+    else:
+        description_config = {}
+
+    if os.path.exists(middleware_config):
+        with open(middleware_config, 'r') as file:
+            middleware_config = yaml.safe_load(file)
+    else:
+        middleware_config = None
+
+    if os.path.exists(run_config):
+        with open(run_config, 'r') as file:
+            run_config = yaml.safe_load(file)
+    else:
+        run_config = {}
+
+    fah = FastApiHandler(loggerLvl = logging.INFO)
+    
+    fah.run_app(
+        description = description_config,
+        middleware = middleware_config,
+        run_parameters = run_config,
+        package_names = package_names,
+        routes_paths = routes_paths
+    )
+
+@click.command()
+@click.argument('package_name')
+@click.option('--output-dir', 
+              'output_dir', 
+              type=str, required=False, 
+              help='Directory where routes extracted from the package will be copied to.')
+@click.option('--output-path', 
+              'output_path', 
+              type=str, required=False, 
+              help='Filepath to which routes extracted from the package will be copied to.')
+@click.pass_context
+def extract_module_routes(ctx,
+        package_name,
+        output_dir,
+        output_path):
+    """Extracts routes for fastapi from packages that have them into a file."""
+
+    fah = FastApiHandler(loggerLvl = logging.INFO)
+
+    fah.extract_routes_from_package(
+        package_name = package_name, 
+        output_directory = output_dir, 
+        output_filepath = output_path
+    )
 
 
 
@@ -890,6 +990,8 @@ cli.add_command(make_package, "make-package")
 cli.add_command(check_vulnerabilities, "check-vulnerabilities")
 cli.add_command(check_licenses, "check-licenses")
 cli.add_command(update_release_notes, "update-release-notes")
+cli.add_command(run_api_routes, "run-api-routes")
+cli.add_command(extract_module_routes, "extract-module-routes")
 cli.add_command(show_module_list, "show-module-list")
 cli.add_command(show_module_info, "show-module-info")
 cli.add_command(show_module_requirements, "show-module-requirements")

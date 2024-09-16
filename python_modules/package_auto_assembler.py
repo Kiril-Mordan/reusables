@@ -35,6 +35,9 @@ import difflib
 import importlib
 import importlib.metadata
 from packaging import version
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 
 # Metadata for package creation
@@ -2412,7 +2415,7 @@ class CliHandler:
 
     # processed
     logger = attr.ib(default=None)
-    logger_name = attr.ib(default='MkDocs Handler')
+    logger_name = attr.ib(default='Cli Handler')
     loggerLvl = attr.ib(default=logging.INFO)
     logger_format = attr.ib(default=None)
 
@@ -2449,6 +2452,193 @@ class CliHandler:
         shutil.copy(cli_module_filepath, os.path.join(setup_directory, "cli.py"))
 
         return True
+
+@attr.s
+class FastApiHandler:
+
+    # inputs
+    fastapi_routes_filepath = attr.ib(default = None)
+    setup_directory = attr.ib(default = None)
+
+    # processed
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='FastAPI Handler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+
+    def _initialize_logger(self):
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    def _include_package_routes(self, 
+                                app, 
+                                package_names : list, 
+                                routes_paths : list):
+    
+        
+        for package_name in package_names:
+            try:
+                routes_module = importlib.import_module(f"{package_name}.routes")
+                app.include_router(routes_module.router)
+            except ImportError as e:
+                print(e)
+                print(f"Error importing routes from {package_name}: {e}")
+                sys.exit(1)
+
+        for routes_path in routes_paths:
+            try:
+                # Generate a module name from the file path
+                module_name = routes_path.rstrip('.py').replace('/', '.').replace('\\', '.')
+                
+                # Load the module from the specified file path
+                spec = importlib.util.spec_from_file_location(module_name, routes_path)
+                if spec is None:
+                    print(f"Could not load spec from {routes_path}")
+                    sys.exit(1)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                
+                # Check if the module has a 'router' attribute
+                if hasattr(module, 'router'):
+                    app.include_router(module.router)
+                else:
+                    print(f"The module at {routes_path} does not have a 'router' attribute.")
+                    sys.exit(1)
+            except FileNotFoundError:
+                print(f"File not found: {routes_path}")
+                sys.exit(1)
+            except Exception as e:
+                print(f"Error loading routes from {routes_path}: {e}")
+                sys.exit(1)
+
+        return app
+
+    def prepare_routes(self,
+                       fastapi_routes_filepath: str = None,
+                       setup_directory : str = None):
+
+        """
+        Prepare fastapi routes for packaging.
+        """
+
+        if fastapi_routes_filepath is None:
+            fastapi_routes_filepath = self.fastapi_routes_filepath
+
+        if setup_directory is None:
+            setup_directory = self.setup_directory
+
+        if fastapi_routes_filepath is None:
+            raise ImportError("Parameter fastapi_routes_filepath is missing!")
+
+        if setup_directory is None:
+            raise ImportError("Parameter setup_directory is missing!")
+
+        # Copying module to setup directory
+        shutil.copy(fastapi_routes_filepath, 
+                    os.path.join(setup_directory, "routes.py"))
+
+        return True
+
+    def run_app(self,
+                description : dict = None, 
+                middleware : dict = None,
+                run_parameters : dict = None,
+                package_names : list = None, 
+                routes_paths : list = None):
+
+        """
+        Sets up FastAPI app with provided `description` and runs it with
+        routes for selected `package_names` and `routes_paths` 
+        with `run_parameters`.
+        """
+
+        if description is None:
+            description = {}
+
+        if package_names is None:
+            package_names = []
+
+        if routes_paths is None:
+            routes_paths = []
+
+        if run_parameters is None:
+            run_parameters = {
+                "host" : "0.0.0.0", 
+                "port" : 8000
+            }
+
+        app = FastAPI(**description)
+
+        if middleware is not None:
+            app.add_middleware(
+                CORSMiddleware,
+                **middleware
+            )
+
+        app = self._include_package_routes(
+            app = app, 
+            package_names = package_names, 
+            routes_paths = routes_paths)
+
+        uvicorn.run(app, **run_parameters)
+
+    def extract_routes_from_package(self, 
+                              package_name : str, 
+                              output_directory : str = '.', 
+                              output_filepath : str = None):
+        """
+        Extracts the routes.py file from the specified package.
+        """
+        try:
+
+            if output_directory is None:
+                output_directory = '.'
+
+            # Import the package
+            package = importlib.import_module(package_name)
+            
+            # Get the package's directory
+            package_dir = os.path.dirname(package.__file__)
+            
+            # Construct the path to routes.py
+            routes_file_path = os.path.join(package_dir, 'routes.py')
+            if not os.path.exists(routes_file_path):
+                print(f"No routes.py found in package '{package_name}'.")
+                return
+            
+            # Read the content of routes.py
+            with open(routes_file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Replace 'package_name.package_name' with 'package_name'
+            content = content.replace(f'{package_name}.{package_name}', package_name)
+            
+            # Ensure the output directory exists
+            os.makedirs(output_directory, exist_ok=True)
+            
+            # Write the modified content to a new file in the output directory
+            if output_filepath is None:
+                output_filepath = os.path.join(output_directory, f'{package_name}_route.py')
+
+            with open(output_filepath, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            print(f"Extracted routes.py from package '{package_name}' to '{output_filepath}'.")
+        except ImportError:
+            print(f"Package '{package_name}' not found.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
 @attr.s
 class DependenciesAnalyser:
@@ -2923,6 +3113,7 @@ class PackageAutoAssembler:
     ## paths
     module_filepath = attr.ib(type=str)
     cli_module_filepath = attr.ib(default=None)
+    fastapi_routes_filepath = attr.ib(default=None)
     mapping_filepath = attr.ib(default=None)
     licenses_filepath = attr.ib(default=None)
     allowed_licenses = attr.ib(default=None)
@@ -2934,15 +3125,7 @@ class PackageAutoAssembler:
     release_notes_filepath = attr.ib(default=None)
 
     # optional parameters
-    classifiers = attr.ib(default=['Development Status :: 3 - Alpha',
-                                    'Intended Audience :: Developers',
-                                    'Intended Audience :: Science/Research',
-                                    'Programming Language :: Python :: 3',
-                                    'Programming Language :: Python :: 3.9',
-                                    'Programming Language :: Python :: 3.10',
-                                    'Programming Language :: Python :: 3.11',
-                                    'License :: OSI Approved :: MIT License',
-                                    'Topic :: Scientific/Engineering'])
+    classifiers = attr.ib(default=['Development Status :: 3 - Alpha'])
     license_path = attr.ib(default=None)
     license_label = attr.ib(default=None)
     docs_url = attr.ib(default=None)
@@ -2972,6 +3155,7 @@ class PackageAutoAssembler:
     cli_h_class = attr.ib(default=CliHandler)
     release_notes_h_class = attr.ib(default=ReleaseNotesHandler)
     dependencies_analyzer_h_class = attr.ib(default=DependenciesAnalyser)
+    fastapi_h_class = attr.ib(default=FastApiHandler)
 
     ## handlers
     setup_dir_h = attr.ib(default = None, type = SetupDirHandler)
@@ -2984,6 +3168,7 @@ class PackageAutoAssembler:
     cli_h = attr.ib(default = None, type=CliHandler)
     release_notes_h = attr.ib(default = None, type=ReleaseNotesHandler)
     dependencies_analyzer_h = attr.ib(default = None, type=DependenciesAnalyser)
+    fastapi_h = attr.ib(default = None, type=FastApiHandler)
 
     ## output
     cli_metadata = attr.ib(default={}, type = dict)
@@ -3099,6 +3284,17 @@ class PackageAutoAssembler:
 
         self.cli_h = self.cli_h_class(
             cli_module_filepath = self.cli_module_filepath,
+            setup_directory = self.setup_directory,
+            logger = self.logger)
+
+    def _initialize_fastapi_handler(self):
+
+        """
+        Initialize fastapi handler with available parameters.
+        """
+
+        self.fastapi_h = self.fastapi_h_class(
+            fastapi_routes_filepath = self.fastapi_routes_filepath,
             setup_directory = self.setup_directory,
             logger = self.logger)
 
@@ -3450,6 +3646,39 @@ class PackageAutoAssembler:
                 add_header = False
             )
 
+    def add_requirements_from_api_route(self,
+                                     module_name : str = None,
+                                     fastapi_routes_filepath : str = None,
+                                     custom_modules : list = None,
+                                     import_mappings : str = None,
+                                     check_vulnerabilities : bool = None,
+                                     check_dependencies_licenses : bool = None):
+
+        """
+        Extract and add requirements from the module.
+        """
+
+        if fastapi_routes_filepath is None:
+            fastapi_routes_filepath = self.fastapi_routes_filepath
+
+        if module_name is None:
+            module_name = self.module_name
+
+        if custom_modules is None:
+            custom_modules = []
+
+        if os.path.exists(fastapi_routes_filepath) \
+                and os.path.isfile(fastapi_routes_filepath):
+
+            self._add_requirements(
+                module_filepath = fastapi_routes_filepath,
+                custom_modules = custom_modules + [module_name],
+                import_mappings = import_mappings,
+                check_vulnerabilities = check_vulnerabilities,
+                check_dependencies_licenses = check_dependencies_licenses,
+                add_header = False
+            )
+
     def add_readme(self,
                     example_notebook_path : str = None,
                     output_path : str = None,
@@ -3491,6 +3720,7 @@ class PackageAutoAssembler:
     def prep_setup_file(self,
                        module_name : str = None,
                        cli_module_filepath : str = None,
+                       fastapi_routes_filepath : str = None,
                        metadata : dict = None,
                        cli_metadata : dict = None,
                        requirements : list = None,
@@ -3509,6 +3739,9 @@ class PackageAutoAssembler:
 
         if cli_module_filepath is None:
             cli_module_filepath = self.cli_module_filepath
+
+        if fastapi_routes_filepath is None:
+            fastapi_routes_filepath = self.fastapi_routes_filepath
 
         if metadata is None:
             metadata = self.metadata
@@ -3553,6 +3786,17 @@ class PackageAutoAssembler:
             )
         else:
             add_cli_tool = None
+
+        if fastapi_routes_filepath is not None \
+            and os.path.exists(fastapi_routes_filepath) \
+                and os.path.isfile(fastapi_routes_filepath):
+
+            if self.fastapi_h is None:
+                self._initialize_fastapi_handler()
+
+            add_fastapi = self.fastapi_h.prepare_routes(
+                fastapi_routes_filepath = fastapi_routes_filepath
+            )
 
         self.logger.info(f"Preparing setup file for {module_name.replace('_','-')} package ...")
 

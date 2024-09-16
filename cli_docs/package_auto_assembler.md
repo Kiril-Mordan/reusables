@@ -14,10 +14,12 @@ Options:
 Commands:
   check-licenses            Check licenses of the module.
   check-vulnerabilities     Check vulnerabilities of the module.
+  extract-module-routes     Extracts routes for fastapi from packages...
   init-config               Initialize config file
   make-package              Package with package-auto-assembler.
+  run-api-routes            Run fastapi with provided routes.
   show-module-info          Shows module info.
-  show-module-licenses      Shows module requirements.
+  show-module-licenses      Shows module licenses.
   show-module-list          Shows module list.
   show-module-requirements  Shows module requirements.
   test-install              Test install module into local environment.
@@ -190,6 +192,50 @@ Options:
 
 ``` bash
 paa show-module-info --help
+```
+
+Packaging process could help building APIs as well. This package would call routes stored within other packages and routes stored in files to form one application, so that repeatable structure does not need to copied between projects, but instead built in one places and extended with some config files in many. Since routes are python code that can have its dependencies, it makes sense to store them within packages sometimes to take advantage of automated dependency handling and import code straight from the package, eliminating in turn situation when package release in no compatible anymore with routes based on them.
+
+``` bash
+paa run-api-routes --help
+```
+
+```
+Usage: paa run-api-routes [OPTIONS]
+
+  Run fastapi with provided routes.
+
+Options:
+  --description-config TEXT  Path to yml config file with app description,
+                             `.paa.api.description` is used by default.
+  --middleware-config TEXT   Path to yml config file with middleware
+                             parameters, `.paa.api.run.config` is used by
+                             default.
+  --run-config TEXT          Path to yml config file with run parameters,
+                             `.paa.api.run.config` is used by default.
+  --package TEXT             Package names from which routes will be added to
+                             the app.
+  --route TEXT               Paths to routes which will be added to the app.
+  --help                     Show this message and exit.
+```
+
+Storing routes within package could be convinient, but extracting them from a package is not. To mitigate that, the following exists to extract `routes.py` from a package that contains it.
+
+```
+paa extract-module-routes --help
+```
+
+```
+Usage: paa extract-module-routes [OPTIONS] PACKAGE_NAME
+
+  Extracts routes for fastapi from packages that have them into a file.
+
+Options:
+  --output-dir TEXT   Directory where routes extracted from the package will
+                      be copied to.
+  --output-path TEXT  Filepath to which routes extracted from the package will
+                      be copied to.
+  --help              Show this message and exit.
 ```
 
 ```
