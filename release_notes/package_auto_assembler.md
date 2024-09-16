@@ -1,5 +1,17 @@
 # Release notes
 
+### 0.5.0
+
+    - ability to add and run routes for fastapi applications
+
+    - cli tools to run routes from multiple packages and filepaths
+
+    - cli tool to extract routes from a package
+
+    - cli and api support descriptions in docs
+
+    - automatic extraction and processing of dependencies from api routes
+
 ### 0.4.5
 
     - minor fixes to license check
