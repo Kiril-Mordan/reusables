@@ -1282,7 +1282,57 @@ da.find_unexpected_licenses_in_deps_tree(
     Exception: Found unexpected licenses!
 
 
-### 10. Making a package
+### 10. Adding cli interfaces
+
+The tool allows to make a package with optional cli interfaces. These could be sometimes preferable when a package contains a standalone tool that would be called from script anyway.
+
+All of the cli logic would need to be included within a `.py` file which should be stored within `cli_dir` provided in `.paa.config`. 
+Dependencies from these files are extracted in the similar manner to the main module.
+
+Tools from main `.py` file could still be imported like the following:
+
+```python
+from package_name.package_name import ToBeImported
+```
+
+The code is wired in `setup.py` via the following automatically assuming that appropriate file with the same name as the package exists within `cli_dir` location.
+
+```python
+...,
+entry_points = {'console_scripts': [
+    '<package_alias> = package_name.cli:cli']} ,
+...
+```
+
+Alias for name could be provided via the following piece of code, defined after imports, otherwise package name would be used.
+
+```python 
+__cli_metadata__ = {
+    "name" : <package_alias>
+}
+```
+
+Package-auto-assembler tool itself uses [`click`](https://pypi.org/project/click/) dependency to build that file, use its [cli definition](https://github.com/Kiril-Mordan/reusables/blob/main/cli/package_auto_assembler.py) as example.
+
+
+### 11. Adding routes and running FastAPI application
+
+The tool allows to make a package with optional routes for FastAPI application and run them. Each packages can have one routes file where its logic should be defined. Package-auto-assembler itself can combine multiple routes from packages and filepaths into one application.
+
+A `.py`  file with the same name of the package should be stored within `api_routes_dir` provided in `.paa.config`.
+
+Dependencies from these files are extracted in the similar manner to the main module.
+
+Tools from main `.py` file could still be imported like the following:
+
+```python
+from package_name.package_name import ToBeImported
+```
+
+Api description, middleware and run parameters could be provided via optional `yml` files.
+
+
+### 12. Making a package
 
 Main wrapper for the package integrates described above components into a class that could be used to build package building pipelines within python scripts. 
 
@@ -1515,7 +1565,7 @@ paa.make_package(
 
 
 
-### 11. Making simple MkDocs site
+### 13. Making simple MkDocs site
 
 Package documentation can be presented in a form of mkdocs static site, which could be either served or deployed to something like github packages. 
 
