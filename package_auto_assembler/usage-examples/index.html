@@ -873,13 +873,31 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#10-making-a-package" class="md-nav__link">
+  <a href="#10-adding-cli-interfaces" class="md-nav__link">
     <span class="md-ellipsis">
-      10. Making a package
+      10. Adding cli interfaces
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="10. Making a package">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-adding-routes-and-running-fastapi-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      11. Adding routes and running FastAPI application
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-making-a-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      12. Making a package
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. Making a package">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -978,13 +996,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#11-making-simple-mkdocs-site" class="md-nav__link">
+  <a href="#13-making-simple-mkdocs-site" class="md-nav__link">
     <span class="md-ellipsis">
-      11. Making simple MkDocs site
+      13. Making simple MkDocs site
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="11. Making simple MkDocs site">
+    <nav class="md-nav" aria-label="13. Making simple MkDocs site">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1594,13 +1612,31 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#10-making-a-package" class="md-nav__link">
+  <a href="#10-adding-cli-interfaces" class="md-nav__link">
     <span class="md-ellipsis">
-      10. Making a package
+      10. Adding cli interfaces
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="10. Making a package">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-adding-routes-and-running-fastapi-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      11. Adding routes and running FastAPI application
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-making-a-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      12. Making a package
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. Making a package">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1699,13 +1735,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#11-making-simple-mkdocs-site" class="md-nav__link">
+  <a href="#13-making-simple-mkdocs-site" class="md-nav__link">
     <span class="md-ellipsis">
-      11. Making simple MkDocs site
+      13. Making simple MkDocs site
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="11. Making simple MkDocs site">
+    <nav class="md-nav" aria-label="13. Making simple MkDocs site">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2634,7 +2670,34 @@ File ~/miniforge3/envs/testenv/lib/python3.10/site-packages/package_auto_assembl
 
 Exception: Found unexpected licenses!
 </code></pre>
-<h3 id="10-making-a-package">10. Making a package</h3>
+<h3 id="10-adding-cli-interfaces">10. Adding cli interfaces</h3>
+<p>The tool allows to make a package with optional cli interfaces. These could be sometimes preferable when a package contains a standalone tool that would be called from script anyway.</p>
+<p>All of the cli logic would need to be included within a <code>.py</code> file which should be stored within <code>cli_dir</code> provided in <code>.paa.config</code>. 
+Dependencies from these files are extracted in the similar manner to the main module.</p>
+<p>Tools from main <code>.py</code> file could still be imported like the following:</p>
+<pre><code class="language-python">from package_name.package_name import ToBeImported
+</code></pre>
+<p>The code is wired in <code>setup.py</code> via the following automatically assuming that appropriate file with the same name as the package exists within <code>cli_dir</code> location.</p>
+<pre><code class="language-python">...,
+entry_points = {'console_scripts': [
+    '&lt;package_alias&gt; = package_name.cli:cli']} ,
+...
+</code></pre>
+<p>Alias for name could be provided via the following piece of code, defined after imports, otherwise package name would be used.</p>
+<pre><code class="language-python">__cli_metadata__ = {
+    &quot;name&quot; : &lt;package_alias&gt;
+}
+</code></pre>
+<p>Package-auto-assembler tool itself uses <a href="https://pypi.org/project/click/"><code>click</code></a> dependency to build that file, use its <a href="https://github.com/Kiril-Mordan/reusables/blob/main/cli/package_auto_assembler.py">cli definition</a> as example.</p>
+<h3 id="11-adding-routes-and-running-fastapi-application">11. Adding routes and running FastAPI application</h3>
+<p>The tool allows to make a package with optional routes for FastAPI application and run them. Each packages can have one routes file where its logic should be defined. Package-auto-assembler itself can combine multiple routes from packages and filepaths into one application.</p>
+<p>A <code>.py</code>  file with the same name of the package should be stored within <code>api_routes_dir</code> provided in <code>.paa.config</code>.</p>
+<p>Dependencies from these files are extracted in the similar manner to the main module.</p>
+<p>Tools from main <code>.py</code> file could still be imported like the following:</p>
+<pre><code class="language-python">from package_name.package_name import ToBeImported
+</code></pre>
+<p>Api description, middleware and run parameters could be provided via optional <code>yml</code> files.</p>
+<h3 id="12-making-a-package">12. Making a package</h3>
 <p>Main wrapper for the package integrates described above components into a class that could be used to build package building pipelines within python scripts. </p>
 <p>To simplify usage <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/">cli interface</a> is recomended instead. </p>
 <h4 id="initializing-packageautoassembler">Initializing PackageAutoAssembler</h4>
@@ -2802,7 +2865,7 @@ No known vulnerabilities found
 
 CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=0, stdout="running sdist\nrunning egg_info\nwriting example_module.egg-info/PKG-INFO\nwriting dependency_links to example_module.egg-info/dependency_links.txt\nwriting entry points to example_module.egg-info/entry_points.txt\nwriting requirements to example_module.egg-info/requires.txt\nwriting top-level names to example_module.egg-info/top_level.txt\nreading manifest file 'example_module.egg-info/SOURCES.txt'\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nrunning check\ncreating example_module-0.0.0\ncreating example_module-0.0.0/example_module\ncreating example_module-0.0.0/example_module.egg-info\ncopying files to example_module-0.0.0...\ncopying example_module/__init__.py -&gt; example_module-0.0.0/example_module\ncopying example_module/cli.py -&gt; example_module-0.0.0/example_module\ncopying example_module/example_module.py -&gt; example_module-0.0.0/example_module\ncopying example_module/setup.py -&gt; example_module-0.0.0/example_module\ncopying example_module.egg-info/PKG-INFO -&gt; example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -&gt; example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/dependency_links.txt -&gt; example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/entry_points.txt -&gt; example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/requires.txt -&gt; example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/top_level.txt -&gt; example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -&gt; example_module-0.0.0/example_module.egg-info\nWriting example_module-0.0.0/setup.cfg\nCreating tar archive\nremoving 'example_module-0.0.0' (and everything under it)\nrunning bdist_wheel\nrunning build\nrunning build_py\ncopying example_module/example_module.py -&gt; build/lib/example_module\ncopying example_module/__init__.py -&gt; build/lib/example_module\ncopying example_module/setup.py -&gt; build/lib/example_module\ncopying example_module/cli.py -&gt; build/lib/example_module\ninstalling to build/bdist.linux-x86_64/wheel\nrunning install\nrunning install_lib\ncreating build/bdist.linux-x86_64/wheel\ncreating build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/example_module.py -&gt; build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/__init__.py -&gt; build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/setup.py -&gt; build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/cli.py -&gt; build/bdist.linux-x86_64/wheel/example_module\nrunning install_egg_info\nCopying example_module.egg-info to build/bdist.linux-x86_64/wheel/example_module-0.0.0-py3.10.egg-info\nrunning install_scripts\ncreating build/bdist.linux-x86_64/wheel/example_module-0.0.0.dist-info/WHEEL\ncreating 'dist/example_module-0.0.0-py3-none-any.whl' and adding 'build/bdist.linux-x86_64/wheel' to it\nadding 'example_module/__init__.py'\nadding 'example_module/cli.py'\nadding 'example_module/example_module.py'\nadding 'example_module/setup.py'\nadding 'example_module-0.0.0.dist-info/METADATA'\nadding 'example_module-0.0.0.dist-info/WHEEL'\nadding 'example_module-0.0.0.dist-info/entry_points.txt'\nadding 'example_module-0.0.0.dist-info/top_level.txt'\nadding 'example_module-0.0.0.dist-info/RECORD'\nremoving build/bdist.linux-x86_64/wheel\n", stderr='warning: sdist: standard file not found: should have one of README, README.rst, README.txt, README.md\n\n/home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.\n!!\n\n        ********************************************************************************\n        Please avoid running ``setup.py`` directly.\n        Instead, use pypa/build, pypa/installer or other\n        standards-based tools.\n\n        See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.\n        ********************************************************************************\n\n!!\n  self.initialize_options()\n')
 </code></pre>
-<h3 id="11-making-simple-mkdocs-site">11. Making simple MkDocs site</h3>
+<h3 id="13-making-simple-mkdocs-site">13. Making simple MkDocs site</h3>
 <p>Package documentation can be presented in a form of mkdocs static site, which could be either served or deployed to something like github packages. </p>
 <p>Main module docstring is used as intro package that contains something like optional pypi and license badges. Package description and realease notes are turned into separate tabs. Png with diagrams for example could be provided and displayed as their own separate tabs as well.</p>
 <p>The one for this package can be seen <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/">here</a></p>
