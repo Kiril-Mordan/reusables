@@ -1,5 +1,11 @@
 # Release notes
 
+### 0.5.1
+
+    - minor fix for requirements extraction with extra_require labels
+
+    - fixes for the problem when __package_metadata__ is empty and .ipynb is optional
+
 ### 0.5.0
 
     - ability to add and run routes for fastapi applications
