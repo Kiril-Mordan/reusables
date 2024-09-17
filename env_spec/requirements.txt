@@ -9,8 +9,8 @@ hnswlib
 pandas
 jupyter
 attrs
-nbformat
 mkdocs
+nbformat
 tox
 pytest
 mocker_db
