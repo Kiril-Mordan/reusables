@@ -682,7 +682,8 @@ class RequirementsHandler:
         
         #from_import_pattern = re.compile(r"from (\S+) import [^#]+#\s*(==|>=|<=|>|<)\s*([0-9.]+)")
         from_import_pattern = re.compile(
-            r"from (\S+) import \S+(?:\s+#(?:\[(\w+)\])?(?:\s*(==|>=|<=|>|<)\s*([0-9.]+))?)?")
+            r"from (\S+) import ([\w\s,]+)(?:\s*#(?:\[(\w+)\])?\s*(==|>=|<=|>|<)\s*([0-9.]+))?"
+        )
 
         # optional requirements
         optional_import_pattern_as = re.compile(
@@ -691,7 +692,7 @@ class RequirementsHandler:
             r"#!\s*import\s+(\S+)(?:\s+#(?:\[(\w+)\])?(?:\s*(==|>=|<=|>|<)\s*([\d\.]+))?)?"
         )
         optional_from_import_pattern = re.compile(
-            r"#!\s*from\s+(\S+)\s+import\s+\S+(?:\s+#(?:\[(\w+)\])?(?:\s*(==|>=|<=|>|<)\s*([0-9.]+))?)?"
+            r"#!\s*from\s+(\S+)\s+import\s+([\w\s,]+)(?:\s*#(?:\s*\[(\w+)\])?(?:\s*(==|>=|<=|>|<)\s*([0-9.]+))?)?"
         )
 
 
@@ -718,13 +719,13 @@ class RequirementsHandler:
                 if import_as_match:
                     module, alias, extra_require, version_constraint, version = import_as_match.groups()
                 elif from_import_match:
-                    module, extra_require, version_constraint, version = from_import_match.groups()
+                    module, _, extra_require, version_constraint, version = from_import_match.groups()
                 elif import_match:
                     module, extra_require, version_constraint, version = import_match.groups()
                 elif optional_import_match:
                     optional_module, optional_extra_require, optional_version_constraint, optional_version = optional_import_match.groups()
                 elif optional_from_import_match:
-                    optional_module, optional_extra_require, optional_version_constraint, optional_version = optional_from_import_match.groups()
+                    optional_module, _, optional_extra_require, optional_version_constraint, optional_version = optional_from_import_match.groups()
                 elif optional_import_as_match:
                     optional_module, optional_alias, optional_extra_require, optional_version_constraint, optional_version = optional_import_as_match.groups()
                 else:
@@ -761,7 +762,7 @@ class RequirementsHandler:
                         if version_info:
                             requirements.append(f"{module}{extra_require_ad}{version_info}")
                         else:
-                            requirements.append(module)
+                            requirements.append(f"{module}{extra_require_ad}")
 
                         # deduplicate requirements
                         requirements = [requirements[0]] + list(set(requirements[1:]))
@@ -798,7 +799,7 @@ class RequirementsHandler:
                         if optional_version_info:
                             optional_requirements.append(f"{optional_module}{optional_extra_require_ad}{optional_version_info}")
                         else:
-                            optional_requirements.append(optional_module)
+                            optional_requirements.append(f"{optional_module}{optional_extra_require_ad}")
 
         if self.requirements_list:
             header = [self.requirements_list.pop(0)]
@@ -851,6 +852,8 @@ class MetadataHandler:
     module_filepath = attr.ib(default=None)
     header_name = attr.ib(default="__package_metadata__")
 
+    metadata_status = attr.ib(default={})
+
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Package Metadata Handler')
     loggerLvl = attr.ib(default=logging.INFO)
@@ -897,9 +900,12 @@ class MetadataHandler:
                 for line in file:
                     # Check if the line defines __package_metadata__
                     if line.strip().startswith(f"{header_name} ="):
+                        self.metadata_status[header_name] = True
                         return True
+            self.metadata_status[header_name] = False
             return False
         except FileNotFoundError:
+            self.metadata_status[header_name] = False
             return False
 
     def get_package_metadata(self,
@@ -951,6 +957,10 @@ class MetadataHandler:
                 except SyntaxError as e:
                     return f"Error parsing metadata: {e}"
             else:
+
+                if self.metadata_status.get(header_name, False):
+                    return {}
+
                 return "No metadata found in the file."
 
         except FileNotFoundError:
@@ -1307,21 +1317,28 @@ class LongDocHandler:
         if output_path is None:
             output_path = self.markdown_filepath
 
-        # Load the notebook
-        with open(notebook_path, encoding='utf-8') as fh:
-            notebook_node = nbformat.read(fh, as_version=4)
+        if os.path.exists(notebook_path):
 
-        # Create a Markdown exporter
-        md_exporter = MarkdownExporter()
+            # Load the notebook
+            with open(notebook_path, encoding='utf-8') as fh:
+                notebook_node = nbformat.read(fh, as_version=4)
 
-        # Process the notebook we loaded earlier
-        (body, _) = md_exporter.from_notebook_node(notebook_node)
+            # Create a Markdown exporter
+            md_exporter = MarkdownExporter()
+
+            # Process the notebook we loaded earlier
+            (body, _) = md_exporter.from_notebook_node(notebook_node)
+
+            self.logger.debug(f"Converted {notebook_path} to {output_path}")
+
+        else:
+            body = ""
 
         # Write to the output markdown file
         with open(output_path, 'w', encoding='utf-8') as fh:
             fh.write(body)
 
-        self.logger.debug(f"Converted {notebook_path} to {output_path}")
+            
 
     def convert_and_execute_notebook_to_md(self,
                                            notebook_path : str = None,
@@ -1345,23 +1362,29 @@ class LongDocHandler:
         if kernel_name is None:
             kernel_name = self.kernel_name
 
-        # Load the notebook
-        with open(notebook_path, encoding = 'utf-8') as fh:
-            notebook_node = nbformat.read(fh, as_version=4)
+        if os.path.exists(notebook_path):
 
-        # Execute the notebook
-        execute_preprocessor = ExecutePreprocessor(timeout=timeout, kernel_name=kernel_name)
-        execute_preprocessor.preprocess(notebook_node, {'metadata': {'path': os.path.dirname(notebook_path)}})
+            # Load the notebook
+            with open(notebook_path, encoding = 'utf-8') as fh:
+                notebook_node = nbformat.read(fh, as_version=4)
 
-        # Convert the notebook to Markdown
-        md_exporter = MarkdownExporter()
-        (body, _) = md_exporter.from_notebook_node(notebook_node)
+            # Execute the notebook
+            execute_preprocessor = ExecutePreprocessor(timeout=timeout, kernel_name=kernel_name)
+            execute_preprocessor.preprocess(notebook_node, {'metadata': {'path': os.path.dirname(notebook_path)}})
 
-        # Write to the output markdown file
-        with open(output_path, 'w', encoding='utf-8') as fh:
-            fh.write(body)
+            # Convert the notebook to Markdown
+            md_exporter = MarkdownExporter()
+            (body, _) = md_exporter.from_notebook_node(notebook_node)
 
-        self.logger.debug(f"Converted and executed {notebook_path} to {output_path}")
+            self.logger.debug(f"Converted and executed {notebook_path} to {output_path}")
+
+        else:
+
+            body = ""
+
+            # Write to the output markdown file
+            with open(output_path, 'w', encoding='utf-8') as fh:
+                fh.write(body)
 
     def convert_dependacies_notebooks_to_md(self,
                                             dependacies_dir : str,
@@ -1589,6 +1612,9 @@ class SetupDirHandler:
 
         if metadata is None:
             metadata = self.metadata
+
+        if metadata is None:
+            metadata = {}
 
         if cli_metadata is None:
             cli_metadata = self.cli_metadata
@@ -3341,6 +3367,7 @@ class PackageAutoAssembler:
 
         # extracting package metadata
         self.metadata = self.metadata_h.get_package_metadata(module_filepath = module_filepath)
+
 
     def add_metadata_from_cli_module(self,
                                      cli_module_filepath : str = None):
