@@ -125,8 +125,7 @@ def test_install(ctx,
         "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
         "classifiers" : test_install_config["classifiers"],
-        "default_version" : test_install_config["default_version"],
-        "license_path" : test_install_config.get("license_path", None),
+        "default_version" : test_install_config["default_version"]
     }
 
     if module_filepath:
