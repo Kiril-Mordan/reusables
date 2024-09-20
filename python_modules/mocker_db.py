@@ -12,19 +12,23 @@ import time
 import copy
 import numpy as np #==1.26.0
 import dill #==0.3.7
-import attr #==23.2.0
+import attr #>=22.2.0
 ## for making keys
 import hashlib
 ## for search
 import concurrent.futures
 #! import hnswlib #==0.8.0
 #! import sentence_transformers #==2.2.2
-from gridlooper import GridLooper #==0.0.1
+from gridlooper import GridLooper #>=0.0.1
 from difflib import get_close_matches
 ## for connect to remote mocker and llm search
 import requests
 import httpx
-
+# dependencies for routes
+from .components.mocker_db_deps.data_types import InitializeParams, InsertItem, SearchRequest, DeleteItem, UpdateItem, EmbeddingRequest, RemoveHandlersRequest
+from .components.mocker_db_deps.memory_management import check_and_offload_handlers, 
+from .components.mocker_db_deps.other import extract_directory
+from .components.mocker_db_deps.response_descriptions import ActivateHandlersDesc, RemoveHandlersDesc, InitializeDesc, InsertDesc, SearchDesc, DeleteDesc, EmbedDesc
 
 # Metadata for package creation
 __package_metadata__ = {
@@ -1167,7 +1171,7 @@ class MockerDB:
                         similarity_search_type: str = None,
                         similarity_params: dict = None,
                         perform_similarity_search: bool = None,
-                        return_keys_list : list = None) ->list:
+                        return_keys_list : list = None) -> list:
 
         """
         Searches through keys and retrieves specified fields from the search results
