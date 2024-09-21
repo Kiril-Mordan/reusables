@@ -1,5 +1,15 @@
 # Release notes
 
+### 0.2.5
+
+    - simple cli for initializing optional config
+
+    - wiring mocker connector into main mocker class
+
+    - a single interface to interact with local and remote mocker
+
+    - packaging existing mocker-db api routes with latest search options
+
 ### 0.2.4
 
     - making hnswlib optional dependency
