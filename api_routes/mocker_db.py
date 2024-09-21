@@ -1,6 +1,7 @@
 
 import numpy as np
 import os
+import yaml
 
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.responses import JSONResponse
@@ -10,7 +11,6 @@ from mocker_db.mocker_db import *
 
 router = APIRouter(prefix = "/mocker-db")
 
-
 MOCKER_SETUP_PARAMS = {
     'embedder_params' :
   {'model_name_or_path' : 'intfloat/multilingual-e5-base',
@@ -19,14 +19,27 @@ MOCKER_SETUP_PARAMS = {
     'similarity_params' : {'space':'cosine'},
     'file_path' : "./persist/",
     'embs_file_path' : "./persist/",
-    'persist' : True,
-    'embedder_error_tolerance' : 0.0
+    'persist' : True
 }
 
 API_SETUP_PARAMS = {
     'memory_scaler_from_bytes': 1048576,
     'allocated_mb': 8192
 }
+
+config = ".mockerdb.api.config"
+
+if os.path.exists(config):
+    with open(config, 'r') as file:
+        api_config_up = yaml.safe_load(file)
+
+    MOCKER_SETUP_PARAMS.update(
+        api_config_up.get('MOCKER_SETUP_PARAMS', {}))
+
+    API_SETUP_PARAMS.update(
+        api_config_up.get('API_SETUP_PARAMS', {}))
+
+
 
 handlers = {}
 handlers['default'] = MockerDB(**{**MOCKER_SETUP_PARAMS, 

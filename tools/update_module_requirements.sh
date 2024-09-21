@@ -8,7 +8,10 @@ process_module() {
     local module_file=$1
     local module_name=$(basename "$module_file")
     echo "Processing module: $module_name"
-    python3 ./tools/extract_requirements.py "$module_name"
+    paa test-install "$module_name"
+    paa show-module-requirements "$module_name" > "env_spec/requirements_$module_name.txt"
+    
+    #python3 ./tools/extract_requirements.py "$module_name"
 }
 
 # If arguments are provided, process each; otherwise, process all modules in directory

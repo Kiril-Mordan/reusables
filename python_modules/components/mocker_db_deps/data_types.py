@@ -30,13 +30,13 @@ class InsertItem(BaseModel):
     database_name: Optional[str] = Field(default=None, example="custom_db_name")
 
 class SearchRequest(BaseModel):
-    query: Optional[str] = Field(default=None, example="example search query")
     database_name: Optional[str] = Field(default=None, example="custom_db_name")
+    query: Optional[str] = Field(default=None, example="example search query")
+    filter_criteria: Optional[Dict[str, Any]] = Field(default=None, example={"other_field": "Additional data"})
     search_results_n: Optional[int] = Field(default=None, example=3)
     llm_search_keys: Optional[list] = Field(default=None, example=[])
     keyword_check_keys : Optional[list] = Field(default=None, example=[])
     keyword_check_cutoff : Optional[float] = Field(default=None, example=0)
-    filter_criteria: Optional[Dict[str, Any]] = Field(default=None, example={"other_field": "Additional data"})
     similarity_search_type: Optional[str] = Field(default=None, example="linear")
     similarity_params: Optional[Dict[str, Any]] = Field(default=None, example={"space": "cosine"})
     perform_similarity_search: Optional[bool] = Field(default=None, example=True)

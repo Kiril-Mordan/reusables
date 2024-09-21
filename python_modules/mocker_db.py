@@ -26,7 +26,7 @@ import requests
 import httpx
 # dependencies for routes
 from .components.mocker_db_deps.data_types import InitializeParams, InsertItem, SearchRequest, DeleteItem, UpdateItem, EmbeddingRequest, RemoveHandlersRequest
-from .components.mocker_db_deps.memory_management import check_and_offload_handlers, 
+from .components.mocker_db_deps.memory_management import check_and_offload_handlers, obj_size
 from .components.mocker_db_deps.other import extract_directory
 from .components.mocker_db_deps.response_descriptions import ActivateHandlersDesc, RemoveHandlersDesc, InitializeDesc, InsertDesc, SearchDesc, DeleteDesc, EmbedDesc
 
@@ -265,12 +265,16 @@ class MockerSimilaritySearch:
 @attr.s
 class MockerConnector:
 
-    base_url = attr.ib(default = "http://localhost:8000")
+    connection_details = attr.ib(
+        default = {
+            "base_url" : "http://localhost:8000"
+        })
+
 
 
     def __attrs_post_init__(self):
-
-        self.client = httpx.Client(base_url=self.base_url)
+        self.client = httpx.Client(
+            **self.connection_details)
 
     def read_root(self):
         response = self.client.get("/")
@@ -285,20 +289,9 @@ class MockerConnector:
         response = self.client.get("/active_handlers")
         return response.json()
 
-    def remove_handlers(self,
-                        handler_names : list):
-
-        """
-        Remove active handlers
-        """
-
-        response = self.client.post("/remove_handlers", json={"handler_names": handler_names})
-        if response.status_code == 404:
-            raise Exception(response.json()['detail'])
-        return response.json()
-
+    
     def initialize_database(self,
-                            database_name : str = None,
+                            database_name : str = 'default',
                             embedder_params : dict = None):
 
         """
@@ -316,11 +309,27 @@ class MockerConnector:
         response = self.client.post("/initialize", json=params)
         return response.json()
 
+    def remove_handlers(self,
+                        handler_names : list):
+
+        """
+        Remove active handlers
+        """
+
+        response = self.client.post("/remove_handlers", json={"handler_names": handler_names})
+        if response.status_code == 404:
+            raise Exception(response.json()['detail'])
+        return response.json()
+
     def insert_data(self,
                     data : list,
-                    database_name : str = None,
+                    database_name : str = 'default',
                     var_for_embedding_name : str = None,
                     embed=False):
+
+        """
+        Insert data into a select handler.
+        """
 
         request_body = {"data": data,
                         "var_for_embedding_name" : "text"}
@@ -336,9 +345,12 @@ class MockerConnector:
         return response.json()
 
     def search_data(self,
-                    database_name : str,
+                    database_name : str = 'default',
                     query : str = None,
                     filter_criteria : dict = None,
+                    llm_search_keys: list = None,
+                    keyword_check_keys : list = None,
+                    keyword_check_cutoff : float = None,
                     return_keys_list : list = None,
                     search_results_n : int = None,
                     similarity_search_type : str = None,
@@ -346,7 +358,7 @@ class MockerConnector:
                     perform_similarity_search : bool = None):
 
         """
-        Search data in selected handler
+        Search data in selected handler.
         """
 
         request_body = {"database_name" : database_name}
@@ -355,6 +367,12 @@ class MockerConnector:
             request_body["query"] = query
         if filter_criteria is not None:
             request_body["filter_criteria"] = filter_criteria
+        if llm_search_keys is not None:
+            request_body["llm_search_keys"] = llm_search_keys
+        if keyword_check_keys is not None:
+            request_body["keyword_check_keys"] = keyword_check_keys
+        if keyword_check_cutoff is not None:
+            request_body["keyword_check_cutoff"] = keyword_check_cutoff
         if return_keys_list is not None:
             request_body["return_keys_list"] = return_keys_list
         if search_results_n is not None:
@@ -490,7 +508,6 @@ class MockerDB:
     Parameters:
         file_path (str): Local file path for storing and simulating the database; defaults to "../mock_persist".
         persist (bool): Flag to persist data changes; defaults to False.
-        embedder_error_tolerance (float): Tolerance level for embedding errors; defaults to 0.0.
         logger (logging.Logger): Logger instance for activity logging.
         logger_name (str): Name for the logger; defaults to 'Mock handler'.
         loggerLvl (int): Logging level, set to logging.INFO by default.
@@ -523,11 +540,15 @@ class MockerDB:
     similarity_params = attr.ib(default={'space':'cosine'}, type = dict)
     similarity_search = attr.ib(default=MockerSimilaritySearch)
 
+    ## for conneting to remote mocker
+    mdbc_h_params = attr.ib(default={})
+    mdbc_class = attr.ib(default=MockerConnector)
 
     ## activate dependencies
     llm_filter_h = attr.ib(default=None)
     embedder_h = attr.ib(default=None)
     similarity_search_h = attr.ib(default=None)
+    mdbc_h = attr.ib(default=None)
 
     ##
     return_keys_list = attr.ib(default=None, type = list)
@@ -544,7 +565,7 @@ class MockerDB:
     embs_file_path = attr.ib(default="./mock_embs_persist", type=str)
     persist = attr.ib(default=False, type=bool)
 
-    embedder_error_tolerance = attr.ib(default=0.0, type=float)
+    skip_post_init = attr.ib(default=False)
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Mock handler')
@@ -563,9 +584,10 @@ class MockerDB:
 
     def __attrs_post_init__(self):
         self._initialize_logger()
-        self._initialize_llm_filter()
-        self._initialize_embedder()
-        self._initialize_sim_search()
+        if not self.skip_post_init:
+            self._initialize_llm_filter()
+            self._initialize_embedder()
+            self._initialize_sim_search()
 
 
         self.data = {}
@@ -1067,12 +1089,22 @@ class MockerDB:
 
 ### EXPOSED METHODS FOR INTERACTION
 
-    def establish_connection(self, file_path : str = None, embs_file_path : str = None):
+    def establish_connection(self,
+                            connection_details : dict = None,
+                            file_path : str = None, 
+                            embs_file_path : str = None):
 
         """
         Simulates establishing a connection by loading data from a local file into the 'data' attribute.
         """
 
+        if connection_details:
+            self.mdbc_h = self.mdbc_class(
+                connection_details = connection_details,
+                **self.mdbc_h_params
+            )
+
+            
         if file_path is None:
             file_path = self.file_path
 
@@ -1114,11 +1146,26 @@ class MockerDB:
     def insert_values(self,
                       values_dict_list : list,
                       var_for_embedding_name : str = None,
+                      database_name : str = None,
                       embed : bool = True) -> None:
 
         """
         Simulates inserting key-value pairs into the mock Redis database.
         """
+
+        if self.mdbc_h:
+
+            mdbc_input = {
+                "data" : values_dict_list,
+                "embed" : embed
+            }
+
+            if var_for_embedding_name:
+                mdbc_input['var_for_embedding_name'] = var_for_embedding_name
+            if database_name:
+                mdbc_input['database_name'] = database_name
+
+            return self.mdbc_h.insert_data(**mdbc_input)
 
         values_dict_list = copy.deepcopy(values_dict_list)
 
@@ -1149,11 +1196,21 @@ class MockerDB:
             except Exception as e:
                 self.logger.error("Problem during inserting list of key-values dictionaries into mock database!", e)
 
-    def flush_database(self):
+    def flush_database(self, handler_names : list = None):
 
         """
         Clears all data in the mock database.
         """
+
+        if self.mdbc_h:
+
+            if handler_names is None:
+                raise ValueError("Missing handler_names input for remote MockerDB!")
+            
+            mdbc_input = {
+                'handler_names' : handler_names}
+
+            return self.mdbc_h.remove_handlers(**mdbc_input)
 
         try:
             self.data = {}
@@ -1171,7 +1228,8 @@ class MockerDB:
                         similarity_search_type: str = None,
                         similarity_params: dict = None,
                         perform_similarity_search: bool = None,
-                        return_keys_list : list = None) -> list:
+                        return_keys_list : list = None,
+                        database_name : str = None) -> list:
 
         """
         Searches through keys and retrieves specified fields from the search results
@@ -1180,6 +1238,16 @@ class MockerDB:
 
         if query is None:
             perform_similarity_search = False
+
+
+        if self.mdbc_h:
+
+            mdbc_input = {}
+
+            if database_name:
+                mdbc_input['database_name'] = database_name
+
+            return self.mdbc_h.search_data(**mdbc_input)
 
         if filter_criteria:
             self._filter_database(
@@ -1206,15 +1274,29 @@ class MockerDB:
 
         return results
 
-    def remove_from_database(self, filter_criteria : dict = None):
+    def remove_from_database(self, 
+                             filter_criteria : dict = None,
+                             database_name : str = None):
         """
         Removes key-value pairs from a dictionary based on filter criteria.
         """
+
+        if self.mdbc_h:
+
+            if database_name is None:
+                raise ValueError("Missing database_name input for remote MockerDB!")
+
+            mdbc_input = {
+                'filter_criteria' : filter_criteria,
+                'database_name' : database_name}
+
+            return self.mdbc_h.delete_data(**mdbc_input)
 
         if filter_criteria is None:
             filter_criteria_list = []
         else:
             filter_criteria_list = self._prep_filter_criterias(filter_criteria = filter_criteria)
+
 
         self.data = {
             key: value
@@ -1224,3 +1306,68 @@ class MockerDB:
         }
 
         self.save_data()
+
+
+    def embed_texts(self, texts : list, embedding_model : str = None):
+
+        """
+        Embed list of text.
+        """
+
+        if self.mdbc_h:
+
+            
+            mdbc_input = {
+                'texts' : texts,
+                'embedding_model' : embedding_model}
+
+            return self.mdbc_h.embed_texts(**mdbc_input)
+
+        if embedding_model:
+            self.logger.warning("Parameter embedding_model will be ignore, define it when initializing embedder locally!")
+
+        insert = [{'text' : text} for text in texts]
+
+        self.insert_values(values_dict_list=insert,
+                            var_for_embedding_name='text',
+                            embed=True)
+
+        embeddings = [self.search_database(query = query,
+                return_keys_list=['embedding'],
+                search_results_n=1)[0]['embedding'].tolist() \
+            for query in texts]
+
+        return {"embeddings" : embeddings}
+        
+
+
+    def show_handlers(self):
+
+        """
+        Show active handlers in MockerDB API.
+        """
+
+        if self.mdbc_h:
+
+            return self.mdbc_h.show_handlers()
+
+        raise ValueError("Establish connection to remote MockerDB first!")
+
+    def initialize_database(self,
+                            database_name : str = 'default',
+                            embedder_params : dict = None):
+
+        """
+        Initialize database handler in MockerDB API.
+        """
+
+        if self.mdbc_h:
+
+            return self.mdbc_h.initialize_database(
+                database_name = database_name,
+                embedder_params = embedder_params
+            )
+
+        raise ValueError("Establish connection to remote MockerDB first!")
+
+
