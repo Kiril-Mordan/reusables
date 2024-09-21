@@ -45,7 +45,8 @@ jobs:
         run: |
           chmod +x ./tools/update_module_requirements.sh
           chmod +x ./tools/update_tox_requirements.sh
-          ./tools/update_module_requirements.sh
+          python -m pip install setuptools wheel twine
+          ./tools/update_module_requirements.sh "${{ steps.changed-modules.outputs.files }}"
           ./tools/update_tox_requirements.sh "${{ steps.changed-modules.outputs.files }}"
 
       - name: Check requirements for vulnerabilities
