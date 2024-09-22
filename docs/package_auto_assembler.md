@@ -1329,7 +1329,21 @@ Tools from main `.py` file could still be imported like the following:
 from package_name.package_name import ToBeImported
 ```
 
-Api description, middleware and run parameters could be provided via optional `yml` files.
+Api description, middleware and run parameters could be provided via optional `yml` file, which for example would look like:
+
+```
+DESCRIPTION : {
+    'version' : 0.0.0
+}
+MIDDLEWARE : {
+    origin : ['*']
+}
+RUN : {
+ host : 0.0.0.0
+}
+```
+
+where DESCRIPTION contains parameters for `FastAPI`, MIDDLEWARE for `CORSMiddleware` and RUN for `uvicorn.run`
 
 
 ### 12. Making a package
@@ -1572,6 +1586,8 @@ Package documentation can be presented in a form of mkdocs static site, which co
 Main module docstring is used as intro package that contains something like optional pypi and license badges. Package description and realease notes are turned into separate tabs. Png with diagrams for example could be provided and displayed as their own separate tabs as well.
  
 The one for this package can be seen [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/)
+
+It can be packaged with the package and be displayed in webrowser like documentation for api via `{package_name}\docs` when using included api handling capabilities.
 
 ##### - preparing inputs
 
