@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.34">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.36">
     
     
       
@@ -24,7 +24,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.35f28582.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.06209087.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -2696,7 +2696,18 @@ entry_points = {'console_scripts': [
 <p>Tools from main <code>.py</code> file could still be imported like the following:</p>
 <pre><code class="language-python">from package_name.package_name import ToBeImported
 </code></pre>
-<p>Api description, middleware and run parameters could be provided via optional <code>yml</code> files.</p>
+<p>Api description, middleware and run parameters could be provided via optional <code>yml</code> file, which for example would look like:</p>
+<pre><code>DESCRIPTION : {
+    'version' : 0.0.0
+}
+MIDDLEWARE : {
+    origin : ['*']
+}
+RUN : {
+ host : 0.0.0.0
+}
+</code></pre>
+<p>where DESCRIPTION contains parameters for <code>FastAPI</code>, MIDDLEWARE for <code>CORSMiddleware</code> and RUN for <code>uvicorn.run</code></p>
 <h3 id="12-making-a-package">12. Making a package</h3>
 <p>Main wrapper for the package integrates described above components into a class that could be used to build package building pipelines within python scripts. </p>
 <p>To simplify usage <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/">cli interface</a> is recomended instead. </p>
@@ -2869,6 +2880,7 @@ CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wh
 <p>Package documentation can be presented in a form of mkdocs static site, which could be either served or deployed to something like github packages. </p>
 <p>Main module docstring is used as intro package that contains something like optional pypi and license badges. Package description and realease notes are turned into separate tabs. Png with diagrams for example could be provided and displayed as their own separate tabs as well.</p>
 <p>The one for this package can be seen <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/">here</a></p>
+<p>It can be packaged with the package and be displayed in webrowser like documentation for api via <code>{package_name}\docs</code> when using included api handling capabilities.</p>
 <h5 id="-preparing-inputs">- preparing inputs</h5>
 <pre><code class="language-python">package_name = &quot;example_module&quot;
 
@@ -2968,7 +2980,7 @@ INFO    -  Documentation built in 0.12 seconds
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
