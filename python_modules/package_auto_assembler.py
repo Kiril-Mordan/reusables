@@ -2252,6 +2252,7 @@ class MkDocsHandler:
         return filename
 
     def create_index(self,
+                     package_name: str = None,
                      project_name: str = None,
                      module_docstring : str = None,
                      pypi_badge : str = None,
@@ -2262,18 +2263,28 @@ class MkDocsHandler:
         """
 
         if project_name is None:
-            project_name = self.package_name
+            project_name = self.project_name
 
         if module_docstring is None:
             module_docstring = self.module_docstring
 
+        if module_docstring is None:
+            module_docstring = ''
+
         if pypi_badge is None:
             pypi_badge = self.pypi_badge
+
+        if pypi_badge is None:
+            pypi_badge = ''
 
         if license_badge is None:
             license_badge = self.license_badge
 
-        package_name = project_name.replace("_","-")
+        if license_badge is None:
+             license_badge = ''
+
+        if package_name is None:
+            package_name = self.package_name
 
         content = f"""# Intro
 
@@ -2281,14 +2292,20 @@ class MkDocsHandler:
 
 {module_docstring}
 
+"""
+
+
+        if package_name:
+            content += f"""
 ## Installation
 
 ```bash
-pip install {package_name}
+pip install {package_name.replace("_", "-")}
 ```
-        """
 
-        mkdocs_index_path = os.path.join("temp_project","docs", "index.md")
+"""
+
+        mkdocs_index_path = os.path.join(project_name,"docs", "index.md")
         with open(mkdocs_index_path, 'w', encoding='utf-8') as file:
             file.write(content)
         print(f"index.md has been created with site_name: {package_name}")
@@ -2653,6 +2670,8 @@ class FastApiHandler:
         for package_name in package_names:
             try:
 
+                package_name = package_name.replace('-','_')
+
                 # Import the package
                 package = importlib.import_module(package_name)
                 
@@ -2669,13 +2688,11 @@ class FastApiHandler:
                     routes_module = importlib.import_module(f"{package_name}.routes")
                     app.include_router(routes_module.router)
                 
-                print(docs_file_path)
                 if os.path.exists(docs_file_path):
-                    print(docs_file_path)
                     app = self._include_docs(
                         app = app,
                         docs_paths = [docs_file_path],
-                        docs_prefix = f"/{package_name}/docs"
+                        docs_prefix = f"/{package_name.replace('_','-')}/docs"
                     )
 
             except ImportError as e:
@@ -3318,28 +3335,37 @@ class PackageAutoAssembler:
     setup_directory = attr.ib(default='./setup_dir')
     release_notes_filepath = attr.ib(default=None)
     config_filepath = attr.ib(default=None)
+    cli_docs_filepath = attr.ib(default=None)
+
+    docs_path = attr.ib(default=None)
 
     # optional parameters
     classifiers = attr.ib(default=['Development Status :: 3 - Alpha'])
     license_path = attr.ib(default=None)
     license_label = attr.ib(default=None)
+    license_badge = attr.ib(default=None)
     docs_url = attr.ib(default=None)
     requirements_list = attr.ib(default=[])
     optional_requirements_list = attr.ib(default=[])
-    execute_readme_notebook = attr.ib(default=True, type = bool)
     python_version = attr.ib(default="3.8")
     version_increment_type = attr.ib(default="patch", type = str)
     default_version = attr.ib(default="0.0.1", type = str)
     kernel_name = attr.ib(default = 'python', type = str)
+    max_git_search_depth = attr.ib(default=5, type = int)
+    artifacts_filepaths = attr.ib(default=None, type = dict)
+    docs_file_paths = attr.ib(default=None, type = dict)
+
+    # switches
+    add_artifacts = attr.ib(default=True, type = bool)
+    remove_temp_files = attr.ib(default=True, type = bool)
+    skip_deps_install = attr.ib(default=False, type = bool)
     check_vulnerabilities = attr.ib(default=True, type = bool)
     add_requirements_header = attr.ib(default=True, type = bool)
     use_commit_messages = attr.ib(default=True, type = bool)
     check_dependencies_licenses = attr.ib(default=False, type = bool)
-    remove_temp_files = attr.ib(default=True, type = bool)
-    skip_deps_install = attr.ib(default=False, type = bool)
-    max_git_search_depth = attr.ib(default=5, type = int)
-    add_artifacts = attr.ib(default=True, type = bool)
-    artifacts_filepaths = attr.ib(default=None, type = dict)
+    execute_readme_notebook = attr.ib(default=True, type = bool)
+    add_mkdocs_site = attr.ib(default=True, type = bool)
+
 
     ## handler classes
     setup_dir_h_class = attr.ib(default=SetupDirHandler)
@@ -3354,6 +3380,7 @@ class PackageAutoAssembler:
     dependencies_analyzer_h_class = attr.ib(default=DependenciesAnalyser)
     fastapi_h_class = attr.ib(default=FastApiHandler)
     artifacts_h_class = attr.ib(default=ArtifactsHandler)
+    mkdocs_h_class = attr.ib(default=MkDocsHandler)
 
     ## handlers
     setup_dir_h = attr.ib(default = None, type = SetupDirHandler)
@@ -3368,6 +3395,7 @@ class PackageAutoAssembler:
     dependencies_analyzer_h = attr.ib(default = None, type=DependenciesAnalyser)
     fastapi_h = attr.ib(default = None, type=FastApiHandler)
     artifacts_h = attr.ib(default = None, type=ArtifactsHandler)
+    mkdocs_h = attr.ib(default = None, type=MkDocsHandler)
 
     ## output
     cli_metadata = attr.ib(default={}, type = dict)
@@ -3927,6 +3955,75 @@ class PackageAutoAssembler:
                 output_path = output_path
             )
 
+    def make_mkdocs_site(self):
+
+        """
+        Use provided docs to generate simple mkdocs site. 
+        """
+
+        if self.add_mkdocs_site:
+
+            if self.mkdocs_h is None:
+
+                package_name = self.module_name
+
+                module_content = LongDocHandler().read_module_content(
+                    filepath=self.module_filepath)
+                docstring = LongDocHandler().extract_module_docstring(
+                    module_content=module_content)
+                pypi_link = LongDocHandler().get_pypi_badge(
+                    module_name=package_name)
+
+                if (self.docs_path is not None) \
+                    and (os.path.exists(self.docs_path)):
+                    doc_files = os.listdir(self.docs_path)
+                else:
+                    doc_files = []
+                
+                docs_file_paths = {}
+
+                package_docs = [doc_file for doc_file in doc_files \
+                    if doc_file.startswith(package_name)]
+
+                for package_doc in package_docs:
+
+                    if package_doc == f"{package_name}.md":
+                        docs_file_paths[os.path.join(self.docs_path,package_doc)] = "usage-examples.md"
+                    else:
+                        docs_file_paths[os.path.join(self.docs_path,package_doc)] = package_doc
+
+                if self.docs_file_paths:
+                    docs_file_paths.update(self.docs_file_paths)
+
+                if (self.release_notes_filepath is not None) \
+                    and os.path.exists(self.release_notes_filepath):
+                    docs_file_paths[self.release_notes_filepath] = "release-notes.md"
+
+                if (self.cli_docs_filepath is not None) \
+                    and os.path.exists(self.cli_docs_filepath):
+                    docs_file_paths[self.cli_docs_filepath] = "cli.md"
+
+            
+                self.mkdocs_h = MkDocsHandler(
+                    project_name = f"{package_name}_temp_mkdocs",
+                    package_name = package_name,
+                    docs_file_paths = docs_file_paths,
+                    module_docstring = docstring,
+                    pypi_badge = pypi_link,
+                    license_badge=self.license_badge)
+
+            self.mkdocs_h.create_mkdocs_dir()
+            self.mkdocs_h.move_files_to_docs()
+            self.mkdocs_h.generate_markdown_for_images()
+            self.mkdocs_h.create_index()
+            self.mkdocs_h.create_mkdocs_yml()
+            self.mkdocs_h.build_mkdocs_site()
+
+            if self.artifacts_filepaths is None:
+                self.artifacts_filepaths = {}
+
+            self.artifacts_filepaths['mkdocs'] = f"{package_name}_temp_mkdocs"
+
     def prepare_artifacts(self, artifacts_filepaths : dict = None):
 
         """
@@ -4148,4 +4245,7 @@ class PackageAutoAssembler:
             shutil.rmtree('dist', ignore_errors=True)
             shutil.rmtree(module_name, ignore_errors=True)
             shutil.rmtree(f"{module_name}.egg-info", ignore_errors=True)
+
+            if os.path.exists(f"{module_name}_temp_mkdocs"):
+                shutil.rmtree(f"{module_name}_temp_mkdocs", ignore_errors=True)
 
