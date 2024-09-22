@@ -1,5 +1,15 @@
 # Release notes
 
+### 0.5.2
+
+    - integration of mkdocs into package building pipeline
+
+    - packaging mkdocs static package and enabling displaying via run-module-routes functionality
+
+    - initial ability to include docs for run-module-routes functionality
+
+    - ability to package with artifacts
+
 ### 0.5.1
 
     - minor fix for requirements extraction with extra_require labels
