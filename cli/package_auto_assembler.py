@@ -51,7 +51,8 @@ test_install_config = {
         "version_increment_type" : "patch",
         "use_commit_messages" : True,
         "check_vulnerabilities" : True,
-        "check_dependencies_licenses" : False
+        "check_dependencies_licenses" : False,
+        "add_artifacts" : True
     }
 
 @click.command()
@@ -115,6 +116,7 @@ def test_install(ctx,
     test_install_config["loggerLvl"] = logging.INFO
 
     paa_params = {
+        "config_filepath" : config,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
@@ -125,7 +127,9 @@ def test_install(ctx,
         "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
         "classifiers" : test_install_config["classifiers"],
-        "default_version" : test_install_config["default_version"]
+        "default_version" : test_install_config["default_version"],
+        "add_artifacts" : test_install_config["add_artifacts"],
+        "artifacts_filepaths" : test_install_config.get("artifacts_filepaths")
     }
 
     if module_filepath:
@@ -146,7 +150,7 @@ def test_install(ctx,
         paa_params["check_vulnerabilities"] = True
     else:
         paa_params["check_vulnerabilities"] = False
-    check_licenses
+    
     if check_licenses:
         paa_params["check_dependencies_licenses"] = True
     else:
@@ -178,6 +182,7 @@ def test_install(ctx,
         paa.add_requirements_from_cli_module()
         paa.add_requirements_from_api_route()
 
+        paa.prepare_artifacts()
         paa.prep_setup_file()
         paa.make_package()
         click.echo(f"Module {module_name.replace('_','-')} prepared as a package.")
@@ -239,6 +244,7 @@ def make_package(ctx,
     test_install_config["loggerLvl"] = logging.INFO
 
     paa_params = {
+        "config_filepath" : config,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
@@ -258,6 +264,8 @@ def make_package(ctx,
         "license_path" : test_install_config.get("license_path", None),
         "license_label" : test_install_config.get("license_label", None),
         "docs_url" : test_install_config.get("docs_url", None),
+        "add_artifacts" : test_install_config["add_artifacts"],
+        "artifacts_filepaths" : test_install_config.get("artifacts_filepaths"),
     }
 
     if test_install_config["release_notes_dir"]:
@@ -322,6 +330,8 @@ def make_package(ctx,
         paa.add_requirements_from_api_route()
 
         paa.add_readme(execute_notebook = execute_notebook)
+
+        paa.prepare_artifacts()
         paa.prep_setup_file()
         paa.make_package()
         click.echo(f"Module {module_name.replace('_','-')} prepared as a package.")
@@ -372,7 +382,8 @@ def check_vulnerabilities(ctx,
         "default_version" : test_install_config["default_version"],
         "versions_filepath" : test_install_config["versions_filepath"],
         "log_filepath" : test_install_config["log_filepath"],
-        "check_vulnerabilities" : True
+        "check_vulnerabilities" : True,
+        "add_artifacts" : False
     }
 
     if module_filepath:
@@ -464,7 +475,8 @@ def check_licenses(ctx,
         "versions_filepath" : test_install_config["versions_filepath"],
         "log_filepath" : test_install_config["log_filepath"],
         "check_vulnerabilities" : False,
-        "check_dependencies_licenses" : True
+        "check_dependencies_licenses" : True,
+        "add_artifacts" : False
     }
 
     if module_filepath:
@@ -918,13 +930,19 @@ def show_module_licenses(ctx,
               multiple=True, 
               required=False, 
               help='Paths to routes which will be added to the app.')
+@click.option('--docs', 
+              'docs_paths', 
+              multiple=True, 
+              required=False, 
+              help='Paths to static docs site which will be added to the app.')
 @click.pass_context
 def run_api_routes(ctx,
         description_config,
         middleware_config,
         run_config,
         package_names,
-        routes_paths):
+        routes_paths,
+        docs_paths):
     """Run fastapi with provided routes."""
 
 
@@ -953,7 +971,8 @@ def run_api_routes(ctx,
         middleware = middleware_config,
         run_parameters = run_config,
         package_names = package_names,
-        routes_paths = routes_paths
+        routes_paths = routes_paths,
+        docs_paths = docs_paths
     )
 
 @click.command()
