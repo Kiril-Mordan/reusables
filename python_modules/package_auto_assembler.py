@@ -37,6 +37,7 @@ import importlib.metadata
 from packaging import version
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 
@@ -1595,7 +1596,9 @@ class SetupDirHandler:
                          optional_requirements : list = None,
                          classifiers : list = None,
                          setup_directory : str = None,
-                         add_cli_tool : bool = None):
+                         add_cli_tool : bool = None,
+                         add_artifacts : bool = None,
+                         artifacts_filepaths : dict = None):
 
         """
         Create setup.py for the package.
@@ -1641,6 +1644,9 @@ class SetupDirHandler:
 
         if add_cli_tool is None:
             add_cli_tool = self.add_cli_tool
+
+        if add_artifacts is None:
+            add_artifacts = self.add_artifacts
 
         paa_version = pkg_resources.get_distribution("package_auto_assembler").version
         
@@ -1749,8 +1755,21 @@ setup(
     url = {docs_url},
 """
 
+        if add_artifacts and artifacts_filepaths != {}:
+            setup_content += f"""
+    include_package_data = True,
+"""
+
+            package_data = {
+                f"{module_name}" : [art for art in artifacts_filepaths],
+            }
+    #str([art for art in artifacts_filepaths])
+            setup_content += f"""
+    package_data = {package_data} ,
+"""
+
         setup_content += f"""
-)
+    )
 """
 
         with open(os.path.join(setup_directory, 'setup.py'), 'w') as file:
@@ -2233,6 +2252,7 @@ class MkDocsHandler:
         return filename
 
     def create_index(self,
+                     package_name: str = None,
                      project_name: str = None,
                      module_docstring : str = None,
                      pypi_badge : str = None,
@@ -2243,18 +2263,28 @@ class MkDocsHandler:
         """
 
         if project_name is None:
-            project_name = self.package_name
+            project_name = self.project_name
 
         if module_docstring is None:
             module_docstring = self.module_docstring
 
+        if module_docstring is None:
+            module_docstring = ''
+
         if pypi_badge is None:
             pypi_badge = self.pypi_badge
+
+        if pypi_badge is None:
+            pypi_badge = ''
 
         if license_badge is None:
             license_badge = self.license_badge
 
-        package_name = project_name.replace("_","-")
+        if license_badge is None:
+             license_badge = ''
+
+        if package_name is None:
+            package_name = self.package_name
 
         content = f"""# Intro
 
@@ -2262,14 +2292,20 @@ class MkDocsHandler:
 
 {module_docstring}
 
+"""
+
+
+        if package_name:
+            content += f"""
 ## Installation
 
 ```bash
-pip install {package_name}
+pip install {package_name.replace("_", "-")}
 ```
-        """
 
-        mkdocs_index_path = os.path.join("temp_project","docs", "index.md")
+"""
+
+        mkdocs_index_path = os.path.join(project_name,"docs", "index.md")
         with open(mkdocs_index_path, 'w', encoding='utf-8') as file:
             file.write(content)
         print(f"index.md has been created with site_name: {package_name}")
@@ -2480,11 +2516,109 @@ class CliHandler:
         return True
 
 @attr.s
+class ArtifactsHandler:
+
+    # inputs
+    setup_directory = attr.ib()
+    module_name = attr.ib(default = None)
+    artifacts_filepaths = attr.ib(default = None)
+    manifest_lines = attr.ib(default = [])
+
+    # processed
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='Artifacts Handler')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self._initialize_logger()
+
+    def _initialize_logger(self):
+        """
+        Initialize a logger for the class instance based on the specified logging level and logger name.
+        """
+
+        if self.logger is None:
+            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
+            logger = logging.getLogger(self.logger_name)
+            logger.setLevel(self.loggerLvl)
+
+            self.logger = logger
+
+    def make_manifest(self,
+                    module_name : str = None,
+                    artifacts_filepaths: dict = None,
+                    setup_directory : str = None):
+
+        """
+        Prepare cli script for packaging.
+        """
+
+        if module_name is None:
+            module_name = self.module_name
+
+        if artifacts_filepaths is None:
+            artifacts_filepaths = self.artifacts_filepaths
+
+        if setup_directory is None:
+            setup_directory = self.setup_directory
+
+        manifest_lines = []
+        updated_artifacts_filepaths = {}
+        # copy files and create manifest
+        for artifact_name, artifacts_filepath in artifacts_filepaths.items():
+
+            # artifact_name = os.path.basename(
+            #     os.path.normpath(artifacts_filepath))
+            
+            if os.path.isdir(artifacts_filepath):
+                shutil.copytree(artifacts_filepath, 
+                    os.path.join(setup_directory, artifact_name))
+                artifact_name += "/**/*"
+                manifest_lines.append(
+                    f"recursive-include {module_name}/{artifact_name} \n")
+            else:
+                shutil.copy(artifacts_filepath, 
+                    os.path.join(setup_directory, artifact_name))
+                manifest_lines.append(f"include {module_name}/{artifact_name} \n")
+
+            updated_artifacts_filepaths[artifact_name] = artifacts_filepath
+            
+
+        self.artifacts_filepaths = updated_artifacts_filepaths
+        self.manifest_lines = manifest_lines
+
+
+    def write_mafifest(self):
+
+        manifest_filepath = os.path.join(self.setup_directory,
+                'MANIFEST.in')
+
+        if os.path.exists(manifest_filepath):
+            with open(manifest_filepath, 'r') as file:
+                manifest_lines = file.readlines()
+        else:
+            manifest_lines = []
+
+
+        manifest_lines += self.manifest_lines
+
+        # write/update manifest
+        if manifest_lines:
+            with open(manifest_filepath, 
+            'w') as file:
+                file.writelines(manifest_lines)
+
+        return True
+
+@attr.s
 class FastApiHandler:
 
     # inputs
     fastapi_routes_filepath = attr.ib(default = None)
     setup_directory = attr.ib(default = None)
+
+    docs_prefix = attr.ib(default = "/mkdocs")
 
     # processed
     logger = attr.ib(default=None)
@@ -2507,6 +2641,26 @@ class FastApiHandler:
 
             self.logger = logger
 
+    def _include_docs(self,
+                      app,
+                      docs_paths,
+                      docs_prefix = None):
+
+        if docs_prefix is None:
+            docs_prefix = self.docs_prefix
+
+        i_str = ''
+        i = 0
+        for docs_path in docs_paths:
+            app.mount(f"{docs_prefix}{i_str}", 
+                      StaticFiles(directory=docs_path, 
+                                  html=True))
+            i += 1
+            i_str = str(i)
+
+
+        return app
+
     def _include_package_routes(self, 
                                 app, 
                                 package_names : list, 
@@ -2515,8 +2669,32 @@ class FastApiHandler:
         
         for package_name in package_names:
             try:
-                routes_module = importlib.import_module(f"{package_name}.routes")
-                app.include_router(routes_module.router)
+
+                package_name = package_name.replace('-','_')
+
+                # Import the package
+                package = importlib.import_module(package_name)
+                
+                # Get the package's directory
+                package_dir = os.path.dirname(package.__file__)
+                
+                # Construct the path to routes.py
+                routes_file_path = os.path.join(package_dir, 'routes.py')
+
+                # Construct the path to site
+                docs_file_path = os.path.join(package_dir,'mkdocs', 'site')
+
+                if os.path.exists(routes_file_path):
+                    routes_module = importlib.import_module(f"{package_name}.routes")
+                    app.include_router(routes_module.router)
+                
+                if os.path.exists(docs_file_path):
+                    app = self._include_docs(
+                        app = app,
+                        docs_paths = [docs_file_path],
+                        docs_prefix = f"/{package_name.replace('_','-')}/docs"
+                    )
+
             except ImportError as e:
                 print(e)
                 print(f"Error importing routes from {package_name}: {e}")
@@ -2581,7 +2759,8 @@ class FastApiHandler:
                 middleware : dict = None,
                 run_parameters : dict = None,
                 package_names : list = None, 
-                routes_paths : list = None):
+                routes_paths : list = None,
+                docs_paths : list = None):
 
         """
         Sets up FastAPI app with provided `description` and runs it with
@@ -2610,6 +2789,12 @@ class FastApiHandler:
             app.add_middleware(
                 CORSMiddleware,
                 **middleware
+            )
+
+        if docs_paths:
+            app = self._include_docs(
+                app = app,
+                docs_paths = docs_paths
             )
 
         app = self._include_package_routes(
@@ -3149,26 +3334,38 @@ class PackageAutoAssembler:
     log_filepath = attr.ib(default='./version_logs.csv')
     setup_directory = attr.ib(default='./setup_dir')
     release_notes_filepath = attr.ib(default=None)
+    config_filepath = attr.ib(default=None)
+    cli_docs_filepath = attr.ib(default=None)
+
+    docs_path = attr.ib(default=None)
 
     # optional parameters
     classifiers = attr.ib(default=['Development Status :: 3 - Alpha'])
     license_path = attr.ib(default=None)
     license_label = attr.ib(default=None)
+    license_badge = attr.ib(default=None)
     docs_url = attr.ib(default=None)
     requirements_list = attr.ib(default=[])
     optional_requirements_list = attr.ib(default=[])
-    execute_readme_notebook = attr.ib(default=True, type = bool)
     python_version = attr.ib(default="3.8")
     version_increment_type = attr.ib(default="patch", type = str)
     default_version = attr.ib(default="0.0.1", type = str)
     kernel_name = attr.ib(default = 'python', type = str)
+    max_git_search_depth = attr.ib(default=5, type = int)
+    artifacts_filepaths = attr.ib(default=None, type = dict)
+    docs_file_paths = attr.ib(default=None, type = dict)
+
+    # switches
+    add_artifacts = attr.ib(default=True, type = bool)
+    remove_temp_files = attr.ib(default=True, type = bool)
+    skip_deps_install = attr.ib(default=False, type = bool)
     check_vulnerabilities = attr.ib(default=True, type = bool)
     add_requirements_header = attr.ib(default=True, type = bool)
     use_commit_messages = attr.ib(default=True, type = bool)
     check_dependencies_licenses = attr.ib(default=False, type = bool)
-    remove_temp_files = attr.ib(default=True, type = bool)
-    skip_deps_install = attr.ib(default=False, type = bool)
-    max_git_search_depth = attr.ib(default=5, type = int)
+    execute_readme_notebook = attr.ib(default=True, type = bool)
+    add_mkdocs_site = attr.ib(default=True, type = bool)
+
 
     ## handler classes
     setup_dir_h_class = attr.ib(default=SetupDirHandler)
@@ -3182,6 +3379,8 @@ class PackageAutoAssembler:
     release_notes_h_class = attr.ib(default=ReleaseNotesHandler)
     dependencies_analyzer_h_class = attr.ib(default=DependenciesAnalyser)
     fastapi_h_class = attr.ib(default=FastApiHandler)
+    artifacts_h_class = attr.ib(default=ArtifactsHandler)
+    mkdocs_h_class = attr.ib(default=MkDocsHandler)
 
     ## handlers
     setup_dir_h = attr.ib(default = None, type = SetupDirHandler)
@@ -3195,6 +3394,8 @@ class PackageAutoAssembler:
     release_notes_h = attr.ib(default = None, type=ReleaseNotesHandler)
     dependencies_analyzer_h = attr.ib(default = None, type=DependenciesAnalyser)
     fastapi_h = attr.ib(default = None, type=FastApiHandler)
+    artifacts_h = attr.ib(default = None, type=ArtifactsHandler)
+    mkdocs_h = attr.ib(default = None, type=MkDocsHandler)
 
     ## output
     cli_metadata = attr.ib(default={}, type = dict)
@@ -3321,6 +3522,17 @@ class PackageAutoAssembler:
 
         self.fastapi_h = self.fastapi_h_class(
             fastapi_routes_filepath = self.fastapi_routes_filepath,
+            setup_directory = self.setup_directory,
+            logger = self.logger)
+
+    def _initialize_artifacts_handler(self):
+
+        """
+        Initialize artifacts handler with available parameters.
+        """
+
+        self.artifacts_h = self.artifacts_h_class(
+            module_name = self.module_name,
             setup_directory = self.setup_directory,
             logger = self.logger)
 
@@ -3743,6 +3955,127 @@ class PackageAutoAssembler:
                 output_path = output_path
             )
 
+    def make_mkdocs_site(self):
+
+        """
+        Use provided docs to generate simple mkdocs site. 
+        """
+
+        if self.add_mkdocs_site:
+
+            if self.mkdocs_h is None:
+
+                package_name = self.module_name
+
+                module_content = LongDocHandler().read_module_content(
+                    filepath=self.module_filepath)
+                docstring = LongDocHandler().extract_module_docstring(
+                    module_content=module_content)
+                pypi_link = LongDocHandler().get_pypi_badge(
+                    module_name=package_name)
+
+                if (self.docs_path is not None) \
+                    and (os.path.exists(self.docs_path)):
+                    doc_files = os.listdir(self.docs_path)
+                else:
+                    doc_files = []
+                
+                docs_file_paths = {}
+
+                package_docs = [doc_file for doc_file in doc_files \
+                    if doc_file.startswith(package_name)]
+
+                for package_doc in package_docs:
+
+                    if package_doc == f"{package_name}.md":
+                        docs_file_paths[os.path.join(self.docs_path,package_doc)] = "usage-examples.md"
+                    else:
+                        docs_file_paths[os.path.join(self.docs_path,package_doc)] = package_doc
+
+                if self.docs_file_paths:
+                    docs_file_paths.update(self.docs_file_paths)
+
+                if (self.release_notes_filepath is not None) \
+                    and os.path.exists(self.release_notes_filepath):
+                    docs_file_paths[self.release_notes_filepath] = "release-notes.md"
+
+                if (self.cli_docs_filepath is not None) \
+                    and os.path.exists(self.cli_docs_filepath):
+                    docs_file_paths[self.cli_docs_filepath] = "cli.md"
+
+            
+                self.mkdocs_h = MkDocsHandler(
+                    project_name = f"{package_name}_temp_mkdocs",
+                    package_name = package_name,
+                    docs_file_paths = docs_file_paths,
+                    module_docstring = docstring,
+                    pypi_badge = pypi_link,
+                    license_badge=self.license_badge)
+
+            self.mkdocs_h.create_mkdocs_dir()
+            self.mkdocs_h.move_files_to_docs()
+            self.mkdocs_h.generate_markdown_for_images()
+            self.mkdocs_h.create_index()
+            self.mkdocs_h.create_mkdocs_yml()
+            self.mkdocs_h.build_mkdocs_site()
+
+            if self.artifacts_filepaths is None:
+                self.artifacts_filepaths = {}
+
+            self.artifacts_filepaths['mkdocs'] = f"{package_name}_temp_mkdocs"
+
+    def prepare_artifacts(self, artifacts_filepaths : dict = None):
+
+        """
+        Add artifacts to setup directory and its manifest.
+        """
+
+        if self.artifacts_h is None:
+            self._initialize_artifacts_handler()
+
+        if artifacts_filepaths is None:
+            artifacts_filepaths = self.artifacts_filepaths
+
+        if artifacts_filepaths is None:
+            artifacts_filepaths = {}
+
+        
+        if self.add_artifacts:
+
+            if (self.log_filepath is not None \
+                and os.path.exists(self.log_filepath)):
+                artifacts_filepaths['version_logs.csv'] = self.log_filepath
+
+            if (self.release_notes_filepath is not None \
+                and os.path.exists(self.release_notes_filepath)):
+                artifacts_filepaths['release_notes.md'] = self.release_notes_filepath
+
+            if (self.versions_filepath is not None \
+                and os.path.exists(self.versions_filepath)):
+                artifacts_filepaths['lsts_package_versions.yml'] = self.versions_filepath
+
+            if (self.example_notebook_path is not None \
+                and os.path.exists(self.example_notebook_path)):
+                artifacts_filepaths['notebook.ipynb'] = self.example_notebook_path
+
+            if (self.mapping_filepath is not None \
+                and os.path.exists(self.mapping_filepath)):
+                artifacts_filepaths['package_mapping.json'] = self.mapping_filepath
+
+            if (self.licenses_filepath is not None \
+                and os.path.exists(self.licenses_filepath)):
+                artifacts_filepaths['package_licenses.json'] = self.licenses_filepath
+
+            if (self.config_filepath is not None \
+                and os.path.exists(self.config_filepath)):
+                artifacts_filepaths['.paa.config'] = self.config_filepath
+
+            
+        self.artifacts_h.make_manifest(
+            artifacts_filepaths = artifacts_filepaths
+        )
+
+        self.artifacts_filepaths = self.artifacts_h.artifacts_filepaths
 
     def prep_setup_file(self,
                        module_name : str = None,
@@ -3754,7 +4087,9 @@ class PackageAutoAssembler:
                        optional_requirements : list = None,
                        classifiers : list = None,
                        module_filepath : str = None,
-                       module_docstring : str = None):
+                       module_docstring : str = None,
+                       add_artifacts : bool = None,
+                       artifacts_filepaths : dict = None):
 
         """
         Assemble setup.py file.
@@ -3791,6 +4126,12 @@ class PackageAutoAssembler:
         if module_name is None:
             module_name = self.module_name
 
+        if add_artifacts is None:
+            add_artifacts = self.add_artifacts
+
+        if artifacts_filepaths is None:
+            artifacts_filepaths = self.artifacts_filepaths
+
         if module_docstring is None:
 
             if self.long_doc_h is None:
@@ -3825,6 +4166,7 @@ class PackageAutoAssembler:
                 fastapi_routes_filepath = fastapi_routes_filepath
             )
 
+    
         self.logger.info(f"Preparing setup file for {module_name.replace('_','-')} package ...")
 
         # create setup.py
@@ -3835,8 +4177,14 @@ class PackageAutoAssembler:
                                           requirements = requirements,
                                           optional_requirements = optional_requirements,
                                           classifiers = classifiers,
-                                          add_cli_tool = add_cli_tool)
+                                          add_cli_tool = add_cli_tool,
+                                          add_artifacts = add_artifacts,
+                                          artifacts_filepaths = artifacts_filepaths)
 
+        if self.artifacts_h is not None:
+            self.artifacts_h.write_mafifest()
+
+    
     def make_package(self,
                      setup_directory : str = None):
 
@@ -3897,4 +4245,7 @@ class PackageAutoAssembler:
             shutil.rmtree('dist', ignore_errors=True)
             shutil.rmtree(module_name, ignore_errors=True)
             shutil.rmtree(f"{module_name}.egg-info", ignore_errors=True)
+
+            if os.path.exists(f"{module_name}_temp_mkdocs"):
+                shutil.rmtree(f"{module_name}_temp_mkdocs", ignore_errors=True)
 

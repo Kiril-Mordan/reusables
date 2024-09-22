@@ -84,24 +84,28 @@ paa test-install [OPTIONS] MODULE_NAME
 ```
 Usage: paa test-install [OPTIONS] MODULE_NAME
 
-  Test install module for .py file in local environment
+  Test install module into local environment.
 
 Options:
-  --config TEXT                Path to config file for paa.
-  --module-filepath TEXT       Path to .py file to be packaged.
-  --mapping-filepath TEXT      Path to .json file that maps import to install
-                               dependecy names.
-  --cli-module-filepath TEXT   Path to .py file that contains cli logic.
-  --dependencies-dir TEXT      Path to directory with local dependencies of
-                               the module.
-  --default-version TEXT       Default version.
-  --check-vulnerabilities      If checked, checks module dependencies with
-                               pip-audit for vulnerabilities.
-  --keep-temp-files            If checked, setup directory won't be removed
-                               after setup is done.
-  --skip-deps-install         If checked, existing dependencies from env will
-                              be reused.
-  --help                       Show this message and exit.
+  --config TEXT                   Path to config file for paa.
+  --module-filepath TEXT          Path to .py file to be packaged.
+  --mapping-filepath TEXT         Path to .json file that maps import to
+                                  install dependecy names.
+  --cli-module-filepath TEXT      Path to .py file that contains cli logic.
+  --fastapi-routes-filepath TEXT  Path to .py file that routes for fastapi.
+  --dependencies-dir TEXT         Path to directory with local dependencies of
+                                  the module.
+  --default-version TEXT          Default version.
+  --check-vulnerabilities         If checked, checks module dependencies with
+                                  pip-audit for vulnerabilities.
+  --build-mkdocs                  If checked, builds mkdocs documentation.
+  --check-licenses                If checked, checks module dependencies
+                                  licenses.
+  --keep-temp-files               If checked, setup directory won't be removed
+                                  after setup is done.
+  --skip-deps-install             If checked, existing dependencies from env
+                                  will be reused.
+  --help                          Show this message and exit.
 ```
 
 Checking vulnerabilities with `pip-audit` is usefull. This checks vulnerabilities of .py files and its local dependencies with `pip-audit`.
@@ -194,7 +198,11 @@ Options:
 paa show-module-info --help
 ```
 
-Packaging process could help building APIs as well. This package would call routes stored within other packages and routes stored in files to form one application, so that repeatable structure does not need to copied between projects, but instead built in one places and extended with some config files in many. Since routes are python code that can have its dependencies, it makes sense to store them within packages sometimes to take advantage of automated dependency handling and import code straight from the package, eliminating in turn situation when package release in no compatible anymore with routes based on them.
+Packaging process could help building APIs as well. This package would call routes stored within other packages and routes stored in files to form one application, so that repeatable structure does not need to copied between projects, but instead built in one places and extended with some config files in many. Since routes are python code that can have its dependencies, it makes sense to store them within packages sometimes to take advantage of automated dependency handling and import code straight from the package, eliminating in turn situation when package release in no compatible anymore with routes based on them. 
+
+Parameters for fastapi app description, middleware and run could be supplied via optional `.paa.api.config` file, with `DESCRIPTION` , `MIDDLEWARE` and `RUN` dictionary of parameters respectively. 
+
+It could be beneficial to add a static page with documentation, so additional pages could be addded. First one would be accessible via `\mkdocs` and the following ones via `\mkdocs {i+1}`. Static package within package, that were packages by `package-auto-assemble>0.5.1` would be accessible via `\{package_name}\docs` if available.
 
 ``` bash
 paa run-api-routes --help
@@ -206,17 +214,15 @@ Usage: paa run-api-routes [OPTIONS]
   Run fastapi with provided routes.
 
 Options:
-  --description-config TEXT  Path to yml config file with app description,
-                             `.paa.api.description` is used by default.
-  --middleware-config TEXT   Path to yml config file with middleware
-                             parameters, `.paa.api.run.config` is used by
-                             default.
-  --run-config TEXT          Path to yml config file with run parameters,
-                             `.paa.api.run.config` is used by default.
-  --package TEXT             Package names from which routes will be added to
-                             the app.
-  --route TEXT               Paths to routes which will be added to the app.
-  --help                     Show this message and exit.
+  --api-config TEXT  Path to yml config file with app description, middleware
+                     parameters, run parameters, `.paa.api.config` is used by
+                     default.
+  --host TEXT        The host to bind to.
+  --port TEXT        The port to bind to.
+  --package TEXT     Package names from which routes will be added to the app.
+  --route TEXT       Paths to routes which will be added to the app.
+  --docs TEXT        Paths to static docs site which will be added to the app.
+  --help             Show this message and exit.
 ```
 
 Storing routes within package could be convinient, but extracting them from a package is not. To mitigate that, the following exists to extract `routes.py` from a package that contains it.

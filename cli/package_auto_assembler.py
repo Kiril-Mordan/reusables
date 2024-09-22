@@ -5,6 +5,7 @@ import click #==8.1.7
 import yaml
 import importlib
 import importlib.metadata
+import importlib.resources as pkg_resources
 import ast
 
 from package_auto_assembler.package_auto_assembler import (
@@ -28,31 +29,36 @@ def cli(ctx):
     ctx.ensure_object(dict)
 
 test_install_config = {
-        "module_dir" : "python_modules",
-        "cli_dir" : "cli",
-        "api_routes_dir" : "api_routes",
-        "mapping_filepath" : "package_mapping.json",
-        "licenses_filepath" : None,
-        "include_local_dependecies" : True,
-        "dependencies_dir" : None,
-        "license_path" : None,
-        "license_label" : None,
-        "docs_url" : None,
-        "release_notes_dir" : "./release_notes/",
-        "example_notebooks_path" : "./example_notebooks/",
-        "versions_filepath" : "lsts_package_versions.yml",
-        "log_filepath" : "version_logs.csv",
-        "classifiers" : ['Development Status :: 3 - Alpha'],
-        "allowed_licenses" : ['mit', 'apache-2.0', 'lgpl-3.0', 
-                              'bsd-3-clause', 'bsd-2-clause', '-', 'mpl-2.0'],
-        "kernel_name" : 'python3',
-        "python_version" : "3.10",
-        "default_version" : "0.0.0",
-        "version_increment_type" : "patch",
-        "use_commit_messages" : True,
-        "check_vulnerabilities" : True,
-        "check_dependencies_licenses" : False
-    }
+    "module_dir" : "python_modules",
+    "cli_dir" : "cli",
+    "cli_docs_dir" : "cli_docs",
+    "api_routes_dir" : "api_routes",
+    "docs_dir" : "docs",
+    "release_notes_dir" : "release_notes",
+    "example_notebooks_path" : "example_notebooks",
+    "mapping_filepath" : None, #"package_mapping.json",
+    "licenses_filepath" : None,
+    "include_local_dependecies" : True,
+    "dependencies_dir" : None,
+    "license_path" : None,
+    "license_label" : None,
+    "license_badge" : None,
+    "docs_url" : None,
+    "versions_filepath" : "lsts_package_versions.yml",
+    "log_filepath" : "version_logs.csv",
+    "classifiers" : ['Development Status :: 3 - Alpha'],
+    "allowed_licenses" : ['mit', 'apache-2.0', 'lgpl-3.0', 
+                            'bsd-3-clause', 'bsd-2-clause', '-', 'mpl-2.0'],
+    "kernel_name" : 'python3',
+    "python_version" : "3.10",
+    "default_version" : "0.0.0",
+    "version_increment_type" : "patch",
+    "use_commit_messages" : True,
+    "check_vulnerabilities" : True,
+    "check_dependencies_licenses" : False,
+    "add_artifacts" : True,
+    "add_mkdocs_site" : False
+}
 
 @click.command()
 @click.pass_context
@@ -82,6 +88,7 @@ def init_config(ctx):
 @click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
 @click.option('--default-version', 'default_version', type=str, required=False, help='Default version.')
 @click.option('--check-vulnerabilities', 'check_vulnerabilities', is_flag=True, type=bool, required=False, help='If checked, checks module dependencies with pip-audit for vulnerabilities.')
+@click.option('--build-mkdocs', 'build_mkdocs', is_flag=True, type=bool, required=False, help='If checked, builds mkdocs documentation.')
 @click.option('--check-licenses', 'check_licenses', is_flag=True, type=bool, required=False, help='If checked, checks module dependencies licenses.')
 @click.option('--keep-temp-files', 'keep_temp_files', is_flag=True, type=bool, required=False, help='If checked, setup directory won\'t be removed after setup is done.')
 @click.option('--skip-deps-install', 'skip_deps_install', is_flag=True, type=bool, required=False, help='If checked, existing dependencies from env will be reused.')
@@ -96,6 +103,7 @@ def test_install(ctx,
         dependencies_dir,
         default_version,
         check_vulnerabilities,
+        build_mkdocs,
         check_licenses,
         skip_deps_install,
         keep_temp_files):
@@ -115,6 +123,7 @@ def test_install(ctx,
     test_install_config["loggerLvl"] = logging.INFO
 
     paa_params = {
+        "config_filepath" : config,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
@@ -125,8 +134,30 @@ def test_install(ctx,
         "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
         "classifiers" : test_install_config["classifiers"],
-        "default_version" : test_install_config["default_version"]
+        "default_version" : test_install_config["default_version"],
+        "add_artifacts" : test_install_config["add_artifacts"],
+        "artifacts_filepaths" : test_install_config.get("artifacts_filepaths"),
+        "add_mkdocs_site" : False,
+        "docs_path" : test_install_config.get("docs_dir"),
+        "license_badge" : test_install_config.get("license_badge"),
+        "check_dependencies_licenses" : False,
+        "check_vulnerabilities" : False
+
     }
+
+    if test_install_config["release_notes_dir"]:
+        paa_params["release_notes_filepath"] = os.path.join(test_install_config["release_notes_dir"],
+                                                            f"{module_name}.md")
+
+    if test_install_config["cli_docs_dir"]:
+        paa_params["cli_docs_filepath"] = os.path.join(test_install_config["cli_docs_dir"],
+                                                            f"{module_name}.md")
+
+    if build_mkdocs:
+        paa_params["add_mkdocs_site"] = True
+
+    if test_install_config.get("docs_file_paths"):
+        paa_params["docs_file_paths"] = test_install_config.get("docs_file_paths")
 
     if module_filepath:
         paa_params["module_filepath"] = module_filepath
@@ -144,13 +175,10 @@ def test_install(ctx,
         paa_params["default_version"] = default_version
     if check_vulnerabilities:
         paa_params["check_vulnerabilities"] = True
-    else:
-        paa_params["check_vulnerabilities"] = False
-    check_licenses
+    
     if check_licenses:
         paa_params["check_dependencies_licenses"] = True
-    else:
-        paa_params["check_dependencies_licenses"] = False
+
     if skip_deps_install:
         paa_params["skip_deps_install"] = True
 
@@ -177,7 +205,8 @@ def test_install(ctx,
         paa.add_requirements_from_module()
         paa.add_requirements_from_cli_module()
         paa.add_requirements_from_api_route()
-
+        paa.make_mkdocs_site()
+        paa.prepare_artifacts()
         paa.prep_setup_file()
         paa.make_package()
         click.echo(f"Module {module_name.replace('_','-')} prepared as a package.")
@@ -239,6 +268,7 @@ def make_package(ctx,
     test_install_config["loggerLvl"] = logging.INFO
 
     paa_params = {
+        "config_filepath" : config,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
@@ -257,12 +287,28 @@ def make_package(ctx,
         "use_commit_messages" : test_install_config["use_commit_messages"],
         "license_path" : test_install_config.get("license_path", None),
         "license_label" : test_install_config.get("license_label", None),
+        "license_badge" : test_install_config.get("license_badge"),
         "docs_url" : test_install_config.get("docs_url", None),
+        "add_artifacts" : test_install_config["add_artifacts"],
+        "add_mkdocs_site" : test_install_config["add_mkdocs_site"],
+        "artifacts_filepaths" : test_install_config.get("artifacts_filepaths"),
+        "docs_path" : test_install_config.get("docs_dir"),
+        "check_vulnerabilities" : test_install_config.get("check_vulnerabilities", True),
+        "check_dependencies_licenses" : test_install_config.get("check_dependencies_licenses", True)
     }
 
     if test_install_config["release_notes_dir"]:
         paa_params["release_notes_filepath"] = os.path.join(test_install_config["release_notes_dir"],
                                                             f"{module_name}.md")
+    if test_install_config["cli_docs_dir"]:
+        paa_params["cli_docs_filepath"] = os.path.join(test_install_config["cli_docs_dir"],
+                                                            f"{module_name}.md")
+
+    if test_install_config.get("docs_file_paths"):
+        paa_params["docs_file_paths"] = test_install_config.get("docs_file_paths")
+
+    if test_install_config.get("license_badge"):
+        paa_params["license_badge"] = test_install_config.get("license_badge")
 
     if module_filepath:
         paa_params["module_filepath"] = module_filepath
@@ -284,12 +330,9 @@ def make_package(ctx,
 
     if ignore_vulnerabilities_check:
         paa_params["check_vulnerabilities"] = False
-    # else:
-    #     paa_params["check_vulnerabilities"] = True
+
     if ignore_licenses_check:
         paa_params["check_dependencies_licenses"] = False
-    # else:
-    #     paa_params["check_dependencies_licenses"] = True
 
     if example_notebook_path:
         paa_params["example_notebook_path"] = example_notebook_path
@@ -322,6 +365,8 @@ def make_package(ctx,
         paa.add_requirements_from_api_route()
 
         paa.add_readme(execute_notebook = execute_notebook)
+        paa.make_mkdocs_site()
+        paa.prepare_artifacts()
         paa.prep_setup_file()
         paa.make_package()
         click.echo(f"Module {module_name.replace('_','-')} prepared as a package.")
@@ -372,7 +417,8 @@ def check_vulnerabilities(ctx,
         "default_version" : test_install_config["default_version"],
         "versions_filepath" : test_install_config["versions_filepath"],
         "log_filepath" : test_install_config["log_filepath"],
-        "check_vulnerabilities" : True
+        "check_vulnerabilities" : True,
+        "add_artifacts" : False
     }
 
     if module_filepath:
@@ -464,7 +510,8 @@ def check_licenses(ctx,
         "versions_filepath" : test_install_config["versions_filepath"],
         "log_filepath" : test_install_config["log_filepath"],
         "check_vulnerabilities" : False,
-        "check_dependencies_licenses" : True
+        "check_dependencies_licenses" : True,
+        "add_artifacts" : False
     }
 
     if module_filepath:
@@ -896,18 +943,12 @@ def show_module_licenses(ctx,
     da.print_flattened_tree(extracted_dependencies_tree_license)
 
 @click.command()
-@click.option('--description-config','description_config', type=str, 
-             default=".paa.api.description",
+@click.option('--api-config','api_config', type=str, 
+             default=".paa.api.config",
              required=False, 
-             help='Path to yml config file with app description, `.paa.api.description` is used by default.')
-@click.option('--middleware-config','middleware_config', type=str, 
-             default=".paa.api.middleware.config",
-             required=False, 
-             help='Path to yml config file with middleware parameters, `.paa.api.run.config` is used by default.')
-@click.option('--run-config','run_config', type=str, 
-             default=".paa.api.run.config",
-             required=False, 
-             help='Path to yml config file with run parameters, `.paa.api.run.config` is used by default.')
+             help='Path to yml config file with app description, middleware parameters, run parameters, `.paa.api.config` is used by default.')
+@click.option('--host', default=None, help='The host to bind to.')
+@click.option('--port', default=None, help='The port to bind to.')
 @click.option('--package', 
               'package_names',
               multiple=True,
@@ -918,33 +959,40 @@ def show_module_licenses(ctx,
               multiple=True, 
               required=False, 
               help='Paths to routes which will be added to the app.')
+@click.option('--docs', 
+              'docs_paths', 
+              multiple=True, 
+              required=False, 
+              help='Paths to static docs site which will be added to the app.')
 @click.pass_context
 def run_api_routes(ctx,
-        description_config,
-        middleware_config,
-        run_config,
+        api_config,
         package_names,
-        routes_paths):
+        routes_paths,
+        docs_paths,
+        host,
+        port):
     """Run fastapi with provided routes."""
 
-
-    if os.path.exists(description_config):
-        with open(description_config, 'r') as file:
-            description_config = yaml.safe_load(file)
+    if os.path.exists(api_config):
+        with open(api_config, 'r') as file:
+            api_config = yaml.safe_load(file)
     else:
-        description_config = {}
+        api_config = {}
 
-    if os.path.exists(middleware_config):
-        with open(middleware_config, 'r') as file:
-            middleware_config = yaml.safe_load(file)
-    else:
-        middleware_config = None
+    description_config = api_config.get('DESCRIPTION')
+    middleware_config = api_config.get('MIDDLEWARE')
+    run_config = api_config.get('RUN')
 
-    if os.path.exists(run_config):
-        with open(run_config, 'r') as file:
-            run_config = yaml.safe_load(file)
-    else:
+    if run_config is None:
         run_config = {}
+
+    if host:
+        run_config['host'] = host
+
+    if port:
+        run_config['port'] = port
+    
 
     fah = FastApiHandler(loggerLvl = logging.INFO)
     
@@ -953,7 +1001,8 @@ def run_api_routes(ctx,
         middleware = middleware_config,
         run_parameters = run_config,
         package_names = package_names,
-        routes_paths = routes_paths
+        routes_paths = routes_paths,
+        docs_paths = docs_paths
     )
 
 @click.command()
