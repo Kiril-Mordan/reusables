@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.32">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.36">
     
     
       
@@ -22,7 +22,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.3cba04c6.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.06209087.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -46,7 +46,7 @@
     
       <link rel="stylesheet" href="../css/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#usage-examples" class="md-skip">
+        <a href="#1-creating-validation-set" class="md-skip">
           Skip to content
         </a>
       
@@ -91,12 +91,12 @@
     <a href=".." title="Comparisonframe" class="md-header__button md-logo" aria-label="Comparisonframe" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
       
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
     </label>
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
@@ -124,7 +124,7 @@
     <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="green"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
     
       <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
       </label>
     
   
@@ -134,7 +134,7 @@
     <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="green" data-md-color-accent="green"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
     
       <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
       </label>
     
   
@@ -142,13 +142,13 @@
       
     
     
-      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
       <label class="md-header__button md-icon" for="__search">
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
       </label>
       <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
@@ -157,15 +157,15 @@
       <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </nav>
       
@@ -212,7 +212,7 @@
     <a href=".." title="Comparisonframe" class="md-nav__button md-logo" aria-label="Comparisonframe" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
     Comparisonframe
@@ -329,23 +329,14 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#usage-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Usage examples
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Usage examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#1-creating-validation-set" class="md-nav__link">
     <span class="md-ellipsis">
       1. Creating validation set
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="1. Creating validation set">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#11-initialize-comparison-class" class="md-nav__link">
@@ -354,8 +345,7 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1.1 Initialize comparison class">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
   <a href="#12-recording-queries-and-expected-responses-validation-set" class="md-nav__link">
@@ -370,8 +360,8 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#2-comparing-newly-generated-data-with-expected-results" class="md-nav__link">
     <span class="md-ellipsis">
       2. Comparing newly generated data with expected results
@@ -394,8 +384,8 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#22-show-validation-set" class="md-nav__link">
     <span class="md-ellipsis">
       2.2 Show validation set
@@ -414,11 +404,6 @@
   
 </li>
         
-      </ul>
-    </nav>
-  
-</li>
-        
           <li class="md-nav__item">
   <a href="#24-comparing-runs-with-records" class="md-nav__link">
     <span class="md-ellipsis">
@@ -428,7 +413,12 @@
   
 </li>
         
-          <li class="md-nav__item">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#3-calculating-aggregate-comparison-scores" class="md-nav__link">
     <span class="md-ellipsis">
       3 Calculating aggregate comparison scores
@@ -436,8 +426,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#4-recording-test-statuses" class="md-nav__link">
     <span class="md-ellipsis">
       4. Recording test statuses
@@ -445,18 +435,13 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#5-reseting-statuses-flushing-records-and-comparison-results" class="md-nav__link">
     <span class="md-ellipsis">
       5. Reseting statuses, flushing records and comparison results
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -493,23 +478,14 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#usage-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Usage examples
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Usage examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#1-creating-validation-set" class="md-nav__link">
     <span class="md-ellipsis">
       1. Creating validation set
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="1. Creating validation set">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#11-initialize-comparison-class" class="md-nav__link">
@@ -518,8 +494,7 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1.1 Initialize comparison class">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
   <a href="#12-recording-queries-and-expected-responses-validation-set" class="md-nav__link">
@@ -534,8 +509,8 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#2-comparing-newly-generated-data-with-expected-results" class="md-nav__link">
     <span class="md-ellipsis">
       2. Comparing newly generated data with expected results
@@ -558,8 +533,8 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#22-show-validation-set" class="md-nav__link">
     <span class="md-ellipsis">
       2.2 Show validation set
@@ -578,11 +553,6 @@
   
 </li>
         
-      </ul>
-    </nav>
-  
-</li>
-        
           <li class="md-nav__item">
   <a href="#24-comparing-runs-with-records" class="md-nav__link">
     <span class="md-ellipsis">
@@ -592,7 +562,12 @@
   
 </li>
         
-          <li class="md-nav__item">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#3-calculating-aggregate-comparison-scores" class="md-nav__link">
     <span class="md-ellipsis">
       3 Calculating aggregate comparison scores
@@ -600,8 +575,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#4-recording-test-statuses" class="md-nav__link">
     <span class="md-ellipsis">
       4. Recording test statuses
@@ -609,18 +584,13 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#5-reseting-statuses-flushing-records-and-comparison-results" class="md-nav__link">
     <span class="md-ellipsis">
       5. Reseting statuses, flushing records and comparison results
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -641,19 +611,10 @@
 
   <h1>Usage examples</h1>
 
-<pre><code class="language-python"># import sys
-# sys.path.append('../')
-from comparisonframe import ComparisonFrame
+<pre><code class="language-python">from comparisonframe import ComparisonFrame
 </code></pre>
-<h2 id="usage-examples">Usage examples</h2>
-<p>The examples contain: 
-1. Creating validation set and saving it to be reused
-2. Comparing newly generated data with expected results 
-3. Calculating aggregate comparison scores
-4. Recording test statuses
-5. Reseting statuses, flushing records and comparison results</p>
 <h3 id="1-creating-validation-set">1. Creating validation set</h3>
-<h3 id="11-initialize-comparison-class">1.1 Initialize comparison class</h3>
+<h4 id="11-initialize-comparison-class">1.1 Initialize comparison class</h4>
 <pre><code class="language-python">comparer = ComparisonFrame(
     # optionally
     ## mocker default parameters
@@ -665,9 +626,6 @@ from comparisonframe import ComparisonFrame
     compare_scores = ['word_count_diff','semantic_similarity'],
     aggr_scores = ['median']
 )
-</code></pre>
-<pre><code>/home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/transformers/tokenization_utils_base.py:1601: FutureWarning: `clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default. For more details check this issue: https://github.com/huggingface/transformers/issues/31884
-  warnings.warn(
 </code></pre>
 <h4 id="12-recording-queries-and-expected-responses-validation-set">1.2 Recording queries and expected responses (validation set)</h4>
 <pre><code class="language-python">comparer.record_queries(
@@ -701,11 +659,11 @@ print(untested_queries)
 </code></pre>
 <pre><code class="language-python">comparer.get_all_records()
 </code></pre>
-<pre><code>[{'query': 'Black metal',
-  'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
+<pre><code>[{'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
+  'query': 'Black metal',
   'expected_text': 'Black metal is an extreme subgenre of heavy metal music.'},
- {'query': 'Tribulation',
-  'record_id': 'eecd9c2a5b25ee6053891b894157fa30372ed694763385e1ada1dc9ad8e41625',
+ {'record_id': 'eecd9c2a5b25ee6053891b894157fa30372ed694763385e1ada1dc9ad8e41625',
+  'query': 'Tribulation',
   'expected_text': 'Tribulation are a Swedish heavy metal band from Arvika that formed in 2005.'}]
 </code></pre>
 <pre><code class="language-python">comparer.get_all_records_df()
@@ -728,22 +686,22 @@ print(untested_queries)
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>query</th>
       <th>record_id</th>
+      <th>query</th>
       <th>expected_text</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>Black metal</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
+      <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>Tribulation</td>
       <td>eecd9c2a5b25ee6053891b894157fa30372ed694763385...</td>
+      <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
     </tr>
   </tbody>
@@ -763,17 +721,17 @@ unexpected_answer_query_1 = &quot;Black metals are beautiful and are often used 
 </code></pre>
 <pre><code class="language-python">comparer.get_all_runs()
 </code></pre>
-<pre><code>[{'timestamp': '2024-08-22 21:27:45',
+<pre><code>[{'timestamp': '2024-09-24 03:43:48',
+  'run_id': 'e8f5f87186ac81a38896e602c7d8a4e1b973aa00973b68cbfdc983e6c1762d6e',
   'query': 'Black metal',
-  'run_id': '1831f4f4b65bc287d27ff3bdc7bcbb5d9032b2d6b28602c202514a756eca3223',
   'provided_text': 'Black metal is an extreme subgenre of heavy metal music.'},
- {'timestamp': '2024-08-22 21:27:45',
+ {'timestamp': '2024-09-24 03:43:48',
+  'run_id': 'e0e4dfaff0b16227dbfde7a75eb9f060ccd2b1b5acc8b4b48aa9d305a3591353',
   'query': 'Black metal',
-  'run_id': 'dad65ebf45d7f54284f478e1850d258b8aabb66ba60ff31236666a4ede5260cc',
   'provided_text': 'Black metal is a subgenre of heavy metal music.'},
- {'timestamp': '2024-08-22 21:27:45',
+ {'timestamp': '2024-09-24 03:43:48',
+  'run_id': '4e806f8cf2bd2184e63d41c85322e129b14c8d5206472c7668077452386257af',
   'query': 'Black metal',
-  'run_id': 'e8432d75142df85bba1f3098403c6023a0f84ec5ef645c7a332c7033a78abcd1',
   'provided_text': 'Black metals are beautiful and are often used in jewelry design.'}]
 </code></pre>
 <pre><code class="language-python">df = comparer.get_all_runs_df()
@@ -798,68 +756,68 @@ df
     <tr style="text-align: right;">
       <th></th>
       <th>timestamp</th>
-      <th>query</th>
       <th>run_id</th>
+      <th>query</th>
       <th>provided_text</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-08-22 21:27:45</td>
+      <td>2024-09-24 03:43:48</td>
+      <td>e8f5f87186ac81a38896e602c7d8a4e1b973aa00973b68...</td>
       <td>Black metal</td>
-      <td>1831f4f4b65bc287d27ff3bdc7bcbb5d9032b2d6b28602...</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-08-22 21:27:45</td>
+      <td>2024-09-24 03:43:48</td>
+      <td>e0e4dfaff0b16227dbfde7a75eb9f060ccd2b1b5acc8b4...</td>
       <td>Black metal</td>
-      <td>dad65ebf45d7f54284f478e1850d258b8aabb66ba60ff3...</td>
       <td>Black metal is a subgenre of heavy metal music.</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-08-22 21:27:45</td>
+      <td>2024-09-24 03:43:48</td>
+      <td>4e806f8cf2bd2184e63d41c85322e129b14c8d5206472c...</td>
       <td>Black metal</td>
-      <td>e8432d75142df85bba1f3098403c6023a0f84ec5ef645c...</td>
       <td>Black metals are beautiful and are often used ...</td>
     </tr>
   </tbody>
 </table>
 </div>
 
-<h3 id="24-comparing-runs-with-records">2.4 Comparing runs with records</h3>
+<h4 id="24-comparing-runs-with-records">2.4 Comparing runs with records</h4>
 <pre><code class="language-python">comparer.compare_runs_with_records()
 </code></pre>
 <pre><code>WARNING:ComparisonFrame:No data was found with applied filters!
 </code></pre>
 <pre><code class="language-python">comparer.get_all_run_scores()
 </code></pre>
-<pre><code>[{'timestamp': '2024-08-22 21:27:57',
+<pre><code>[{'timestamp': '2024-09-24 03:43:57',
+  'run_id': 'e8f5f87186ac81a38896e602c7d8a4e1b973aa00973b68cbfdc983e6c1762d6e',
   'query': 'Black metal',
-  'run_id': '1831f4f4b65bc287d27ff3bdc7bcbb5d9032b2d6b28602c202514a756eca3223',
   'provided_text': 'Black metal is an extreme subgenre of heavy metal music.',
   'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
   'word_count_diff': 0,
   'semantic_similarity': 1.0000001192092896,
-  'comparison_id': '25a7dab1af09323799699cd6d28529090072ee0808f1f1a4942c1db69c7b1621'},
- {'timestamp': '2024-08-22 21:27:57',
+  'comparison_id': '9376f9245bf3a237ef1eb4920cc2c86918fdba5e5934014058b14286fbd31f32'},
+ {'timestamp': '2024-09-24 03:43:57',
+  'run_id': 'e0e4dfaff0b16227dbfde7a75eb9f060ccd2b1b5acc8b4b48aa9d305a3591353',
   'query': 'Black metal',
-  'run_id': 'dad65ebf45d7f54284f478e1850d258b8aabb66ba60ff31236666a4ede5260cc',
   'provided_text': 'Black metal is a subgenre of heavy metal music.',
   'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
   'word_count_diff': 1,
   'semantic_similarity': 0.9859851002693176,
-  'comparison_id': '34611011b656a9495178dd833ce09c3afe6b9083abc47f1b42d43e1e76b143a4'},
- {'timestamp': '2024-08-22 21:27:57',
+  'comparison_id': '756abbce6c86dea26ce9f3d0cc11668b76df40120faf2fbee1dad5daa1e201ec'},
+ {'timestamp': '2024-09-24 03:43:57',
+  'run_id': '4e806f8cf2bd2184e63d41c85322e129b14c8d5206472c7668077452386257af',
   'query': 'Black metal',
-  'run_id': 'e8432d75142df85bba1f3098403c6023a0f84ec5ef645c7a332c7033a78abcd1',
   'provided_text': 'Black metals are beautiful and are often used in jewelry design.',
   'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
   'word_count_diff': 1,
   'semantic_similarity': 0.4940534234046936,
-  'comparison_id': '2fe5604e66d318a8195f4b3a9aa4548894a57972fbcc8386aaea3ee0ef02c071'}]
+  'comparison_id': 'f6ab2967695a560f4ff208e03c2804b09f26b9356ab5da592186e503a900ab56'}]
 </code></pre>
 <pre><code class="language-python">comparer.get_all_run_scores_df()
 </code></pre>
@@ -882,8 +840,8 @@ df
     <tr style="text-align: right;">
       <th></th>
       <th>timestamp</th>
-      <th>query</th>
       <th>run_id</th>
+      <th>query</th>
       <th>provided_text</th>
       <th>record_id</th>
       <th>word_count_diff</th>
@@ -894,36 +852,36 @@ df
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-08-22 21:27:57</td>
+      <td>2024-09-24 03:43:57</td>
+      <td>e8f5f87186ac81a38896e602c7d8a4e1b973aa00973b68...</td>
       <td>Black metal</td>
-      <td>1831f4f4b65bc287d27ff3bdc7bcbb5d9032b2d6b28602...</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
       <td>0</td>
       <td>1.000000</td>
-      <td>25a7dab1af09323799699cd6d28529090072ee0808f1f1...</td>
+      <td>9376f9245bf3a237ef1eb4920cc2c86918fdba5e593401...</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-08-22 21:27:57</td>
+      <td>2024-09-24 03:43:57</td>
+      <td>e0e4dfaff0b16227dbfde7a75eb9f060ccd2b1b5acc8b4...</td>
       <td>Black metal</td>
-      <td>dad65ebf45d7f54284f478e1850d258b8aabb66ba60ff3...</td>
       <td>Black metal is a subgenre of heavy metal music.</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
       <td>1</td>
       <td>0.985985</td>
-      <td>34611011b656a9495178dd833ce09c3afe6b9083abc47f...</td>
+      <td>756abbce6c86dea26ce9f3d0cc11668b76df40120faf2f...</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-08-22 21:27:57</td>
+      <td>2024-09-24 03:43:57</td>
+      <td>4e806f8cf2bd2184e63d41c85322e129b14c8d5206472c...</td>
       <td>Black metal</td>
-      <td>e8432d75142df85bba1f3098403c6023a0f84ec5ef645c...</td>
       <td>Black metals are beautiful and are often used ...</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
       <td>1</td>
       <td>0.494053</td>
-      <td>2fe5604e66d318a8195f4b3a9aa4548894a57972fbcc83...</td>
+      <td>f6ab2967695a560f4ff208e03c2804b09f26b9356ab5da...</td>
     </tr>
   </tbody>
 </table>
@@ -936,14 +894,14 @@ df
 </code></pre>
 <pre><code class="language-python">comparer.get_all_aggr_scores()
 </code></pre>
-<pre><code>[{'timestamp': '2024-08-22 21:30:40',
-  'comparison_id': ['25a7dab1af09323799699cd6d28529090072ee0808f1f1a4942c1db69c7b1621',
-   '34611011b656a9495178dd833ce09c3afe6b9083abc47f1b42d43e1e76b143a4',
-   '2fe5604e66d318a8195f4b3a9aa4548894a57972fbcc8386aaea3ee0ef02c071'],
+<pre><code>[{'timestamp': '2024-09-24 03:44:07',
+  'comparison_id': ['9376f9245bf3a237ef1eb4920cc2c86918fdba5e5934014058b14286fbd31f32',
+   '756abbce6c86dea26ce9f3d0cc11668b76df40120faf2fbee1dad5daa1e201ec',
+   'f6ab2967695a560f4ff208e03c2804b09f26b9356ab5da592186e503a900ab56'],
   'query': 'Black metal',
   'median_word_count_diff': 1.0,
   'median_semantic_similarity': 0.9859851002693176,
-  'record_status_id': 'd11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e63d3f99c93cf0f4f7d'}]
+  'record_status_id': '2723311824179b0f89b65a513368bfe05298a625b7c73b5a06ff33702689d56a'}]
 </code></pre>
 <pre><code class="language-python">comparer.get_all_aggr_scores_df()
 </code></pre>
@@ -976,12 +934,12 @@ df
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-08-22 21:30:40</td>
-      <td>[25a7dab1af09323799699cd6d28529090072ee0808f1f...</td>
+      <td>2024-09-24 03:44:07</td>
+      <td>[9376f9245bf3a237ef1eb4920cc2c86918fdba5e59340...</td>
       <td>Black metal</td>
       <td>1.0</td>
       <td>0.985985</td>
-      <td>d11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e...</td>
+      <td>2723311824179b0f89b65a513368bfe05298a625b7c73b...</td>
     </tr>
   </tbody>
 </table>
@@ -993,21 +951,12 @@ df
 </code></pre>
 <pre><code class="language-python">comparer.get_test_statuses()
 </code></pre>
-<pre><code>[{'timestamp': '2024-08-22 21:31:18',
+<pre><code>[{'timestamp': '2024-09-24 03:44:13',
   'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
-  'record_status_id': 'd11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e63d3f99c93cf0f4f7d',
+  'record_status_id': '2723311824179b0f89b65a513368bfe05298a625b7c73b5a06ff33702689d56a',
   'query': 'Black metal',
-  'valid': True},
- {'timestamp': '2024-08-22 21:31:51',
-  'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
-  'record_status_id': 'd11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e63d3f99c93cf0f4f7d',
-  'query': 'Black metal',
-  'valid': True},
- {'timestamp': '2024-08-22 21:36:59',
-  'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
-  'record_status_id': 'd11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e63d3f99c93cf0f4f7d',
-  'query': 'Black metal',
-  'valid': False}]
+  'test': 'median_semantic_similarity &gt; 0.9',
+  'valid': True}]
 </code></pre>
 <pre><code class="language-python">comparer.get_test_statuses_df()
 </code></pre>
@@ -1033,33 +982,19 @@ df
       <th>record_id</th>
       <th>record_status_id</th>
       <th>query</th>
+      <th>test</th>
       <th>valid</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-08-22 21:31:18</td>
+      <td>2024-09-24 03:44:13</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
-      <td>d11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e...</td>
+      <td>2723311824179b0f89b65a513368bfe05298a625b7c73b...</td>
       <td>Black metal</td>
+      <td>median_semantic_similarity &gt; 0.9</td>
       <td>True</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>2024-08-22 21:31:51</td>
-      <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
-      <td>d11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e...</td>
-      <td>Black metal</td>
-      <td>True</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>2024-08-22 21:36:59</td>
-      <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
-      <td>d11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e...</td>
-      <td>Black metal</td>
-      <td>False</td>
     </tr>
   </tbody>
 </table>
@@ -1122,10 +1057,10 @@ df
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.471ce7a9.min.js"></script>
+      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
       
     
   </body>
