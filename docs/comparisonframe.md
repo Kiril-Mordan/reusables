@@ -1,21 +1,10 @@
 ```python
-# import sys
-# sys.path.append('../')
 from comparisonframe import ComparisonFrame
 ```
 
-## Usage examples
-
-The examples contain: 
-1. Creating validation set and saving it to be reused
-2. Comparing newly generated data with expected results 
-3. Calculating aggregate comparison scores
-4. Recording test statuses
-5. Reseting statuses, flushing records and comparison results
-
 ### 1. Creating validation set
 
-### 1.1 Initialize comparison class
+#### 1.1 Initialize comparison class
 
 
 ```python
@@ -31,10 +20,6 @@ comparer = ComparisonFrame(
     aggr_scores = ['median']
 )
 ```
-
-    /home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/transformers/tokenization_utils_base.py:1601: FutureWarning: `clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default. For more details check this issue: https://github.com/huggingface/transformers/issues/31884
-      warnings.warn(
-
 
 #### 1.2 Recording queries and expected responses (validation set)
 
@@ -88,11 +73,11 @@ comparer.get_all_records()
 
 
 
-    [{'query': 'Black metal',
-      'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
+    [{'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
+      'query': 'Black metal',
       'expected_text': 'Black metal is an extreme subgenre of heavy metal music.'},
-     {'query': 'Tribulation',
-      'record_id': 'eecd9c2a5b25ee6053891b894157fa30372ed694763385e1ada1dc9ad8e41625',
+     {'record_id': 'eecd9c2a5b25ee6053891b894157fa30372ed694763385e1ada1dc9ad8e41625',
+      'query': 'Tribulation',
       'expected_text': 'Tribulation are a Swedish heavy metal band from Arvika that formed in 2005.'}]
 
 
@@ -123,22 +108,22 @@ comparer.get_all_records_df()
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>query</th>
       <th>record_id</th>
+      <th>query</th>
       <th>expected_text</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>Black metal</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
+      <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>Tribulation</td>
       <td>eecd9c2a5b25ee6053891b894157fa30372ed694763385...</td>
+      <td>Tribulation</td>
       <td>Tribulation are a Swedish heavy metal band fro...</td>
     </tr>
   </tbody>
@@ -173,17 +158,17 @@ comparer.get_all_runs()
 
 
 
-    [{'timestamp': '2024-08-22 21:27:45',
+    [{'timestamp': '2024-09-24 03:43:48',
+      'run_id': 'e8f5f87186ac81a38896e602c7d8a4e1b973aa00973b68cbfdc983e6c1762d6e',
       'query': 'Black metal',
-      'run_id': '1831f4f4b65bc287d27ff3bdc7bcbb5d9032b2d6b28602c202514a756eca3223',
       'provided_text': 'Black metal is an extreme subgenre of heavy metal music.'},
-     {'timestamp': '2024-08-22 21:27:45',
+     {'timestamp': '2024-09-24 03:43:48',
+      'run_id': 'e0e4dfaff0b16227dbfde7a75eb9f060ccd2b1b5acc8b4b48aa9d305a3591353',
       'query': 'Black metal',
-      'run_id': 'dad65ebf45d7f54284f478e1850d258b8aabb66ba60ff31236666a4ede5260cc',
       'provided_text': 'Black metal is a subgenre of heavy metal music.'},
-     {'timestamp': '2024-08-22 21:27:45',
+     {'timestamp': '2024-09-24 03:43:48',
+      'run_id': '4e806f8cf2bd2184e63d41c85322e129b14c8d5206472c7668077452386257af',
       'query': 'Black metal',
-      'run_id': 'e8432d75142df85bba1f3098403c6023a0f84ec5ef645c7a332c7033a78abcd1',
       'provided_text': 'Black metals are beautiful and are often used in jewelry design.'}]
 
 
@@ -216,31 +201,31 @@ df
     <tr style="text-align: right;">
       <th></th>
       <th>timestamp</th>
-      <th>query</th>
       <th>run_id</th>
+      <th>query</th>
       <th>provided_text</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-08-22 21:27:45</td>
+      <td>2024-09-24 03:43:48</td>
+      <td>e8f5f87186ac81a38896e602c7d8a4e1b973aa00973b68...</td>
       <td>Black metal</td>
-      <td>1831f4f4b65bc287d27ff3bdc7bcbb5d9032b2d6b28602...</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-08-22 21:27:45</td>
+      <td>2024-09-24 03:43:48</td>
+      <td>e0e4dfaff0b16227dbfde7a75eb9f060ccd2b1b5acc8b4...</td>
       <td>Black metal</td>
-      <td>dad65ebf45d7f54284f478e1850d258b8aabb66ba60ff3...</td>
       <td>Black metal is a subgenre of heavy metal music.</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-08-22 21:27:45</td>
+      <td>2024-09-24 03:43:48</td>
+      <td>4e806f8cf2bd2184e63d41c85322e129b14c8d5206472c...</td>
       <td>Black metal</td>
-      <td>e8432d75142df85bba1f3098403c6023a0f84ec5ef645c...</td>
       <td>Black metals are beautiful and are often used ...</td>
     </tr>
   </tbody>
@@ -249,7 +234,7 @@ df
 
 
 
-### 2.4 Comparing runs with records
+#### 2.4 Comparing runs with records
 
 
 ```python
@@ -267,30 +252,30 @@ comparer.get_all_run_scores()
 
 
 
-    [{'timestamp': '2024-08-22 21:27:57',
+    [{'timestamp': '2024-09-24 03:43:57',
+      'run_id': 'e8f5f87186ac81a38896e602c7d8a4e1b973aa00973b68cbfdc983e6c1762d6e',
       'query': 'Black metal',
-      'run_id': '1831f4f4b65bc287d27ff3bdc7bcbb5d9032b2d6b28602c202514a756eca3223',
       'provided_text': 'Black metal is an extreme subgenre of heavy metal music.',
       'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
       'word_count_diff': 0,
       'semantic_similarity': 1.0000001192092896,
-      'comparison_id': '25a7dab1af09323799699cd6d28529090072ee0808f1f1a4942c1db69c7b1621'},
-     {'timestamp': '2024-08-22 21:27:57',
+      'comparison_id': '9376f9245bf3a237ef1eb4920cc2c86918fdba5e5934014058b14286fbd31f32'},
+     {'timestamp': '2024-09-24 03:43:57',
+      'run_id': 'e0e4dfaff0b16227dbfde7a75eb9f060ccd2b1b5acc8b4b48aa9d305a3591353',
       'query': 'Black metal',
-      'run_id': 'dad65ebf45d7f54284f478e1850d258b8aabb66ba60ff31236666a4ede5260cc',
       'provided_text': 'Black metal is a subgenre of heavy metal music.',
       'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
       'word_count_diff': 1,
       'semantic_similarity': 0.9859851002693176,
-      'comparison_id': '34611011b656a9495178dd833ce09c3afe6b9083abc47f1b42d43e1e76b143a4'},
-     {'timestamp': '2024-08-22 21:27:57',
+      'comparison_id': '756abbce6c86dea26ce9f3d0cc11668b76df40120faf2fbee1dad5daa1e201ec'},
+     {'timestamp': '2024-09-24 03:43:57',
+      'run_id': '4e806f8cf2bd2184e63d41c85322e129b14c8d5206472c7668077452386257af',
       'query': 'Black metal',
-      'run_id': 'e8432d75142df85bba1f3098403c6023a0f84ec5ef645c7a332c7033a78abcd1',
       'provided_text': 'Black metals are beautiful and are often used in jewelry design.',
       'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
       'word_count_diff': 1,
       'semantic_similarity': 0.4940534234046936,
-      'comparison_id': '2fe5604e66d318a8195f4b3a9aa4548894a57972fbcc8386aaea3ee0ef02c071'}]
+      'comparison_id': 'f6ab2967695a560f4ff208e03c2804b09f26b9356ab5da592186e503a900ab56'}]
 
 
 
@@ -321,8 +306,8 @@ comparer.get_all_run_scores_df()
     <tr style="text-align: right;">
       <th></th>
       <th>timestamp</th>
-      <th>query</th>
       <th>run_id</th>
+      <th>query</th>
       <th>provided_text</th>
       <th>record_id</th>
       <th>word_count_diff</th>
@@ -333,36 +318,36 @@ comparer.get_all_run_scores_df()
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-08-22 21:27:57</td>
+      <td>2024-09-24 03:43:57</td>
+      <td>e8f5f87186ac81a38896e602c7d8a4e1b973aa00973b68...</td>
       <td>Black metal</td>
-      <td>1831f4f4b65bc287d27ff3bdc7bcbb5d9032b2d6b28602...</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
       <td>0</td>
       <td>1.000000</td>
-      <td>25a7dab1af09323799699cd6d28529090072ee0808f1f1...</td>
+      <td>9376f9245bf3a237ef1eb4920cc2c86918fdba5e593401...</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-08-22 21:27:57</td>
+      <td>2024-09-24 03:43:57</td>
+      <td>e0e4dfaff0b16227dbfde7a75eb9f060ccd2b1b5acc8b4...</td>
       <td>Black metal</td>
-      <td>dad65ebf45d7f54284f478e1850d258b8aabb66ba60ff3...</td>
       <td>Black metal is a subgenre of heavy metal music.</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
       <td>1</td>
       <td>0.985985</td>
-      <td>34611011b656a9495178dd833ce09c3afe6b9083abc47f...</td>
+      <td>756abbce6c86dea26ce9f3d0cc11668b76df40120faf2f...</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-08-22 21:27:57</td>
+      <td>2024-09-24 03:43:57</td>
+      <td>4e806f8cf2bd2184e63d41c85322e129b14c8d5206472c...</td>
       <td>Black metal</td>
-      <td>e8432d75142df85bba1f3098403c6023a0f84ec5ef645c...</td>
       <td>Black metals are beautiful and are often used ...</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
       <td>1</td>
       <td>0.494053</td>
-      <td>2fe5604e66d318a8195f4b3a9aa4548894a57972fbcc83...</td>
+      <td>f6ab2967695a560f4ff208e03c2804b09f26b9356ab5da...</td>
     </tr>
   </tbody>
 </table>
@@ -388,14 +373,14 @@ comparer.get_all_aggr_scores()
 
 
 
-    [{'timestamp': '2024-08-22 21:30:40',
-      'comparison_id': ['25a7dab1af09323799699cd6d28529090072ee0808f1f1a4942c1db69c7b1621',
-       '34611011b656a9495178dd833ce09c3afe6b9083abc47f1b42d43e1e76b143a4',
-       '2fe5604e66d318a8195f4b3a9aa4548894a57972fbcc8386aaea3ee0ef02c071'],
+    [{'timestamp': '2024-09-24 03:44:07',
+      'comparison_id': ['9376f9245bf3a237ef1eb4920cc2c86918fdba5e5934014058b14286fbd31f32',
+       '756abbce6c86dea26ce9f3d0cc11668b76df40120faf2fbee1dad5daa1e201ec',
+       'f6ab2967695a560f4ff208e03c2804b09f26b9356ab5da592186e503a900ab56'],
       'query': 'Black metal',
       'median_word_count_diff': 1.0,
       'median_semantic_similarity': 0.9859851002693176,
-      'record_status_id': 'd11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e63d3f99c93cf0f4f7d'}]
+      'record_status_id': '2723311824179b0f89b65a513368bfe05298a625b7c73b5a06ff33702689d56a'}]
 
 
 
@@ -436,12 +421,12 @@ comparer.get_all_aggr_scores_df()
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-08-22 21:30:40</td>
-      <td>[25a7dab1af09323799699cd6d28529090072ee0808f1f...</td>
+      <td>2024-09-24 03:44:07</td>
+      <td>[9376f9245bf3a237ef1eb4920cc2c86918fdba5e59340...</td>
       <td>Black metal</td>
       <td>1.0</td>
       <td>0.985985</td>
-      <td>d11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e...</td>
+      <td>2723311824179b0f89b65a513368bfe05298a625b7c73b...</td>
     </tr>
   </tbody>
 </table>
@@ -465,21 +450,12 @@ comparer.get_test_statuses()
 
 
 
-    [{'timestamp': '2024-08-22 21:31:18',
+    [{'timestamp': '2024-09-24 03:44:13',
       'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
-      'record_status_id': 'd11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e63d3f99c93cf0f4f7d',
+      'record_status_id': '2723311824179b0f89b65a513368bfe05298a625b7c73b5a06ff33702689d56a',
       'query': 'Black metal',
-      'valid': True},
-     {'timestamp': '2024-08-22 21:31:51',
-      'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
-      'record_status_id': 'd11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e63d3f99c93cf0f4f7d',
-      'query': 'Black metal',
-      'valid': True},
-     {'timestamp': '2024-08-22 21:36:59',
-      'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
-      'record_status_id': 'd11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e63d3f99c93cf0f4f7d',
-      'query': 'Black metal',
-      'valid': False}]
+      'test': 'median_semantic_similarity > 0.9',
+      'valid': True}]
 
 
 
@@ -513,33 +489,19 @@ comparer.get_test_statuses_df()
       <th>record_id</th>
       <th>record_status_id</th>
       <th>query</th>
+      <th>test</th>
       <th>valid</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-08-22 21:31:18</td>
+      <td>2024-09-24 03:44:13</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
-      <td>d11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e...</td>
+      <td>2723311824179b0f89b65a513368bfe05298a625b7c73b...</td>
       <td>Black metal</td>
+      <td>median_semantic_similarity &gt; 0.9</td>
       <td>True</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>2024-08-22 21:31:51</td>
-      <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
-      <td>d11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e...</td>
-      <td>Black metal</td>
-      <td>True</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>2024-08-22 21:36:59</td>
-      <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
-      <td>d11f7522f4e4e34a6e6f387c6ce7572d43c69fef9f628e...</td>
-      <td>Black metal</td>
-      <td>False</td>
     </tr>
   </tbody>
 </table>
