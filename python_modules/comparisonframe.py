@@ -1,19 +1,22 @@
 """
-Comparison Frame is designed to automate and streamline the process of comparing textual data, particularly focusing on various metrics
-such as character and word count, punctuation usage, and semantic similarity.
+Comparison Frame is designed to automate and streamline the 
+process of comparing textual data, particularly focusing on various 
+metrics such as character and word count, punctuation usage, and 
+semantic similarity.
 It's particularly useful for scenarios where consistent text analysis is required,
-such as evaluating the performance of natural language processing models, monitoring content quality,
-or tracking changes in textual data over time using manual evaluation.
+such as evaluating the performance of natural language processing models, 
+monitoring content quality, or tracking changes in textual data over 
+time using manual evaluation.
 """
 
-import numpy as np #==1.26.0
 import string
 import logging
 from collections import Counter
 from datetime import datetime #==5.2
-import pandas as pd #==2.1.1
-import attrs #>=23.2.0
-from mocker_db import MockerDB #==0.2.1
+import numpy as np #==1.26.0
+import pandas as pd #>=2.1.1
+import attrs #>=22.1.0
+from mocker_db import MockerDB #>=0.2.1
 
 
 # Metadata for package creation
@@ -21,7 +24,7 @@ __package_metadata__ = {
     "author": "Kyrylo Mordan",
     "author_email": "parachute.repo@gmail.com",
     "description": "A simple tool to compare textual data against validation sets.",
-    # Add other metadata as needed
+    'license' : 'mit'
 }
 
 @attrs.define
@@ -39,7 +42,7 @@ class RecordsAnalyser:
                                         'punctuation_diff',
                                         'semantic_similarity'])
 
-    aggr_scores = attrs.field(default = ['min', 
+    aggr_scores = attrs.field(default = ['min',
                                          'p25',
                                          'median',
                                          'mean',
@@ -94,9 +97,9 @@ class RecordsAnalyser:
 
         scores = {method_name : self.calculate_score(
             method_name = method_name,
-            *args, 
+            *args,
             **kwargs) for method_name in method_names}
-        
+
         return scores
 
     def calculate_aggr_scores(self, method_names : list = None, *args, **kwargs):
@@ -109,7 +112,7 @@ class RecordsAnalyser:
             method_names = self.aggr_scores
 
 
-        scores = self.calculate_scores(method_names = method_names, 
+        scores = self.calculate_scores(method_names = method_names,
                               *args, **kwargs)
 
         scores_output = {}
@@ -198,7 +201,7 @@ class RecordsAnalyser:
 
         df = df.copy()
         df.columns = ["max_" + col for col in df.columns]
-        
+
         return df.agg(lambda x: x.max()).to_dict()
 
     def mean(self, df):
@@ -209,7 +212,7 @@ class RecordsAnalyser:
 
         df = df.copy()
         df.columns = ["mean_" + col for col in df.columns]
-        
+
         return df.agg(lambda x: x.mean()).to_dict()
 
     def median(self, df):
@@ -220,7 +223,7 @@ class RecordsAnalyser:
 
         df = df.copy()
         df.columns = ["median_" + col for col in df.columns]
-        
+
         return df.agg(lambda x: x.median()).to_dict()
 
     def p25(self, df):
@@ -231,7 +234,7 @@ class RecordsAnalyser:
 
         df = df.copy()
         df.columns = ["p25_" + col for col in df.columns]
-        
+
         return df.agg(lambda x: x.quantile(0.25)).to_dict()
 
     def p75(self, df):
@@ -242,7 +245,7 @@ class RecordsAnalyser:
 
         df = df.copy()
         df.columns = ["p75_" + col for col in df.columns]
-        
+
         return df.agg(lambda x: x.quantile(0.75)).to_dict()
 
 
@@ -268,8 +271,8 @@ class ComparisonFrame:
     compare_scores = attrs.field(default = None)
     aggr_scores = attrs.field(default = None)
     test_query = attrs.field(default = None)
-    
-    
+
+
     ## dependencies
     mocker_h_class = attrs.field(default = MockerDB)
     records_analyser_class = attrs.field(default = RecordsAnalyser)
@@ -354,20 +357,22 @@ class ComparisonFrame:
                             "run_id": record_run['run_id']}
 
             comparison_scores = self.records_analyser.calculate_scores(
-                method_names = compare_scores, 
+                method_names = compare_scores,
                 exp_text = record_run['expected_text'],
                 prov_text = record_run['provided_text'])
-            
+
             comparison.update(comparison_scores)
+        else:
+            comparison = None
 
         return comparison
 
 
 ### RECORDING QUERIES AND RUNS
 
-    def record_queries(self, 
-                     queries : list, 
-                     expected_texts : list, 
+    def record_queries(self,
+                     queries : list,
+                     expected_texts : list,
                      metadata : dict = {}):
 
         """
@@ -382,13 +387,13 @@ class ComparisonFrame:
             raise ValueError(f"Queries len: {len(queries)}, Expected texts len: {len(expected_texts)}")
 
         if (len(queries) != len(expected_texts)) and (len(queries) == 1):
-             queries = [queries[0] for _ in expected_texts]
+            queries = [queries[0] for _ in expected_texts]
 
         if (len(queries) != len(expected_texts)) and (len(expected_texts) == 1):
-             expected_texts = [expected_texts[0] for _ in queries]
+            expected_texts = [expected_texts[0] for _ in queries]
 
 
-        restricted_keys = ['collection', 'table', 'record_id', 'text', 'query'] 
+        restricted_keys = ['collection', 'table', 'record_id', 'text', 'query']
 
         # Check if any of the restricted keys are in the metadata
         if any(key in metadata for key in restricted_keys):
@@ -416,7 +421,7 @@ class ComparisonFrame:
                                     embed = True)
 
 
-    def record_runs(self, 
+    def record_runs(self,
                    queries : list,
                    provided_texts : list,
                    metadata : dict = {}):
@@ -433,13 +438,13 @@ class ComparisonFrame:
             raise ValueError(f"Queries len: {len(queries)}, Provided texts len: {len(expected_texts)}")
 
         if (len(queries) != len(provided_texts)) and (len(queries) == 1):
-             queries = [queries[0] for _ in provided_texts]
+            queries = [queries[0] for _ in provided_texts]
 
         if (len(queries) != len(provided_texts)) and (len(provided_texts) == 1):
-             provided_texts = [provided_texts[0] for _ in queries]
+            provided_texts = [provided_texts[0] for _ in queries]
 
 
-        restricted_keys = ['collection', 'table', 'run_id', 'text', 'query',"timestamp"] 
+        restricted_keys = ['collection', 'table', 'run_id', 'text', 'query',"timestamp"]
 
         # Check if any of the restricted keys are in the metadata
         if any(key in metadata for key in restricted_keys):
@@ -463,7 +468,7 @@ class ComparisonFrame:
 
 ### EXTRACTING TABLES
 
-    def get_all_queries(self, 
+    def get_all_queries(self,
         metadata_filters = None
         ):
 
@@ -490,7 +495,7 @@ class ComparisonFrame:
         return queries
 
 
-    def get_all_records(self, 
+    def get_all_records(self,
                         queries : list = None,
                         metadata_filters : dict = {}):
 
@@ -525,14 +530,14 @@ class ComparisonFrame:
                                 perform_similarity_search = False,
                                 return_keys_list = ['+&id','query', 'text'])
 
-        
+
         # record ids will be added based mocker hash keys after mocker is updated with that ability
 
         if expected_text_records:
 
             updated_list_of_dicts = [
                 {**{
-                    'expected_text' if k == 'text' else 
+                    'expected_text' if k == 'text' else
                     'record_id' if k == '&id' else k: v
                     for k, v in dictionary.items()
                 }}
@@ -544,7 +549,7 @@ class ComparisonFrame:
 
         return updated_list_of_dicts
 
-    def get_all_records_df(self, 
+    def get_all_records_df(self,
                           queries : list = None,
                           metadata_filters : dict = {}):
 
@@ -556,7 +561,7 @@ class ComparisonFrame:
             queries=queries,
             metadata_filters=metadata_filters))
 
-    def get_all_runs(self, 
+    def get_all_runs(self,
                      queries : list = None,
                      run_ids : list = None):
 
@@ -579,15 +584,15 @@ class ComparisonFrame:
         run_records = self.mocker_h.search_database(
             filter_criteria=filter_criteria,
             perform_similarity_search = False,
-            return_keys_list = ['+&id', 
+            return_keys_list = ['+&id',
                                 'query',
                                 'text',
                                 'timestamp'])
-            
+
         if run_records:
 
             updated_list_of_dicts = [
-                {**{'provided_text' if k == 'text' else 
+                {**{'provided_text' if k == 'text' else
                     'run_id' if k == '&id' else k: v
                     for k, v in dictionary.items()}}
                 for dictionary in run_records
@@ -597,8 +602,8 @@ class ComparisonFrame:
             updated_list_of_dicts = []
 
         return updated_list_of_dicts
-        
-    def get_all_runs_df(self, 
+
+    def get_all_runs_df(self,
                         queries : list = None,
                         run_ids : list = None):
 
@@ -609,11 +614,11 @@ class ComparisonFrame:
         df = pd.DataFrame(self.get_all_runs(
             queries=queries,
             run_ids=run_ids))
-   
+
         return df.replace({np.nan: None})
 
 
-    def get_all_run_scores(self, 
+    def get_all_run_scores(self,
                            queries : list = None,
                            run_ids : list = None,
                            comparison_ids : list = None):
@@ -643,7 +648,7 @@ class ComparisonFrame:
         run_records = self.mocker_h.search_database(
             filter_criteria=filter_criteria,
             perform_similarity_search = False,
-            return_keys_list = ['+&id', 
+            return_keys_list = ['+&id',
                                 'query',
                                 'text',
                                 'timestamp'])
@@ -659,9 +664,9 @@ class ComparisonFrame:
                                 '-collection', '-table'])
 
         if scores:
-            
+
             run_records = [
-                {**{'provided_text' if k == 'text' else 
+                {**{'provided_text' if k == 'text' else
                     'run_id' if k == '&id' else k: v
                     for k, v in dictionary.items()}}
                 for dictionary in run_records
@@ -672,19 +677,19 @@ class ComparisonFrame:
                     for k, v in dictionary.items()}}
                 for dictionary in scores
             ]
-            
+
             updated_list_of_dicts = self._merge_lists_by_key_full_left(
                  run_records, scores, "run_id")
 
-            
+
 
         else:
             updated_list_of_dicts = []
 
         return updated_list_of_dicts
 
-    def get_all_run_scores_df(self, 
-                              queries : list = None, 
+    def get_all_run_scores_df(self,
+                              queries : list = None,
                               run_ids : list = None,
                               comparison_ids : list = None):
 
@@ -697,9 +702,10 @@ class ComparisonFrame:
             run_ids = run_ids,
             comparison_ids = comparison_ids))
 
-    
-    def get_all_aggr_scores(self, 
-                           queries : list = None):
+
+    def get_all_aggr_scores(self,
+                           queries : list = None,
+                           filter_cid : bool = False):
 
         """
         Retrieves list for aggregate scores for selected filters.
@@ -722,28 +728,33 @@ class ComparisonFrame:
 
 
         if scores:
-            
+
             scores = [
                 {**{'record_status_id' if k == '&id' else k: v
                     for k, v in dictionary.items()}}
                 for dictionary in scores
             ]
-                        
+
+            if filter_cid:
+                scores = [sc for sc in scores if sc.get('comparison_id' , [0]) != []]
+
         else:
             scores = []
 
         return scores
 
-    def get_all_aggr_scores_df(self, 
-                              queries : list = None):
+    def get_all_aggr_scores_df(self,
+                              queries : list = None,
+                              filter_cid : bool = False):
 
         """
         Retrieves dataframe for aggregate scores for selected filters.
         """
         return pd.DataFrame(self.get_all_aggr_scores(
-            queries = queries))
+            queries = queries,
+            filter_cid = filter_cid))
 
-    def get_test_statuses(self, 
+    def get_test_statuses(self,
                           queries : list = None):
 
         """
@@ -767,7 +778,7 @@ class ComparisonFrame:
 
         return statuses
 
-    def get_test_statuses_df(self, 
+    def get_test_statuses_df(self,
                           queries : list = None):
         """
         Retrieves dataframe for test statuses for selected filters.
@@ -776,13 +787,13 @@ class ComparisonFrame:
 
 ### CALCULATING COMPARISON AND AGGREGATE SCORES
 
-    def compare_runs_with_records(self,                        
+    def compare_runs_with_records(self,
                             queries : list = None,
                             compare_scores : list = None,
                             latest_runs : bool = True):
 
         """
-        Compares the provided text with all recorded expected results 
+        Compares the provided text with all recorded expected results
         for a specific query and stores the comparison results.
 
         Parameters:
@@ -823,7 +834,7 @@ class ComparisonFrame:
 
         records_runs = self._merge_lists_by_key_full_left(
             list1 = runs,
-            list2 = records, 
+            list2 = records,
             key = "query")
 
         if not records_runs:
@@ -831,9 +842,11 @@ class ComparisonFrame:
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        comparisons = [self._call_comparer(record_run, 
-                                timestamp, 
+        comparisons = [self._call_comparer(record_run,
+                                timestamp,
                                 compare_scores) for record_run in records_runs]
+
+        comparisons = [cm for cm in comparisons if cm is not None]
 
         if comparisons:
 
@@ -854,7 +867,7 @@ class ComparisonFrame:
 
         Parameters:
             queries : list - queries from compare scores table
-            compare_scores : list - compare scores to use for 
+            compare_scores : list - compare scores to use for
                 calculating aggregate scores
             aggr_scores : list - names of aggregate scores from pre defined
             latest_runs : bool - condition that selects only new compare
@@ -912,8 +925,8 @@ class ComparisonFrame:
 
             for query in queries:
 
-                df_limited = df.query(f"query == '{query}'")
-                
+                df_limited = df.query(f"query == '{query}' and record_id.notna()")
+
                 # get score dataframe for each query
                 df_scores = df_limited[compare_scores]
 
@@ -948,7 +961,7 @@ class ComparisonFrame:
                             ):
 
         """
-        Calculates test statuses for selected queries and 
+        Calculates test statuses for selected queries and
         test condition.
 
         Parameters:
@@ -965,8 +978,8 @@ class ComparisonFrame:
 
         # pull relevant runs
         df = self.get_all_aggr_scores_df(
-                queries=queries)
-
+                queries=queries,
+                filter_cid=True)
 
         comparisons = []
         if df.shape[0]>0:
@@ -978,7 +991,7 @@ class ComparisonFrame:
             for query in queries:
 
                 record_id_d = self.get_all_records(queries=[query])
-                
+
                 if record_id_d:
                     record_id = record_id_d[0]['record_id']
                 else:
@@ -988,13 +1001,13 @@ class ComparisonFrame:
                     .sort_values(by='timestamp', ascending=False).head(1)
 
                 status = df_sorted.query(test_query).shape[0] > 0
-                
+
 
                 comparison = {"collection" : "scores",
                                 "table" : "status",
                                 "timestamp" : timestamp,
                                 "record_id" : record_id,
-                                "record_status_id" : df_sorted['record_status_id'][0],
+                                "record_status_id" : df_sorted['record_status_id'].iloc[0],
                                 "query": query,
                                 "test" : test_query,
                                 "valid" : status}
@@ -1008,7 +1021,7 @@ class ComparisonFrame:
         else:
             self.logger.warning("No comparisons were completed for queries!")
 
-### FLUSHING 
+### FLUSHING
     def flush_records(self,
                       queries : list = None,
                       record_ids : list = None,
@@ -1018,7 +1031,7 @@ class ComparisonFrame:
         Removes selected records, all if no filters provided.
 
         Parameters:
-            queries : list 
+            queries : list
             record_ids : list
             expected_texts : list
         """
@@ -1048,7 +1061,7 @@ class ComparisonFrame:
         Removes selected runs, all if no filters provided.
 
         Parameters:
-            queries : list 
+            queries : list
             run_ids : list
             provided_texts : list
             timestamps : list
@@ -1083,7 +1096,7 @@ class ComparisonFrame:
         Removes selected comparison results, all if no filters provided.
 
         Parameters:
-            record_ids : list 
+            record_ids : list
             comparison_ids : list
             queries : list
             run_ids : list
@@ -1121,7 +1134,7 @@ class ComparisonFrame:
         Removes selected aggregate scores, all if no filters provided.
 
         Parameters:
-            comparison_ids : list 
+            comparison_ids : list
             timestamps : list
             queries : list
         """
@@ -1152,7 +1165,7 @@ class ComparisonFrame:
         Removes selected test statuses, all if no filters provided.
 
         Parameters:
-            queries : list 
+            queries : list
             timestamps : list
             record_ids : list
             record_status_ids : list
@@ -1177,5 +1190,3 @@ class ComparisonFrame:
 
         self.mocker_h.remove_from_database(
             filter_criteria=filter_criterias)
-
-        
