@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.0.3
+
+    - minor fixes to scores calculation
+
 ### 0.0.2
 
     - revised version implemeted based on diagram
