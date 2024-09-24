@@ -1,5 +1,0 @@
-### comparisonframe.py
-numpy==1.26.0
-attrs>=23.2.0
-pandas==2.1.1
-mocker_db==0.2.1
