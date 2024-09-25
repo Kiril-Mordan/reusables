@@ -369,7 +369,7 @@ class ComparisonFrame:
 
     def _create_query_bundles(self, 
                               data, 
-                              grouped_by : list,
+                              group_by : list,
                               target_field : str):
 
         # Dictionary to hold grouped data
@@ -378,30 +378,30 @@ class ComparisonFrame:
         # Grouping the data
         for item in data:
             # Create a tuple of values from the fields used for grouping
-            group_key = tuple(item[field] for field in group_key)
-            grouped_data[group_key].append(item(target_field))
+            group_key = tuple(item[field] for field in group_by)
+            grouped_data[group_key].append(item[target_field])
 
         # Convert grouped_data back to list of lists 
         grouped_list = list(grouped_data.values())
 
         return grouped_list
 
-    def _create_grouped_bundles(self, data, grouped_by : list):
+    def _create_grouped_bundles(self, data, group_by : list):
 
         # Set to hold unique combinations of grouped fields
-        grouped_fileds_set = set()
+        grouped_fields_set = set()
 
         # Collecting the unique grouped fields
         for item in data:
             # Create a tuple of values from the fields used for grouping
             group_key = tuple(item[field] for field in group_by)
-            grouped_fields_set.add(grouped_by)
+            grouped_fields_set.add(group_key)
 
         # Convert the set back to the a list of dictionaries
-        grouped_fileds_list = [dict(zip(group_by, values)) \
-            for values in grouped_fileds_set]
+        grouped_fields_set = [dict(zip(group_by, values)) \
+            for values in grouped_fields_set]
 
-        return grouped_fileds_list
+        return grouped_fields_set
 
 
 ### RECORDING QUERIES AND RUNS
@@ -915,6 +915,47 @@ class ComparisonFrame:
         else:
             self.logger.warning("No comparisons were completed for queries!")
 
+    def _calc_aggr(self, 
+                   df, 
+                   run_id_bundles,
+                   groups,
+                   group_by, 
+                   aggr_scores, 
+                   compare_scores,
+                   comparisons):
+
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        for run_ids, group in zip(run_id_bundles, groups):
+
+            df_limited = df.query(f"run_id == @run_ids and record_id.notna()")
+
+            # get score dataframe for each query
+            df_scores = df_limited[compare_scores]
+
+            relevant_queries = list(set(df_limited['query'].to_list()))
+
+            comparison_ids = df_limited['comparison_id'].to_list()
+
+            comparison_ids = [cid for cid in comparison_ids if not pd.isna(cid)]
+
+            comparison = {"collection" : "scores",
+                                "table" : "records",
+                                "timestamp" : timestamp,
+                                "comparison_id" : comparison_ids,
+                                "query" : relevant_queries,
+                                "grouped_by" : group_by,
+                                "group": group}
+
+            comparison_scores = self.records_analyser.calculate_aggr_scores(
+                method_names = aggr_scores,
+                df = df_scores
+            )
+
+            comparison.update(comparison_scores)
+            comparisons.append(comparison)
+
+        return comparisons
     
     def calculate_aggr_scores(self,
                             queries : list = None,
@@ -976,17 +1017,15 @@ class ComparisonFrame:
             df = self.get_all_run_scores_df(
                 queries=queries)
 
-        # scores = self.get_all_aggr_scores()
         comparisons = []
         if df.shape[0]>0:
 
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
             # get relevant queries
             queries = list(set(df['query']))
+            run_ids = list(set(df['run_id']))
 
             if group_by:
-
+                
                 dd = self.mocker_h.search_database(
                     perform_similarity_search = False,
                     filter_criteria = {
@@ -996,47 +1035,37 @@ class ComparisonFrame:
                     return_keys_list = group_by + ['+&id']
                 )
 
-                queries_bundles = self._create_query_bundles(
+                run_id_bundles = self._create_query_bundles(
                     data = dd, group_by = group_by, target_field = '&id'
                 )
 
                 groups = self._create_grouped_bundles(
                     data = dd, group_by = group_by
                 )
-            else:
-                queries_bundles = [[q] for q in queries]
-                groups = [{'query' : q} for q in queries] 
-                group_by = ['query']
 
-
-            for queries, group in zip(queries_bundles, groups):
-
-                df_limited = df.query(f"run_id == @queries and record_id.notna()")
-
-                # get score dataframe for each query
-                df_scores = df_limited[compare_scores]
-
-                relevant_queries = df_limited['query'].to_list()
-
-                comparison_ids = df_limited['comparison_id'].to_list()
-
-                comparison_ids = [cid for cid in comparison_ids if not pd.isna(cid)]
-
-                comparison = {"collection" : "scores",
-                                    "table" : "records",
-                                    "timestamp" : timestamp,
-                                    "comparison_id" : comparison_ids,
-                                    "query" : relevant_queries,
-                                    "grouped_by" : group_by,
-                                    "group": group}
-
-                comparison_scores = self.records_analyser.calculate_aggr_scores(
-                    method_names = aggr_scores,
-                    df = df_scores
+                comparisons = self._calc_aggr(
+                    df = df, 
+                    run_id_bundles = run_id_bundles,
+                    groups = groups,
+                    group_by = group_by, 
+                    aggr_scores = aggr_scores,
+                    compare_scores = compare_scores,
+                    comparisons = comparisons
                 )
 
-                comparison.update(comparison_scores)
-                comparisons.append(comparison)
+            run_id_bundles = [run_ids]
+            groups = [{'query' : q} for q in queries]
+            group_by = ['query']
+
+            comparisons = self._calc_aggr(
+                df = df, 
+                run_id_bundles = run_id_bundles,
+                groups = groups,
+                group_by = group_by, 
+                aggr_scores = aggr_scores,
+                compare_scores = compare_scores,
+                comparisons = comparisons
+            )
 
         if comparisons:
 
@@ -1067,16 +1096,19 @@ class ComparisonFrame:
 
 
         # pull relevant runs
-        df = self.get_all_aggr_scores_df(
+        dl = self.get_all_aggr_scores(
                 queries=queries,
                 filter_cid=True)
 
         comparisons = []
-        if df.shape[0]>0:
+        if len(dl)>0:
 
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            queries = list(set(df['query']))
+            queries = []
+            for q in dl:
+                queries += q['query']
+            queries = list(set(queries))
 
             for query in queries:
 
@@ -1087,7 +1119,7 @@ class ComparisonFrame:
                 else:
                     raise ValueError(f"No record in records for query: {query}")
 
-                df_sorted = df.query(f"query == '{query}'")\
+                df_sorted = pd.DataFrame([d for d in dl if d['query'] == [query]])\
                     .sort_values(by='timestamp', ascending=False).head(1)
 
                 status = df_sorted.query(test_query).shape[0] > 0
