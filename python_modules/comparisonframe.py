@@ -11,7 +11,7 @@ time using manual evaluation.
 
 import string
 import logging
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime #==5.2
 import numpy as np #==1.26.0
 import pandas as pd #>=2.1.1
@@ -367,6 +367,42 @@ class ComparisonFrame:
 
         return comparison
 
+    def _create_query_bundles(self, 
+                              data, 
+                              grouped_by : list,
+                              target_field : str):
+
+        # Dictionary to hold grouped data
+        grouped_data = defaultdict(list)
+
+        # Grouping the data
+        for item in data:
+            # Create a tuple of values from the fields used for grouping
+            group_key = tuple(item[field] for field in group_key)
+            grouped_data[group_key].append(item(target_field))
+
+        # Convert grouped_data back to list of lists 
+        grouped_list = list(grouped_data.values())
+
+        return grouped_list
+
+    def _create_grouped_bundles(self, data, grouped_by : list):
+
+        # Set to hold unique combinations of grouped fields
+        grouped_fileds_set = set()
+
+        # Collecting the unique grouped fields
+        for item in data:
+            # Create a tuple of values from the fields used for grouping
+            group_key = tuple(item[field] for field in group_by)
+            grouped_fields_set.add(grouped_by)
+
+        # Convert the set back to the a list of dictionaries
+        grouped_fileds_list = [dict(zip(group_by, values)) \
+            for values in grouped_fileds_set]
+
+        return grouped_fileds_list
+
 
 ### RECORDING QUERIES AND RUNS
 
@@ -482,9 +518,6 @@ class ComparisonFrame:
         if metadata_filters:
             filter_criteria.update(metadata_filters)
 
-        # if untested_only:
-        #     filter_criteria['tested'] = None
-
         queries_records = self.mocker_h.search_database(
             filter_criteria = filter_criteria,
             perform_similarity_search = False,
@@ -563,7 +596,8 @@ class ComparisonFrame:
 
     def get_all_runs(self,
                      queries : list = None,
-                     run_ids : list = None):
+                     run_ids : list = None,
+                     metadata_filters : dict = None):
 
         """
         Retrieves run lists for selected filters.
@@ -574,6 +608,9 @@ class ComparisonFrame:
                     "collection" : "runs",
                     "table" : "provided_text"
                 }
+
+        if metadata_filters:
+            filter_criteria.update(metadata_filters)
 
         if queries:
             filter_criteria["query"] = queries
@@ -605,7 +642,8 @@ class ComparisonFrame:
 
     def get_all_runs_df(self,
                         queries : list = None,
-                        run_ids : list = None):
+                        run_ids : list = None,
+                        metadata_filters : dict = None):
 
         """
         Retrieves dataframe of runs for selected filters.
@@ -613,7 +651,8 @@ class ComparisonFrame:
 
         df = pd.DataFrame(self.get_all_runs(
             queries=queries,
-            run_ids=run_ids))
+            run_ids=run_ids,
+            metadata_filters=metadata_filters))
 
         return df.replace({np.nan: None})
 
@@ -621,7 +660,9 @@ class ComparisonFrame:
     def get_all_run_scores(self,
                            queries : list = None,
                            run_ids : list = None,
-                           comparison_ids : list = None):
+                           run_metadata : dict = None,
+                           comparison_ids : list = None,
+                           filter_rid : bool = False):
 
         """
         Retrieves list of comparison scores for selected filters.
@@ -642,6 +683,10 @@ class ComparisonFrame:
             filter_criteria["query"] = queries
         if run_ids:
             filter_criteria["run_id"] = run_ids
+
+        if run_metadata:
+            filter_criteria.update(run_metadata)
+
         if comparison_ids:
             filter_criteria2["&id"] = comparison_ids
 
@@ -681,7 +726,11 @@ class ComparisonFrame:
             updated_list_of_dicts = self._merge_lists_by_key_full_left(
                  run_records, scores, "run_id")
 
-
+            if filter_rid:
+                updated_list_of_dicts = [
+                    ulod for ulod in updated_list_of_dicts \
+                        if ulod.get('record_id')
+                ]
 
         else:
             updated_list_of_dicts = []
@@ -691,7 +740,9 @@ class ComparisonFrame:
     def get_all_run_scores_df(self,
                               queries : list = None,
                               run_ids : list = None,
-                              comparison_ids : list = None):
+                              run_metadata : dict = None,
+                              comparison_ids : list = None,
+                              filter_rid : bool = False):
 
         """
         Retrieves dataframe of comparison scores for selected filters.
@@ -700,11 +751,14 @@ class ComparisonFrame:
         return pd.DataFrame(self.get_all_run_scores(
             queries = queries,
             run_ids = run_ids,
-            comparison_ids = comparison_ids))
+            run_metadata = run_metadata,
+            comparison_ids = comparison_ids,
+            filter_rid = filter_rid))
 
 
     def get_all_aggr_scores(self,
                            queries : list = None,
+                           grouped_by : list = None,
                            filter_cid : bool = False):
 
         """
@@ -718,8 +772,12 @@ class ComparisonFrame:
                 }
 
         if queries:
-            filter_criteria["query"] = queries
+            filter_criteria["query"] = [[q] for q in queries]
 
+        if grouped_by is None:
+            grouped_by = ['query']
+
+        filter_criteria['grouped_by'] = [grouped_by]
 
         scores = self.mocker_h.search_database(
             filter_criteria=filter_criteria,
@@ -745,6 +803,7 @@ class ComparisonFrame:
 
     def get_all_aggr_scores_df(self,
                               queries : list = None,
+                              grouped_by : list = None,
                               filter_cid : bool = False):
 
         """
@@ -752,6 +811,7 @@ class ComparisonFrame:
         """
         return pd.DataFrame(self.get_all_aggr_scores(
             queries = queries,
+            grouped_by = grouped_by,
             filter_cid = filter_cid))
 
     def get_test_statuses(self,
@@ -855,12 +915,13 @@ class ComparisonFrame:
         else:
             self.logger.warning("No comparisons were completed for queries!")
 
+    
     def calculate_aggr_scores(self,
                             queries : list = None,
+                            group_by : list = None,
                             compare_scores : list = None,
                             aggr_scores : list = None,
-                            latest_runs : bool = True
-                            ):
+                            latest_runs : bool = True):
 
         """
         Calculate aggr scores for selected queries based on compare scores.
@@ -892,7 +953,8 @@ class ComparisonFrame:
             scores = self.get_all_aggr_scores()
             run_scores = self.get_all_run_scores(queries=queries)
 
-            comparison_ids = [d['comparison_id'] for d in run_scores if d.get('comparison_id', None)]
+            comparison_ids = [d['comparison_id'] for d in run_scores \
+                if d.get('comparison_id', None)]
 
             exclusion_cid = []
 
@@ -923,12 +985,38 @@ class ComparisonFrame:
             # get relevant queries
             queries = list(set(df['query']))
 
-            for query in queries:
+            if group_by:
 
-                df_limited = df.query(f"query == '{query}' and record_id.notna()")
+                dd = self.mocker_h.search_database(
+                    perform_similarity_search = False,
+                    filter_criteria = {
+                        "collection" : "runs",
+                        "table" : "provided_text"
+                    },
+                    return_keys_list = group_by + ['+&id']
+                )
+
+                queries_bundles = self._create_query_bundles(
+                    data = dd, group_by = group_by, target_field = '&id'
+                )
+
+                groups = self._create_grouped_bundles(
+                    data = dd, group_by = group_by
+                )
+            else:
+                queries_bundles = [[q] for q in queries]
+                groups = [{'query' : q} for q in queries] 
+                group_by = ['query']
+
+
+            for queries, group in zip(queries_bundles, groups):
+
+                df_limited = df.query(f"run_id == @queries and record_id.notna()")
 
                 # get score dataframe for each query
                 df_scores = df_limited[compare_scores]
+
+                relevant_queries = df_limited['query'].to_list()
 
                 comparison_ids = df_limited['comparison_id'].to_list()
 
@@ -938,7 +1026,9 @@ class ComparisonFrame:
                                     "table" : "records",
                                     "timestamp" : timestamp,
                                     "comparison_id" : comparison_ids,
-                                    "query": query}
+                                    "query" : relevant_queries,
+                                    "grouped_by" : group_by,
+                                    "group": group}
 
                 comparison_scores = self.records_analyser.calculate_aggr_scores(
                     method_names = aggr_scores,
