@@ -388,20 +388,18 @@ class ComparisonFrame:
 
     def _create_grouped_bundles(self, data, group_by : list):
 
-        # Set to hold unique combinations of grouped fields
-        grouped_fields_set = set()
+        # Dictionary to hold grouped data
+        grouped_fields = defaultdict(list)
 
         # Collecting the unique grouped fields
         for item in data:
             # Create a tuple of values from the fields used for grouping
             group_key = tuple(item[field] for field in group_by)
-            grouped_fields_set.add(group_key)
+            grouped_fields[group_key] = {field : item[field] for field in group_by}
 
-        # Convert the set back to the a list of dictionaries
-        grouped_fields_set = [dict(zip(group_by, values)) \
-            for values in grouped_fields_set]
+        grouped_fields = list(grouped_fields.values())
 
-        return grouped_fields_set
+        return grouped_fields
 
 
 ### RECORDING QUERIES AND RUNS
