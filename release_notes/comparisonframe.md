@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.0.5
+
+    - minor fix for aggregate scores with groups
+
 ### 0.0.4
 
     - initial support for grouping runs to calculate aggregate scores
