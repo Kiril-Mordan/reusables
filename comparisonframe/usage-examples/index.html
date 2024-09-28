@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.36">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.38">
     
     
       
@@ -22,7 +22,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.06209087.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.8c3ca2c6.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -627,6 +627,9 @@
     aggr_scores = ['median']
 )
 </code></pre>
+<pre><code>/home/kyriosskia/miniforge3/envs/testenv/lib/python3.10/site-packages/transformers/tokenization_utils_base.py:1601: FutureWarning: `clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default. For more details check this issue: https://github.com/huggingface/transformers/issues/31884
+  warnings.warn(
+</code></pre>
 <h4 id="12-recording-queries-and-expected-responses-validation-set">1.2 Recording queries and expected responses (validation set)</h4>
 <pre><code class="language-python">comparer.record_queries(
     queries = [&quot;Black metal&quot;, 
@@ -659,12 +662,12 @@ print(untested_queries)
 </code></pre>
 <pre><code class="language-python">comparer.get_all_records()
 </code></pre>
-<pre><code>[{'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
-  'query': 'Black metal',
-  'expected_text': 'Black metal is an extreme subgenre of heavy metal music.'},
- {'record_id': 'eecd9c2a5b25ee6053891b894157fa30372ed694763385e1ada1dc9ad8e41625',
-  'query': 'Tribulation',
-  'expected_text': 'Tribulation are a Swedish heavy metal band from Arvika that formed in 2005.'}]
+<pre><code>[{'expected_text': 'Black metal is an extreme subgenre of heavy metal music.',
+  'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
+  'query': 'Black metal'},
+ {'expected_text': 'Tribulation are a Swedish heavy metal band from Arvika that formed in 2005.',
+  'record_id': 'eecd9c2a5b25ee6053891b894157fa30372ed694763385e1ada1dc9ad8e41625',
+  'query': 'Tribulation'}]
 </code></pre>
 <pre><code class="language-python">comparer.get_all_records_df()
 </code></pre>
@@ -686,23 +689,23 @@ print(untested_queries)
   <thead>
     <tr style="text-align: right;">
       <th></th>
+      <th>expected_text</th>
       <th>record_id</th>
       <th>query</th>
-      <th>expected_text</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
+      <td>Black metal is an extreme subgenre of heavy me...</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
       <td>Black metal</td>
-      <td>Black metal is an extreme subgenre of heavy me...</td>
     </tr>
     <tr>
       <th>1</th>
+      <td>Tribulation are a Swedish heavy metal band fro...</td>
       <td>eecd9c2a5b25ee6053891b894157fa30372ed694763385...</td>
       <td>Tribulation</td>
-      <td>Tribulation are a Swedish heavy metal band fro...</td>
     </tr>
   </tbody>
 </table>
@@ -721,18 +724,18 @@ unexpected_answer_query_1 = &quot;Black metals are beautiful and are often used 
 </code></pre>
 <pre><code class="language-python">comparer.get_all_runs()
 </code></pre>
-<pre><code>[{'timestamp': '2024-09-24 03:43:48',
-  'run_id': 'e8f5f87186ac81a38896e602c7d8a4e1b973aa00973b68cbfdc983e6c1762d6e',
-  'query': 'Black metal',
-  'provided_text': 'Black metal is an extreme subgenre of heavy metal music.'},
- {'timestamp': '2024-09-24 03:43:48',
-  'run_id': 'e0e4dfaff0b16227dbfde7a75eb9f060ccd2b1b5acc8b4b48aa9d305a3591353',
-  'query': 'Black metal',
-  'provided_text': 'Black metal is a subgenre of heavy metal music.'},
- {'timestamp': '2024-09-24 03:43:48',
-  'run_id': '4e806f8cf2bd2184e63d41c85322e129b14c8d5206472c7668077452386257af',
-  'query': 'Black metal',
-  'provided_text': 'Black metals are beautiful and are often used in jewelry design.'}]
+<pre><code>[{'query': 'Black metal',
+  'provided_text': 'Black metal is an extreme subgenre of heavy metal music.',
+  'run_id': 'faf5aab28ee8d460cbb69c6f434bee622aff8cdfb8796282bdc547fff2c1abf8',
+  'timestamp': '2024-09-26 01:36:13'},
+ {'query': 'Black metal',
+  'provided_text': 'Black metal is a subgenre of heavy metal music.',
+  'run_id': '9fbd80050d382972c012ffcb4641f48d6220afb2210a20a11da5c7a48664f033',
+  'timestamp': '2024-09-26 01:36:13'},
+ {'query': 'Black metal',
+  'provided_text': 'Black metals are beautiful and are often used in jewelry design.',
+  'run_id': 'e4fc3f56c95d4266b6543a306c4305e0d8b960a1e0196d05cfc8ee4ea0bd7129',
+  'timestamp': '2024-09-26 01:36:13'}]
 </code></pre>
 <pre><code class="language-python">df = comparer.get_all_runs_df()
 df
@@ -755,33 +758,33 @@ df
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>timestamp</th>
-      <th>run_id</th>
       <th>query</th>
       <th>provided_text</th>
+      <th>run_id</th>
+      <th>timestamp</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-09-24 03:43:48</td>
-      <td>e8f5f87186ac81a38896e602c7d8a4e1b973aa00973b68...</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
+      <td>faf5aab28ee8d460cbb69c6f434bee622aff8cdfb87962...</td>
+      <td>2024-09-26 01:36:13</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-09-24 03:43:48</td>
-      <td>e0e4dfaff0b16227dbfde7a75eb9f060ccd2b1b5acc8b4...</td>
       <td>Black metal</td>
       <td>Black metal is a subgenre of heavy metal music.</td>
+      <td>9fbd80050d382972c012ffcb4641f48d6220afb2210a20...</td>
+      <td>2024-09-26 01:36:13</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-09-24 03:43:48</td>
-      <td>4e806f8cf2bd2184e63d41c85322e129b14c8d5206472c...</td>
       <td>Black metal</td>
       <td>Black metals are beautiful and are often used ...</td>
+      <td>e4fc3f56c95d4266b6543a306c4305e0d8b960a1e0196d...</td>
+      <td>2024-09-26 01:36:13</td>
     </tr>
   </tbody>
 </table>
@@ -794,30 +797,30 @@ df
 </code></pre>
 <pre><code class="language-python">comparer.get_all_run_scores()
 </code></pre>
-<pre><code>[{'timestamp': '2024-09-24 03:43:57',
-  'run_id': 'e8f5f87186ac81a38896e602c7d8a4e1b973aa00973b68cbfdc983e6c1762d6e',
-  'query': 'Black metal',
+<pre><code>[{'query': 'Black metal',
   'provided_text': 'Black metal is an extreme subgenre of heavy metal music.',
+  'run_id': 'faf5aab28ee8d460cbb69c6f434bee622aff8cdfb8796282bdc547fff2c1abf8',
+  'timestamp': '2024-09-26 01:36:13',
   'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
   'word_count_diff': 0,
-  'semantic_similarity': 1.0000001192092896,
-  'comparison_id': '9376f9245bf3a237ef1eb4920cc2c86918fdba5e5934014058b14286fbd31f32'},
- {'timestamp': '2024-09-24 03:43:57',
-  'run_id': 'e0e4dfaff0b16227dbfde7a75eb9f060ccd2b1b5acc8b4b48aa9d305a3591353',
-  'query': 'Black metal',
+  'semantic_similarity': 0.9999999403953552,
+  'comparison_id': 'cdb16a8d16a95e85d879c29aaf9762c9e2776843f2a01d6ef9154daacd9b732d'},
+ {'query': 'Black metal',
   'provided_text': 'Black metal is a subgenre of heavy metal music.',
+  'run_id': '9fbd80050d382972c012ffcb4641f48d6220afb2210a20a11da5c7a48664f033',
+  'timestamp': '2024-09-26 01:36:13',
   'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
   'word_count_diff': 1,
   'semantic_similarity': 0.9859851002693176,
-  'comparison_id': '756abbce6c86dea26ce9f3d0cc11668b76df40120faf2fbee1dad5daa1e201ec'},
- {'timestamp': '2024-09-24 03:43:57',
-  'run_id': '4e806f8cf2bd2184e63d41c85322e129b14c8d5206472c7668077452386257af',
-  'query': 'Black metal',
+  'comparison_id': '16472e44ac7d2d74e18ea583490c2f6b8661cc8b48cc9b7480a51dc8c6796c41'},
+ {'query': 'Black metal',
   'provided_text': 'Black metals are beautiful and are often used in jewelry design.',
+  'run_id': 'e4fc3f56c95d4266b6543a306c4305e0d8b960a1e0196d05cfc8ee4ea0bd7129',
+  'timestamp': '2024-09-26 01:36:13',
   'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
   'word_count_diff': 1,
   'semantic_similarity': 0.4940534234046936,
-  'comparison_id': 'f6ab2967695a560f4ff208e03c2804b09f26b9356ab5da592186e503a900ab56'}]
+  'comparison_id': '966c1da5e641480e8ccd33a7d0f544d9ec6c4e2e799be11529d2cf7a222deb9a'}]
 </code></pre>
 <pre><code class="language-python">comparer.get_all_run_scores_df()
 </code></pre>
@@ -839,10 +842,10 @@ df
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>timestamp</th>
-      <th>run_id</th>
       <th>query</th>
       <th>provided_text</th>
+      <th>run_id</th>
+      <th>timestamp</th>
       <th>record_id</th>
       <th>word_count_diff</th>
       <th>semantic_similarity</th>
@@ -852,58 +855,60 @@ df
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-09-24 03:43:57</td>
-      <td>e8f5f87186ac81a38896e602c7d8a4e1b973aa00973b68...</td>
       <td>Black metal</td>
       <td>Black metal is an extreme subgenre of heavy me...</td>
+      <td>faf5aab28ee8d460cbb69c6f434bee622aff8cdfb87962...</td>
+      <td>2024-09-26 01:36:13</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
       <td>0</td>
       <td>1.000000</td>
-      <td>9376f9245bf3a237ef1eb4920cc2c86918fdba5e593401...</td>
+      <td>cdb16a8d16a95e85d879c29aaf9762c9e2776843f2a01d...</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-09-24 03:43:57</td>
-      <td>e0e4dfaff0b16227dbfde7a75eb9f060ccd2b1b5acc8b4...</td>
       <td>Black metal</td>
       <td>Black metal is a subgenre of heavy metal music.</td>
+      <td>9fbd80050d382972c012ffcb4641f48d6220afb2210a20...</td>
+      <td>2024-09-26 01:36:13</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
       <td>1</td>
       <td>0.985985</td>
-      <td>756abbce6c86dea26ce9f3d0cc11668b76df40120faf2f...</td>
+      <td>16472e44ac7d2d74e18ea583490c2f6b8661cc8b48cc9b...</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-09-24 03:43:57</td>
-      <td>4e806f8cf2bd2184e63d41c85322e129b14c8d5206472c...</td>
       <td>Black metal</td>
       <td>Black metals are beautiful and are often used ...</td>
+      <td>e4fc3f56c95d4266b6543a306c4305e0d8b960a1e0196d...</td>
+      <td>2024-09-26 01:36:13</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
       <td>1</td>
       <td>0.494053</td>
-      <td>f6ab2967695a560f4ff208e03c2804b09f26b9356ab5da...</td>
+      <td>966c1da5e641480e8ccd33a7d0f544d9ec6c4e2e799be1...</td>
     </tr>
   </tbody>
 </table>
 </div>
 
 <h3 id="3-calculating-aggregate-comparison-scores">3 Calculating aggregate comparison scores</h3>
-<pre><code class="language-python">comparer.calculate_aggr_scores()
+<pre><code class="language-python">comparer.calculate_aggr_scores(group_by = ['desc'])
 </code></pre>
 <pre><code>WARNING:ComparisonFrame:No data was found with applied filters!
 </code></pre>
 <pre><code class="language-python">comparer.get_all_aggr_scores()
 </code></pre>
-<pre><code>[{'timestamp': '2024-09-24 03:44:07',
-  'comparison_id': ['9376f9245bf3a237ef1eb4920cc2c86918fdba5e5934014058b14286fbd31f32',
-   '756abbce6c86dea26ce9f3d0cc11668b76df40120faf2fbee1dad5daa1e201ec',
-   'f6ab2967695a560f4ff208e03c2804b09f26b9356ab5da592186e503a900ab56'],
-  'query': 'Black metal',
+<pre><code>[{'timestamp': '2024-09-26 01:36:13',
+  'comparison_id': ['cdb16a8d16a95e85d879c29aaf9762c9e2776843f2a01d6ef9154daacd9b732d',
+   '16472e44ac7d2d74e18ea583490c2f6b8661cc8b48cc9b7480a51dc8c6796c41',
+   '966c1da5e641480e8ccd33a7d0f544d9ec6c4e2e799be11529d2cf7a222deb9a'],
+  'query': ['Black metal'],
+  'grouped_by': ['query'],
+  'group': {'query': 'Black metal'},
   'median_word_count_diff': 1.0,
   'median_semantic_similarity': 0.9859851002693176,
-  'record_status_id': '2723311824179b0f89b65a513368bfe05298a625b7c73b5a06ff33702689d56a'}]
+  'record_status_id': 'dc1126e128d42f74bb98bad9ce4101fe1a4ea5a46df57d430dea99fdd4b8c628'}]
 </code></pre>
-<pre><code class="language-python">comparer.get_all_aggr_scores_df()
+<pre><code class="language-python">comparer.get_all_aggr_scores_df(grouped_by = ['desc'])
 </code></pre>
 <div>
 <style scoped>
@@ -926,6 +931,8 @@ df
       <th>timestamp</th>
       <th>comparison_id</th>
       <th>query</th>
+      <th>grouped_by</th>
+      <th>group</th>
       <th>median_word_count_diff</th>
       <th>median_semantic_similarity</th>
       <th>record_status_id</th>
@@ -934,12 +941,14 @@ df
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-09-24 03:44:07</td>
-      <td>[9376f9245bf3a237ef1eb4920cc2c86918fdba5e59340...</td>
-      <td>Black metal</td>
+      <td>2024-09-26 01:36:13</td>
+      <td>[cdb16a8d16a95e85d879c29aaf9762c9e2776843f2a01...</td>
+      <td>[Black metal]</td>
+      <td>[desc]</td>
+      <td>{'desc': 'definitions'}</td>
       <td>1.0</td>
       <td>0.985985</td>
-      <td>2723311824179b0f89b65a513368bfe05298a625b7c73b...</td>
+      <td>c9d97729c5b03641fbf8fd35d257f2f1024a812f097ffb...</td>
     </tr>
   </tbody>
 </table>
@@ -951,9 +960,9 @@ df
 </code></pre>
 <pre><code class="language-python">comparer.get_test_statuses()
 </code></pre>
-<pre><code>[{'timestamp': '2024-09-24 03:44:13',
+<pre><code>[{'timestamp': '2024-09-26 01:36:13',
   'record_id': '0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8bd7b663c92f2f16e87',
-  'record_status_id': '2723311824179b0f89b65a513368bfe05298a625b7c73b5a06ff33702689d56a',
+  'record_status_id': 'dc1126e128d42f74bb98bad9ce4101fe1a4ea5a46df57d430dea99fdd4b8c628',
   'query': 'Black metal',
   'test': 'median_semantic_similarity &gt; 0.9',
   'valid': True}]
@@ -989,9 +998,9 @@ df
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-09-24 03:44:13</td>
+      <td>2024-09-26 01:36:13</td>
       <td>0cc157453395b440f36d1a1aee24aa76a03f5f9ab0a7a8...</td>
-      <td>2723311824179b0f89b65a513368bfe05298a625b7c73b...</td>
+      <td>dc1126e128d42f74bb98bad9ce4101fe1a4ea5a46df57d...</td>
       <td>Black metal</td>
       <td>median_semantic_similarity &gt; 0.9</td>
       <td>True</td>
@@ -1060,7 +1069,7 @@ df
     <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+      <script src="../assets/javascripts/bundle.d6f25eb3.min.js"></script>
       
     
   </body>
