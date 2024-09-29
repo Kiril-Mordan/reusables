@@ -14,10 +14,13 @@ Options:
 Commands:
   check-licenses            Check licenses of the module.
   check-vulnerabilities     Check vulnerabilities of the module.
+  extract-module-artifacts  Extracts artifacts from packaged module.
   extract-module-routes     Extracts routes for fastapi from packages...
+  extract-module-site       Extracts static mkdocs site from packaged...
   init-config               Initialize config file
   make-package              Package with package-auto-assembler.
   run-api-routes            Run fastapi with provided routes.
+  show-module-artifacts     Shows module artifacts.
   show-module-info          Shows module info.
   show-module-licenses      Shows module licenses.
   show-module-list          Shows module list.
@@ -245,6 +248,33 @@ Options:
 ```
 
 ```
+Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
+
+  Extracts artifacts from packaged module.
+
+Options:
+  --artifact TEXT     Name of the artifact to be extracted.
+  --output-dir TEXT   Directory where artifacts extracted from the package
+                      will be copied to.
+  --output-path TEXT  Filepath to which artifact extracted from the package
+                      will be copied to.
+  --help              Show this message and exit.
+```
+
+```
+Usage: paa extract-module-site [OPTIONS] PACKAGE_NAME
+
+  Extracts static mkdocs site from packaged module.
+
+Options:
+  --output-dir TEXT   Directory where routes extracted from the package will
+                      be copied to.
+  --output-path TEXT  Filepath to which routes extracted from the package will
+                      be copied to.
+  --help              Show this message and exit.
+```
+
+```
 Usage: paa show-module-info [OPTIONS] LABEL_NAME
 
   Shows module info.
@@ -284,5 +314,19 @@ Usage: paa show-module-licenses [OPTIONS] PACKAGE_NAME
 
 Options:
   --normalize-labels  If checked, package license labels are normalized.
+  --help              Show this message and exit.
+```
+
+```
+Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
+
+  Extracts artifacts from packaged module.
+
+Options:
+  --artifact TEXT     Name of the artifact to be extracted.
+  --output-dir TEXT   Directory where artifacts extracted from the package
+                      will be copied to.
+  --output-path TEXT  Filepath to which artifact extracted from the package
+                      will be copied to.
   --help              Show this message and exit.
 ```

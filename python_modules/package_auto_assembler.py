@@ -1779,25 +1779,20 @@ setup(
 """
 
         if docs_url and ('url' not in metadata.keys()):
-            setup_content += f"""
-    url = {docs_url},
+            setup_content += f"""    url = {docs_url},
 """
 
         if add_artifacts and artifacts_filepaths != {}:
-            setup_content += f"""
-    include_package_data = True,
+            setup_content += f"""    include_package_data = True,
 """
 
             package_data = {
                 f"{module_name}" : [art for art in artifacts_filepaths],
             }
-    #str([art for art in artifacts_filepaths])
-            setup_content += f"""
-    package_data = {package_data} ,
+            setup_content += f"""    package_data = {package_data} ,
 """
 
-        setup_content += f"""
-    )
+        setup_content += f"""    )
 """
 
         with open(os.path.join(setup_directory, 'setup.py'), 'w') as file:
@@ -2554,7 +2549,7 @@ class CliHandler:
 class ArtifactsHandler:
 
     # inputs
-    setup_directory = attr.ib()
+    setup_directory = attr.ib(default = None)
     module_name = attr.ib(default = None)
     artifacts_filepaths = attr.ib(default = None)
     artifacts_dir = attr.ib(default = None)
@@ -2603,8 +2598,7 @@ class ArtifactsHandler:
 
 
     def get_packaged_artifacts(self, 
-                              module_name : str = None,
-                              skip_default : bool = False):
+                              module_name : str = None):
 
         """
         Get names and paths to package artifacts
@@ -2684,7 +2678,9 @@ class ArtifactsHandler:
 
             updated_artifacts_filepaths[artifact_name] = artifacts_filepath
             
-
+        manifest_lines.append(f"include {module_name}/{'.paa.tracking/.paa.version'} \n")
+        updated_artifacts_filepaths['.paa.tracking/.paa.version'] = os.path.join(setup_directory,'.paa.tracking','.paa.version')
+        
         self.artifacts_filepaths = updated_artifacts_filepaths
         self.manifest_lines = manifest_lines
 
