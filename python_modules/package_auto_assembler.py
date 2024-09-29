@@ -448,9 +448,16 @@ class ImportMappingHandler:
 
         
         if base_mapping_filepath is None:
-            with pkg_resources.path('package_auto_assembler.artifacts', 
-            'package_mapping.json') as path:
-                base_mapping_filepath = path
+
+
+            with pkg_resources.path('package_auto_assembler','.') as path:
+                paa_path = path
+
+            if 'artifacts' in os.listdir(paa_path):
+
+                with pkg_resources.path('package_auto_assembler.artifacts', 
+                'package_mapping.json') as path:
+                    base_mapping_filepath = path
 
         if (mapping_filepath is not None) \
             and os.path.exists(mapping_filepath):
@@ -460,7 +467,8 @@ class ImportMappingHandler:
         else:
             mapping_file = {}
 
-        if os.path.exists(base_mapping_filepath):
+        if (base_mapping_filepath is not None) and \
+            os.path.exists(base_mapping_filepath):
 
             with open(base_mapping_filepath, 'r') as file:
                 base_mapping_file = json.load(file)
@@ -3087,12 +3095,20 @@ class DependenciesAnalyser:
             base_mapping_filepath = self.base_mapping_filepath
 
         if base_mapping_filepath is None:
-            with pkg_resources.path('package_auto_assembler.artifacts', 
-            'package_licenses.json') as path:
-                base_mapping_filepath = path
 
-            with open(base_mapping_filepath, 'r') as file:
-                base_package_licenses = json.load(file)
+            with pkg_resources.path('package_auto_assembler','.') as path:
+                paa_path = path
+
+            if 'artifacts' in os.listdir(paa_path):
+
+                with pkg_resources.path('package_auto_assembler.artifacts', 
+                'package_licenses.json') as path:
+                    base_mapping_filepath = path
+
+                with open(base_mapping_filepath, 'r') as file:
+                    base_package_licenses = json.load(file)
+            else:
+                base_package_licenses = {}
 
         if mapping_filepath is None:
             mapping_filepath = self.package_licenses_filepath
