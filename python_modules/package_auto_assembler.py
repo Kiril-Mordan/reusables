@@ -39,6 +39,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
+import importlib.resources as pkg_resources
 
 
 # Metadata for package creation
@@ -407,7 +408,8 @@ class VersionHandler:
 @attr.s
 class ImportMappingHandler:
 
-    mapping_filepath = attr.ib()
+    mapping_filepath = attr.ib(default = None)
+    base_mapping_filepath = attr.ib(default = None)
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Package Import Mapping Handler')
@@ -432,7 +434,8 @@ class ImportMappingHandler:
 
 
     def load_package_mappings(self,
-                              mapping_filepath : str = None):
+                              mapping_filepath : str = None,
+                              base_mapping_filepath : str = None):
         """
         Get file with mappings for packages which import names differ from install names.
         """
@@ -440,8 +443,33 @@ class ImportMappingHandler:
         if mapping_filepath is None:
             mapping_filepath = self.mapping_filepath
 
-        with open(mapping_filepath, 'r') as file:
-            return json.load(file)
+        if base_mapping_filepath is None:
+            base_mapping_filepath = self.base_mapping_filepath
+
+        
+        if base_mapping_filepath is None:
+            with pkg_resources.path('package_auto_assembler.artifacts', 
+            'package_mapping.json') as path:
+                base_mapping_filepath = path
+
+        if (mapping_filepath is not None) \
+            and os.path.exists(mapping_filepath):
+
+            with open(mapping_filepath, 'r') as file:
+                mapping_file = json.load(file)
+        else:
+            mapping_file = {}
+
+        if os.path.exists(base_mapping_filepath):
+
+            with open(base_mapping_filepath, 'r') as file:
+                base_mapping_file = json.load(file)
+        else:
+            base_mapping_file = {}
+
+        base_mapping_file.update(mapping_file)
+
+        return base_mapping_file
 
 
 @attr.s
@@ -2199,7 +2227,10 @@ class MkDocsHandler:
 
         print(f"Created new MkDocs dir: {project_name}")
 
-    def move_files_to_docs(self, file_paths: dict = None, project_name: str = None):
+    def move_files_to_docs(self, 
+                           file_paths: dict = None, 
+                           project_name: str = None,
+                           package_name: str = None):
         """
         Move files from given list of paths to the docs directory.
         """
@@ -2210,6 +2241,9 @@ class MkDocsHandler:
         if project_name is None:
             project_name = self.project_name
 
+        if package_name is None:
+            package_name = self.package_name
+
         docs_dir = os.path.join(project_name, "docs")
         if not os.path.exists(docs_dir):
             os.makedirs(docs_dir)
@@ -2217,7 +2251,9 @@ class MkDocsHandler:
         for file_path in file_paths:
             if os.path.exists(file_path):
                 filename = file_paths[file_path]
-                destination = os.path.join(docs_dir, filename)
+                cleaned_filename = self._clean_filename(
+                            filename, package_name)
+                destination = os.path.join(docs_dir, cleaned_filename)
 
                 # Ensure unique filenames
                 if os.path.exists(destination):
@@ -2246,8 +2282,6 @@ class MkDocsHandler:
         """
         if filename.startswith(f"{package_name}-"):
           return filename[len(package_name)+1:]
-        # if filename == f"{package_name}.md":
-        #   return "usage-examples.md"
 
         return filename
 
@@ -2295,7 +2329,7 @@ class MkDocsHandler:
 """
 
 
-        if package_name:
+        if pypi_badge != '':
             content += f"""
 ## Installation
 
@@ -2334,6 +2368,7 @@ pip install {package_name.replace("_", "-")}
             return
 
         for filename in os.listdir(directory):
+
             if filename.endswith('.png'):
                 cleaned_name = self._clean_filename(filename, package_name)
                 md_filename = f"{os.path.splitext(cleaned_name)[0]}.md"
@@ -2522,6 +2557,7 @@ class ArtifactsHandler:
     setup_directory = attr.ib()
     module_name = attr.ib(default = None)
     artifacts_filepaths = attr.ib(default = None)
+    artifacts_dir = attr.ib(default = None)
     manifest_lines = attr.ib(default = [])
 
     # processed
@@ -2545,6 +2581,52 @@ class ArtifactsHandler:
 
             self.logger = logger
 
+    def load_additional_artifacts(self, artifacts_dir : str = None):
+
+        """
+        Load artifacts filepath from provided folder.
+        """
+
+        if artifacts_dir is None:
+            artifacts_dir = self.artifacts_dir
+
+        if artifacts_dir:
+
+            if os.path.exists(artifacts_dir):
+                artifacts_filepaths = {
+                    path : os.path.join(artifacts_dir, path) \
+                        for path in os.listdir(artifacts_dir)
+                }
+
+        return artifacts_filepaths
+
+
+
+    def get_packaged_artifacts(self, 
+                              module_name : str = None,
+                              skip_default : bool = False):
+
+        """
+        Get names and paths to package artifacts
+        """
+
+        if module_name is None:
+            module_name = self.module_name
+
+        with pkg_resources.path(module_name, 'artifacts') as path:
+            package_path = path
+
+        if os.path.exists(package_path):
+            package_files = os.listdir(package_path)
+
+            package_artifacts = {file_name : os.path.join(package_path, file_name) \
+                for file_name in package_files}
+        else:
+            package_artifacts = {}
+        
+        return package_artifacts
+
+
     def make_manifest(self,
                     module_name : str = None,
                     artifacts_filepaths: dict = None,
@@ -2562,6 +2644,24 @@ class ArtifactsHandler:
 
         if setup_directory is None:
             setup_directory = self.setup_directory
+
+        # create folder for paa files
+        os.makedirs(os.path.join(setup_directory,'.paa.tracking'))
+
+        try:
+            # Get the package version
+            version = importlib.metadata.version('package-auto-assembler')
+            
+            # Write the version to a text file
+            with open(os.path.join(setup_directory,'.paa.tracking','.paa.version'), 
+            'w') as file:
+                file.write(f"{version}")
+        except Exception as e:
+            self.logger.warning(e)
+
+        # create folder for optional artifacts
+        if artifacts_filepaths != {}:
+            os.makedirs(os.path.join(setup_directory,'artifacts'))
 
         manifest_lines = []
         updated_artifacts_filepaths = {}
@@ -2855,6 +2955,7 @@ class FastApiHandler:
 class DependenciesAnalyser:
 
     package_name = attr.ib(default=True)
+    base_mapping_filepath = attr.ib(default=None)
     package_licenses_filepath = attr.ib(default=None)
     allowed_licenses = attr.ib(default=[])
 
@@ -2980,10 +3081,22 @@ class DependenciesAnalyser:
         return items
 
     def load_package_mappings(self,
-                              mapping_filepath : str = None):
+                              mapping_filepath : str = None,
+                              base_mapping_filepath : str = None):
         """
         Get file with mappings of package license labels.
         """
+
+        if base_mapping_filepath is None:
+            base_mapping_filepath = self.base_mapping_filepath
+
+        if base_mapping_filepath is None:
+            with pkg_resources.path('package_auto_assembler.artifacts', 
+            'package_licenses.json') as path:
+                base_mapping_filepath = path
+
+            with open(base_mapping_filepath, 'r') as file:
+                base_package_licenses = json.load(file)
 
         if mapping_filepath is None:
             mapping_filepath = self.package_licenses_filepath
@@ -2995,9 +3108,11 @@ class DependenciesAnalyser:
             with open(mapping_filepath, 'r') as file:
                 package_licenses = json.load(file)
 
-        self.package_licenses = package_licenses
+        base_package_licenses.update(package_licenses)
+
+        self.package_licenses = base_package_licenses
             
-        return package_licenses
+        return base_package_licenses
 
     def extract_dependencies_tree(self, 
                                     package_name : str = None, 
@@ -3328,7 +3443,6 @@ class PackageAutoAssembler:
     mapping_filepath = attr.ib(default=None)
     licenses_filepath = attr.ib(default=None)
     allowed_licenses = attr.ib(default=None)
-    dependencies_dir = attr.ib(default=None)
     example_notebook_path = attr.ib(default=None)
     versions_filepath = attr.ib(default='./lsts_package_versions.yml')
     log_filepath = attr.ib(default='./version_logs.csv')
@@ -3337,6 +3451,8 @@ class PackageAutoAssembler:
     config_filepath = attr.ib(default=None)
     cli_docs_filepath = attr.ib(default=None)
 
+    artifacts_dir = attr.ib(default=None)
+    dependencies_dir = attr.ib(default=None)
     docs_path = attr.ib(default=None)
 
     # optional parameters
@@ -3534,6 +3650,7 @@ class PackageAutoAssembler:
         self.artifacts_h = self.artifacts_h_class(
             module_name = self.module_name,
             setup_directory = self.setup_directory,
+            artifacts_dir = self.artifacts_dir,
             logger = self.logger)
 
     def _initialize_dep_analyser_handler(self):
@@ -3562,6 +3679,74 @@ class PackageAutoAssembler:
             version = version,
             max_search_depth = self.max_git_search_depth,
             logger = self.logger)
+
+    def _add_requirements(self,
+                            module_filepath : str = None,
+                            custom_modules : list = None,
+                            import_mappings : str = None,
+                            check_vulnerabilities : bool = None,
+                            check_dependencies_licenses : bool = None,
+                            add_header : bool = None):
+
+        """
+        Extract and add requirements.
+        """
+
+        if self.requirements_h is None:
+            self._initialize_requirements_handler()
+
+        if module_filepath is None:
+            module_filepath = self.module_filepath
+
+        if check_vulnerabilities is None:
+            check_vulnerabilities = self.check_vulnerabilities
+
+        if check_dependencies_licenses is None:
+            check_dependencies_licenses = self.check_dependencies_licenses
+
+        if import_mappings is None:
+            import_mappings = self.import_mapping_h.load_package_mappings()
+
+        if add_header is None:
+            add_header = self.add_requirements_header
+
+        custom_modules_list = self.requirements_h.list_custom_modules()
+
+        if custom_modules:
+            custom_modules_list += custom_modules
+
+        self.logger.debug(f"Adding requirements from {module_filepath}")
+
+        # extracting package requirements
+        self.requirements_h.extract_requirements(
+            package_mappings=import_mappings,
+            module_filepath=module_filepath,
+            custom_modules=custom_modules_list,
+            add_header = add_header)
+
+        self.requirements_list = self.requirements_h.requirements_list
+        self.optional_requirements_list = self.requirements_h.optional_requirements_list
+
+        if check_vulnerabilities:
+            self.requirements_h.check_vulnerabilities()
+
+        if check_dependencies_licenses:
+            if self.dependencies_analyzer_h is None:
+                self._initialize_dep_analyser_handler()
+
+                edt = self.dependencies_analyzer_h.extract_dependencies_tree(
+                    requirements = self.requirements_list + self.optional_requirements_list
+                )
+
+                edtl = self.dependencies_analyzer_h.add_license_labels_to_dep_tree(
+                    dependencies_tree = edt
+                )
+
+                self.dependencies_analyzer_h.find_unexpected_licenses_in_deps_tree(
+                    tree_dep_license = edtl
+                )
+
+    ###
 
     def add_metadata_from_module(self, module_filepath : str = None):
 
@@ -3759,78 +3944,7 @@ class PackageAutoAssembler:
             # switch filepath for the combined one
             self.module_filepath = save_filepath
 
-    def _add_requirements(self,
-                            module_filepath : str = None,
-                            custom_modules : list = None,
-                            import_mappings : str = None,
-                            check_vulnerabilities : bool = None,
-                            check_dependencies_licenses : bool = None,
-                            add_header : bool = None):
-
-        """
-        Extract and add requirements.
-        """
-
-        if self.requirements_h is None:
-            self._initialize_requirements_handler()
-
-        if module_filepath is None:
-            module_filepath = self.module_filepath
-
-        if check_vulnerabilities is None:
-            check_vulnerabilities = self.check_vulnerabilities
-
-        if check_dependencies_licenses is None:
-            check_dependencies_licenses = self.check_dependencies_licenses
-
-        if import_mappings is None:
-
-            if self.mapping_filepath is None:
-                import_mappings = {}
-            else:
-                import_mappings = self.import_mapping_h.load_package_mappings()
-
-        if add_header is None:
-            add_header = self.add_requirements_header
-
-        custom_modules_list = self.requirements_h.list_custom_modules()
-
-        if custom_modules:
-            custom_modules_list += custom_modules
-
-        self.logger.debug(f"Adding requirements from {module_filepath}")
-
-        # extracting package requirements
-        self.requirements_h.extract_requirements(
-            package_mappings=import_mappings,
-            module_filepath=module_filepath,
-            custom_modules=custom_modules_list,
-            add_header = add_header)
-
-        self.requirements_list = self.requirements_h.requirements_list
-        self.optional_requirements_list = self.requirements_h.optional_requirements_list
-
-        if check_vulnerabilities:
-            self.requirements_h.check_vulnerabilities()
-
-        if check_dependencies_licenses:
-            if self.dependencies_analyzer_h is None:
-                self._initialize_dep_analyser_handler()
-
-                edt = self.dependencies_analyzer_h.extract_dependencies_tree(
-                    requirements = self.requirements_list + self.optional_requirements_list
-                )
-
-                edtl = self.dependencies_analyzer_h.add_license_labels_to_dep_tree(
-                    dependencies_tree = edt
-                )
-
-                self.dependencies_analyzer_h.find_unexpected_licenses_in_deps_tree(
-                    tree_dep_license = edtl
-                )
-
-
-
+    
     def add_requirements_from_module(self,
                                      module_filepath : str = None,
                                      custom_modules : list = None,
@@ -4039,38 +4153,48 @@ class PackageAutoAssembler:
         if artifacts_filepaths is None:
             artifacts_filepaths = {}
 
+        additional_artifacts_filepaths = self.artifacts_h.load_additional_artifacts()
+
+        artifacts_filepaths.update(additional_artifacts_filepaths)
+
+        artifacts_filepaths_m = {name : import_path \
+            for name, import_path in artifacts_filepaths.items() if name == 'mkdocs'}
+
+        artifacts_filepaths_m.update({os.path.join('artifacts', name) : import_path \
+            for name, import_path in artifacts_filepaths.items() if name != 'mkdocs'})
         
+        artifacts_filepaths = artifacts_filepaths_m
+
         if self.add_artifacts:
 
             if (self.log_filepath is not None \
                 and os.path.exists(self.log_filepath)):
-                artifacts_filepaths['version_logs.csv'] = self.log_filepath
+                artifacts_filepaths['.paa.tracking/version_logs.csv'] = self.log_filepath
 
             if (self.release_notes_filepath is not None \
                 and os.path.exists(self.release_notes_filepath)):
-                artifacts_filepaths['release_notes.md'] = self.release_notes_filepath
+                artifacts_filepaths['.paa.tracking/release_notes.md'] = self.release_notes_filepath
 
             if (self.versions_filepath is not None \
                 and os.path.exists(self.versions_filepath)):
-                artifacts_filepaths['lsts_package_versions.yml'] = self.versions_filepath
+                artifacts_filepaths['.paa.tracking/lsts_package_versions.yml'] = self.versions_filepath
 
             if (self.example_notebook_path is not None \
                 and os.path.exists(self.example_notebook_path)):
-                artifacts_filepaths['notebook.ipynb'] = self.example_notebook_path
+                artifacts_filepaths['.paa.tracking/notebook.ipynb'] = self.example_notebook_path
 
             if (self.mapping_filepath is not None \
                 and os.path.exists(self.mapping_filepath)):
-                artifacts_filepaths['package_mapping.json'] = self.mapping_filepath
+                artifacts_filepaths['.paa.tracking/package_mapping.json'] = self.mapping_filepath
 
             if (self.licenses_filepath is not None \
                 and os.path.exists(self.licenses_filepath)):
-                artifacts_filepaths['package_licenses.json'] = self.licenses_filepath
+                artifacts_filepaths['.paa.tracking/package_licenses.json'] = self.licenses_filepath
 
             if (self.config_filepath is not None \
                 and os.path.exists(self.config_filepath)):
-                artifacts_filepaths['.paa.config'] = self.config_filepath
+                artifacts_filepaths['.paa.tracking/.paa.config'] = self.config_filepath
 
-            
         self.artifacts_h.make_manifest(
             artifacts_filepaths = artifacts_filepaths
         )

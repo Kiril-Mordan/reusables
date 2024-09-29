@@ -30,13 +30,14 @@ def cli(ctx):
 
 test_install_config = {
     "module_dir" : "python_modules",
-    "cli_dir" : "cli",
-    "cli_docs_dir" : "cli_docs",
-    "api_routes_dir" : "api_routes",
-    "docs_dir" : "docs",
-    "release_notes_dir" : "release_notes",
     "example_notebooks_path" : "example_notebooks",
-    "mapping_filepath" : None, #"package_mapping.json",
+    "artifacts_dir" : None,
+    "cli_dir" : None,
+    "cli_docs_dir" : None,
+    "api_routes_dir" : None,
+    "docs_dir" : None,
+    "release_notes_dir" : None,
+    "mapping_filepath" : None,
     "licenses_filepath" : None,
     "include_local_dependecies" : True,
     "dependencies_dir" : None,
@@ -126,12 +127,10 @@ def test_install(ctx,
         "config_filepath" : config,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
-        "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
-        "fastapi_routes_filepath" : os.path.join(test_install_config['api_routes_dir'], f"{module_name}.py"),
-        "mapping_filepath" : test_install_config["mapping_filepath"],
-        "licenses_filepath" : test_install_config["licenses_filepath"],
+        "mapping_filepath" : test_install_config.get("mapping_filepath"),
+        "licenses_filepath" : test_install_config.get("licenses_filepath"),
         "allowed_licenses" : test_install_config["allowed_licenses"],
-        "dependencies_dir" : test_install_config["dependencies_dir"],
+        "dependencies_dir" : test_install_config.get("dependencies_dir"),
         "setup_directory" : f"./{module_name}",
         "classifiers" : test_install_config["classifiers"],
         "default_version" : test_install_config["default_version"],
@@ -145,11 +144,22 @@ def test_install(ctx,
 
     }
 
-    if test_install_config["release_notes_dir"]:
+    if test_install_config.get("cli_dir"):
+        paa_params["cli_module_filepath"] = os.path.join(
+            test_install_config['cli_dir'], f"{module_name}.py")
+
+    if test_install_config.get("api_routes_dir"):
+        paa_params["fastapi_routes_filepath"] = os.path.join(
+            test_install_config['api_routes_dir'], f"{module_name}.py")
+
+    if test_install_config.get("artifacts_dir"):
+        paa_params["artifacts_dir"] = os.path.join(
+            test_install_config["artifacts_dir"], module_name)
+
+    if test_install_config.get("release_notes_dir"):
         paa_params["release_notes_filepath"] = os.path.join(test_install_config["release_notes_dir"],
                                                             f"{module_name}.md")
-
-    if test_install_config["cli_docs_dir"]:
+    if test_install_config.get("cli_docs_dir"):
         paa_params["cli_docs_filepath"] = os.path.join(test_install_config["cli_docs_dir"],
                                                             f"{module_name}.md")
 
@@ -271,12 +281,10 @@ def make_package(ctx,
         "config_filepath" : config,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
-        "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
-        "fastapi_routes_filepath" : os.path.join(test_install_config['api_routes_dir'], f"{module_name}.py"),
-        "mapping_filepath" : test_install_config["mapping_filepath"],
-        "licenses_filepath" : test_install_config["licenses_filepath"],
+        "mapping_filepath" : test_install_config.get("mapping_filepath"),
+        "licenses_filepath" : test_install_config.get("licenses_filepath"),
         "allowed_licenses" : test_install_config["allowed_licenses"],
-        "dependencies_dir" : test_install_config["dependencies_dir"],
+        "dependencies_dir" : test_install_config.get("dependencies_dir"),
         "setup_directory" : f"./{module_name}",
         "classifiers" : test_install_config["classifiers"],
         "kernel_name" : test_install_config["kernel_name"],
@@ -297,10 +305,22 @@ def make_package(ctx,
         "check_dependencies_licenses" : test_install_config.get("check_dependencies_licenses", True)
     }
 
-    if test_install_config["release_notes_dir"]:
+    if test_install_config.get("cli_dir"):
+        paa_params["cli_module_filepath"] = os.path.join(
+            test_install_config['cli_dir'], f"{module_name}.py")
+
+    if test_install_config.get("api_routes_dir"):
+        paa_params["fastapi_routes_filepath"] = os.path.join(
+            test_install_config['api_routes_dir'], f"{module_name}.py")
+
+    if test_install_config.get("artifacts_dir"):
+        paa_params["artifacts_dir"] = os.path.join(
+            test_install_config["artifacts_dir"], module_name)
+
+    if test_install_config.get("release_notes_dir"):
         paa_params["release_notes_filepath"] = os.path.join(test_install_config["release_notes_dir"],
                                                             f"{module_name}.md")
-    if test_install_config["cli_docs_dir"]:
+    if test_install_config.get("cli_docs_dir"):
         paa_params["cli_docs_filepath"] = os.path.join(test_install_config["cli_docs_dir"],
                                                             f"{module_name}.md")
 
