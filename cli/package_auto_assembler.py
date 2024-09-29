@@ -14,7 +14,8 @@ from package_auto_assembler.package_auto_assembler import (
     VersionHandler,
     RequirementsHandler,
     DependenciesAnalyser,
-    FastApiHandler)
+    FastApiHandler,
+    ArtifactsHandler)
 
 
 __cli_metadata__ = {
@@ -30,13 +31,14 @@ def cli(ctx):
 
 test_install_config = {
     "module_dir" : "python_modules",
-    "cli_dir" : "cli",
-    "cli_docs_dir" : "cli_docs",
-    "api_routes_dir" : "api_routes",
-    "docs_dir" : "docs",
-    "release_notes_dir" : "release_notes",
     "example_notebooks_path" : "example_notebooks",
-    "mapping_filepath" : None, #"package_mapping.json",
+    "artifacts_dir" : None,
+    "cli_dir" : None,
+    "cli_docs_dir" : None,
+    "api_routes_dir" : None,
+    "docs_dir" : None,
+    "release_notes_dir" : None,
+    "mapping_filepath" : None,
     "licenses_filepath" : None,
     "include_local_dependecies" : True,
     "dependencies_dir" : None,
@@ -126,12 +128,10 @@ def test_install(ctx,
         "config_filepath" : config,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
-        "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
-        "fastapi_routes_filepath" : os.path.join(test_install_config['api_routes_dir'], f"{module_name}.py"),
-        "mapping_filepath" : test_install_config["mapping_filepath"],
-        "licenses_filepath" : test_install_config["licenses_filepath"],
+        "mapping_filepath" : test_install_config.get("mapping_filepath"),
+        "licenses_filepath" : test_install_config.get("licenses_filepath"),
         "allowed_licenses" : test_install_config["allowed_licenses"],
-        "dependencies_dir" : test_install_config["dependencies_dir"],
+        "dependencies_dir" : test_install_config.get("dependencies_dir"),
         "setup_directory" : f"./{module_name}",
         "classifiers" : test_install_config["classifiers"],
         "default_version" : test_install_config["default_version"],
@@ -145,11 +145,22 @@ def test_install(ctx,
 
     }
 
-    if test_install_config["release_notes_dir"]:
+    if test_install_config.get("cli_dir"):
+        paa_params["cli_module_filepath"] = os.path.join(
+            test_install_config['cli_dir'], f"{module_name}.py")
+
+    if test_install_config.get("api_routes_dir"):
+        paa_params["fastapi_routes_filepath"] = os.path.join(
+            test_install_config['api_routes_dir'], f"{module_name}.py")
+
+    if test_install_config.get("artifacts_dir"):
+        paa_params["artifacts_dir"] = os.path.join(
+            test_install_config["artifacts_dir"], module_name)
+
+    if test_install_config.get("release_notes_dir"):
         paa_params["release_notes_filepath"] = os.path.join(test_install_config["release_notes_dir"],
                                                             f"{module_name}.md")
-
-    if test_install_config["cli_docs_dir"]:
+    if test_install_config.get("cli_docs_dir"):
         paa_params["cli_docs_filepath"] = os.path.join(test_install_config["cli_docs_dir"],
                                                             f"{module_name}.md")
 
@@ -271,12 +282,10 @@ def make_package(ctx,
         "config_filepath" : config,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
-        "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
-        "fastapi_routes_filepath" : os.path.join(test_install_config['api_routes_dir'], f"{module_name}.py"),
-        "mapping_filepath" : test_install_config["mapping_filepath"],
-        "licenses_filepath" : test_install_config["licenses_filepath"],
+        "mapping_filepath" : test_install_config.get("mapping_filepath"),
+        "licenses_filepath" : test_install_config.get("licenses_filepath"),
         "allowed_licenses" : test_install_config["allowed_licenses"],
-        "dependencies_dir" : test_install_config["dependencies_dir"],
+        "dependencies_dir" : test_install_config.get("dependencies_dir"),
         "setup_directory" : f"./{module_name}",
         "classifiers" : test_install_config["classifiers"],
         "kernel_name" : test_install_config["kernel_name"],
@@ -297,10 +306,22 @@ def make_package(ctx,
         "check_dependencies_licenses" : test_install_config.get("check_dependencies_licenses", True)
     }
 
-    if test_install_config["release_notes_dir"]:
+    if test_install_config.get("cli_dir"):
+        paa_params["cli_module_filepath"] = os.path.join(
+            test_install_config['cli_dir'], f"{module_name}.py")
+
+    if test_install_config.get("api_routes_dir"):
+        paa_params["fastapi_routes_filepath"] = os.path.join(
+            test_install_config['api_routes_dir'], f"{module_name}.py")
+
+    if test_install_config.get("artifacts_dir"):
+        paa_params["artifacts_dir"] = os.path.join(
+            test_install_config["artifacts_dir"], module_name)
+
+    if test_install_config.get("release_notes_dir"):
         paa_params["release_notes_filepath"] = os.path.join(test_install_config["release_notes_dir"],
                                                             f"{module_name}.md")
-    if test_install_config["cli_docs_dir"]:
+    if test_install_config.get("cli_docs_dir"):
         paa_params["cli_docs_filepath"] = os.path.join(test_install_config["cli_docs_dir"],
                                                             f"{module_name}.md")
 
@@ -686,6 +707,26 @@ def show_module_list(ctx,
 
 @click.command()
 @click.argument('label_name')
+@click.pass_context
+def show_module_artifacts(ctx,
+        label_name):
+    """Shows module artifacts."""
+
+    ah = ArtifactsHandler(
+        module_name = label_name.replace('-','_')
+    )
+
+    package_artifacts = ah.get_packaged_artifacts()
+
+    if package_artifacts:
+        # Print each package and its version
+        for artifact, path in package_artifacts.items():
+            click.echo(f"{artifact}")
+    else:
+        click.echo(f"No package artifacts found for {label_name}")
+
+@click.command()
+@click.argument('label_name')
 # @click.option('--is-cli', 
 #               'get_paa_cli_status', 
 #               is_flag=True, 
@@ -1025,12 +1066,101 @@ def extract_module_routes(ctx,
     fah = FastApiHandler(loggerLvl = logging.INFO)
 
     fah.extract_routes_from_package(
-        package_name = package_name, 
+        package_name = package_name.replace("-", "_"), 
         output_directory = output_dir, 
         output_filepath = output_path
     )
 
+@click.command()
+@click.argument('package_name')
+@click.option('--artifact', 
+              type=str, required=False, 
+              help='Name of the artifact to be extracted.')
+@click.option('--output-dir', 
+              'output_dir', 
+              type=str, required=False, 
+              help='Directory where artifacts extracted from the package will be copied to.')
+@click.option('--output-path', 
+              'output_path', 
+              type=str, required=False, 
+              help='Filepath to which artifact extracted from the package will be copied to.')
+@click.pass_context
+def extract_module_artifacts(ctx,
+        package_name,
+        artifact,
+        output_dir,
+        output_path):
+    """Extracts artifacts from packaged module."""
 
+    ah = ArtifactsHandler(
+        module_name = package_name.replace('-','_')
+    )
+
+    package_artifacts = ah.get_packaged_artifacts()
+
+
+    if artifact:
+
+        if output_dir is None:
+            output_dir = '.'
+
+        if output_path is None:
+            output_path = os.path.join(output_dir, artifact)
+
+        if artifact in package_artifacts.keys():
+            shutil.copy(package_artifacts[artifact], output_path)
+        else:
+            click.echo(f"Artifact {artifact} was not found in {package_name}!")
+    else:
+
+        destination = 'artifacts'
+
+        if output_dir:
+            destination = output_dir
+        if output_path:
+            destination = output_path
+
+        with pkg_resources.path(f"{package_name.replace('-','_')}", 
+            'artifacts') as path:
+                artifacts_filepath = path
+
+        if os.path.exists(artifacts_filepath):
+            shutil.copytree(artifacts_filepath, destination)
+        else:
+            click.echo(f"Artifacts were not found in {package_name}!")
+
+@click.command()
+@click.argument('package_name')
+@click.option('--output-dir', 
+              'output_dir', 
+              type=str, required=False, 
+              help='Directory where routes extracted from the package will be copied to.')
+@click.option('--output-path', 
+              'output_path', 
+              type=str, required=False, 
+              help='Filepath to which routes extracted from the package will be copied to.')
+@click.pass_context
+def extract_module_site(ctx,
+        package_name,
+        output_dir,
+        output_path):
+    """Extracts static mkdocs site from packaged module."""
+
+    destination = 'mkdocs'
+
+    if output_dir:
+        destination = output_dir
+    if output_path:
+        destination = output_path
+
+    with pkg_resources.path(f"{package_name.replace('-','_')}", 
+            'mkdocs') as path:
+                mkdocs_filepath = path
+
+    if os.path.exists(mkdocs_filepath):
+        shutil.copytree(mkdocs_filepath, destination)
+    else:
+        click.echo(f"Mkdocs static page was not found in {package_name}!")
 
 cli.add_command(init_config, "init-config")
 cli.add_command(test_install, "test-install")
@@ -1039,11 +1169,14 @@ cli.add_command(check_vulnerabilities, "check-vulnerabilities")
 cli.add_command(check_licenses, "check-licenses")
 cli.add_command(update_release_notes, "update-release-notes")
 cli.add_command(run_api_routes, "run-api-routes")
-cli.add_command(extract_module_routes, "extract-module-routes")
 cli.add_command(show_module_list, "show-module-list")
 cli.add_command(show_module_info, "show-module-info")
 cli.add_command(show_module_requirements, "show-module-requirements")
 cli.add_command(show_module_licenses, "show-module-licenses")
+cli.add_command(show_module_artifacts, "show-module-artifacts")
+cli.add_command(extract_module_routes, "extract-module-routes")
+cli.add_command(extract_module_artifacts, "extract-module-artifacts")
+cli.add_command(extract_module_site, "extract-module-site")
 
 
 if __name__ == "__main__":
