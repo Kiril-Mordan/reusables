@@ -73,8 +73,8 @@ jobs:
 
           echo "Assembling for:"
           echo ${{ steps.changed-modules.outputs.files }}
-          echo "Test-installing paa ..."
-          paa test-install package-auto-assembler
+          #echo "Test-installing paa ..."
+          #paa test-install package-auto-assembler
           echo "Assembling..."
           ./tools/make_package.sh ${{ steps.changed-modules.outputs.files }}
           ls -la
