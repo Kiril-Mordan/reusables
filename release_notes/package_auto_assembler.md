@@ -1,5 +1,19 @@
 # Release notes
 
+### 0.5.3
+
+    - additional cli tools to show and extract packaged artifacts
+
+    - additional cli tool to extract mkdocs site
+
+    - adding .paa tracking files to each package
+
+    - adding optional package artifacts from a select destination in packaging repo
+
+    - removing pypi installation instruction if pypi version is not available
+
+    - adding all md files that start with package name to mkdocs site
+
 ### 0.5.2
 
     - integration of mkdocs into package building pipeline
