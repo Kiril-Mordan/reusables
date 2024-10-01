@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.35">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.39">
     
     
       
@@ -22,7 +22,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.35f28582.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.8c3ca2c6.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -498,6 +498,7 @@ handler = MockerDB(
     embedder_params = {'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
                         'processing_type' : 'batch',
                         'tbatch_size' : 500},
+    similarity_search_type = 'linear_torch',
     use_embedder = True,
     embedder = SentenceTransformerEmbedder,
     persist = True
@@ -509,17 +510,29 @@ handler.establish_connection(
     embs_file_path = &quot;./mock_embs_persist&quot;,
 )
 </code></pre>
-<pre><code class="language-python"># Insert Data
+<pre><code class="language-python">sentences = [
+    &quot;The cat slept.&quot;,
+    &quot;It rained today.&quot;,
+    &quot;She smiled gently.&quot;,
+    &quot;Books hold knowledge.&quot;,
+    &quot;The sun set behind the mountains, casting a golden glow over the valley.&quot;,
+    &quot;He quickly realized that time was slipping away, and he needed to act fast.&quot;,
+    &quot;The concert was an unforgettable experience, filled with laughter and joy.&quot;,
+    &quot;Despite the challenges, they managed to build a beautiful home together.&quot;,
+    &quot;As the wind howled through the ancient trees, scattering leaves and whispering secrets of the forest, she stood there, gazing up at the endless expanse of stars, feeling both infinitely small and profoundly connected to the universe.&quot;,
+    &quot;While the project seemed daunting at first, requiring countless hours of research, planning, and execution, the team worked tirelessly, motivated by their shared goal of creating something truly remarkable and innovative in their field.&quot;,
+    &quot;In the bustling city streets, amidst the constant hum of traffic and chatter, he found himself contemplating life's mysteries, pondering the choices that had brought him to this very moment and wondering where the path ahead would lead.&quot;,
+    &quot;The conference was a gathering of minds from around the globe, each participant bringing their unique perspectives and insights to the table, fostering a vibrant exchange of ideas that would shape the future of their respective fields for years to come.&quot;
+]
+
+# Insert Data
 values_list = [
-    {&quot;text&quot;: &quot;Sample text 1&quot;,
-     &quot;text2&quot;: &quot;Sample text 1&quot;},
-    {&quot;text&quot;: &quot;Sample text 2&quot;,
-     &quot;text2&quot;: &quot;Sample text 2&quot;}
+    {'text' : t, 'n_words' : len(t.split())} for t in sentences
 ]
 handler.insert_values(values_list, &quot;text&quot;)
 print(f&quot;Items in the database {len(handler.data)}&quot;)
 </code></pre>
-<pre><code>Items in the database 2
+<pre><code>Items in the database 12
 </code></pre>
 <h3 id="2-searching-and-retrieving-values-from-the-database">2. Searching and retrieving values from the database</h3>
 <p>There are multiple options for search which could be used together or separately:</p>
@@ -535,23 +548,22 @@ print(f&quot;Items in the database {len(handler.data)}&quot;)
 </li>
 </ul>
 <pre><code class="language-python">results = handler.search_database(
-    query = &quot;text&quot;,
+    query = &quot;cat&quot;,
     filter_criteria = {
-        &quot;text&quot; : &quot;Sample text 1&quot;,
+        &quot;n_words&quot; : 3,
     }
 )
 print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
 </code></pre>
-<pre><code>[{'text': 'Sample text 1...', 'text2': 'Sample text 1...'}]
+<pre><code>[{'text': 'The cat slept....', 'n_words': '3...'}, {'text': 'She smiled gently....', 'n_words': '3...'}, {'text': 'It rained today....', 'n_words': '3...'}, {'text': 'Books hold knowledge....', 'n_words': '3...'}]
 </code></pre>
 <ul>
 <li>get all keys with keywords search</li>
 </ul>
 <pre><code class="language-python">results = handler.search_database(
-    query = &quot;text&quot;,
     # when keyword key is provided filter is used to pass keywords
     filter_criteria = {
-        &quot;text&quot; : [&quot;1&quot;],
+        &quot;text&quot; : [&quot;sun&quot;],
     },
     keyword_check_keys = ['text'],
     # percentage of filter keyword allowed to be different
@@ -560,101 +572,101 @@ print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result 
 )
 print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
 </code></pre>
-<pre><code>[{'text': 'Sample text 1...'}]
+<pre><code>[{'text': 'The sun set behind the mountai...'}]
 </code></pre>
 <ul>
-<li>get all key - text2</li>
+<li>get all key - n_words</li>
 </ul>
 <pre><code class="language-python">results = handler.search_database(
-    query = &quot;text&quot;,
+    query = &quot;cat&quot;,
     filter_criteria = {
-        &quot;text&quot; : &quot;Sample text 1&quot;,
+        &quot;n_words&quot; : 3,
     },
-    return_keys_list=[&quot;-text2&quot;])
+    return_keys_list=[&quot;-n_words&quot;])
 print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
 </code></pre>
-<pre><code>[{'text': 'Sample text 1...'}]
+<pre><code>[{'text': 'The cat slept....'}, {'text': 'She smiled gently....'}, {'text': 'It rained today....'}, {'text': 'Books hold knowledge....'}]
 </code></pre>
 <ul>
 <li>get all keys + distance</li>
 </ul>
 <pre><code class="language-python">results = handler.search_database(
-    query = &quot;text&quot;,
+    query = &quot;cat slept&quot;,
     filter_criteria = {
-        &quot;text&quot; : &quot;Sample text 1&quot;
+        &quot;n_words&quot; : 3,
     },
     return_keys_list=[&quot;+&amp;distance&quot;]
 )
 print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
 </code></pre>
-<pre><code>[{'text': 'Sample text 1...', 'text2': 'Sample text 1...', '&amp;distance': '0.6744726...'}]
+<pre><code>[{'text': 'The cat slept....', 'n_words': '3...', '&amp;distance': '0.9757655658500587...'}, {'text': 'She smiled gently....', 'n_words': '3...', '&amp;distance': '0.255370996400475...'}, {'text': 'It rained today....', 'n_words': '3...', '&amp;distance': '0.049663160920329866...'}, {'text': 'Books hold knowledge....', 'n_words': '3...', '&amp;distance': '0.011214848789777708...'}]
 </code></pre>
 <ul>
 <li>get distance</li>
 </ul>
 <pre><code class="language-python">results = handler.search_database(
-    query = &quot;text&quot;,
+    query = &quot;cat slept&quot;,
     filter_criteria = {
-        &quot;text&quot; : &quot;Sample text 1&quot;
+        &quot;n_words&quot; : 3,
     },
     return_keys_list=[&quot;&amp;distance&quot;]
 )
 print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
 </code></pre>
-<pre><code>[{'&amp;distance': '0.6744726...'}]
+<pre><code>[{'&amp;distance': '0.9757655658500587...'}, {'&amp;distance': '0.255370996400475...'}, {'&amp;distance': '0.049663160920329866...'}, {'&amp;distance': '0.011214848789777708...'}]
 </code></pre>
 <ul>
 <li>get all keys + embeddings</li>
 </ul>
 <pre><code class="language-python">results = handler.search_database(
-    query = &quot;text&quot;,
+    query = &quot;cat slept&quot;,
     filter_criteria = {
-        &quot;text&quot; : &quot;Sample text 1&quot;
+        &quot;n_words&quot; : 3,
     },
     return_keys_list=[&quot;+embedding&quot;]
 )
 print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
 </code></pre>
-<pre><code>[{'text': 'Sample text 1...', 'text2': 'Sample text 1...', 'embedding': '[-4.94665056e-02 -2.38676026e-...'}]
+<pre><code>[{'text': 'The cat slept....', 'n_words': '3...', 'embedding': '[-3.86438631e-02  1.23167999e-...'}, {'text': 'She smiled gently....', 'n_words': '3...', 'embedding': '[-2.46711988e-02  2.37020120e-...'}, {'text': 'It rained today....', 'n_words': '3...', 'embedding': '[-1.35887757e-01 -2.52719939e-...'}, {'text': 'Books hold knowledge....', 'n_words': '3...', 'embedding': '[ 6.20862879e-02  1.13785893e-...'}]
 </code></pre>
 <ul>
 <li>get embeddings</li>
 </ul>
 <pre><code class="language-python">results = handler.search_database(
-    query = &quot;text&quot;,
+    query = &quot;cat slept&quot;,
     filter_criteria = {
-        &quot;text&quot; : &quot;Sample text 1&quot;
+        &quot;n_words&quot; : 3,
     },
     return_keys_list=[&quot;embedding&quot;]
 )
 print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
 
 </code></pre>
-<pre><code>[{'embedding': '[-4.94665056e-02 -2.38676026e-...'}]
+<pre><code>[{'embedding': '[-3.86438631e-02  1.23167999e-...'}, {'embedding': '[-2.46711988e-02  2.37020120e-...'}, {'embedding': '[-1.35887757e-01 -2.52719939e-...'}, {'embedding': '[ 6.20862879e-02  1.13785893e-...'}]
 </code></pre>
 <ul>
 <li>get embeddings and embedded field</li>
 </ul>
 <pre><code class="language-python">results = handler.search_database(
-    query = &quot;text&quot;,
+    query = &quot;cat slept&quot;,
     filter_criteria = {
-        &quot;text&quot; : &quot;Sample text 1&quot;
+        &quot;n_words&quot; : 3,
     },
     return_keys_list=[&quot;embedding&quot;, &quot;+&amp;embedded_field&quot;]
 )
 print([{k: str(v)[:30] + &quot;...&quot; for k, v in result.items()} for result in results])
 
 </code></pre>
-<pre><code>[{'embedding': '[-4.94665056e-02 -2.38676026e-...', '&amp;embedded_field': 'text...'}]
+<pre><code>[{'&amp;embedded_field': 'text...', 'embedding': '[-3.86438631e-02  1.23167999e-...'}, {'&amp;embedded_field': 'text...', 'embedding': '[-2.46711988e-02  2.37020120e-...'}, {'&amp;embedded_field': 'text...', 'embedding': '[-1.35887757e-01 -2.52719939e-...'}, {'&amp;embedded_field': 'text...', 'embedding': '[ 6.20862879e-02  1.13785893e-...'}]
 </code></pre>
 <h3 id="3-removing-values-from-the-database">3. Removing values from the database</h3>
 <pre><code class="language-python">print(f&quot;Items in the database {len(handler.data)}&quot;)
-handler.remove_from_database(filter_criteria = {&quot;text&quot;: &quot;Sample text 1&quot;})
+handler.remove_from_database(filter_criteria = {&quot;n_words&quot; : 11})
 print(f&quot;Items left in the database {len(handler.data)}&quot;)
 
 </code></pre>
-<pre><code>Items in the database 2
-Items left in the database 1
+<pre><code>Items in the database 12
+Items left in the database 10
 </code></pre>
 <h3 id="4-embeding-text">4 Embeding text</h3>
 <pre><code class="language-python">results = handler.embed_texts(
@@ -682,12 +694,24 @@ handler.establish_connection(
     }
 )
 </code></pre>
-<pre><code class="language-python"># Insert Data
+<pre><code class="language-python">sentences = [
+    &quot;The cat slept.&quot;,
+    &quot;It rained today.&quot;,
+    &quot;She smiled gently.&quot;,
+    &quot;Books hold knowledge.&quot;,
+    &quot;The sun set behind the mountains, casting a golden glow over the valley.&quot;,
+    &quot;He quickly realized that time was slipping away, and he needed to act fast.&quot;,
+    &quot;The concert was an unforgettable experience, filled with laughter and joy.&quot;,
+    &quot;Despite the challenges, they managed to build a beautiful home together.&quot;,
+    &quot;As the wind howled through the ancient trees, scattering leaves and whispering secrets of the forest, she stood there, gazing up at the endless expanse of stars, feeling both infinitely small and profoundly connected to the universe.&quot;,
+    &quot;While the project seemed daunting at first, requiring countless hours of research, planning, and execution, the team worked tirelessly, motivated by their shared goal of creating something truly remarkable and innovative in their field.&quot;,
+    &quot;In the bustling city streets, amidst the constant hum of traffic and chatter, he found himself contemplating life's mysteries, pondering the choices that had brought him to this very moment and wondering where the path ahead would lead.&quot;,
+    &quot;The conference was a gathering of minds from around the globe, each participant bringing their unique perspectives and insights to the table, fostering a vibrant exchange of ideas that would shape the future of their respective fields for years to come.&quot;
+]
+
+# Insert Data
 values_list = [
-    {&quot;text&quot;: &quot;Sample text 1&quot;,
-     &quot;text2&quot;: &quot;Sample text 1&quot;},
-    {&quot;text&quot;: &quot;Sample text 2&quot;,
-     &quot;text2&quot;: &quot;Sample text 2&quot;}
+    {'text' : t, 'n_words' : len(t.split())} for t in sentences
 ]
 handler.insert_values(values_list, &quot;text&quot;)
 </code></pre>
@@ -709,18 +733,18 @@ handler.insert_values(values_list, &quot;text&quot;)
 
 
 {'results': [{'handler': 'default',
-   'items': 4,
-   'memory_usage': 1.3744659423828125}],
+   'items': 14,
+   'memory_usage': 1.4558258056640625}],
  'status': 'success',
  'message': '',
  'handlers': ['default'],
- 'items': [4],
- 'memory_usage': [1.3744659423828125]}
+ 'items': [14],
+ 'memory_usage': [1.4558258056640625]}
 </code></pre>
 <pre><code class="language-python">results = handler.search_database(
-    query = &quot;text&quot;,
+    query = &quot;cat&quot;,
     filter_criteria = {
-        &quot;text&quot; : &quot;Sample text 1&quot;,
+        &quot;n_words&quot; : 3,
     }
 )
 
@@ -735,10 +759,10 @@ results
 {'status': 'success',
  'message': '',
  'handler': 'default',
- 'results': [{'other_field': 'Additional data', 'text': 'Example text 1'},
-  {'other_field': 'Additional data', 'text': 'Example text 2'},
-  {'text': 'Sample text 1', 'text2': 'Sample text 1'},
-  {'text': 'Sample text 2', 'text2': 'Sample text 2'}]}
+ 'results': [{'text': 'The cat slept.', 'n_words': 3},
+  {'text': 'Books hold knowledge.', 'n_words': 3},
+  {'text': 'It rained today.', 'n_words': 3},
+  {'text': 'She smiled gently.', 'n_words': 3}]}
 </code></pre>
 <pre><code class="language-python">results = handler.embed_texts(
     texts = [
@@ -765,16 +789,16 @@ print(str(results)[0:500] + &quot;...&quot;)
 
 
 {'results': [{'handler': 'default',
-   'items': 4,
-   'memory_usage': 1.3749237060546875},
+   'items': 14,
+   'memory_usage': 1.4564743041992188},
   {'handler': 'cache_mocker_intfloat_multilingual-e5-base',
    'items': 2,
-   'memory_usage': 1.3611679077148438}],
+   'memory_usage': 1.3639755249023438}],
  'status': 'success',
  'message': '',
  'handlers': ['default', 'cache_mocker_intfloat_multilingual-e5-base'],
- 'items': [4, 2],
- 'memory_usage': [1.3749237060546875, 1.3611679077148438]}
+ 'items': [14, 2],
+ 'memory_usage': [1.4564743041992188, 1.3639755249023438]}
 </code></pre>
 
 
@@ -825,7 +849,7 @@ print(str(results)[0:500] + &quot;...&quot;)
     <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+      <script src="../assets/javascripts/bundle.525ec568.min.js"></script>
       
     
   </body>
