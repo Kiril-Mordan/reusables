@@ -450,8 +450,9 @@ class ImportMappingHandler:
         if base_mapping_filepath is None:
 
 
-            with pkg_resources.path('package_auto_assembler','.') as path:
-                paa_path = path
+            # with pkg_resources.path('package_auto_assembler','.') as path:
+            #     paa_path = path
+            paa_path = pkg_resources.files('package_auto_assembler')
 
             if 'artifacts' in os.listdir(paa_path):
 
@@ -3098,8 +3099,10 @@ class DependenciesAnalyser:
 
         if base_mapping_filepath is None:
 
-            with pkg_resources.path('package_auto_assembler','.') as path:
-                paa_path = path
+            # with pkg_resources.path('package_auto_assembler','.') as path:
+            #     paa_path = path
+
+            paa_path = pkg_resources.files('package_auto_assembler')
 
             if 'artifacts' in os.listdir(paa_path):
 
