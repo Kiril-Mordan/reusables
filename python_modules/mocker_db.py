@@ -19,6 +19,7 @@ import hashlib
 import concurrent.futures
 #! import hnswlib #==0.8.0
 #! import sentence_transformers #==2.2.2
+#! import torch
 from gridlooper import GridLooper #>=0.0.1
 from difflib import get_close_matches
 ## for connect to remote mocker and llm search
@@ -150,6 +151,13 @@ class MockerSimilaritySearch:
 
             self.hnsw_index = Index
 
+        if self.similarity_search_type == 'linear_torch':
+            try:
+                import torch as t
+                self.torch = t
+            except ImportError:
+                print("Please install `pytorch` to use this feature.")
+
 
     def _initialize_logger(self):
 
@@ -202,6 +210,55 @@ class MockerSimilaritySearch:
 
         return labels[0], distances[0]
 
+    
+    def linear_search_torch(self, search_emb, doc_embs, k=1, space='cosine'):
+        """
+        Perform a linear (brute force) search.
+
+        Args:
+        - search_emb (numpy array): The query embedding. Shape (1, dim).
+        - doc_embs (numpy array): Array of reference embeddings. Shape (num_elements, dim).
+        - k (int): Number of nearest neighbors to return.
+        - space (str): Space type for the distance calculation ('cosine' or 'l2').
+
+        Returns:
+        - labels (numpy array): Indices of the k nearest embeddings from doc_embs to search_emb.
+        - distances (numpy array): Distances of the k nearest embeddings.
+        """
+
+        # Convert numpy arrays to PyTorch tensors with float64 precision
+        search_emb_tensor = self.torch.tensor(search_emb, dtype=self.torch.float64)
+        doc_embs_tensor = self.torch.tensor(doc_embs, dtype=self.torch.float64)
+
+        # Calculate distances from the query to all document embeddings
+        if space == 'cosine':
+            # Normalize embeddings for cosine similarity
+            search_emb_norm = self.torch.nn.functional.normalize(search_emb_tensor, p=2, dim=0)
+            doc_embs_norm = self.torch.nn.functional.normalize(doc_embs_tensor, p=2, dim=1)
+
+            # Compute cosine distances
+            distances = self.torch.matmul(doc_embs_norm, search_emb_norm).flatten()
+
+        elif space == 'l2':
+            # Compute L2 distances
+            distances = self.torch.norm(doc_embs_tensor - search_emb_tensor, dim=1)
+
+        k = min(k, len(distances))
+
+        # Get the indices of the top k closest embeddings
+        if space == 'cosine':
+            # For cosine, larger values mean closer distance
+            top_distances, labels = self.torch.topk(distances, k, largest=True)
+        else:
+            # For L2, smaller values mean closer distance
+            top_distances, labels = self.torch.topk(distances, k, largest=False)
+
+        # Convert results to numpy arrays
+        labels = labels.cpu().numpy()
+        top_distances = top_distances.cpu().numpy()
+
+        return labels, top_distances
+
     def linear_search(self, search_emb, doc_embs, k=1, space='cosine'):
 
         """
@@ -226,6 +283,7 @@ class MockerSimilaritySearch:
 
             # Compute cosine distances
             distances = np.dot(doc_embs_norm, search_emb_norm.T).flatten()
+
         elif space == 'l2':
             # Compute L2 distances
             distances = np.linalg.norm(doc_embs - search_emb, axis=1)
@@ -234,6 +292,7 @@ class MockerSimilaritySearch:
         if space == 'cosine':
             # For cosine, larger values mean closer distance
             labels = np.argsort(-distances)[:k]
+
         else:
             # For L2, smaller values mean closer distance
             labels = np.argsort(distances)[:k]
@@ -258,9 +317,23 @@ class MockerSimilaritySearch:
             similarity_params = self.similarity_params
 
         if similarity_search_type == 'linear':
-            return self.linear_search(search_emb = query_embedding, doc_embs = data_embeddings, k=k, **similarity_params)
+            return self.linear_search(
+                search_emb = query_embedding, 
+                doc_embs = data_embeddings, 
+                k=k, 
+                **similarity_params)
         if similarity_search_type == 'hnsw':
-            return self.hnsw_search(search_emb = query_embedding, doc_embs = data_embeddings, k=k, **similarity_params)
+            return self.hnsw_search(
+                search_emb = query_embedding, 
+                doc_embs = data_embeddings, 
+                k=k, 
+                **similarity_params)
+        if similarity_search_type == 'linear_torch':
+            return self.linear_search_torch(
+                search_emb = query_embedding, 
+                doc_embs = data_embeddings, 
+                k=k, 
+                **similarity_params)
 
 @attr.s
 class MockerConnector:
@@ -1246,6 +1319,21 @@ class MockerDB:
 
             if database_name:
                 mdbc_input['database_name'] = database_name
+
+            mdbc_input.update({
+                'query' : query,
+                'search_results_n' : search_results_n,
+                'llm_search_keys' : llm_search_keys,
+                'keyword_check_keys' : keyword_check_keys,
+                'keyword_check_cutoff' : keyword_check_cutoff,
+                'filter_criteria' : filter_criteria,
+                'similarity_search_type': similarity_search_type,
+                'similarity_params': similarity_params,
+                'perform_similarity_search': perform_similarity_search,
+                'return_keys_list' : return_keys_list,
+                'database_name' : database_name
+            }
+            )
 
             return self.mdbc_h.search_data(**mdbc_input)
 

@@ -48,6 +48,7 @@ jobs:
           python -m pip install setuptools wheel twine
           ./tools/update_module_requirements.sh "${{ steps.changed-modules.outputs.files }}"
           ./tools/update_tox_requirements.sh "${{ steps.changed-modules.outputs.files }}"
+          cat env_spec/requirements_tox.txt 
 
       - name: Check requirements for vulnerabilities
         if: steps.changed-modules.outputs.files != ''
@@ -101,7 +102,6 @@ jobs:
       - name: Install dependencies
         run: | 
           pip install -r env_spec/requirements_dev.txt
-          echo "sentence_transformers" >> env_spec/requirements_tox.txt
 
       - name: Test with tox
         run: |
