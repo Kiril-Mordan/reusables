@@ -2593,6 +2593,8 @@ class ArtifactsHandler:
         if artifacts_dir is None:
             artifacts_dir = self.artifacts_dir
 
+        artifacts_filepaths = {}
+
         if artifacts_dir:
 
             if os.path.exists(artifacts_dir):
