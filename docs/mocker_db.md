@@ -16,6 +16,7 @@ handler = MockerDB(
     embedder_params = {'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
                         'processing_type' : 'batch',
                         'tbatch_size' : 500},
+    similarity_search_type = 'linear_torch',
     use_embedder = True,
     embedder = SentenceTransformerEmbedder,
     persist = True
@@ -30,18 +31,30 @@ handler.establish_connection(
 
 
 ```python
+sentences = [
+    "The cat slept.",
+    "It rained today.",
+    "She smiled gently.",
+    "Books hold knowledge.",
+    "The sun set behind the mountains, casting a golden glow over the valley.",
+    "He quickly realized that time was slipping away, and he needed to act fast.",
+    "The concert was an unforgettable experience, filled with laughter and joy.",
+    "Despite the challenges, they managed to build a beautiful home together.",
+    "As the wind howled through the ancient trees, scattering leaves and whispering secrets of the forest, she stood there, gazing up at the endless expanse of stars, feeling both infinitely small and profoundly connected to the universe.",
+    "While the project seemed daunting at first, requiring countless hours of research, planning, and execution, the team worked tirelessly, motivated by their shared goal of creating something truly remarkable and innovative in their field.",
+    "In the bustling city streets, amidst the constant hum of traffic and chatter, he found himself contemplating life's mysteries, pondering the choices that had brought him to this very moment and wondering where the path ahead would lead.",
+    "The conference was a gathering of minds from around the globe, each participant bringing their unique perspectives and insights to the table, fostering a vibrant exchange of ideas that would shape the future of their respective fields for years to come."
+]
+
 # Insert Data
 values_list = [
-    {"text": "Sample text 1",
-     "text2": "Sample text 1"},
-    {"text": "Sample text 2",
-     "text2": "Sample text 2"}
+    {'text' : t, 'n_words' : len(t.split())} for t in sentences
 ]
 handler.insert_values(values_list, "text")
 print(f"Items in the database {len(handler.data)}")
 ```
 
-    Items in the database 2
+    Items in the database 12
 
 
 ### 2. Searching and retrieving values from the database
@@ -58,15 +71,15 @@ There are multiple options for search which could be used together or separately
 
 ```python
 results = handler.search_database(
-    query = "text",
+    query = "cat",
     filter_criteria = {
-        "text" : "Sample text 1",
+        "n_words" : 3,
     }
 )
 print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
 ```
 
-    [{'text': 'Sample text 1...', 'text2': 'Sample text 1...'}]
+    [{'text': 'The cat slept....', 'n_words': '3...'}, {'text': 'She smiled gently....', 'n_words': '3...'}, {'text': 'It rained today....', 'n_words': '3...'}, {'text': 'Books hold knowledge....', 'n_words': '3...'}]
 
 
 - get all keys with keywords search
@@ -74,10 +87,9 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 
 ```python
 results = handler.search_database(
-    query = "text",
     # when keyword key is provided filter is used to pass keywords
     filter_criteria = {
-        "text" : ["1"],
+        "text" : ["sun"],
     },
     keyword_check_keys = ['text'],
     # percentage of filter keyword allowed to be different
@@ -87,23 +99,23 @@ results = handler.search_database(
 print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
 ```
 
-    [{'text': 'Sample text 1...'}]
+    [{'text': 'The sun set behind the mountai...'}]
 
 
-- get all key - text2
+- get all key - n_words
 
 
 ```python
 results = handler.search_database(
-    query = "text",
+    query = "cat",
     filter_criteria = {
-        "text" : "Sample text 1",
+        "n_words" : 3,
     },
-    return_keys_list=["-text2"])
+    return_keys_list=["-n_words"])
 print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
 ```
 
-    [{'text': 'Sample text 1...'}]
+    [{'text': 'The cat slept....'}, {'text': 'She smiled gently....'}, {'text': 'It rained today....'}, {'text': 'Books hold knowledge....'}]
 
 
 - get all keys + distance
@@ -111,16 +123,16 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 
 ```python
 results = handler.search_database(
-    query = "text",
+    query = "cat slept",
     filter_criteria = {
-        "text" : "Sample text 1"
+        "n_words" : 3,
     },
     return_keys_list=["+&distance"]
 )
 print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
 ```
 
-    [{'text': 'Sample text 1...', 'text2': 'Sample text 1...', '&distance': '0.6744726...'}]
+    [{'text': 'The cat slept....', 'n_words': '3...', '&distance': '0.9757655658500587...'}, {'text': 'She smiled gently....', 'n_words': '3...', '&distance': '0.255370996400475...'}, {'text': 'It rained today....', 'n_words': '3...', '&distance': '0.049663160920329866...'}, {'text': 'Books hold knowledge....', 'n_words': '3...', '&distance': '0.011214848789777708...'}]
 
 
 - get distance
@@ -128,16 +140,16 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 
 ```python
 results = handler.search_database(
-    query = "text",
+    query = "cat slept",
     filter_criteria = {
-        "text" : "Sample text 1"
+        "n_words" : 3,
     },
     return_keys_list=["&distance"]
 )
 print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
 ```
 
-    [{'&distance': '0.6744726...'}]
+    [{'&distance': '0.9757655658500587...'}, {'&distance': '0.255370996400475...'}, {'&distance': '0.049663160920329866...'}, {'&distance': '0.011214848789777708...'}]
 
 
 - get all keys + embeddings
@@ -145,16 +157,16 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 
 ```python
 results = handler.search_database(
-    query = "text",
+    query = "cat slept",
     filter_criteria = {
-        "text" : "Sample text 1"
+        "n_words" : 3,
     },
     return_keys_list=["+embedding"]
 )
 print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
 ```
 
-    [{'text': 'Sample text 1...', 'text2': 'Sample text 1...', 'embedding': '[-4.94665056e-02 -2.38676026e-...'}]
+    [{'text': 'The cat slept....', 'n_words': '3...', 'embedding': '[-3.86438631e-02  1.23167999e-...'}, {'text': 'She smiled gently....', 'n_words': '3...', 'embedding': '[-2.46711988e-02  2.37020120e-...'}, {'text': 'It rained today....', 'n_words': '3...', 'embedding': '[-1.35887757e-01 -2.52719939e-...'}, {'text': 'Books hold knowledge....', 'n_words': '3...', 'embedding': '[ 6.20862879e-02  1.13785893e-...'}]
 
 
 - get embeddings
@@ -162,9 +174,9 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 
 ```python
 results = handler.search_database(
-    query = "text",
+    query = "cat slept",
     filter_criteria = {
-        "text" : "Sample text 1"
+        "n_words" : 3,
     },
     return_keys_list=["embedding"]
 )
@@ -172,7 +184,7 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 
 ```
 
-    [{'embedding': '[-4.94665056e-02 -2.38676026e-...'}]
+    [{'embedding': '[-3.86438631e-02  1.23167999e-...'}, {'embedding': '[-2.46711988e-02  2.37020120e-...'}, {'embedding': '[-1.35887757e-01 -2.52719939e-...'}, {'embedding': '[ 6.20862879e-02  1.13785893e-...'}]
 
 
 - get embeddings and embedded field
@@ -180,9 +192,9 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 
 ```python
 results = handler.search_database(
-    query = "text",
+    query = "cat slept",
     filter_criteria = {
-        "text" : "Sample text 1"
+        "n_words" : 3,
     },
     return_keys_list=["embedding", "+&embedded_field"]
 )
@@ -190,7 +202,7 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 
 ```
 
-    [{'embedding': '[-4.94665056e-02 -2.38676026e-...', '&embedded_field': 'text...'}]
+    [{'&embedded_field': 'text...', 'embedding': '[-3.86438631e-02  1.23167999e-...'}, {'&embedded_field': 'text...', 'embedding': '[-2.46711988e-02  2.37020120e-...'}, {'&embedded_field': 'text...', 'embedding': '[-1.35887757e-01 -2.52719939e-...'}, {'&embedded_field': 'text...', 'embedding': '[ 6.20862879e-02  1.13785893e-...'}]
 
 
 ### 3. Removing values from the database
@@ -198,13 +210,13 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 
 ```python
 print(f"Items in the database {len(handler.data)}")
-handler.remove_from_database(filter_criteria = {"text": "Sample text 1"})
+handler.remove_from_database(filter_criteria = {"n_words" : 11})
 print(f"Items left in the database {len(handler.data)}")
 
 ```
 
-    Items in the database 2
-    Items left in the database 1
+    Items in the database 12
+    Items left in the database 10
 
 
 ### 4 Embeding text
@@ -245,12 +257,24 @@ handler.establish_connection(
 
 
 ```python
+sentences = [
+    "The cat slept.",
+    "It rained today.",
+    "She smiled gently.",
+    "Books hold knowledge.",
+    "The sun set behind the mountains, casting a golden glow over the valley.",
+    "He quickly realized that time was slipping away, and he needed to act fast.",
+    "The concert was an unforgettable experience, filled with laughter and joy.",
+    "Despite the challenges, they managed to build a beautiful home together.",
+    "As the wind howled through the ancient trees, scattering leaves and whispering secrets of the forest, she stood there, gazing up at the endless expanse of stars, feeling both infinitely small and profoundly connected to the universe.",
+    "While the project seemed daunting at first, requiring countless hours of research, planning, and execution, the team worked tirelessly, motivated by their shared goal of creating something truly remarkable and innovative in their field.",
+    "In the bustling city streets, amidst the constant hum of traffic and chatter, he found himself contemplating life's mysteries, pondering the choices that had brought him to this very moment and wondering where the path ahead would lead.",
+    "The conference was a gathering of minds from around the globe, each participant bringing their unique perspectives and insights to the table, fostering a vibrant exchange of ideas that would shape the future of their respective fields for years to come."
+]
+
 # Insert Data
 values_list = [
-    {"text": "Sample text 1",
-     "text2": "Sample text 1"},
-    {"text": "Sample text 2",
-     "text2": "Sample text 2"}
+    {'text' : t, 'n_words' : len(t.split())} for t in sentences
 ]
 handler.insert_values(values_list, "text")
 ```
@@ -279,22 +303,22 @@ handler.show_handlers()
 
 
     {'results': [{'handler': 'default',
-       'items': 4,
-       'memory_usage': 1.3744659423828125}],
+       'items': 14,
+       'memory_usage': 1.4558258056640625}],
      'status': 'success',
      'message': '',
      'handlers': ['default'],
-     'items': [4],
-     'memory_usage': [1.3744659423828125]}
+     'items': [14],
+     'memory_usage': [1.4558258056640625]}
 
 
 
 
 ```python
 results = handler.search_database(
-    query = "text",
+    query = "cat",
     filter_criteria = {
-        "text" : "Sample text 1",
+        "n_words" : 3,
     }
 )
 
@@ -310,10 +334,10 @@ results
     {'status': 'success',
      'message': '',
      'handler': 'default',
-     'results': [{'other_field': 'Additional data', 'text': 'Example text 1'},
-      {'other_field': 'Additional data', 'text': 'Example text 2'},
-      {'text': 'Sample text 1', 'text2': 'Sample text 1'},
-      {'text': 'Sample text 2', 'text2': 'Sample text 2'}]}
+     'results': [{'text': 'The cat slept.', 'n_words': 3},
+      {'text': 'Books hold knowledge.', 'n_words': 3},
+      {'text': 'It rained today.', 'n_words': 3},
+      {'text': 'She smiled gently.', 'n_words': 3}]}
 
 
 
@@ -349,15 +373,15 @@ handler.show_handlers()
 
 
     {'results': [{'handler': 'default',
-       'items': 4,
-       'memory_usage': 1.3749237060546875},
+       'items': 14,
+       'memory_usage': 1.4564743041992188},
       {'handler': 'cache_mocker_intfloat_multilingual-e5-base',
        'items': 2,
-       'memory_usage': 1.3611679077148438}],
+       'memory_usage': 1.3639755249023438}],
      'status': 'success',
      'message': '',
      'handlers': ['default', 'cache_mocker_intfloat_multilingual-e5-base'],
-     'items': [4, 2],
-     'memory_usage': [1.3749237060546875, 1.3611679077148438]}
+     'items': [14, 2],
+     'memory_usage': [1.4564743041992188, 1.3639755249023438]}
 
 
