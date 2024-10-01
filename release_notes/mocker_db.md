@@ -1,5 +1,11 @@
 # Release notes
 
+### 0.2.6
+
+    - cosine similarity with torch
+
+    - adding missing inputs for remote mocker in search_database method
+
 ### 0.2.5
 
     - simple cli for initializing optional config
