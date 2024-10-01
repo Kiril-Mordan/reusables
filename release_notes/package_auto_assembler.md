@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.5.5
+
+    - minor fixes to file imports from paa artifacts
+
 ### 0.5.4
 
     - minor fix for packaging package without artifacts
