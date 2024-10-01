@@ -1,6 +1,0 @@
-requests
-numpy==1.26.0
-dill==0.3.7
-attrs==23.2.0
-gridlooper==0.0.1
-httpx
