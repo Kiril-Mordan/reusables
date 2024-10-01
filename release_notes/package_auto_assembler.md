@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.5.4
+
+    - minor fix for packaging package without artifacts
+
 ### 0.5.3
 
     - additional cli tools to show and extract packaged artifacts
