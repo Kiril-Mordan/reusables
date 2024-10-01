@@ -23,6 +23,7 @@ api_config = {
     'similarity_params' : {'space':'cosine'},
     'file_path' : "./persist/",
     'embs_file_path' : "./persist/",
+    'similarity_search_type' : 'linear_torch',
     'persist' : True
 },
 'API_SETUP_PARAMS' : {
