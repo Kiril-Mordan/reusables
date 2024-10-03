@@ -32,6 +32,14 @@ def cli(ctx):
 test_install_config = {
     "module_dir" : "python_modules",
     "example_notebooks_path" : "example_notebooks",
+    "versions_filepath" : "lsts_package_versions.yml",
+    "log_filepath" : "version_logs.csv",
+    "include_local_dependecies" : True,
+    "use_commit_messages" : True,
+    "check_vulnerabilities" : True,
+    "check_dependencies_licenses" : False,
+    "add_artifacts" : True,
+    "add_mkdocs_site" : False,
     "artifacts_dir" : None,
     "cli_dir" : None,
     "cli_docs_dir" : None,
@@ -40,26 +48,17 @@ test_install_config = {
     "release_notes_dir" : None,
     "mapping_filepath" : None,
     "licenses_filepath" : None,
-    "include_local_dependecies" : True,
     "dependencies_dir" : None,
     "license_path" : None,
     "license_label" : None,
     "license_badge" : None,
     "docs_url" : None,
-    "versions_filepath" : "lsts_package_versions.yml",
-    "log_filepath" : "version_logs.csv",
-    "classifiers" : ['Development Status :: 3 - Alpha'],
-    "allowed_licenses" : ['mit', 'apache-2.0', 'lgpl-3.0', 
-                            'bsd-3-clause', 'bsd-2-clause', '-', 'mpl-2.0'],
-    "kernel_name" : 'python3',
-    "python_version" : "3.10",
-    "default_version" : "0.0.0",
-    "version_increment_type" : "patch",
-    "use_commit_messages" : True,
-    "check_vulnerabilities" : True,
-    "check_dependencies_licenses" : False,
-    "add_artifacts" : True,
-    "add_mkdocs_site" : False
+    "classifiers" : None,
+    "allowed_licenses" : None,
+    "kernel_name" : None,
+    "python_version" : None,
+    "default_version" : None,
+    "version_increment_type" : None
 }
 
 @click.command()
@@ -130,20 +129,26 @@ def test_install(ctx,
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "mapping_filepath" : test_install_config.get("mapping_filepath"),
         "licenses_filepath" : test_install_config.get("licenses_filepath"),
-        "allowed_licenses" : test_install_config["allowed_licenses"],
         "dependencies_dir" : test_install_config.get("dependencies_dir"),
         "setup_directory" : f"./{module_name}",
-        "classifiers" : test_install_config["classifiers"],
-        "default_version" : test_install_config["default_version"],
-        "add_artifacts" : test_install_config["add_artifacts"],
+        "add_artifacts" : test_install_config.get("add_artifacts"),
         "artifacts_filepaths" : test_install_config.get("artifacts_filepaths"),
-        "add_mkdocs_site" : False,
         "docs_path" : test_install_config.get("docs_dir"),
         "license_badge" : test_install_config.get("license_badge"),
+        "add_mkdocs_site" : False,
         "check_dependencies_licenses" : False,
         "check_vulnerabilities" : False
 
     }
+
+    if test_install_config.get("default_version"):
+        paa_params["default_version"] = test_install_config["default_version"]
+
+    if test_install_config.get("classifiers"):
+        paa_params["classifiers"] = test_install_config["classifiers"]
+
+    if test_install_config.get("allowed_licenses"):
+        paa_params["allowed_licenses"] = test_install_config["allowed_licenses"]
 
     if test_install_config.get("cli_dir"):
         paa_params["cli_module_filepath"] = os.path.join(
@@ -284,13 +289,8 @@ def make_package(ctx,
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "mapping_filepath" : test_install_config.get("mapping_filepath"),
         "licenses_filepath" : test_install_config.get("licenses_filepath"),
-        "allowed_licenses" : test_install_config["allowed_licenses"],
         "dependencies_dir" : test_install_config.get("dependencies_dir"),
         "setup_directory" : f"./{module_name}",
-        "classifiers" : test_install_config["classifiers"],
-        "kernel_name" : test_install_config["kernel_name"],
-        "python_version" : test_install_config["python_version"],
-        "default_version" : test_install_config["default_version"],
         "versions_filepath" : test_install_config["versions_filepath"],
         "log_filepath" : test_install_config["log_filepath"],
         "use_commit_messages" : test_install_config["use_commit_messages"],
@@ -298,13 +298,32 @@ def make_package(ctx,
         "license_label" : test_install_config.get("license_label", None),
         "license_badge" : test_install_config.get("license_badge"),
         "docs_url" : test_install_config.get("docs_url", None),
-        "add_artifacts" : test_install_config["add_artifacts"],
-        "add_mkdocs_site" : test_install_config["add_mkdocs_site"],
+        "add_artifacts" : test_install_config.get("add_artifacts"),
+        "add_mkdocs_site" : test_install_config.get("add_mkdocs_site"),
         "artifacts_filepaths" : test_install_config.get("artifacts_filepaths"),
         "docs_path" : test_install_config.get("docs_dir"),
         "check_vulnerabilities" : test_install_config.get("check_vulnerabilities", True),
         "check_dependencies_licenses" : test_install_config.get("check_dependencies_licenses", True)
     }
+
+    if test_install_config.get("example_notebook_path"):
+        paa_params["example_notebook_path"] = os.path.join(test_install_config["example_notebooks_path"],
+                                                           f"{module_name}.ipynb")
+
+    if test_install_config.get("default_version"):
+        paa_params["default_version"] = test_install_config["default_version"]
+
+    if test_install_config.get("classifiers"):
+        paa_params["classifiers"] = test_install_config["classifiers"]
+
+    if test_install_config.get("python_version"):
+        paa_params["python_version"] = test_install_config["python_version"]
+
+    if test_install_config.get("kernel_name"):
+        paa_params["kernel_name"] = test_install_config["kernel_name"]
+
+    if test_install_config.get("allowed_licenses"):
+        paa_params["allowed_licenses"] = test_install_config["allowed_licenses"]
 
     if test_install_config.get("cli_dir"):
         paa_params["cli_module_filepath"] = os.path.join(
@@ -357,9 +376,7 @@ def make_package(ctx,
 
     if example_notebook_path:
         paa_params["example_notebook_path"] = example_notebook_path
-    else:
-        paa_params["example_notebook_path"] = os.path.join(test_install_config["example_notebooks_path"],
-                                                           f"{module_name}.ipynb")
+    
     if log_filepath:
         paa_params["log_filepath"] = log_filepath
     if versions_filepath:
@@ -432,15 +449,23 @@ def check_vulnerabilities(ctx,
         "mapping_filepath" : test_install_config["mapping_filepath"],
         "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
-        "classifiers" : test_install_config["classifiers"],
-        "kernel_name" : test_install_config["kernel_name"],
-        "python_version" : test_install_config["python_version"],
-        "default_version" : test_install_config["default_version"],
         "versions_filepath" : test_install_config["versions_filepath"],
         "log_filepath" : test_install_config["log_filepath"],
         "check_vulnerabilities" : True,
         "add_artifacts" : False
     }
+
+    if test_install_config.get("default_version"):
+        paa_params["default_version"] = test_install_config["default_version"]
+
+    if test_install_config.get("classifiers"):
+        paa_params["classifiers"] = test_install_config["classifiers"]
+
+    if test_install_config.get("python_version"):
+        paa_params["python_version"] = test_install_config["python_version"]
+
+    if test_install_config.get("kernel_name"):
+        paa_params["kernel_name"] = test_install_config["kernel_name"]
 
     if module_filepath:
         paa_params["module_filepath"] = module_filepath
@@ -524,16 +549,24 @@ def check_licenses(ctx,
         "licenses_filepath" : test_install_config["licenses_filepath"],
         "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
-        "classifiers" : test_install_config["classifiers"],
-        "kernel_name" : test_install_config["kernel_name"],
-        "python_version" : test_install_config["python_version"],
-        "default_version" : test_install_config["default_version"],
         "versions_filepath" : test_install_config["versions_filepath"],
         "log_filepath" : test_install_config["log_filepath"],
         "check_vulnerabilities" : False,
         "check_dependencies_licenses" : True,
         "add_artifacts" : False
     }
+
+    if test_install_config.get("default_version"):
+        paa_params["default_version"] = test_install_config["default_version"]
+
+    if test_install_config.get("classifiers"):
+        paa_params["classifiers"] = test_install_config["classifiers"]
+
+    if test_install_config.get("python_version"):
+        paa_params["python_version"] = test_install_config["python_version"]
+
+    if test_install_config.get("kernel_name"):
+        paa_params["kernel_name"] = test_install_config["kernel_name"]
 
     if module_filepath:
         paa_params["module_filepath"] = module_filepath

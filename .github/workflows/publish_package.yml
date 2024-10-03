@@ -123,6 +123,18 @@ jobs:
           else
             echo "No changes to commit"
           fi
-      - name: Wait for next workflow
-        run: sleep 10
+
+      - name: Prepare site for gh-pages
+        if: steps.changed-modules.outputs.files != ''
+        run: |
+          LABEL_NAME=$(basename "${{ steps.changed-modules.outputs.files }}" .py)
+          mv "{$LABEL_NAME}_temp_mkdocs" temp_project
+
+      - name: Deploy to GitHub Pages
+        if: steps.changed-modules.outputs.files != ''
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./temp_project/site
+          destination_dir: "${{ steps.changed-modules.outputs.files }}"
 
