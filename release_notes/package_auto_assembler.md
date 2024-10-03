@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.5.6
+
+    - fixes to some problems caused by missing optional .paa.config parameters
+
 ### 0.5.5
 
     - minor fixes to file imports from paa artifacts
