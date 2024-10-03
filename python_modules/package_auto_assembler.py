@@ -1355,7 +1355,7 @@ class LongDocHandler:
         if output_path is None:
             output_path = self.markdown_filepath
 
-        if os.path.exists(notebook_path):
+        if (notebook_path is not None) and os.path.exists(notebook_path):
 
             # Load the notebook
             with open(notebook_path, encoding='utf-8') as fh:
@@ -1400,7 +1400,7 @@ class LongDocHandler:
         if kernel_name is None:
             kernel_name = self.kernel_name
 
-        if os.path.exists(notebook_path):
+        if (notebook_path is not None) and os.path.exists(notebook_path):
 
             # Load the notebook
             with open(notebook_path, encoding = 'utf-8') as fh:
@@ -3459,7 +3459,8 @@ class PackageAutoAssembler:
     fastapi_routes_filepath = attr.ib(default=None)
     mapping_filepath = attr.ib(default=None)
     licenses_filepath = attr.ib(default=None)
-    allowed_licenses = attr.ib(default=None)
+    allowed_licenses = attr.ib(default=['mit', 'apache-2.0', 'lgpl-3.0', 
+                            'bsd-3-clause', 'bsd-2-clause', '-', 'mpl-2.0'])
     example_notebook_path = attr.ib(default=None)
     versions_filepath = attr.ib(default='./lsts_package_versions.yml')
     log_filepath = attr.ib(default='./version_logs.csv')
@@ -3482,7 +3483,7 @@ class PackageAutoAssembler:
     optional_requirements_list = attr.ib(default=[])
     python_version = attr.ib(default="3.8")
     version_increment_type = attr.ib(default="patch", type = str)
-    default_version = attr.ib(default="0.0.1", type = str)
+    default_version = attr.ib(default="0.0.0", type = str)
     kernel_name = attr.ib(default = 'python', type = str)
     max_git_search_depth = attr.ib(default=5, type = int)
     artifacts_filepaths = attr.ib(default=None, type = dict)
@@ -4037,7 +4038,8 @@ class PackageAutoAssembler:
         if custom_modules is None:
             custom_modules = []
 
-        if os.path.exists(fastapi_routes_filepath) \
+        if (fastapi_routes_filepath is not None) and \
+            os.path.exists(fastapi_routes_filepath) \
                 and os.path.isfile(fastapi_routes_filepath):
 
             self._add_requirements(
