@@ -1,12 +1,9 @@
 name: Update README
 
 on:
-  # push:
-  #   branches:
-  #     - main
   workflow_dispatch:
   workflow_run:
-    workflows: ["Generate PlantUML Diagrams"]
+    workflows: ["Extract requirements"]
     types:
       - completed
 
@@ -18,7 +15,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0  # Fetches prev commits
+          fetch-depth: 0 # Fetches prev commits
 
       - name: Install Draw.io Desktop and Dependencies
         run: |
@@ -39,11 +36,11 @@ jobs:
         #   transparent: true
         #   output: docs
         #   scale: 2
-        
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: 3.10
 
       - name: Find Changed Modules
         id: changed-modules
@@ -60,7 +57,7 @@ jobs:
               echo "::set-output name=files::$(cat changed_files)"
           fi
 
-    
+
       - name: Create and activate virtual environment
         run: |
           python -m venv venv
@@ -80,7 +77,6 @@ jobs:
       - name: Update README.md
         run: |
           chmod +x ./tools/update_README.sh
-          chmod +x ./tools/update_readme_alt_content.sh
           chmod +x ./tools/update_gh_pages_links.sh
           ./tools/update_README.sh
 

@@ -128,7 +128,7 @@ jobs:
         if: steps.changed-modules.outputs.files != ''
         run: |
           LABEL_NAME=$(basename "${{ steps.changed-modules.outputs.files }}" .py)
-          mv "{$LABEL_NAME}_temp_mkdocs" temp_project
+          mv "${LABEL_NAME}_temp_mkdocs" temp_project
 
       - name: Deploy to GitHub Pages
         if: steps.changed-modules.outputs.files != ''
