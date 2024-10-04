@@ -6,11 +6,7 @@ on:
       package_name:
         description: 'Name of the package'
         required: false
-        default: 'parameterframe'
-  workflow_run:
-    workflows: ["Publish packages"]
-    types:
-      - completed
+        default: 'package_auto_assembler'
 
 jobs:
   build_site:
