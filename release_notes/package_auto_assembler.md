@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.5.7
+
+    - fixing a problem with missing package description from jupyter
+
 ### 0.5.6
 
     - fixes to some problems caused by missing optional .paa.config parameters
