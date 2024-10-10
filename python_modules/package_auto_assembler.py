@@ -48,7 +48,8 @@ __package_metadata__ = {
     "author_email": "parachute.repo@gmail.com",
     "description": "A tool to automate package creation within ci based on just .py and optionally .ipynb file.",
     "keywords" : ['python', 'packaging'],
-    'license' : 'mit'
+    'license' : 'mit',
+    "url" : 'https://kiril-mordan.github.io/reusables/package_auto_assembler/'
 }
 
 @attr.s
