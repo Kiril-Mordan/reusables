@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.40">
     
     
       
@@ -380,7 +380,7 @@
 
 <pre><code class="language-bash">paa --help
 </code></pre>
-<pre><code>Usage: paa [OPTIONS] COMMAND [ARGS]...
+<pre><code class="language-bash">Usage: paa [OPTIONS] COMMAND [ARGS]...
 
   Package Auto Assembler CLI tool.
 
@@ -407,7 +407,7 @@ Commands:
 <p>Creating config file could be useful to avoid providing parameters manually. If no config file will be provided, by default values from <code>.paa.config</code> will be used.</p>
 <pre><code class="language-bash">paa init-config  --help
 </code></pre>
-<pre><code>Usage: paa init-config [OPTIONS]
+<pre><code class="language-bash">Usage: paa init-config [OPTIONS]
 
   Initialize config file
 
@@ -417,7 +417,7 @@ Options:
 <p>Making package based on provided parameters can be useful in ci/cd pipelines to streamline creation of packages before publishing from something that could be as simple as <code>.py</code> file.</p>
 <pre><code class="language-bash">paa make-package --help
 </code></pre>
-<pre><code>Usage: paa make-package [OPTIONS] MODULE_NAME
+<pre><code class="language-bash">Usage: paa make-package [OPTIONS] MODULE_NAME
 
   Package with package-auto-assembler.
 
@@ -446,7 +446,7 @@ Options:
 <p>Installing packages for a test in local environments could be a useful step to make sure everything works as expected before pushing changes to publishing repo. This creates an instance of the package in local environment with default version, with a greatly simplified building process that avoids making documentation, versioning and so on.</p>
 <pre><code class="language-bash">paa test-install [OPTIONS] MODULE_NAME
 </code></pre>
-<pre><code>Usage: paa test-install [OPTIONS] MODULE_NAME
+<pre><code class="language-bash">Usage: paa test-install [OPTIONS] MODULE_NAME
 
   Test install module into local environment.
 
@@ -474,6 +474,7 @@ Options:
 <p>Checking vulnerabilities with <code>pip-audit</code> is usefull. This checks vulnerabilities of .py files and its local dependencies with <code>pip-audit</code>.</p>
 <pre><code class="language-bash">paa check-vulnerabilities --help
 </code></pre>
+<p>bash</p>
 <pre><code>Usage: paa check-vulnerabilities [OPTIONS] MODULE_NAME
 
   Check vulnerabilities of the module.
@@ -489,7 +490,7 @@ Options:
   --help                      Show this message and exit.
 </code></pre>
 <p>Checking license labels of module dependencies tree could be useful to prevent using some dependencies early on.</p>
-<pre><code>Usage: paa check-licenses [OPTIONS] MODULE_NAME
+<pre><code class="language-bash">Usage: paa check-licenses [OPTIONS] MODULE_NAME
 
   Check licenses of the module.
 
@@ -527,25 +528,12 @@ Options:
                            pip.
   --help                   Show this message and exit.
 </code></pre>
-<p>Cli interface provides some additional tools to analyse locally installed packages if they were build with package-auto-assembler&gt;0.4.2. These include methods to list modules, show module info, extract requirements.</p>
-<pre><code class="language-bash">paa show-module-list --help
-</code></pre>
-<pre><code>Usage: paa show-module-list [OPTIONS]
-
-  Shows module list.
-
-Options:
-  --tags TEXT  Keyword tag filters for the package.
-  --help       Show this message and exit.
-</code></pre>
-<pre><code class="language-bash">paa show-module-info --help
-</code></pre>
 <p>Packaging process could help building APIs as well. This package would call routes stored within other packages and routes stored in files to form one application, so that repeatable structure does not need to copied between projects, but instead built in one places and extended with some config files in many. Since routes are python code that can have its dependencies, it makes sense to store them within packages sometimes to take advantage of automated dependency handling and import code straight from the package, eliminating in turn situation when package release in no compatible anymore with routes based on them. </p>
 <p>Parameters for fastapi app description, middleware and run could be supplied via optional <code>.paa.api.config</code> file, with <code>DESCRIPTION</code> , <code>MIDDLEWARE</code> and <code>RUN</code> dictionary of parameters respectively. </p>
 <p>It could be beneficial to add a static page with documentation, so additional pages could be addded. First one would be accessible via <code>\mkdocs</code> and the following ones via <code>\mkdocs {i+1}</code>. Static package within package, that were packages by <code>package-auto-assemble&gt;0.5.1</code> would be accessible via <code>\{package_name}\docs</code> if available.</p>
 <pre><code class="language-bash">paa run-api-routes --help
 </code></pre>
-<pre><code>Usage: paa run-api-routes [OPTIONS]
+<pre><code class="language-bash">Usage: paa run-api-routes [OPTIONS]
 
   Run fastapi with provided routes.
 
@@ -561,9 +549,9 @@ Options:
   --help             Show this message and exit.
 </code></pre>
 <p>Storing routes within package could be convinient, but extracting them from a package is not. To mitigate that, the following exists to extract <code>routes.py</code> from a package that contains it.</p>
-<pre><code>paa extract-module-routes --help
+<pre><code class="language-bash">paa extract-module-routes --help
 </code></pre>
-<pre><code>Usage: paa extract-module-routes [OPTIONS] PACKAGE_NAME
+<pre><code class="language-bash">Usage: paa extract-module-routes [OPTIONS] PACKAGE_NAME
 
   Extracts routes for fastapi from packages that have them into a file.
 
@@ -574,7 +562,7 @@ Options:
                       be copied to.
   --help              Show this message and exit.
 </code></pre>
-<pre><code>Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
+<pre><code class="language-bash">Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
 
   Extracts artifacts from packaged module.
 
@@ -586,7 +574,7 @@ Options:
                       will be copied to.
   --help              Show this message and exit.
 </code></pre>
-<pre><code>Usage: paa extract-module-site [OPTIONS] PACKAGE_NAME
+<pre><code class="language-bash">Usage: paa extract-module-site [OPTIONS] PACKAGE_NAME
 
   Extracts static mkdocs site from packaged module.
 
@@ -597,7 +585,20 @@ Options:
                       be copied to.
   --help              Show this message and exit.
 </code></pre>
-<pre><code>Usage: paa show-module-info [OPTIONS] LABEL_NAME
+<p>Cli interface provides some additional tools to analyse locally installed packages if they were build with package-auto-assembler&gt;0.4.2. These include methods to list modules, show module info, extract requirements.</p>
+<pre><code class="language-bash">paa show-module-list --help
+</code></pre>
+<pre><code>Usage: paa show-module-list [OPTIONS]
+
+  Shows module list.
+
+Options:
+  --tags TEXT  Keyword tag filters for the package.
+  --help       Show this message and exit.
+</code></pre>
+<pre><code class="language-bash">paa show-module-info --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa show-module-info [OPTIONS] LABEL_NAME
 
   Shows module info.
 
@@ -613,7 +614,7 @@ Options:
 </code></pre>
 <pre><code class="language-bash">paa show-module-requirements --help
 </code></pre>
-<pre><code>Usage: paa show-module-requirements [OPTIONS] LABEL_NAME
+<pre><code class="language-bash">Usage: paa show-module-requirements [OPTIONS] LABEL_NAME
 
   Shows module requirements.
 
@@ -622,7 +623,7 @@ Options:
 </code></pre>
 <pre><code class="language-bash">paa show-module-licenses --help
 </code></pre>
-<pre><code>Usage: paa show-module-licenses [OPTIONS] PACKAGE_NAME
+<pre><code class="language-bash">Usage: paa show-module-licenses [OPTIONS] PACKAGE_NAME
 
   Shows module licenses.
 
@@ -630,17 +631,14 @@ Options:
   --normalize-labels  If checked, package license labels are normalized.
   --help              Show this message and exit.
 </code></pre>
-<pre><code>Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
+<pre><code class="language-bash">paa show-module-artifacts --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa show-module-artifacts [OPTIONS] LABEL_NAME
 
-  Extracts artifacts from packaged module.
+  Shows module artifacts.
 
 Options:
-  --artifact TEXT     Name of the artifact to be extracted.
-  --output-dir TEXT   Directory where artifacts extracted from the package
-                      will be copied to.
-  --output-path TEXT  Filepath to which artifact extracted from the package
-                      will be copied to.
-  --help              Show this message and exit.
+  --help  Show this message and exit.
 </code></pre>
 
 
