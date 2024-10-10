@@ -317,3 +317,16 @@ Options:
   --normalize-labels  If checked, package license labels are normalized.
   --help              Show this message and exit.
 ```
+
+``` bash
+paa show-module-artifacts --help
+```
+
+``` bash
+Usage: paa show-module-artifacts [OPTIONS] LABEL_NAME
+
+  Shows module artifacts.
+
+Options:
+  --help  Show this message and exit.
+```
