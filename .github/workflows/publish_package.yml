@@ -73,8 +73,8 @@ jobs:
 
           echo "Assembling for:"
           echo ${{ steps.changed-modules.outputs.files }}
-          echo "Test-installing paa ..."
-          paa test-install package-auto-assembler
+          #echo "Test-installing paa ..."
+          #paa test-install package-auto-assembler
           echo "Assembling..."
           ./tools/make_package.sh ${{ steps.changed-modules.outputs.files }}
           ls -la
@@ -136,5 +136,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./temp_project/site
-          destination_dir: "${{ steps.changed-modules.outputs.files }}"
+          destination_dir: "$LABEL_NAME"
 
