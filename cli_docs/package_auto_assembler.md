@@ -3,7 +3,7 @@
 paa --help
 ```
 
-```
+``` bash
 Usage: paa [OPTIONS] COMMAND [ARGS]...
 
   Package Auto Assembler CLI tool.
@@ -35,7 +35,7 @@ Creating config file could be useful to avoid providing parameters manually. If 
 paa init-config  --help
 ```
 
-```
+``` bash
 Usage: paa init-config [OPTIONS]
 
   Initialize config file
@@ -50,7 +50,7 @@ Making package based on provided parameters can be useful in ci/cd pipelines to 
 paa make-package --help
 ```
 
-```
+``` bash
 Usage: paa make-package [OPTIONS] MODULE_NAME
 
   Package with package-auto-assembler.
@@ -84,7 +84,7 @@ Installing packages for a test in local environments could be a useful step to m
 paa test-install [OPTIONS] MODULE_NAME
 ```
 
-```
+``` bash
 Usage: paa test-install [OPTIONS] MODULE_NAME
 
   Test install module into local environment.
@@ -116,7 +116,7 @@ Checking vulnerabilities with `pip-audit` is usefull. This checks vulnerabilitie
 ``` bash
 paa check-vulnerabilities --help
 ```
-
+ bash
 ```
 Usage: paa check-vulnerabilities [OPTIONS] MODULE_NAME
 
@@ -135,7 +135,7 @@ Options:
 
 Checking license labels of module dependencies tree could be useful to prevent using some dependencies early on.
 
-```
+``` bash
 Usage: paa check-licenses [OPTIONS] MODULE_NAME
 
   Check licenses of the module.
@@ -180,6 +180,80 @@ Options:
   --help                   Show this message and exit.
 ```
 
+Packaging process could help building APIs as well. This package would call routes stored within other packages and routes stored in files to form one application, so that repeatable structure does not need to copied between projects, but instead built in one places and extended with some config files in many. Since routes are python code that can have its dependencies, it makes sense to store them within packages sometimes to take advantage of automated dependency handling and import code straight from the package, eliminating in turn situation when package release in no compatible anymore with routes based on them. 
+
+Parameters for fastapi app description, middleware and run could be supplied via optional `.paa.api.config` file, with `DESCRIPTION` , `MIDDLEWARE` and `RUN` dictionary of parameters respectively. 
+
+It could be beneficial to add a static page with documentation, so additional pages could be addded. First one would be accessible via `\mkdocs` and the following ones via `\mkdocs {i+1}`. Static package within package, that were packages by `package-auto-assemble>0.5.1` would be accessible via `\{package_name}\docs` if available.
+
+``` bash
+paa run-api-routes --help
+```
+
+``` bash
+Usage: paa run-api-routes [OPTIONS]
+
+  Run fastapi with provided routes.
+
+Options:
+  --api-config TEXT  Path to yml config file with app description, middleware
+                     parameters, run parameters, `.paa.api.config` is used by
+                     default.
+  --host TEXT        The host to bind to.
+  --port TEXT        The port to bind to.
+  --package TEXT     Package names from which routes will be added to the app.
+  --route TEXT       Paths to routes which will be added to the app.
+  --docs TEXT        Paths to static docs site which will be added to the app.
+  --help             Show this message and exit.
+```
+
+Storing routes within package could be convinient, but extracting them from a package is not. To mitigate that, the following exists to extract `routes.py` from a package that contains it.
+
+``` bash
+paa extract-module-routes --help
+```
+
+``` bash
+Usage: paa extract-module-routes [OPTIONS] PACKAGE_NAME
+
+  Extracts routes for fastapi from packages that have them into a file.
+
+Options:
+  --output-dir TEXT   Directory where routes extracted from the package will
+                      be copied to.
+  --output-path TEXT  Filepath to which routes extracted from the package will
+                      be copied to.
+  --help              Show this message and exit.
+```
+
+``` bash
+Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
+
+  Extracts artifacts from packaged module.
+
+Options:
+  --artifact TEXT     Name of the artifact to be extracted.
+  --output-dir TEXT   Directory where artifacts extracted from the package
+                      will be copied to.
+  --output-path TEXT  Filepath to which artifact extracted from the package
+                      will be copied to.
+  --help              Show this message and exit.
+```
+
+``` bash
+Usage: paa extract-module-site [OPTIONS] PACKAGE_NAME
+
+  Extracts static mkdocs site from packaged module.
+
+Options:
+  --output-dir TEXT   Directory where routes extracted from the package will
+                      be copied to.
+  --output-path TEXT  Filepath to which routes extracted from the package will
+                      be copied to.
+  --help              Show this message and exit.
+```
+
+
 Cli interface provides some additional tools to analyse locally installed packages if they were build with package-auto-assembler>0.4.2. These include methods to list modules, show module info, extract requirements.
 
 ``` bash
@@ -201,80 +275,7 @@ Options:
 paa show-module-info --help
 ```
 
-Packaging process could help building APIs as well. This package would call routes stored within other packages and routes stored in files to form one application, so that repeatable structure does not need to copied between projects, but instead built in one places and extended with some config files in many. Since routes are python code that can have its dependencies, it makes sense to store them within packages sometimes to take advantage of automated dependency handling and import code straight from the package, eliminating in turn situation when package release in no compatible anymore with routes based on them. 
-
-Parameters for fastapi app description, middleware and run could be supplied via optional `.paa.api.config` file, with `DESCRIPTION` , `MIDDLEWARE` and `RUN` dictionary of parameters respectively. 
-
-It could be beneficial to add a static page with documentation, so additional pages could be addded. First one would be accessible via `\mkdocs` and the following ones via `\mkdocs {i+1}`. Static package within package, that were packages by `package-auto-assemble>0.5.1` would be accessible via `\{package_name}\docs` if available.
-
 ``` bash
-paa run-api-routes --help
-```
-
-```
-Usage: paa run-api-routes [OPTIONS]
-
-  Run fastapi with provided routes.
-
-Options:
-  --api-config TEXT  Path to yml config file with app description, middleware
-                     parameters, run parameters, `.paa.api.config` is used by
-                     default.
-  --host TEXT        The host to bind to.
-  --port TEXT        The port to bind to.
-  --package TEXT     Package names from which routes will be added to the app.
-  --route TEXT       Paths to routes which will be added to the app.
-  --docs TEXT        Paths to static docs site which will be added to the app.
-  --help             Show this message and exit.
-```
-
-Storing routes within package could be convinient, but extracting them from a package is not. To mitigate that, the following exists to extract `routes.py` from a package that contains it.
-
-```
-paa extract-module-routes --help
-```
-
-```
-Usage: paa extract-module-routes [OPTIONS] PACKAGE_NAME
-
-  Extracts routes for fastapi from packages that have them into a file.
-
-Options:
-  --output-dir TEXT   Directory where routes extracted from the package will
-                      be copied to.
-  --output-path TEXT  Filepath to which routes extracted from the package will
-                      be copied to.
-  --help              Show this message and exit.
-```
-
-```
-Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
-
-  Extracts artifacts from packaged module.
-
-Options:
-  --artifact TEXT     Name of the artifact to be extracted.
-  --output-dir TEXT   Directory where artifacts extracted from the package
-                      will be copied to.
-  --output-path TEXT  Filepath to which artifact extracted from the package
-                      will be copied to.
-  --help              Show this message and exit.
-```
-
-```
-Usage: paa extract-module-site [OPTIONS] PACKAGE_NAME
-
-  Extracts static mkdocs site from packaged module.
-
-Options:
-  --output-dir TEXT   Directory where routes extracted from the package will
-                      be copied to.
-  --output-path TEXT  Filepath to which routes extracted from the package will
-                      be copied to.
-  --help              Show this message and exit.
-```
-
-```
 Usage: paa show-module-info [OPTIONS] LABEL_NAME
 
   Shows module info.
@@ -294,7 +295,7 @@ Options:
 paa show-module-requirements --help
 ```
 
-```
+``` bash
 Usage: paa show-module-requirements [OPTIONS] LABEL_NAME
 
   Shows module requirements.
@@ -307,7 +308,7 @@ Options:
 paa show-module-licenses --help
 ```
 
-```
+``` bash
 Usage: paa show-module-licenses [OPTIONS] PACKAGE_NAME
 
   Shows module licenses.
@@ -317,16 +318,15 @@ Options:
   --help              Show this message and exit.
 ```
 
+``` bash
+paa show-module-artifacts --help
 ```
-Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
 
-  Extracts artifacts from packaged module.
+``` bash
+Usage: paa show-module-artifacts [OPTIONS] LABEL_NAME
+
+  Shows module artifacts.
 
 Options:
-  --artifact TEXT     Name of the artifact to be extracted.
-  --output-dir TEXT   Directory where artifacts extracted from the package
-                      will be copied to.
-  --output-path TEXT  Filepath to which artifact extracted from the package
-                      will be copied to.
-  --help              Show this message and exit.
+  --help  Show this message and exit.
 ```

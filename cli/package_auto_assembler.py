@@ -306,7 +306,7 @@ def make_package(ctx,
         "check_dependencies_licenses" : test_install_config.get("check_dependencies_licenses", True)
     }
 
-    if test_install_config.get("example_notebook_path"):
+    if test_install_config.get("example_notebooks_path"):
         paa_params["example_notebook_path"] = os.path.join(test_install_config["example_notebooks_path"],
                                                            f"{module_name}.ipynb")
 
