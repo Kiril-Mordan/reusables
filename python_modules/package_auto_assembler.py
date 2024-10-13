@@ -49,7 +49,11 @@ __package_metadata__ = {
     "description": "A tool to automate package creation within ci based on just .py and optionally .ipynb file.",
     "keywords" : ['python', 'packaging'],
     'license' : 'mit',
-    "url" : 'https://kiril-mordan.github.io/reusables/package_auto_assembler/'
+    "url" : 'https://kiril-mordan.github.io/reusables/package_auto_assembler/',
+    "artifact_urls" : {
+        'downloaded.md' : 'https://raw.githubusercontent.com/Kiril-Mordan/reusables/refs/heads/main/docs/module_from_raw_file.md',
+        'downloaded.png' : 'https://raw.githubusercontent.com/Kiril-Mordan/reusables/refs/heads/main/docs/reuse_logo.png'
+    }
 }
 
 @attr.s
@@ -1749,10 +1753,13 @@ class SetupDirHandler:
                 ]
             }
 
+        ###
+
         setup_content = "from setuptools import setup\n\n"
 
         setup_content += "import codecs\n"
         setup_content += "import os\n\n"
+
         setup_content += "here = os.path.abspath(os.path.dirname(__file__))\n"
         setup_content += 'path_to_readme = os.path.join(here, "README.md")\n\n'
 
@@ -2683,6 +2690,40 @@ class ArtifactsHandler:
                 artifact_name += "/**/*"
                 manifest_lines.append(
                     f"recursive-include {module_name}/{artifact_name} \n")
+            elif artifacts_filepath.endswith(".link"):
+
+                # Open the file and read the content
+                with open(artifacts_filepath, 'r') as file:
+                    artifacts_url = file.readline().strip()
+
+                try:
+
+                    artifact_name = artifact_name.replace(".link", "")
+
+                    # Make a GET request to download the file
+                    response = requests.get(artifacts_url, stream=True)
+
+                    # Open the file in binary mode and write the content to it
+                    with open(os.path.join(setup_directory, artifact_name), 'wb') as file:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:  # Filter out keep-alive chunks
+                                file.write(chunk)
+
+                    manifest_lines.append(f"include {module_name}/{artifact_name} \n")
+
+                except Exception as e:
+                    self.logger.warning(f"Failed to download {artifacts_filepath} artifact!")
+            elif artifact_name.endswith(".link"):
+
+                try:
+
+                    # Open the file in binary mode and write the content to it
+                    with open(os.path.join(setup_directory, artifact_name), 'wb') as file:
+                        file.write(f"{artifacts_filepath}")
+
+                    manifest_lines.append(f"include {module_name}/{artifact_name} \n")
+
+
             else:
                 shutil.copy(artifacts_filepath, 
                     os.path.join(setup_directory, artifact_name))
@@ -4214,6 +4255,15 @@ class PackageAutoAssembler:
             if (self.config_filepath is not None \
                 and os.path.exists(self.config_filepath)):
                 artifacts_filepaths['.paa.tracking/.paa.config'] = self.config_filepath
+
+            if 'artifact_urls' in self.metadata.keys():
+                artifact_urls=self.metadata['artifact_urls']
+                del self.metadata['artifact_urls']
+
+                for artifact_name, artifact_url in artifact_urls.items():
+                    artifacts_filepaths[artifact_name + '.link'] = artifact_url
+
+
 
         self.artifacts_h.make_manifest(
             artifacts_filepaths = artifacts_filepaths
