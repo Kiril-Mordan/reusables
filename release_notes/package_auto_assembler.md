@@ -1,5 +1,13 @@
 # Release notes
 
+### 0.5.8
+
+    - using module level metadata to pass links from which files are not downloaded during packaging
+
+    - cli tools to show links and refresh artifacts from links
+
+    - support for artifacts from links
+
 ### 0.5.7
 
     - fixing a problem with missing package description from jupyter
