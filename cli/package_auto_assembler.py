@@ -1195,6 +1195,65 @@ def extract_module_site(ctx,
     else:
         click.echo(f"Mkdocs static page was not found in {package_name}!")
 
+@click.command()
+@click.argument('label_name')
+@click.pass_context
+def show_module_artifact_links(ctx,
+        label_name):
+    """Shows module artifact links."""
+
+    ah = ArtifactsHandler(
+        module_name = label_name.replace('-','_'))
+
+    link_for_artifacts, link_availability = ah.show_module_links()
+
+    if link_for_artifacts:
+
+        artifact_names = [a.replace(".link","") for a,l in link_for_artifacts.items()]
+        artifact_links = [l for a,l in  link_for_artifacts.items()]
+        link_availabilities = [la for a,la in  link_availability.items()]
+
+        # Calculate the maximum length of package names for formatting
+        max_name_length = max(len(a) for a in artifact_names) if artifact_names else 0
+        max_link_length = max(len(l) for l in artifact_links) if artifact_links else 0
+        max_link_a_length = max(len(str(la)) for la in link_availabilities) if link_availabilities else 0
+        
+        # Print the header
+        header_name = "Artifact"
+        header_link = "Link"
+        header_availability = "Available"
+
+        click.echo(f"{header_name:<{max_name_length}} {header_link:<{max_link_length}} {header_availability:<{max_link_a_length}}")
+        click.echo(f"{'-' * max_name_length} {'-' * max_link_length} {'-' * max_link_a_length}")
+
+        # Print each package and its version
+        for artifact, link in link_for_artifacts.items():
+            available = link_availability[artifact]
+            artifact = artifact.replace(".link","")
+            click.echo(f"{artifact:<{max_name_length}} {link:<{max_link_length}} {str(available):<{max_link_a_length}}")
+    
+    else:
+        click.echo(f"No link for package artifacts found for {label_name}!")
+
+@click.command()
+@click.argument('label_name')
+@click.pass_context
+def refresh_module_artifacts(ctx,
+        label_name):
+    """Refreshes module artifact from links."""
+
+    ah = ArtifactsHandler(
+        module_name = label_name.replace('-','_'))
+
+    failed_refreshes = ah.refresh_artifacts_from_link()
+
+    link_for_artifacts, _ = ah.show_module_links()
+
+    click.echo(f"{len(link_for_artifacts) - failed_refreshes} links refreshed for {label_name}")
+
+    
+
+
 cli.add_command(init_config, "init-config")
 cli.add_command(test_install, "test-install")
 cli.add_command(make_package, "make-package")
@@ -1207,6 +1266,8 @@ cli.add_command(show_module_info, "show-module-info")
 cli.add_command(show_module_requirements, "show-module-requirements")
 cli.add_command(show_module_licenses, "show-module-licenses")
 cli.add_command(show_module_artifacts, "show-module-artifacts")
+cli.add_command(show_module_artifact_links, "show-module-artifacts-links")
+cli.add_command(refresh_module_artifacts, "refresh-module-artifacts")
 cli.add_command(extract_module_routes, "extract-module-routes")
 cli.add_command(extract_module_artifacts, "extract-module-artifacts")
 cli.add_command(extract_module_site, "extract-module-site")
