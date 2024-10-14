@@ -12,21 +12,23 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  check-licenses            Check licenses of the module.
-  check-vulnerabilities     Check vulnerabilities of the module.
-  extract-module-artifacts  Extracts artifacts from packaged module.
-  extract-module-routes     Extracts routes for fastapi from packages...
-  extract-module-site       Extracts static mkdocs site from packaged...
-  init-config               Initialize config file
-  make-package              Package with package-auto-assembler.
-  run-api-routes            Run fastapi with provided routes.
-  show-module-artifacts     Shows module artifacts.
-  show-module-info          Shows module info.
-  show-module-licenses      Shows module licenses.
-  show-module-list          Shows module list.
-  show-module-requirements  Shows module requirements.
-  test-install              Test install module into local environment.
-  update-release-notes      Update release notes.
+  check-licenses               Check licenses of the module.
+  check-vulnerabilities        Check vulnerabilities of the module.
+  extract-module-artifacts     Extracts artifacts from packaged module.
+  extract-module-routes        Extracts routes for fastapi from packages...
+  extract-module-site          Extracts static mkdocs site from packaged...
+  init-config                  Initialize config file
+  make-package                 Package with package-auto-assembler.
+  refresh-module-artifacts     Refreshes module artifact from links.
+  run-api-routes               Run fastapi with provided routes.
+  show-module-artifacts        Shows module artifacts.
+  show-module-artifacts-links  Shows module artifact links.
+  show-module-info             Shows module info.
+  show-module-licenses         Shows module licenses.
+  show-module-list             Shows module list.
+  show-module-requirements     Shows module requirements.
+  test-install                 Test install module into local environment.
+  update-release-notes         Update release notes.
 ```
 
 Creating config file could be useful to avoid providing parameters manually. If no config file will be provided, by default values from `.paa.config` will be used.
@@ -226,19 +228,6 @@ Options:
   --help              Show this message and exit.
 ```
 
-``` bash
-Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
-
-  Extracts artifacts from packaged module.
-
-Options:
-  --artifact TEXT     Name of the artifact to be extracted.
-  --output-dir TEXT   Directory where artifacts extracted from the package
-                      will be copied to.
-  --output-path TEXT  Filepath to which artifact extracted from the package
-                      will be copied to.
-  --help              Show this message and exit.
-```
 
 ``` bash
 Usage: paa extract-module-site [OPTIONS] PACKAGE_NAME
@@ -318,6 +307,8 @@ Options:
   --help              Show this message and exit.
 ```
 
+There is an option to package artifacts with the code. Packaged artifacts can be listed. 
+
 ``` bash
 paa show-module-artifacts --help
 ```
@@ -326,6 +317,56 @@ paa show-module-artifacts --help
 Usage: paa show-module-artifacts [OPTIONS] LABEL_NAME
 
   Shows module artifacts.
+
+Options:
+  --help  Show this message and exit.
+```
+
+Another option to access the artifacts is to copy them to a selected directory.
+
+``` bash
+paa extract-module-artifacts --help
+```
+
+``` bash
+Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
+
+  Extracts artifacts from packaged module.
+
+Options:
+  --artifact TEXT     Name of the artifact to be extracted.
+  --output-dir TEXT   Directory where artifacts extracted from the package
+                      will be copied to.
+  --output-path TEXT  Filepath to which artifact extracted from the package
+                      will be copied to.
+  --help              Show this message and exit.
+```
+
+
+
+Some artifacts can come from links and there might be a need to refresh or even download these files (depending on how a link was provided). I might be useful to inspect which artifacts come from links, whether these links are available and refresh these artifacts within installed package.
+
+``` bash
+paa show-module-artifacts-links --help
+```
+
+``` bash
+Usage: paa show-module-artifacts-links [OPTIONS] LABEL_NAME
+
+  Shows module artifact links.
+
+Options:
+  --help  Show this message and exit.
+```
+
+``` bash
+paa refresh-module-artifacts --help
+```
+
+``` bash
+Usage: paa refresh-module-artifacts [OPTIONS] LABEL_NAME
+
+  Refreshes module artifact from links.
 
 Options:
   --help  Show this message and exit.

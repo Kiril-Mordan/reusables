@@ -40,6 +40,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 import importlib.resources as pkg_resources
+from pathlib import Path
 
 
 # Metadata for package creation
@@ -1749,10 +1750,13 @@ class SetupDirHandler:
                 ]
             }
 
+        ###
+
         setup_content = "from setuptools import setup\n\n"
 
         setup_content += "import codecs\n"
         setup_content += "import os\n\n"
+
         setup_content += "here = os.path.abspath(os.path.dirname(__file__))\n"
         setup_content += 'path_to_readme = os.path.join(here, "README.md")\n\n'
 
@@ -2586,6 +2590,41 @@ class ArtifactsHandler:
 
             self.logger = logger
 
+    def _get_artifact_links(self, 
+                            artifact_name : str, 
+                            artifacts_filepath : str,
+                            use_artifact_name : bool = True):
+
+        link_artifacts_filepaths = {}
+
+        dir_skip = len(Path(artifact_name).parts) +1 
+
+        link_files = [f for f in Path(artifacts_filepath).rglob('*.link')]
+
+        for lf in link_files:
+            if use_artifact_name:
+                cleaned_lf = str(os.path.join(
+                    artifact_name,Path(*lf.parts[dir_skip:])))
+            else:
+                cleaned_lf = str(lf)
+
+            link_artifacts_filepaths[cleaned_lf] = str(lf)
+
+        return link_artifacts_filepaths
+
+    def _check_file_exists(self, url : str):
+
+        try:
+            response = requests.head(url, allow_redirects=True)
+            # Status codes 200 (OK) or 302/301 (redirect) indicate the file exists
+            if response.status_code == 200:
+                return True
+            else:
+                return False
+        except requests.RequestException as e:
+            print(f"Error occurred: {e}")
+            return False
+
     def load_additional_artifacts(self, artifacts_dir : str = None):
 
         """
@@ -2632,7 +2671,6 @@ class ArtifactsHandler:
         
         return package_artifacts
 
-
     def make_manifest(self,
                     module_name : str = None,
                     artifacts_filepaths: dict = None,
@@ -2671,6 +2709,22 @@ class ArtifactsHandler:
 
         manifest_lines = []
         updated_artifacts_filepaths = {}
+        link_artifacts_filepaths = {}
+
+        for artifact_name, artifacts_filepath in artifacts_filepaths.items():
+
+            if os.path.isdir(artifacts_filepath):
+
+                print(artifact_name)
+                print(artifacts_filepath)
+
+                link_artifacts_filepaths = self._get_artifact_links(
+                    artifact_name = artifact_name, 
+                    artifacts_filepath = artifacts_filepath
+                )
+
+        artifacts_filepaths.update(link_artifacts_filepaths)
+
         # copy files and create manifest
         for artifact_name, artifacts_filepath in artifacts_filepaths.items():
 
@@ -2683,6 +2737,50 @@ class ArtifactsHandler:
                 artifact_name += "/**/*"
                 manifest_lines.append(
                     f"recursive-include {module_name}/{artifact_name} \n")
+            elif artifacts_filepath.endswith(".link"):
+                
+                try:
+
+                    # Open the file and read the content
+                    with open(artifacts_filepath, 'r') as file:
+                        artifacts_url = file.readline().strip()
+
+                    # Add link file
+                    shutil.copy(artifacts_filepath, 
+                        os.path.join(setup_directory, artifact_name))
+
+                    manifest_lines.append(f"include {module_name}/{artifact_name} \n")
+
+                    updated_artifacts_filepaths[artifact_name] = artifacts_filepath
+
+                    artifact_name = artifact_name.replace(".link", "")
+
+                    # Make a GET request to download the file
+                    response = requests.get(artifacts_url, stream=True)
+
+                    # Open the file in binary mode and write the content to it
+                    with open(os.path.join(setup_directory, artifact_name), 'wb') as file:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:  # Filter out keep-alive chunks
+                                file.write(chunk)
+
+                    manifest_lines.append(f"include {module_name}/{artifact_name} \n")
+
+                except Exception as e:
+                    self.logger.warning(f"Failed to download {artifacts_filepath} artifact!")
+            elif artifact_name.endswith(".link"):
+
+                try:
+
+                    # Open the file in binary mode and write the content to it
+                    with open(os.path.join(setup_directory, artifact_name), 'w') as file:
+                        file.write(f"{artifacts_filepath}")
+
+                    manifest_lines.append(f"include {module_name}/{artifact_name} \n")
+                except Exception as e:
+                    self.logger.warning(f"Failed to save {artifacts_filepath} link as artifact!")
+
+
             else:
                 shutil.copy(artifacts_filepath, 
                     os.path.join(setup_directory, artifact_name))
@@ -2696,8 +2794,101 @@ class ArtifactsHandler:
         self.artifacts_filepaths = updated_artifacts_filepaths
         self.manifest_lines = manifest_lines
 
+    def show_module_links(self,  module_name : str = None):
+
+        """
+        Show link available within a package.
+        """
+
+        if module_name is None:
+            module_name = self.module_name
+
+        package_path = pkg_resources.files(module_name)
+
+        link_for_artifacts = {}
+        link_availability = {}
+
+        if os.path.exists(package_path):
+
+            link_artifacts_filepaths = self._get_artifact_links(
+                artifact_name = 'artifacts', 
+                artifacts_filepath = os.path.join(package_path, 'artifacts')
+            )
+
+            for artifact_name, artifacts_filepath in link_artifacts_filepaths.items():
+
+                try:
+
+                    # Open the file and read the content
+                    with open(artifacts_filepath, 'r') as file:
+                        artifacts_url = file.readline().strip()
+            
+                    link_for_artifacts[os.path.basename(artifact_name)] = artifacts_url
+                    link_availability[os.path.basename(artifact_name)] = self._check_file_exists(artifacts_url)
+
+                except Exception as e:
+                    self.logger.warning(f"Failed to read {artifacts_filepath} link!")
+
+        else:
+            raise Exception(f"Package {module_name} was not found!")
+
+        return link_for_artifacts, link_availability
+
+    def refresh_artifacts_from_link(self, module_name : str = None):
+
+        """
+        Refresh artifacts based on link in packaged artifacts
+        """
+
+        if module_name is None:
+            module_name = self.module_name
+
+        package_path = pkg_resources.files(module_name)
+
+        failed_refreshes = 0
+
+        if os.path.exists(package_path):
+
+            link_artifacts_filepaths = self._get_artifact_links(
+                artifact_name = 'artifacts', 
+                artifacts_filepath = os.path.join(package_path, 'artifacts'),
+                use_artifact_name = False
+            )
+
+            for artifact_name, artifacts_filepath in link_artifacts_filepaths.items():
+
+                try:
+
+                    # Open the file and read the content
+                    with open(artifacts_filepath, 'r') as file:
+                        artifacts_url = file.readline().strip()
+
+                    artifact_name = artifact_name.replace(".link", "")
+
+                    # Make a GET request to download the file
+                    response = requests.get(artifacts_url, stream=True)
+
+                    # Open the file in binary mode and write the content to it
+                    with open(os.path.join(package_path, artifact_name), 'wb') as file:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:  # Filter out keep-alive chunks
+                                file.write(chunk)
+
+                except Exception as e:
+                    failed_refreshes += 1
+                    self.logger.warning(
+                        f"Failed to refresh {os.path.basename(artifact_name)} with  {artifacts_url}!")
+
+        else:
+            raise Exception(f"Package {module_name} was not found!")
+
+        return failed_refreshes
 
     def write_mafifest(self):
+
+        """
+        Write prepared manifest to setup dir.
+        """
 
         manifest_filepath = os.path.join(self.setup_directory,
                 'MANIFEST.in')
@@ -4214,6 +4405,16 @@ class PackageAutoAssembler:
             if (self.config_filepath is not None \
                 and os.path.exists(self.config_filepath)):
                 artifacts_filepaths['.paa.tracking/.paa.config'] = self.config_filepath
+
+            if 'artifact_urls' in self.metadata.keys():
+                artifact_urls=self.metadata['artifact_urls']
+                del self.metadata['artifact_urls']
+
+                for artifact_name, artifact_url in artifact_urls.items():
+                    artifacts_filepaths[
+                        os.path.join('artifacts',artifact_name + '.link')] = artifact_url
+
+
 
         self.artifacts_h.make_manifest(
             artifacts_filepaths = artifacts_filepaths
