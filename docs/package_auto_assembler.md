@@ -1346,7 +1346,55 @@ RUN : {
 where DESCRIPTION contains parameters for `FastAPI`, MIDDLEWARE for `CORSMiddleware` and RUN for `uvicorn.run`
 
 
-### 12. Making a package
+### 12. Adding artifacts to packages
+
+The tool allows to add files to packages that could be accessed from the package or extracted into selected directory.
+
+There are different types of artifacts with a package like this:
+- `.paa.tracking` : includes some tracking files for the purposes of the tool, added to every package
+- `mkdocs` : optional static mkdocs site 
+- `artifacts` contains directories, files and links to files
+
+Tracking files are added automatically of artifacts adding was not turned off. At the moment contains:
+- `.paa.config` : config file that specifies how paa show work
+- `.paa.version`: version of `package-auto-assembler` that was used for packaging
+- `release_notes.md` : latest release notes for the package
+- `version_logs.csv` : logs for version updates for all packages in the packaging repo
+- `lsts_package_versions.yml` : latests versions of all packages in the packaging repo
+- `package_mapping.json` : additional user-provided remapping of package import names to install names
+- `package_licenses.json` : additional user-provided license labels to overwrite detected ones
+- `notebook.ipynb` : optional jupyter notebook that was used for package description
+
+User provided artifacts could be provided in two ways:
+- adding directory, file or link to the file under `artifacts/<package_name>`
+
+These files would be packaged with the packages, and files from links would be downloaded and packaged as well.
+
+- adding `artifact_urls` dictionary to `__package_metadata__` within module `.py` file
+
+Example of `__package_metadata__` with these additional dictionary would be:
+
+```python
+__package_metadata__ = {
+    "author": "Kyrylo Mordan",
+    "author_email": "parachute.repo@gmail.com",
+    "description": "A tool to automate package creation within ci based on just .py and optionally .ipynb file.",
+    "keywords" : ['python', 'packaging'],
+    'license' : 'mit',
+    "url" : 'https://kiril-mordan.github.io/reusables/package_auto_assembler/',
+    "artifact_urls" : {
+        'downloaded.md' : 'https://raw.githubusercontent.com/Kiril-Mordan/reusables/refs/heads/main/docs/module_from_raw_file.md',
+        'downloaded.png' : 'https://raw.githubusercontent.com/Kiril-Mordan/reusables/refs/heads/main/docs/reuse_logo.png'
+    }
+}
+```
+
+where key would contain name of the artifact and value its link.
+
+These files would not be downloaded and only links would be packaged. After package installation both kinds of links could be refreshed/donwloaded using [`cli interface`](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/) from `package-auto-assembler`.
+
+
+### 13. Making a package
 
 Main wrapper for the package integrates described above components into a class that could be used to build package building pipelines within python scripts. 
 
@@ -1579,7 +1627,7 @@ paa.make_package(
 
 
 
-### 13. Making simple MkDocs site
+### 14. Making simple MkDocs site
 
 Package documentation can be presented in a form of mkdocs static site, which could be either served or deployed to something like github packages. 
 
