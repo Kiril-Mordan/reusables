@@ -891,13 +891,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#12-making-a-package" class="md-nav__link">
+  <a href="#12-adding-artifacts-to-packages" class="md-nav__link">
     <span class="md-ellipsis">
-      12. Making a package
+      12. Adding artifacts to packages
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="12. Making a package">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-making-a-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      13. Making a package
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13. Making a package">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -996,13 +1005,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#13-making-simple-mkdocs-site" class="md-nav__link">
+  <a href="#14-making-simple-mkdocs-site" class="md-nav__link">
     <span class="md-ellipsis">
-      13. Making simple MkDocs site
+      14. Making simple MkDocs site
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="13. Making simple MkDocs site">
+    <nav class="md-nav" aria-label="14. Making simple MkDocs site">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1630,13 +1639,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#12-making-a-package" class="md-nav__link">
+  <a href="#12-adding-artifacts-to-packages" class="md-nav__link">
     <span class="md-ellipsis">
-      12. Making a package
+      12. Adding artifacts to packages
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="12. Making a package">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-making-a-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      13. Making a package
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13. Making a package">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1735,13 +1753,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#13-making-simple-mkdocs-site" class="md-nav__link">
+  <a href="#14-making-simple-mkdocs-site" class="md-nav__link">
     <span class="md-ellipsis">
-      13. Making simple MkDocs site
+      14. Making simple MkDocs site
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="13. Making simple MkDocs site">
+    <nav class="md-nav" aria-label="14. Making simple MkDocs site">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2708,7 +2726,44 @@ RUN : {
 }
 </code></pre>
 <p>where DESCRIPTION contains parameters for <code>FastAPI</code>, MIDDLEWARE for <code>CORSMiddleware</code> and RUN for <code>uvicorn.run</code></p>
-<h3 id="12-making-a-package">12. Making a package</h3>
+<h3 id="12-adding-artifacts-to-packages">12. Adding artifacts to packages</h3>
+<p>The tool allows to add files to packages that could be accessed from the package or extracted into selected directory.</p>
+<p>There are different types of artifacts with a package like this:
+- <code>.paa.tracking</code> : includes some tracking files for the purposes of the tool, added to every package
+- <code>mkdocs</code> : optional static mkdocs site 
+- <code>artifacts</code> contains directories, files and links to files</p>
+<p>Tracking files are added automatically of artifacts adding was not turned off. At the moment contains:
+- <code>.paa.config</code> : config file that specifies how paa show work
+- <code>.paa.version</code>: version of <code>package-auto-assembler</code> that was used for packaging
+- <code>release_notes.md</code> : latest release notes for the package
+- <code>version_logs.csv</code> : logs for version updates for all packages in the packaging repo
+- <code>lsts_package_versions.yml</code> : latests versions of all packages in the packaging repo
+- <code>package_mapping.json</code> : additional user-provided remapping of package import names to install names
+- <code>package_licenses.json</code> : additional user-provided license labels to overwrite detected ones
+- <code>notebook.ipynb</code> : optional jupyter notebook that was used for package description</p>
+<p>User provided artifacts could be provided in two ways:
+- adding directory, file or link to the file under <code>artifacts/&lt;package_name&gt;</code></p>
+<p>These files would be packaged with the packages, and files from links would be downloaded and packaged as well.</p>
+<ul>
+<li>adding <code>artifact_urls</code> dictionary to <code>__package_metadata__</code> within module <code>.py</code> file</li>
+</ul>
+<p>Example of <code>__package_metadata__</code> with these additional dictionary would be:</p>
+<pre><code class="language-python">__package_metadata__ = {
+    &quot;author&quot;: &quot;Kyrylo Mordan&quot;,
+    &quot;author_email&quot;: &quot;parachute.repo@gmail.com&quot;,
+    &quot;description&quot;: &quot;A tool to automate package creation within ci based on just .py and optionally .ipynb file.&quot;,
+    &quot;keywords&quot; : ['python', 'packaging'],
+    'license' : 'mit',
+    &quot;url&quot; : 'https://kiril-mordan.github.io/reusables/package_auto_assembler/',
+    &quot;artifact_urls&quot; : {
+        'downloaded.md' : 'https://raw.githubusercontent.com/Kiril-Mordan/reusables/refs/heads/main/docs/module_from_raw_file.md',
+        'downloaded.png' : 'https://raw.githubusercontent.com/Kiril-Mordan/reusables/refs/heads/main/docs/reuse_logo.png'
+    }
+}
+</code></pre>
+<p>where key would contain name of the artifact and value its link.</p>
+<p>These files would not be downloaded and only links would be packaged. After package installation both kinds of links could be refreshed/donwloaded using <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/"><code>cli interface</code></a> from <code>package-auto-assembler</code>.</p>
+<h3 id="13-making-a-package">13. Making a package</h3>
 <p>Main wrapper for the package integrates described above components into a class that could be used to build package building pipelines within python scripts. </p>
 <p>To simplify usage <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/">cli interface</a> is recomended instead. </p>
 <h4 id="initializing-packageautoassembler">Initializing PackageAutoAssembler</h4>
@@ -2876,7 +2931,7 @@ No known vulnerabilities found
 
 CompletedProcess(args=['python', './example_module/setup.py', 'sdist', 'bdist_wheel'], returncode=0, stdout="running sdist\nrunning egg_info\nwriting example_module.egg-info/PKG-INFO\nwriting dependency_links to example_module.egg-info/dependency_links.txt\nwriting entry points to example_module.egg-info/entry_points.txt\nwriting requirements to example_module.egg-info/requires.txt\nwriting top-level names to example_module.egg-info/top_level.txt\nreading manifest file 'example_module.egg-info/SOURCES.txt'\nwriting manifest file 'example_module.egg-info/SOURCES.txt'\nrunning check\ncreating example_module-0.0.0\ncreating example_module-0.0.0/example_module\ncreating example_module-0.0.0/example_module.egg-info\ncopying files to example_module-0.0.0...\ncopying example_module/__init__.py -&gt; example_module-0.0.0/example_module\ncopying example_module/cli.py -&gt; example_module-0.0.0/example_module\ncopying example_module/example_module.py -&gt; example_module-0.0.0/example_module\ncopying example_module/setup.py -&gt; example_module-0.0.0/example_module\ncopying example_module.egg-info/PKG-INFO -&gt; example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -&gt; example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/dependency_links.txt -&gt; example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/entry_points.txt -&gt; example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/requires.txt -&gt; example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/top_level.txt -&gt; example_module-0.0.0/example_module.egg-info\ncopying example_module.egg-info/SOURCES.txt -&gt; example_module-0.0.0/example_module.egg-info\nWriting example_module-0.0.0/setup.cfg\nCreating tar archive\nremoving 'example_module-0.0.0' (and everything under it)\nrunning bdist_wheel\nrunning build\nrunning build_py\ncopying example_module/example_module.py -&gt; build/lib/example_module\ncopying example_module/__init__.py -&gt; build/lib/example_module\ncopying example_module/setup.py -&gt; build/lib/example_module\ncopying example_module/cli.py -&gt; build/lib/example_module\ninstalling to build/bdist.linux-x86_64/wheel\nrunning install\nrunning install_lib\ncreating build/bdist.linux-x86_64/wheel\ncreating build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/example_module.py -&gt; build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/__init__.py -&gt; build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/setup.py -&gt; build/bdist.linux-x86_64/wheel/example_module\ncopying build/lib/example_module/cli.py -&gt; build/bdist.linux-x86_64/wheel/example_module\nrunning install_egg_info\nCopying example_module.egg-info to build/bdist.linux-x86_64/wheel/example_module-0.0.0-py3.10.egg-info\nrunning install_scripts\ncreating build/bdist.linux-x86_64/wheel/example_module-0.0.0.dist-info/WHEEL\ncreating 'dist/example_module-0.0.0-py3-none-any.whl' and adding 'build/bdist.linux-x86_64/wheel' to it\nadding 'example_module/__init__.py'\nadding 'example_module/cli.py'\nadding 'example_module/example_module.py'\nadding 'example_module/setup.py'\nadding 'example_module-0.0.0.dist-info/METADATA'\nadding 'example_module-0.0.0.dist-info/WHEEL'\nadding 'example_module-0.0.0.dist-info/entry_points.txt'\nadding 'example_module-0.0.0.dist-info/top_level.txt'\nadding 'example_module-0.0.0.dist-info/RECORD'\nremoving build/bdist.linux-x86_64/wheel\n", stderr='warning: sdist: standard file not found: should have one of README, README.rst, README.txt, README.md\n\n/home/kyriosskia/miniconda3/envs/testenv/lib/python3.10/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.\n!!\n\n        ********************************************************************************\n        Please avoid running ``setup.py`` directly.\n        Instead, use pypa/build, pypa/installer or other\n        standards-based tools.\n\n        See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.\n        ********************************************************************************\n\n!!\n  self.initialize_options()\n')
 </code></pre>
-<h3 id="13-making-simple-mkdocs-site">13. Making simple MkDocs site</h3>
+<h3 id="14-making-simple-mkdocs-site">14. Making simple MkDocs site</h3>
 <p>Package documentation can be presented in a form of mkdocs static site, which could be either served or deployed to something like github packages. </p>
 <p>Main module docstring is used as intro package that contains something like optional pypi and license badges. Package description and realease notes are turned into separate tabs. Png with diagrams for example could be provided and displayed as their own separate tabs as well.</p>
 <p>The one for this package can be seen <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/">here</a></p>
