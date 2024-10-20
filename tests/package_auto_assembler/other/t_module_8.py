@@ -24,6 +24,9 @@ import concurrent.futures
 #! import fastapi as ft
 #! import uvicorn #[all]
 
+import tensorflow #-
+
+#@ tensorflow-gpu ; platform_system == "Linux"
 
 # Metadata for package creation
 __package_metadata__ = {
