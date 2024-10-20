@@ -52,7 +52,6 @@ package_mappings = {
  'scikit-learn==1.3.1']),
     ("./tests/package_auto_assembler/other/t_module_7.py", ['### test_module_7.py',
  'google-auth-oauthlib',
- 'google',
  'google-api-python-client',
  'fastapi[all]',
  'uvicorn[all]']),
@@ -70,7 +69,7 @@ def test_requirements_extractions(module_filepath, expected_requirements):
    rh = RequirementsHandler(module_filepath=module_filepath,
                          package_mappings = package_mappings)
 
-   
+
    reqs = rh.extract_requirements()[0] + rh.extract_requirements()[1]
 
    print(reqs)
