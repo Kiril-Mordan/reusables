@@ -259,6 +259,26 @@ attrs >=22.2.0
 hnswlib==0.8.0; extra == "hnswlib"
 ```
 
+Sometimes automatic translation of import names to install names via `package_mapping.json`, for packages where these names differ, may not be enough. A manual overwrite can be done with exlusion of some dependencies from automatic extraction pieline with `#-` comment next to import and `#@` prefix before text that is intended to end up in an equvalent requirements file, for example:
+
+```python
+import os
+import pandas
+import attr #>=22.2.0
+import tensorflow #-
+#@ tensorflow-gpu
+```
+
+produces
+
+
+``` txt
+pandas
+attrs >=22.2.0
+tensorflow-gpu
+```
+
+
 
 #### Initialize RequirementsHandler
 
