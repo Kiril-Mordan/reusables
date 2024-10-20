@@ -128,6 +128,7 @@ jobs:
         if: steps.changed-modules.outputs.files != ''
         run: |
           LABEL_NAME=$(basename "${{ steps.changed-modules.outputs.files }}" .py)
+          echo "LABEL_NAME=${LABEL_NAME}" >> $GITHUB_ENV
           mv "${LABEL_NAME}_temp_mkdocs" temp_project
 
       - name: Deploy to GitHub Pages
@@ -136,5 +137,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./temp_project/site
-          destination_dir: "$LABEL_NAME"
+          destination_dir: "${{ env.LABEL_NAME }}"
 

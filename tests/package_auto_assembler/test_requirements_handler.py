@@ -63,7 +63,8 @@ package_mappings = {
  'hnswlib==0.8.0',
  'sentence-transformers==2.2.2',
  'fastapi',
- 'uvicorn[all]'])
+ 'uvicorn[all]',
+ 'tensorflow-gpu ; platform_system == "Linux"'])
 ])
 def test_requirements_extractions(module_filepath, expected_requirements):
    rh = RequirementsHandler(module_filepath=module_filepath,
