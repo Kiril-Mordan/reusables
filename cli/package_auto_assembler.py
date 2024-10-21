@@ -1196,6 +1196,100 @@ def extract_module_site(ctx,
         click.echo(f"Mkdocs static page was not found in {package_name}!")
 
 @click.command()
+@click.argument('module_name')
+@click.option('--config', type=str, required=False, help='Path to config file for paa.')
+@click.option('--module-filepath', 'module_filepath', type=str, required=False, help='Path to .py file to be packaged.')
+@click.option('--mapping-filepath', 'mapping_filepath', type=str, required=False, help='Path to .json file that maps import to install dependecy names.')
+@click.option('--cli-module-filepath', 'cli_module_filepath',  type=str, required=False, help='Path to .py file that contains cli logic.')
+@click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
+@click.pass_context
+def extract_module_requirements(ctx,
+        config,
+        module_name,
+        module_filepath,
+        mapping_filepath,
+        cli_module_filepath,
+        dependencies_dir):
+    """Extract module requirements."""
+
+    module_name = module_name.replace('-','_')
+
+    if config is None:
+        config = ".paa.config"
+
+    if os.path.exists(config):
+        with open(config, 'r') as file:
+            test_install_config_up = yaml.safe_load(file)
+
+        test_install_config.update(test_install_config_up)
+
+    test_install_config["loggerLvl"] = logging.INFO
+
+    paa_params = {
+        "module_name" : f"{module_name}",
+        "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
+        "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
+        "mapping_filepath" : test_install_config["mapping_filepath"],
+        "dependencies_dir" : test_install_config["dependencies_dir"],
+        "setup_directory" : f"./{module_name}",
+        "check_vulnerabilities" : False,
+        "add_artifacts" : False
+    }
+
+    if test_install_config.get("default_version"):
+        paa_params["default_version"] = test_install_config["default_version"]
+
+    if test_install_config.get("classifiers"):
+        paa_params["classifiers"] = test_install_config["classifiers"]
+
+    if test_install_config.get("python_version"):
+        paa_params["python_version"] = test_install_config["python_version"]
+
+    if test_install_config.get("kernel_name"):
+        paa_params["kernel_name"] = test_install_config["kernel_name"]
+
+    if module_filepath:
+        paa_params["module_filepath"] = module_filepath
+    if cli_module_filepath:
+        paa_params["cli_module_filepath"] = cli_module_filepath
+    if mapping_filepath:
+        paa_params["mapping_filepath"] = mapping_filepath
+    if dependencies_dir:
+        paa_params["dependencies_dir"] = dependencies_dir
+
+    paa = PackageAutoAssembler(
+        **paa_params
+    )
+
+    if paa.metadata_h.is_metadata_available():
+
+
+        paa.add_metadata_from_module()
+        paa.add_metadata_from_cli_module()
+        paa.metadata['version'] = paa.default_version
+        paa.prep_setup_dir()
+
+        try:
+            if test_install_config["include_local_dependecies"]:
+                paa.merge_local_dependacies()
+
+            paa.add_requirements_from_module()
+            paa.add_requirements_from_cli_module()
+
+            requirements_list = paa.requirements_list + paa.optional_requirements_list
+
+            for req in requirements_list:
+                click.echo(req)
+
+        except Exception as e:
+            print("")
+        finally:
+            shutil.rmtree(paa.setup_directory)
+
+    else:
+        paa.logger.info(f"Metadata condition was not fullfield for {module_name.replace('_','-')}")
+
+@click.command()
 @click.argument('label_name')
 @click.pass_context
 def show_module_artifact_links(ctx,
@@ -1251,7 +1345,53 @@ def refresh_module_artifacts(ctx,
 
     click.echo(f"{len(link_for_artifacts) - failed_refreshes} links refreshed for {label_name}")
 
+
+@click.command()
+@click.argument('module_name')
+@click.option('--config', type=str, required=False, help='Path to config file for paa.')
+@click.pass_context
+def extract_tracking_version(ctx,
+        config,
+        module_name):
+    """Get latest package version."""
+
+
+    module_name = module_name.replace('-','_')
+
+    if config is None:
+        config = ".paa.config"
+
+    if os.path.exists(config):
+        with open(config, 'r') as file:
+            test_install_config_up = yaml.safe_load(file)
+
+        test_install_config.update(test_install_config_up)
+
+    MAPPING_FILE = test_install_config['mapping_filepath']
+    VERSIONS_FILE = test_install_config['versions_filepath']
+
+    # if os.path.exists(MAPPING_FILE):
+
+    #     with open(MAPPING_FILE, 'r') as file:
+    #         # Load the contents of the file
+    #         mapping_file = yaml.safe_load(file) or {}
+
+    #     module_name = mapping_file.get(module_name, module_name)
+
+    module_version = "0.0.0"
+    if os.path.exists(VERSIONS_FILE):
+
+        with open(VERSIONS_FILE, 'r') as file:
+            # Load the contents of the file
+            versions_file = yaml.safe_load(file) or {}
+
+        module_version = versions_file.get(module_name, 
+            test_install_config.get("default_version", "0.0.0"))
     
+    click.echo(module_version)
+    
+
+
 
 
 cli.add_command(init_config, "init-config")
@@ -1268,8 +1408,10 @@ cli.add_command(show_module_licenses, "show-module-licenses")
 cli.add_command(show_module_artifacts, "show-module-artifacts")
 cli.add_command(show_module_artifact_links, "show-module-artifacts-links")
 cli.add_command(refresh_module_artifacts, "refresh-module-artifacts")
+cli.add_command(extract_tracking_version, "extract-tracking-version")
 cli.add_command(extract_module_routes, "extract-module-routes")
 cli.add_command(extract_module_artifacts, "extract-module-artifacts")
+cli.add_command(extract_module_requirements, "extract-module-requirements")
 cli.add_command(extract_module_site, "extract-module-site")
 
 

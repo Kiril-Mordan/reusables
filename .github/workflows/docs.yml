@@ -27,15 +27,8 @@ jobs:
 
       - name: Export drawio files to png files
         run: |
-          chmod +x ./tools/convert_drawio_to_png.sh
-          ./tools/convert_drawio_to_png.sh
-        # uses: rlespinasse/drawio-export-action@v2
-        # with:
-        #   path: drawio
-        #   format: png
-        #   transparent: true
-        #   output: docs
-        #   scale: 2
+          chmod +x .github/tools/convert_drawio_to_png.sh
+          .github/tools/convert_drawio_to_png.sh
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -49,8 +42,8 @@ jobs:
           if [ "${{ github.event.inputs.package_name }}" != "" ]; then
             echo "${{ github.event.inputs.package_name }}" > changed_files
           else
-            chmod +x ./tools/find_and_process_changed_files.sh
-            ./tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' 'example_notebooks/' '.ipynb'
+            chmod +x .github/tools/find_and_process_changed_files.sh
+            .github/tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' 'example_notebooks/' '.ipynb'
           fi
 
           if [ -s changed_files ]; then
@@ -64,7 +57,7 @@ jobs:
           source venv/bin/activate
 
       - name: Install python dependencies
-        run: pip install -r env_spec/requirements.txt
+        run: pip install -r .paa/requirements/requirements.txt
 
       - name: Add Python Kernel
         run: python -m ipykernel install --user --name python3
@@ -72,13 +65,13 @@ jobs:
       - name: Generate md files from jupyter for changed modules
         if: steps.changed-modules.outputs.files != ''
         run: |
-          ./tools/convert_ipynb_to_markdown.sh ${{ steps.changed-modules.outputs.files }}
+          chmod +x .github/tools/convert_ipynb_to_markdown.sh
+          .github/tools/convert_ipynb_to_markdown.sh ${{ steps.changed-modules.outputs.files }}
 
       - name: Update README.md
         run: |
-          chmod +x ./tools/update_README.sh
-          chmod +x ./tools/update_gh_pages_links.sh
-          ./tools/update_README.sh
+          chmod +x .github/tools/update_README.sh
+          .github/tools/update_README.sh
 
       - name: Commit changes
         run: |

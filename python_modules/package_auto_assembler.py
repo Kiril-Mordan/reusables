@@ -47,7 +47,6 @@ from pathlib import Path
 #@ mkdocs==1.6.0
 #@ mkdocs-material==9.5.30
 
-
 # Metadata for package creation
 __package_metadata__ = {
     "author": "Kyrylo Mordan",

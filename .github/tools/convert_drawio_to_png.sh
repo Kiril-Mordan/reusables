@@ -18,7 +18,7 @@ find "$input_dir" -name '*.drawio' | while read -r input_file; do
   echo "$page_names" | while read -r page_name; do
     if [ -n "$page_name" ]; then
       output_file="${output_dir}/${base_name}-${page_name}.${format}"
-      sleep 1
+      sleep 3
       xvfb-run -a drawio --export --format png --output "$output_file" --page-index "$page_index" "$input_file"
       page_index=$((page_index + 1))
     fi

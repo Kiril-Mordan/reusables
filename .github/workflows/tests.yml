@@ -28,8 +28,8 @@ jobs:
           if [ "${{ github.event.inputs.package_name }}" != "" ]; then
             echo "${{ github.event.inputs.package_name }}" > changed_files
           else
-            chmod +x ./tools/find_and_process_changed_files.sh
-            ./tools/find_and_process_changed_files.sh 'cli/' 'python_modules/' '' ''
+            chmod +x .github/tools/find_and_process_changed_files.sh
+            .github/tools/find_and_process_changed_files.sh 'cli/' 'python_modules/' '' ''
           fi
 
           if [ -s changed_files ]; then
@@ -38,17 +38,17 @@ jobs:
 
       - name: Install dependencies
         if: steps.changed-modules.outputs.files != ''
-        run: pip install -r env_spec/requirements_dev.txt
+        run: pip install -r .paa/requirements_dev.txt
 
       - name: Update requirements
         if: steps.changed-modules.outputs.files != ''
         run: |
-          chmod +x ./tools/update_module_requirements.sh
-          chmod +x ./tools/update_tox_requirements.sh
+          chmod +x .github/tools/update_module_requirements.sh
+          chmod +x .github/tools/update_tox_requirements.sh
           python -m pip install setuptools wheel twine
-          ./tools/update_module_requirements.sh "${{ steps.changed-modules.outputs.files }}"
-          ./tools/update_tox_requirements.sh "${{ steps.changed-modules.outputs.files }}"
-          cat env_spec/requirements_tox.txt 
+          .github/tools/update_module_requirements.sh "${{ steps.changed-modules.outputs.files }}"
+          .github/tools/update_tox_requirements.sh "${{ steps.changed-modules.outputs.files }}"
+          cat .paa/requirements/requirements_tox.txt 
 
       - name: Check requirements for vulnerabilities
         if: steps.changed-modules.outputs.files != ''
@@ -67,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: updated-requirements
-          path: env_spec/requirements_tox.txt
+          path: .paa/requirements/requirements_tox.txt
 
   test:
     needs: update-requirements
@@ -89,7 +89,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: updated-requirements
-          path: env_spec/
+          path: .paa/requirements/
 
       # - name: Cache pip dependencies
       #   uses: actions/cache@v2
@@ -101,7 +101,7 @@ jobs:
 
       - name: Install dependencies
         run: | 
-          pip install -r env_spec/requirements_dev.txt
+          pip install -r .paa/requirements_dev.txt
 
       - name: Test with tox
         run: |
@@ -110,7 +110,7 @@ jobs:
               tox -- "tests/${{ needs.update-requirements.outputs.changed-files }}"
             else
               echo "No tests for module."
-            ./tools/pylint_test.sh
+            .github/tools/pylint_test.sh
             fi
           elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             if [ -d "tests/${{ needs.update-requirements.outputs.changed-files }}" ]; then

@@ -9,8 +9,8 @@ fi
 PACKAGE_NAME=$(basename "$1" .py)
 
 # Path to env_spec files
-MAPPING_FILE="env_spec/package_mapping.json"
-VERSIONS_FILE="env_spec/lsts_package_versions.yml"
+MAPPING_FILE=".paa/package_mapping.json"
+VERSIONS_FILE=".paa/tracking/lsts_package_versions.yml"
 
 # Use jq to attempt to retrieve the mapping value
 #MAPPED_VALUE=$(jq -r --arg k "$PACKAGE_NAME" '.[$k]' "$MAPPING_FILE")

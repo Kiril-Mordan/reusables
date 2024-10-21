@@ -6,7 +6,7 @@ on:
       package_name:
         description: 'Name of the package'
         required: false
-        default: 'parameterframe'
+        default: 'package_auto_assembler'
   workflow_run:
     workflows: ["Update README"]
     types:
@@ -28,8 +28,8 @@ jobs:
           if [ "${{ github.event.inputs.package_name }}" != "" ]; then
             echo "${{ github.event.inputs.package_name }}" > changed_files
           else
-            chmod +x ./tools/find_and_process_changed_files.sh
-            ./tools/find_and_process_changed_files.sh 'cli/' 'python_modules/' 'example_notebooks/' 'python_modules/' '.py'
+            chmod +x .github/tools/find_and_process_changed_files.sh
+            .github/tools/find_and_process_changed_files.sh 'cli/' 'python_modules/' 'example_notebooks/' 'python_modules/' '.py'
           fi
 
           if [ -s changed_files ]; then
@@ -57,7 +57,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install setuptools wheel twine
-          pip install -r env_spec/requirements.txt
+          pip install -r .paa/requirements/requirements.txt
 
       - name: Add Python Kernel
         if: steps.changed-modules.outputs.files != ''
@@ -76,7 +76,8 @@ jobs:
           #echo "Test-installing paa ..."
           #paa test-install package-auto-assembler
           echo "Assembling..."
-          ./tools/make_package.sh ${{ steps.changed-modules.outputs.files }}
+          chmod +x .github/tools/make_package.sh
+          .github/tools/make_package.sh ${{ steps.changed-modules.outputs.files }}
           ls -la
 
       - name: Publish to PyPI
@@ -92,9 +93,9 @@ jobs:
         if: steps.changed-modules.outputs.files != ''
         run: |
           set -x
-          chmod +x tools/get_latest_package_version.sh
+          chmod +x .github/tools/get_latest_package_version.sh
 
-          PACKAGE_VERSION=$(./tools/get_latest_package_version.sh "${{ steps.changed-modules.outputs.files }}")
+          PACKAGE_VERSION=$(.github/tools/get_latest_package_version.sh "${{ steps.changed-modules.outputs.files }}")
           if [ -z "${PACKAGE_VERSION}" ]; then
             echo "Failed to get version"
             exit 1
@@ -107,9 +108,12 @@ jobs:
 
           git pull origin HEAD:main
 
-          git add env_spec/lsts_package_versions.yml
-          git add env_spec/version_logs.csv
-          git add release_notes
+          # git add env_spec/lsts_package_versions.yml
+          # git add env_spec/version_logs.csv
+          # git add release_notes
+
+          git add .paa
+
           # Check if there are any changes in the working directory
           if [ -n "$(git status --porcelain)" ]; then
             COMMIT_MESSAGE="Update package version tracking files"

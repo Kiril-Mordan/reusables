@@ -1,6 +1,0 @@
-### mocker_db
-sentence-transformers==2.2.2
-hnswlib==0.8.0
-dill==0.3.7
-numpy
-attrs>=22.2.0

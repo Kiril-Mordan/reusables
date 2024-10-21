@@ -32,12 +32,12 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        pip install -r env_spec/requirements_dev.txt
+        pip install -r .paa/requirements_dev.txt
 
     - name: Update requirements for changed modules
       run: |
-        ./tools/update_module_requirements.sh ${{ steps.changed-modules.outputs.files }}
-        ./tools/update_requirements.sh
+        .github/tools/update_module_requirements.sh ${{ steps.changed-modules.outputs.files }}
+        .github/tools/update_requirements.sh
 
 
     - name: Commit changes

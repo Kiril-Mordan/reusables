@@ -9,7 +9,7 @@ process_module() {
     local module_name=$(basename "$module_file")
     echo "Processing module: $module_name"
     paa test-install "$module_name"
-    paa show-module-requirements "$module_name" > "env_spec/requirements_$module_name.txt"
+    paa show-module-requirements "$module_name" > ".paa/requirements/requirements_$module_name.txt"
     
     #python3 ./tools/extract_requirements.py "$module_name"
 }

@@ -21,8 +21,8 @@ jobs:
           if [ "${{ github.event.inputs.package_name }}" != "" ]; then
             echo "${{ github.event.inputs.package_name }}" > changed_files
           else
-            chmod +x ./tools/find_and_process_changed_files.sh
-            ./tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' 'release_notes/' '' ''
+            chmod +x .github/tools/find_and_process_changed_files.sh
+            .github/tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' 'release_notes/' '' ''
           fi
 
           if [ -s changed_files ]; then
@@ -42,7 +42,7 @@ jobs:
 
       - name: Build site
         if: steps.changed-modules.outputs.files != ''
-        run: python tools/make_mkdocs_site.py "${{ steps.changed-modules.outputs.files }}"
+        run: python .github/tools/make_mkdocs_site.py "${{ steps.changed-modules.outputs.files }}"
 
       - name: Deploy to GitHub Pages
         if: steps.changed-modules.outputs.files != ''
