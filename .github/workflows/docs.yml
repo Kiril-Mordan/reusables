@@ -57,7 +57,7 @@ jobs:
           source venv/bin/activate
 
       - name: Install python dependencies
-        run: pip install -r env_spec/requirements.txt
+        run: pip install -r .paa/requirements/requirements.txt
 
       - name: Add Python Kernel
         run: python -m ipykernel install --user --name python3

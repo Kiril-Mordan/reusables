@@ -1,0 +1,5 @@
+### retriever_tunner
+attrs>=22.2.0
+mocker_db==0.0.1
+plotly
+numpy

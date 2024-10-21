@@ -38,7 +38,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.changed-modules.outputs.files != ''
-        run: pip install -r env_spec/requirements_dev.txt
+        run: pip install -r .paa/requirements_dev.txt
 
       - name: Update requirements
         if: steps.changed-modules.outputs.files != ''
@@ -48,7 +48,7 @@ jobs:
           python -m pip install setuptools wheel twine
           .github/tools/update_module_requirements.sh "${{ steps.changed-modules.outputs.files }}"
           .github/tools/update_tox_requirements.sh "${{ steps.changed-modules.outputs.files }}"
-          cat env_spec/requirements_tox.txt 
+          cat .paa/requirements/requirements_tox.txt 
 
       - name: Check requirements for vulnerabilities
         if: steps.changed-modules.outputs.files != ''
@@ -67,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: updated-requirements
-          path: env_spec/requirements_tox.txt
+          path: .paa/requirements/requirements_tox.txt
 
   test:
     needs: update-requirements
@@ -89,7 +89,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: updated-requirements
-          path: env_spec/
+          path: .paa/requirements/
 
       # - name: Cache pip dependencies
       #   uses: actions/cache@v2
@@ -101,7 +101,7 @@ jobs:
 
       - name: Install dependencies
         run: | 
-          pip install -r env_spec/requirements_dev.txt
+          pip install -r .paa/requirements_dev.txt
 
       - name: Test with tox
         run: |

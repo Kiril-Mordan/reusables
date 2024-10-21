@@ -57,7 +57,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install setuptools wheel twine
-          pip install -r env_spec/requirements.txt
+          pip install -r .paa/requirements/requirements.txt
 
       - name: Add Python Kernel
         if: steps.changed-modules.outputs.files != ''
