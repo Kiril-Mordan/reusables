@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.5.10
+
+    - initial cli method to extract requirements
+
 ### 0.5.9
 
     - support for manual overwrite for dependencies extraction
