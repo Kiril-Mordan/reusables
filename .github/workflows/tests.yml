@@ -28,8 +28,8 @@ jobs:
           if [ "${{ github.event.inputs.package_name }}" != "" ]; then
             echo "${{ github.event.inputs.package_name }}" > changed_files
           else
-            chmod +x ./tools/find_and_process_changed_files.sh
-            ./tools/find_and_process_changed_files.sh 'cli/' 'python_modules/' '' ''
+            chmod +x .github/tools/find_and_process_changed_files.sh
+            .github/tools/find_and_process_changed_files.sh 'cli/' 'python_modules/' '' ''
           fi
 
           if [ -s changed_files ]; then
@@ -43,11 +43,11 @@ jobs:
       - name: Update requirements
         if: steps.changed-modules.outputs.files != ''
         run: |
-          chmod +x ./tools/update_module_requirements.sh
-          chmod +x ./tools/update_tox_requirements.sh
+          chmod +x .github/tools/update_module_requirements.sh
+          chmod +x .github/tools/update_tox_requirements.sh
           python -m pip install setuptools wheel twine
-          ./tools/update_module_requirements.sh "${{ steps.changed-modules.outputs.files }}"
-          ./tools/update_tox_requirements.sh "${{ steps.changed-modules.outputs.files }}"
+          .github/tools/update_module_requirements.sh "${{ steps.changed-modules.outputs.files }}"
+          .github/tools/update_tox_requirements.sh "${{ steps.changed-modules.outputs.files }}"
           cat env_spec/requirements_tox.txt 
 
       - name: Check requirements for vulnerabilities
@@ -110,7 +110,7 @@ jobs:
               tox -- "tests/${{ needs.update-requirements.outputs.changed-files }}"
             else
               echo "No tests for module."
-            ./tools/pylint_test.sh
+            .github/tools/pylint_test.sh
             fi
           elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             if [ -d "tests/${{ needs.update-requirements.outputs.changed-files }}" ]; then

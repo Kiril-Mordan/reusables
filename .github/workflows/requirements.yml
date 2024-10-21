@@ -36,8 +36,8 @@ jobs:
 
     - name: Update requirements for changed modules
       run: |
-        ./tools/update_module_requirements.sh ${{ steps.changed-modules.outputs.files }}
-        ./tools/update_requirements.sh
+        .github/tools/update_module_requirements.sh ${{ steps.changed-modules.outputs.files }}
+        .github/tools/update_requirements.sh
 
 
     - name: Commit changes
