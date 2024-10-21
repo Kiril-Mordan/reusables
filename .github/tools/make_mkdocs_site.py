@@ -13,7 +13,7 @@ if __name__ == "__main__":
     pypi_link = LongDocHandler().get_pypi_badge(module_name=package_name)
 
     doc_files = os.listdir("docs")
-    release_note_files = os.listdir("release_notes")
+    release_note_files = os.listdir(".paa/release_notes")
     cli_docs_files = os.listdir("cli_docs")
 
     docs_file_paths = {}
@@ -28,7 +28,7 @@ if __name__ == "__main__":
             docs_file_paths[os.path.join("docs",package_doc)] = package_doc
 
     if f"{package_name}.md" in release_note_files:
-        docs_file_paths[os.path.join("release_notes",f"{package_name}.md")] = "release-notes.md"
+        docs_file_paths[os.path.join(".paa/release_notes",f"{package_name}.md")] = "release-notes.md"
     if f"{package_name}.md" in cli_docs_files:
         docs_file_paths[os.path.join("cli_docs",f"{package_name}.md")] = "cli.md"
 

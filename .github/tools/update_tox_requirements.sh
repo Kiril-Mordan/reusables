@@ -2,6 +2,6 @@
 
 module_name="${@}"
 
-cp "./env_spec/requirements_dev.txt" "./env_spec/requirements_tox.txt"
-echo "" >> "./env_spec/requirements_tox.txt"
-cat "./env_spec/requirements_$module_name.txt" >> "./env_spec/requirements_tox.txt"
+cp ".paa/requirements/requirements_dev.txt" ".paa/requirements/requirements_tox.txt"
+echo "" >> ".paa/requirements/requirements_tox.txt"
+cat ".paa/requirements/requirements_$module_name.txt" >> ".paa/requirements/requirements_tox.txt"

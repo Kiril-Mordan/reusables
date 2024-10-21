@@ -43,6 +43,11 @@ import importlib.resources as pkg_resources
 from pathlib import Path
 
 
+#@ pip_audit==2.7.3
+#@ mkdocs==1.6.0
+#@ mkdocs-material==9.5.30
+
+
 # Metadata for package creation
 __package_metadata__ = {
     "author": "Kyrylo Mordan",
@@ -187,8 +192,8 @@ class VersionHandler:
         self._setup_logging()
 
 
-    def log_version_update(self, 
-                            package_name : str, 
+    def log_version_update(self,
+                            package_name : str,
                             new_version : str):
 
         """
@@ -237,8 +242,8 @@ class VersionHandler:
             # Load the contents of the file
             return yaml.safe_load(file) or {}
 
-    def update_version(self, 
-                       package_name : str, 
+    def update_version(self,
+                       package_name : str,
                        new_version : str,
                        save : bool = True):
 
@@ -278,9 +283,9 @@ class VersionHandler:
         try:
 
             command = ["pip", "index", "versions", package_name]
-            
+
             result = subprocess.run(command, capture_output=True, text=True)
-            
+
             if result.returncode != 0:
                 raise Exception(f"Error fetching package versions: {result.stderr.strip()}")
 
@@ -448,7 +453,7 @@ class ImportMappingHandler:
         if base_mapping_filepath is None:
             base_mapping_filepath = self.base_mapping_filepath
 
-        
+
         if base_mapping_filepath is None:
 
 
@@ -458,7 +463,7 @@ class ImportMappingHandler:
 
             if 'artifacts' in os.listdir(paa_path):
 
-                with pkg_resources.path('package_auto_assembler.artifacts', 
+                with pkg_resources.path('package_auto_assembler.artifacts',
                 'package_mapping.json') as path:
                     base_mapping_filepath = path
 
@@ -530,7 +535,7 @@ class RequirementsHandler:
         try:
             # Regex to capture the package name, extras, version operator, and version
             pattern = re.compile(r"(\S+?)(?:\[(\w+)\])?(?:(==|>=|<=|>|<)\s*([\d\.]+))?$")
-            
+
             # Dictionary to hold the most constrained version for each package
             package_constraints = {}
 
@@ -538,21 +543,21 @@ class RequirementsHandler:
                 match = pattern.match(req)
                 if match:
                     pkg_name, extra, operator, ver = match.groups()
-                    
+
                     # Create a tuple representing the constraint: (extras, operator, version)
                     constraint = (extra, operator, ver)
-                    
+
                     # If the package is not already in the dictionary, or if the new requirement has more constraints
                     if pkg_name not in package_constraints:
                         package_constraints[pkg_name] = (req, constraint)
                     else:
                         # Extract the current best requirement
                         current_req, current_constraint = package_constraints[pkg_name]
-                        
+
                         # Compare the number of constraints
                         new_constraints_count = sum(x is not None for x in constraint)
                         current_constraints_count = sum(x is not None for x in current_constraint)
-                        
+
                         if new_constraints_count > current_constraints_count:
                             package_constraints[pkg_name] = (req, constraint)
                         elif new_constraints_count == current_constraints_count:
@@ -719,7 +724,7 @@ class RequirementsHandler:
         # Separate regex patterns for 'import' and 'from ... import ...' statements
         import_pattern = re.compile(
             r"import (\S+)(?:\s+#(?:\[(\w+)\])?(?:\s*(==|>=|<=|>|<)\s*([0-9.]+))?)?")
-        
+
         #from_import_pattern = re.compile(r"from (\S+) import [^#]+#\s*(==|>=|<=|>|<)\s*([0-9.]+)")
         from_import_pattern = re.compile(
             r"from (\S+) import ([\w\s,]+)(?:\s*#(?:\[(\w+)\])?\s*(==|>=|<=|>|<)\s*([0-9.]+))?"
@@ -735,9 +740,12 @@ class RequirementsHandler:
             r"#!\s*from\s+(\S+)\s+import\s+([\w\s,]+)(?:\s*#(?:\s*\[(\w+)\])?(?:\s*(==|>=|<=|>|<)\s*([0-9.]+))?)?"
         )
 
+        #manual_addition_pattern = re.compile(r"^#@\s*(.*)")
+
 
         requirements = []
         optional_requirements = []
+        manual_additions = []
         if add_header:
             new_header = [f'### {module_name}']
         else:
@@ -745,6 +753,20 @@ class RequirementsHandler:
 
         with open(file_path, 'r') as file:
             for line in file:
+
+                if "#-" in line:
+                    continue
+
+                if line.startswith("#@") and line.replace("#@", "").strip():
+                    manual_additions.append(line.replace("#@", "").strip())
+                    continue
+
+                # manual_addition_match = manual_addition_pattern.search(line)
+                # if manual_addition_match and manual_addition_match.group(1).strip():
+                #     manual_additions.append(manual_addition_match.group(1).strip())
+                #     continue
+
+
                 import_match = import_pattern.match(line)
                 from_import_match = from_import_pattern.match(line)
                 import_as_match = import_pattern_as.match(line)
@@ -772,7 +794,7 @@ class RequirementsHandler:
                     continue
 
                 skip = False
-                    
+
                 if module:
 
                     # Skip local imports
@@ -845,6 +867,9 @@ class RequirementsHandler:
             header = [self.requirements_list.pop(0)]
         else:
             header = []
+
+        # Include manual additions in the final list
+        requirements.extend(manual_additions)
 
         requirements_list = header + new_header + list(set(self.requirements_list + requirements))
         optional_requirements_list = list(set(self.optional_requirements_list + optional_requirements))
@@ -1179,7 +1204,7 @@ class LocalDependaciesHandler:
         # List of dependencies from bundles
         bundle_dependencies = [os.path.splitext(f)[0] for bundle in dependencies_folders for f in os.listdir(os.path.join(dependencies_dir, bundle)) if f.endswith('.py')]
         bundle_dep_path = [os.path.join(bundle, f) for bundle in dependencies_folders for f in os.listdir(os.path.join(dependencies_dir, bundle)) if f.endswith('.py')]
-        
+
         self.dependencies_names_list = dependencies + bundle_dependencies
         # Filtering relevant dependencies
         module_local_deps = [dep for dep in dependencies for module in main_module_imports if f'{dep} import' in module]
@@ -1378,7 +1403,7 @@ class LongDocHandler:
         with open(output_path, 'w', encoding='utf-8') as fh:
             fh.write(body)
 
-            
+
 
     def convert_and_execute_notebook_to_md(self,
                                            notebook_path : str = None,
@@ -1568,7 +1593,7 @@ class SetupDirHandler:
 
         if setup_directory is None:
             setup_directory = self.setup_directory
-        
+
 
         # Copying module to setup directory
         shutil.copy(module_filepath, setup_directory)
@@ -1587,7 +1612,7 @@ class SetupDirHandler:
 
         if setup_directory is None:
             setup_directory = self.setup_directory
-        
+
         if license_path:
             # Copying module to setup directory
             shutil.copy(license_path, setup_directory)
@@ -1610,7 +1635,7 @@ class SetupDirHandler:
 
         if setup_directory is None:
             setup_directory = self.setup_directory
-        
+
         if docstring is None:
             docstring = self.docstring
 
@@ -1688,7 +1713,7 @@ class SetupDirHandler:
             add_artifacts = self.add_artifacts
 
         paa_version = pkg_resources.get_distribution("package_auto_assembler").version
-        
+
         if classifiers is None:
             classfiers = []
             #classifiers = [f"PAA-Version :: {paa_version}"]
@@ -1735,7 +1760,7 @@ class SetupDirHandler:
         if module_docstring:
             long_description_intro += f"""{module_docstring}\n\n"""
 
-    
+
         if add_cli_tool:
             entry_points = {
                 'console_scripts': [
@@ -2069,7 +2094,7 @@ class ReleaseNotesHandler:
             release_notes = self.existing_contents
 
         latest_version = None
-        
+
         for line in release_notes:
             line = line.strip()
             if line.startswith("###"):
@@ -2236,8 +2261,8 @@ class MkDocsHandler:
 
         print(f"Created new MkDocs dir: {project_name}")
 
-    def move_files_to_docs(self, 
-                           file_paths: dict = None, 
+    def move_files_to_docs(self,
+                           file_paths: dict = None,
                            project_name: str = None,
                            package_name: str = None):
         """
@@ -2590,14 +2615,14 @@ class ArtifactsHandler:
 
             self.logger = logger
 
-    def _get_artifact_links(self, 
-                            artifact_name : str, 
+    def _get_artifact_links(self,
+                            artifact_name : str,
                             artifacts_filepath : str,
                             use_artifact_name : bool = True):
 
         link_artifacts_filepaths = {}
 
-        dir_skip = len(Path(artifact_name).parts) +1 
+        dir_skip = len(Path(artifact_name).parts) +1
 
         link_files = [f for f in Path(artifacts_filepath).rglob('*.link')]
 
@@ -2648,7 +2673,7 @@ class ArtifactsHandler:
 
 
 
-    def get_packaged_artifacts(self, 
+    def get_packaged_artifacts(self,
                               module_name : str = None):
 
         """
@@ -2668,7 +2693,7 @@ class ArtifactsHandler:
                 for file_name in package_files}
         else:
             package_artifacts = {}
-        
+
         return package_artifacts
 
     def make_manifest(self,
@@ -2695,9 +2720,9 @@ class ArtifactsHandler:
         try:
             # Get the package version
             version = importlib.metadata.version('package-auto-assembler')
-            
+
             # Write the version to a text file
-            with open(os.path.join(setup_directory,'.paa.tracking','.paa.version'), 
+            with open(os.path.join(setup_directory,'.paa.tracking','.paa.version'),
             'w') as file:
                 file.write(f"{version}")
         except Exception as e:
@@ -2719,7 +2744,7 @@ class ArtifactsHandler:
                 print(artifacts_filepath)
 
                 link_artifacts_filepaths = self._get_artifact_links(
-                    artifact_name = artifact_name, 
+                    artifact_name = artifact_name,
                     artifacts_filepath = artifacts_filepath
                 )
 
@@ -2730,15 +2755,15 @@ class ArtifactsHandler:
 
             # artifact_name = os.path.basename(
             #     os.path.normpath(artifacts_filepath))
-            
+
             if os.path.isdir(artifacts_filepath):
-                shutil.copytree(artifacts_filepath, 
+                shutil.copytree(artifacts_filepath,
                     os.path.join(setup_directory, artifact_name))
                 artifact_name += "/**/*"
                 manifest_lines.append(
                     f"recursive-include {module_name}/{artifact_name} \n")
             elif artifacts_filepath.endswith(".link"):
-                
+
                 try:
 
                     # Open the file and read the content
@@ -2746,7 +2771,7 @@ class ArtifactsHandler:
                         artifacts_url = file.readline().strip()
 
                     # Add link file
-                    shutil.copy(artifacts_filepath, 
+                    shutil.copy(artifacts_filepath,
                         os.path.join(setup_directory, artifact_name))
 
                     manifest_lines.append(f"include {module_name}/{artifact_name} \n")
@@ -2782,15 +2807,15 @@ class ArtifactsHandler:
 
 
             else:
-                shutil.copy(artifacts_filepath, 
+                shutil.copy(artifacts_filepath,
                     os.path.join(setup_directory, artifact_name))
                 manifest_lines.append(f"include {module_name}/{artifact_name} \n")
 
             updated_artifacts_filepaths[artifact_name] = artifacts_filepath
-            
+
         manifest_lines.append(f"include {module_name}/{'.paa.tracking/.paa.version'} \n")
         updated_artifacts_filepaths['.paa.tracking/.paa.version'] = os.path.join(setup_directory,'.paa.tracking','.paa.version')
-        
+
         self.artifacts_filepaths = updated_artifacts_filepaths
         self.manifest_lines = manifest_lines
 
@@ -2811,7 +2836,7 @@ class ArtifactsHandler:
         if os.path.exists(package_path):
 
             link_artifacts_filepaths = self._get_artifact_links(
-                artifact_name = 'artifacts', 
+                artifact_name = 'artifacts',
                 artifacts_filepath = os.path.join(package_path, 'artifacts')
             )
 
@@ -2822,7 +2847,7 @@ class ArtifactsHandler:
                     # Open the file and read the content
                     with open(artifacts_filepath, 'r') as file:
                         artifacts_url = file.readline().strip()
-            
+
                     link_for_artifacts[os.path.basename(artifact_name)] = artifacts_url
                     link_availability[os.path.basename(artifact_name)] = self._check_file_exists(artifacts_url)
 
@@ -2850,7 +2875,7 @@ class ArtifactsHandler:
         if os.path.exists(package_path):
 
             link_artifacts_filepaths = self._get_artifact_links(
-                artifact_name = 'artifacts', 
+                artifact_name = 'artifacts',
                 artifacts_filepath = os.path.join(package_path, 'artifacts'),
                 use_artifact_name = False
             )
@@ -2904,7 +2929,7 @@ class ArtifactsHandler:
 
         # write/update manifest
         if manifest_lines:
-            with open(manifest_filepath, 
+            with open(manifest_filepath,
             'w') as file:
                 file.writelines(manifest_lines)
 
@@ -2951,8 +2976,8 @@ class FastApiHandler:
         i_str = ''
         i = 0
         for docs_path in docs_paths:
-            app.mount(f"{docs_prefix}{i_str}", 
-                      StaticFiles(directory=docs_path, 
+            app.mount(f"{docs_prefix}{i_str}",
+                      StaticFiles(directory=docs_path,
                                   html=True))
             i += 1
             i_str = str(i)
@@ -2960,12 +2985,12 @@ class FastApiHandler:
 
         return app
 
-    def _include_package_routes(self, 
-                                app, 
-                                package_names : list, 
+    def _include_package_routes(self,
+                                app,
+                                package_names : list,
                                 routes_paths : list):
-    
-        
+
+
         for package_name in package_names:
             try:
 
@@ -2973,10 +2998,10 @@ class FastApiHandler:
 
                 # Import the package
                 package = importlib.import_module(package_name)
-                
+
                 # Get the package's directory
                 package_dir = os.path.dirname(package.__file__)
-                
+
                 # Construct the path to routes.py
                 routes_file_path = os.path.join(package_dir, 'routes.py')
 
@@ -2986,7 +3011,7 @@ class FastApiHandler:
                 if os.path.exists(routes_file_path):
                     routes_module = importlib.import_module(f"{package_name}.routes")
                     app.include_router(routes_module.router)
-                
+
                 if os.path.exists(docs_file_path):
                     app = self._include_docs(
                         app = app,
@@ -3003,7 +3028,7 @@ class FastApiHandler:
             try:
                 # Generate a module name from the file path
                 module_name = routes_path.rstrip('.py').replace('/', '.').replace('\\', '.')
-                
+
                 # Load the module from the specified file path
                 spec = importlib.util.spec_from_file_location(module_name, routes_path)
                 if spec is None:
@@ -3011,7 +3036,7 @@ class FastApiHandler:
                     sys.exit(1)
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
-                
+
                 # Check if the module has a 'router' attribute
                 if hasattr(module, 'router'):
                     app.include_router(module.router)
@@ -3048,22 +3073,22 @@ class FastApiHandler:
             raise ImportError("Parameter setup_directory is missing!")
 
         # Copying module to setup directory
-        shutil.copy(fastapi_routes_filepath, 
+        shutil.copy(fastapi_routes_filepath,
                     os.path.join(setup_directory, "routes.py"))
 
         return True
 
     def run_app(self,
-                description : dict = None, 
+                description : dict = None,
                 middleware : dict = None,
                 run_parameters : dict = None,
-                package_names : list = None, 
+                package_names : list = None,
                 routes_paths : list = None,
                 docs_paths : list = None):
 
         """
         Sets up FastAPI app with provided `description` and runs it with
-        routes for selected `package_names` and `routes_paths` 
+        routes for selected `package_names` and `routes_paths`
         with `run_parameters`.
         """
 
@@ -3078,7 +3103,7 @@ class FastApiHandler:
 
         if run_parameters is None:
             run_parameters = {
-                "host" : "0.0.0.0", 
+                "host" : "0.0.0.0",
                 "port" : 8000
             }
 
@@ -3097,15 +3122,15 @@ class FastApiHandler:
             )
 
         app = self._include_package_routes(
-            app = app, 
-            package_names = package_names, 
+            app = app,
+            package_names = package_names,
             routes_paths = routes_paths)
 
         uvicorn.run(app, **run_parameters)
 
-    def extract_routes_from_package(self, 
-                              package_name : str, 
-                              output_directory : str = '.', 
+    def extract_routes_from_package(self,
+                              package_name : str,
+                              output_directory : str = '.',
                               output_filepath : str = None):
         """
         Extracts the routes.py file from the specified package.
@@ -3117,33 +3142,33 @@ class FastApiHandler:
 
             # Import the package
             package = importlib.import_module(package_name)
-            
+
             # Get the package's directory
             package_dir = os.path.dirname(package.__file__)
-            
+
             # Construct the path to routes.py
             routes_file_path = os.path.join(package_dir, 'routes.py')
             if not os.path.exists(routes_file_path):
                 print(f"No routes.py found in package '{package_name}'.")
                 return
-            
+
             # Read the content of routes.py
             with open(routes_file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            
+
             # Replace 'package_name.package_name' with 'package_name'
             content = content.replace(f'{package_name}.{package_name}', package_name)
-            
+
             # Ensure the output directory exists
             os.makedirs(output_directory, exist_ok=True)
-            
+
             # Write the modified content to a new file in the output directory
             if output_filepath is None:
                 output_filepath = os.path.join(output_directory, f'{package_name}_route.py')
 
             with open(output_filepath, 'w', encoding='utf-8') as f:
                 f.write(content)
-            
+
             print(f"Extracted routes.py from package '{package_name}' to '{output_filepath}'.")
         except ImportError:
             print(f"Package '{package_name}' not found.")
@@ -3161,7 +3186,7 @@ class DependenciesAnalyser:
     package_licenses = attr.ib(default=None)
 
     standard_licenses = attr.ib(default=[
-            "mit", "bsd-3-clause", "bsd-2-clause", "apache-2.0", 
+            "mit", "bsd-3-clause", "bsd-2-clause", "apache-2.0",
             "gpl-3.0", "lgpl-3.0", "mpl-2.0", "agpl-3.0", "epl-2.0"
         ])
 
@@ -3201,9 +3226,9 @@ class DependenciesAnalyser:
 
         return reqs
 
-    def _get_licenses(self, 
+    def _get_licenses(self,
                       dependencies : list,
-                      package_licenses : dict = None, 
+                      package_licenses : dict = None,
                       normalize : bool = True):
 
         if package_licenses is None:
@@ -3268,15 +3293,15 @@ class DependenciesAnalyser:
         for k, v in d.items():
             new_key = f"{parent_key}.{k}" if parent_key else k
             # Add subtree or package
-            items.append(new_key)  
-            
+            items.append(new_key)
+
             if isinstance(v, dict):
                 # Recursively flatten subtrees
-                items.extend(self._flatten_dict_with_subtrees(v, new_key)) 
+                items.extend(self._flatten_dict_with_subtrees(v, new_key))
             else:
                 for item in v:
                     # Add individual packages
-                    items.append(f"{new_key}.{item}") 
+                    items.append(f"{new_key}.{item}")
         return items
 
     def load_package_mappings(self,
@@ -3298,7 +3323,7 @@ class DependenciesAnalyser:
 
             if 'artifacts' in os.listdir(paa_path):
 
-                with pkg_resources.path('package_auto_assembler.artifacts', 
+                with pkg_resources.path('package_auto_assembler.artifacts',
                 'package_licenses.json') as path:
                     base_mapping_filepath = path
 
@@ -3320,11 +3345,11 @@ class DependenciesAnalyser:
         base_package_licenses.update(package_licenses)
 
         self.package_licenses = base_package_licenses
-            
+
         return base_package_licenses
 
-    def extract_dependencies_tree(self, 
-                                    package_name : str = None, 
+    def extract_dependencies_tree(self,
+                                    package_name : str = None,
                                     requirements : list = None,
                                     layers : int = 100):
 
@@ -3358,11 +3383,11 @@ class DependenciesAnalyser:
 
             for layer in range(layers):
                 list_dim0 = self._count_keys(dependencies_dict)
-                self._apply_to_lists(data = dependencies_dict, 
+                self._apply_to_lists(data = dependencies_dict,
                             func = self._extract_dependencies_layer)
 
                 list_dim = self._count_keys(dependencies_dict)
-            
+
                 if list_dim == list_dim0:
                     break
         else:
@@ -3371,8 +3396,8 @@ class DependenciesAnalyser:
 
         return dependencies_dict
 
-    def add_license_labels_to_dep_tree(self, 
-                                        dependencies_tree : dict, 
+    def add_license_labels_to_dep_tree(self,
+                                        dependencies_tree : dict,
                                         normalize : bool = True):
 
         """
@@ -3382,13 +3407,13 @@ class DependenciesAnalyser:
         flattened_tree_deps = self._flatten_dict_with_subtrees(
             dependencies_tree)
 
-        tree_dep_license = {ft : self._get_licenses([ft.split('.')[-1]], 
+        tree_dep_license = {ft : self._get_licenses([ft.split('.')[-1]],
         normalize = normalize)[ft.split('.')[-1]] \
             for ft in flattened_tree_deps}
 
         return tree_dep_license
 
-    def find_unexpected_licenses_in_deps_tree(self,  
+    def find_unexpected_licenses_in_deps_tree(self,
                                             tree_dep_license : dict,
                                             allowed_licenses : list = None,
                                             raise_error : bool = True):
@@ -3401,7 +3426,7 @@ class DependenciesAnalyser:
         if allowed_licenses is None:
             allowed_licenses = self.allowed_licenses
 
-        
+
         out = {dep : license_label \
             for dep, license_label in tree_dep_license.items() \
                 if license_label not in allowed_licenses}
@@ -3410,9 +3435,9 @@ class DependenciesAnalyser:
             if req.split('.')[0] == req]))
 
         tree_missing_links_update = {req.split('.')[0] : '' \
-            for req in out if req.split('.')[0] not in requirements} 
+            for req in out if req.split('.')[0] not in requirements}
 
-      
+
         for req_from_missing in tree_missing_links_update:
 
             tree_partials = {req : license_label \
@@ -3421,7 +3446,7 @@ class DependenciesAnalyser:
 
             for req_part in tree_partials:
                 del out[req_part]
-            
+
             out[req_from_missing] = tree_missing_links_update[req_from_missing]
             out.update(tree_partials)
 
@@ -3483,10 +3508,10 @@ class DependenciesAnalyser:
     def extract_requirements_for_dependencies(self, dependencies : list):
 
         """
-        Outputs a dictionary where key is dependency and value is 
+        Outputs a dictionary where key is dependency and value is
         a list of requirements for that dependency.
         """
-    
+
         requirements_dict = {dep : self.get_package_requirements(
             package_name = dep
         ) for dep in dependencies}
@@ -3496,7 +3521,7 @@ class DependenciesAnalyser:
     def filter_packages_by_tags(self, tags : list):
 
         """
-        Uses list of provided tags to search though installed 
+        Uses list of provided tags to search though installed
         dependencies and returns of names of those that match.
         """
 
@@ -3517,7 +3542,7 @@ class DependenciesAnalyser:
         """
         Returns some preselected metadata fields if available, like:
 
-            - keywords 
+            - keywords
             - version
             - author
             - author_email
@@ -3568,13 +3593,13 @@ class DependenciesAnalyser:
             if line.startswith("License:"):
                 license_label = line.split("License: ")[1]
 
-        return {'keywords' : keywords, 
-                'version' : version, 
-                'author' : author, 
-                'author_email' : author_email, 
-                'classifiers' : classifiers, 
-                'paa_version' : paa_version, 
-                'paa_cli' : paa_cli, 
+        return {'keywords' : keywords,
+                'version' : version,
+                'author' : author,
+                'author_email' : author_email,
+                'classifiers' : classifiers,
+                'paa_version' : paa_version,
+                'paa_cli' : paa_cli,
                 'license_label' : license_label}
 
     def get_package_requirements(self, package_name : str = None):
@@ -3600,7 +3625,7 @@ class DependenciesAnalyser:
 
         return requirements
 
-    def _normalize_license_label(self, 
+    def _normalize_license_label(self,
                                 license_label : str,
                                 standard_licenses : list = None):
 
@@ -3609,7 +3634,7 @@ class DependenciesAnalyser:
 
             "mit", "bsd-3-clause", "bsd-2-clause", "apache-2.0", "gpl-3.0", "lgpl-3.0",
             "mpl-2.0", "agpl-3.0", "epl-2.0"
-        
+
         and if nothing matches returns "unknown"
         """
 
@@ -3621,12 +3646,12 @@ class DependenciesAnalyser:
 
         if license_label is None:
             return "unknown"
-        
+
         # Normalize to lowercase
         normalized_label = license_label.lower()
 
         normalized_label = normalized_label.replace('software license', '')
-        
+
         # Match with the highest similarity
         match = difflib.get_close_matches(normalized_label, standard_licenses, n=1, cutoff=0.4)
 
@@ -3651,7 +3676,7 @@ class PackageAutoAssembler:
     fastapi_routes_filepath = attr.ib(default=None)
     mapping_filepath = attr.ib(default=None)
     licenses_filepath = attr.ib(default=None)
-    allowed_licenses = attr.ib(default=['mit', 'apache-2.0', 'lgpl-3.0', 
+    allowed_licenses = attr.ib(default=['mit', 'apache-2.0', 'lgpl-3.0',
                             'bsd-3-clause', 'bsd-2-clause', '-', 'mpl-2.0'])
     example_notebook_path = attr.ib(default=None)
     versions_filepath = attr.ib(default='./lsts_package_versions.yml')
@@ -4027,7 +4052,7 @@ class PackageAutoAssembler:
         if use_commit_messages:
             self._initialize_release_notes_handler(version = version)
             self.release_notes_h.extract_version_update()
-            
+
             version_increment_type = self.release_notes_h.version_update_label
 
             if self.release_notes_h.version != self.default_version:
@@ -4083,7 +4108,7 @@ class PackageAutoAssembler:
         self.release_notes_h.create_release_note_entry()
         self.release_notes_h.save_release_notes()
 
-    def prep_setup_dir(self, 
+    def prep_setup_dir(self,
                        module_filepath : str = None,
                        module_docstring : str = None):
 
@@ -4154,7 +4179,7 @@ class PackageAutoAssembler:
             # switch filepath for the combined one
             self.module_filepath = save_filepath
 
-    
+
     def add_requirements_from_module(self,
                                      module_filepath : str = None,
                                      custom_modules : list = None,
@@ -4283,7 +4308,7 @@ class PackageAutoAssembler:
     def make_mkdocs_site(self):
 
         """
-        Use provided docs to generate simple mkdocs site. 
+        Use provided docs to generate simple mkdocs site.
         """
 
         if self.add_mkdocs_site:
@@ -4304,7 +4329,7 @@ class PackageAutoAssembler:
                     doc_files = os.listdir(self.docs_path)
                 else:
                     doc_files = []
-                
+
                 docs_file_paths = {}
 
                 package_docs = [doc_file for doc_file in doc_files \
@@ -4328,7 +4353,7 @@ class PackageAutoAssembler:
                     and os.path.exists(self.cli_docs_filepath):
                     docs_file_paths[self.cli_docs_filepath] = "cli.md"
 
-            
+
                 self.mkdocs_h = MkDocsHandler(
                     project_name = f"{package_name}_temp_mkdocs",
                     package_name = package_name,
@@ -4373,7 +4398,7 @@ class PackageAutoAssembler:
 
         artifacts_filepaths_m.update({os.path.join('artifacts', name) : import_path \
             for name, import_path in artifacts_filepaths.items() if name != 'mkdocs'})
-        
+
         artifacts_filepaths = artifacts_filepaths_m
 
         if self.add_artifacts:
@@ -4440,7 +4465,7 @@ class PackageAutoAssembler:
         Assemble setup.py file.
         """
 
-        
+
         if self.setup_dir_h is None:
             self._initialize_setup_dir_handler()
 
@@ -4511,7 +4536,7 @@ class PackageAutoAssembler:
                 fastapi_routes_filepath = fastapi_routes_filepath
             )
 
-    
+
         self.logger.info(f"Preparing setup file for {module_name.replace('_','-')} package ...")
 
         # create setup.py
@@ -4529,7 +4554,7 @@ class PackageAutoAssembler:
         if self.artifacts_h is not None:
             self.artifacts_h.write_mafifest()
 
-    
+
     def make_package(self,
                      setup_directory : str = None):
 
@@ -4574,7 +4599,7 @@ class PackageAutoAssembler:
         wheel_files = [f for f in os.listdir('dist') if f.endswith('-py3-none-any.whl')]
 
         for wheel_file in wheel_files:
-            list_of_cmds = [sys.executable, 
+            list_of_cmds = [sys.executable,
                             "-m", "pip", "install", "--force-reinstall"]
 
             if skip_deps_install:

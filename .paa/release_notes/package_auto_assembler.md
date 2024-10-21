@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.5.9
+
+    - support for manual overwrite for dependencies extraction
+
 ### 0.5.8
 
     - using module level metadata to pass links from which files are not downloaded during packaging
