@@ -1,7 +1,9 @@
 import logging
 import os
+import re
 import attr #>=22.2.0
 from stdlib_list import stdlib_list
+from packaging import version
 import tempfile
 
 @attr.s
@@ -87,7 +89,8 @@ class RequirementsHandler:
                                     package_constraints[pkg_name] = (req, constraint)
 
             # Return the most constrained requirements
-            return [req for req, _ in package_constraints.values()]
+            requirements = [req for req, _ in package_constraints.values()]
+            return requirements
         except Exception as e:
             return requirements
 
