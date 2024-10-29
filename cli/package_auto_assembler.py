@@ -15,7 +15,8 @@ from package_auto_assembler.package_auto_assembler import (
     RequirementsHandler,
     DependenciesAnalyser,
     FastApiHandler,
-    ArtifactsHandler)
+    ArtifactsHandler,
+    PprHandler)
 
 
 __cli_metadata__ = {
@@ -41,6 +42,7 @@ test_install_config = {
     "add_artifacts" : True,
     "add_mkdocs_site" : False,
     "artifacts_dir" : None,
+    "drawio_dir" : None,
     "cli_dir" : None,
     "cli_docs_dir" : None,
     "api_routes_dir" : None,
@@ -76,6 +78,17 @@ def init_config(ctx):
         click.echo(f"Edit it to your preferance.")
     else:
         click.echo(f"Config file already exists in {config}!")
+
+
+@click.command()
+@click.pass_context
+def init_paa(ctx):
+    """Initialize paa tracking files"""
+
+    st = PprHandler().init_paa_dir()
+
+    if st:
+        click.echo(f"PAA tracking files initialized!")
 
 
 
@@ -140,6 +153,10 @@ def test_install(ctx,
         "check_vulnerabilities" : False
 
     }
+
+    if test_install_config.get("drawio_dir"):
+        paa_params["drawio_filepath"] = os.path.join(
+            test_install_config['drawio_dir'], f"{module_name}.drawio")
 
     if test_install_config.get("default_version"):
         paa_params["default_version"] = test_install_config["default_version"]
@@ -305,6 +322,9 @@ def make_package(ctx,
         "check_vulnerabilities" : test_install_config.get("check_vulnerabilities", True),
         "check_dependencies_licenses" : test_install_config.get("check_dependencies_licenses", True)
     }
+
+    if test_install_config.get("drawio_dir"):
+        paa_params["drawio_dir"] = test_install_config["drawio_dir"]
 
     if test_install_config.get("example_notebooks_path"):
         paa_params["example_notebook_path"] = os.path.join(test_install_config["example_notebooks_path"],
@@ -1391,9 +1411,7 @@ def extract_tracking_version(ctx,
     click.echo(module_version)
     
 
-
-
-
+cli.add_command(init_paa, "init-paa")
 cli.add_command(init_config, "init-config")
 cli.add_command(test_install, "test-install")
 cli.add_command(make_package, "make-package")

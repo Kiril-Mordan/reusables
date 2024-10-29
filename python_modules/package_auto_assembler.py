@@ -18,6 +18,7 @@ import importlib.metadata
 
 from .components.paa_deps.artifacts_handler import ArtifactsHandler
 from .components.paa_deps.cli_handler import CliHandler
+from .components.paa_deps.drawio_handler import DrawioHandler
 from .components.paa_deps.dependencies_analyzer import DependenciesAnalyser
 from .components.paa_deps.fastapi_handler import FastApiHandler
 from .components.paa_deps.import_mapping_handler import ImportMappingHandler
@@ -29,6 +30,7 @@ from .components.paa_deps.release_notes_handler import ReleaseNotesHandler
 from .components.paa_deps.requirements_handler import RequirementsHandler
 from .components.paa_deps.setup_dir_handler import SetupDirHandler
 from .components.paa_deps.version_handler import VersionHandler
+from .components.paa_deps.ppr_handler import PprHandler
 
 #@ pip_audit==2.7.3
 #@ mkdocs==1.6.0
@@ -62,13 +64,15 @@ class PackageAutoAssembler:
     allowed_licenses = attr.ib(default=['mit', 'apache-2.0', 'lgpl-3.0',
                             'bsd-3-clause', 'bsd-2-clause', '-', 'mpl-2.0'])
     example_notebook_path = attr.ib(default=None)
-    versions_filepath = attr.ib(default='./lsts_package_versions.yml')
-    log_filepath = attr.ib(default='./version_logs.csv')
+    versions_filepath = attr.ib(default='./.paa/tracking/lsts_package_versions.yml')
+    log_filepath = attr.ib(default='./.paa/tracking/version_logs.csv')
     setup_directory = attr.ib(default='./setup_dir')
     release_notes_filepath = attr.ib(default=None)
     config_filepath = attr.ib(default=None)
     cli_docs_filepath = attr.ib(default=None)
+    drawio_filepath = attr.ib(default=None)
 
+    paa_dir = attr.ib(default="./.paa")
     artifacts_dir = attr.ib(default=None)
     dependencies_dir = attr.ib(default=None)
     docs_path = attr.ib(default=None)
@@ -115,6 +119,8 @@ class PackageAutoAssembler:
     fastapi_h_class = attr.ib(default=FastApiHandler)
     artifacts_h_class = attr.ib(default=ArtifactsHandler)
     mkdocs_h_class = attr.ib(default=MkDocsHandler)
+    drawio_h_class = attr.ib(default=DrawioHandler) 
+    ppr_h_class = attr.ib(default=PprHandler)
 
     ## handlers
     setup_dir_h = attr.ib(default = None, type = SetupDirHandler)
@@ -130,8 +136,11 @@ class PackageAutoAssembler:
     fastapi_h = attr.ib(default = None, type=FastApiHandler)
     artifacts_h = attr.ib(default = None, type=ArtifactsHandler)
     mkdocs_h = attr.ib(default = None, type=MkDocsHandler)
+    drawio_h = attr.ib(default = None, type=DrawioHandler)
+    ppr_h = attr.ib(default = None, type=PprHandler)
 
     ## output
+    custom_modules_list = attr.ib(default=[], type=list)
     cli_metadata = attr.ib(default={}, type = dict)
     add_cli_tool = attr.ib(default = None, type = bool)
     package_result = attr.ib(init=False)
@@ -169,7 +178,18 @@ class PackageAutoAssembler:
         """
 
         self.metadata_h = self.metadata_h_class(
-            module_filepath = self.module_filepath)
+            module_filepath = self.module_filepath,
+            logger = self.logger)
+
+    def _initialize_ppr_handler(self):
+
+        """
+        Initialize ppr handler with available parameters.
+        """
+
+        self.ppr_h = self.ppr_h_class(
+            paa_dir = self.paa_dir,
+            logger = self.logger)
 
     def _initialize_version_handler(self):
 
@@ -180,7 +200,8 @@ class PackageAutoAssembler:
         self.version_h = self.version_h_class(
             versions_filepath = self.versions_filepath,
             log_filepath = self.log_filepath,
-            default_version = self.default_version)
+            default_version = self.default_version,
+            logger = self.logger)
 
     def _initialize_requirements_handler(self):
 
@@ -191,7 +212,8 @@ class PackageAutoAssembler:
         self.requirements_h = self.requirements_h_class(
             module_filepath = self.module_filepath,
             custom_modules_filepath = self.dependencies_dir,
-            python_version = self.python_version)
+            python_version = self.python_version,
+            logger = self.logger)
 
     def _initialize_import_mapping_handler(self):
 
@@ -200,7 +222,8 @@ class PackageAutoAssembler:
         """
 
         self.import_mapping_h = self.import_mapping_h_class(
-            mapping_filepath = self.mapping_filepath)
+            mapping_filepath = self.mapping_filepath,
+            logger = self.logger)
 
     def _initialize_local_dependacies_handler(self):
 
@@ -210,7 +233,8 @@ class PackageAutoAssembler:
 
         self.local_dependacies_h = self.local_dependacies_h_class(
             main_module_filepath = self.module_filepath,
-            dependencies_dir = self.dependencies_dir)
+            dependencies_dir = self.dependencies_dir,
+            logger = self.logger)
 
     def _initialize_long_doc_handler(self):
 
@@ -220,7 +244,8 @@ class PackageAutoAssembler:
 
         self.long_doc_h = self.long_doc_h_class(
             notebook_path = self.example_notebook_path,
-            kernel_name = self.kernel_name)
+            kernel_name = self.kernel_name,
+            logger = self.logger)
 
     def _initialize_setup_dir_handler(self):
 
@@ -247,6 +272,18 @@ class PackageAutoAssembler:
             cli_module_filepath = self.cli_module_filepath,
             setup_directory = self.setup_directory,
             logger = self.logger)
+
+    def _initialize_drawio_handler(self):
+
+        """
+        Initialize drawio handler with available parameters.
+        """
+
+        self.drawio_h = self.drawio_h_class(
+            drawio_filepath = self.drawio_filepath,
+            setup_directory = self.setup_directory,
+            logger = self.logger)
+
 
     def _initialize_fastapi_handler(self):
 
@@ -365,6 +402,18 @@ class PackageAutoAssembler:
                 )
 
     ###
+
+    def initialize_paa_dir(self, paa_dir : str = None):
+
+        """
+        Initialize paa dir
+        """
+
+        if self.ppr_h is None:
+            self._initialize_ppr_handler()
+
+        self.ppr_h.init_paa_dir(paa_dir = paa_dir)
+
 
     def add_metadata_from_module(self, module_filepath : str = None):
 
@@ -561,6 +610,7 @@ class PackageAutoAssembler:
 
             # switch filepath for the combined one
             self.module_filepath = save_filepath
+            self.local_dependacies_list = self.local_dependacies_h.filtered_dep_names_list
 
 
     def add_requirements_from_module(self,
@@ -737,7 +787,7 @@ class PackageAutoAssembler:
                     docs_file_paths[self.cli_docs_filepath] = "cli.md"
 
 
-                self.mkdocs_h = MkDocsHandler(
+                self.mkdocs_h = self.mkdocs_h_class(
                     project_name = f"{package_name}_temp_mkdocs",
                     package_name = package_name,
                     docs_file_paths = docs_file_paths,
@@ -771,6 +821,11 @@ class PackageAutoAssembler:
 
         if artifacts_filepaths is None:
             artifacts_filepaths = {}
+
+        if self.drawio_h is None:
+            self._initialize_drawio_handler()
+
+        self.drawio_h.prepare_drawio()
 
         additional_artifacts_filepaths = self.artifacts_h.load_additional_artifacts()
 
@@ -810,10 +865,26 @@ class PackageAutoAssembler:
                 and os.path.exists(self.licenses_filepath)):
                 artifacts_filepaths['.paa.tracking/package_licenses.json'] = self.licenses_filepath
 
+            if (self.drawio_filepath is not None\
+                and os.path.exists(self.drawio_filepath)):
+                artifacts_filepaths['.paa.tracking/.drawio'] = self.drawio_filepath
+
             if (self.config_filepath is not None \
                 and os.path.exists(self.config_filepath)):
                 artifacts_filepaths['.paa.tracking/.paa.config'] = self.config_filepath
 
+            if (self.module_filepath  is not None \
+                and os.path.exists(self.module_filepath)):
+                artifacts_filepaths[
+                    f'.paa.tracking/python_modules/{self.module_name}.py'] = self.module_filepath
+            
+            if (self.local_dependacies_list  \
+                and os.path.exists(self.dependencies_dir)):
+                for component in self.local_dependacies_list:
+                    artifacts_filepaths[
+                    f'.paa.tracking/python_modules/components/{component}'] = os.path.join(
+                        self.dependencies_dir, f"{component}")
+   
             if 'artifact_urls' in self.metadata.keys():
                 artifact_urls=self.metadata['artifact_urls']
                 del self.metadata['artifact_urls']

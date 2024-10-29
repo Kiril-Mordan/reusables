@@ -17,6 +17,7 @@ class LocalDependaciesHandler:
     add_empty_design_choices = attr.ib(default=False, type = bool)
 
     # output
+    filtered_dep_names_list = attr.ib(default=[])
     dependencies_names_list = attr.ib(init=False)
     combined_module = attr.ib(init=False)
 
@@ -177,21 +178,31 @@ class LocalDependaciesHandler:
         # List of dependency bundles
         dependencies_folders = [os.path.splitext(f)[0] for f in os.listdir(dependencies_dir) if os.path.isdir(os.path.join(dependencies_dir,f))]
         # List of dependencies from bundles
-        bundle_dependencies = [os.path.splitext(f)[0] for bundle in dependencies_folders for f in os.listdir(os.path.join(dependencies_dir, bundle)) if f.endswith('.py')]
-        bundle_dep_path = [os.path.join(bundle, f) for bundle in dependencies_folders for f in os.listdir(os.path.join(dependencies_dir, bundle)) if f.endswith('.py')]
+        bundle_dependencies = [os.path.splitext(f)[0] for bundle in dependencies_folders \
+            for f in os.listdir(os.path.join(dependencies_dir, bundle)) if f.endswith('.py')]
+        bundle_dep_path = [os.path.join(bundle, f) for bundle in dependencies_folders \
+            for f in os.listdir(os.path.join(dependencies_dir, bundle)) if f.endswith('.py')]
 
         self.dependencies_names_list = dependencies + bundle_dependencies
         # Filtering relevant dependencies
         module_local_deps = [dep for dep in dependencies for module in main_module_imports if f'{dep} import' in module]
         module_bundle_deps = [dep for dep in bundle_dependencies for module in main_module_imports if f'{dep} import' in module]
-
+        module_bundle_deps_path = [path for dep, path in zip(bundle_dependencies,bundle_dep_path) \
+            for module in main_module_imports if f'{dep} import' in module]
 
         # Remove specific dependency imports from the main module
         for dep in module_local_deps:
+            main_module_imports0 = main_module_imports
             main_module_imports = [imp for imp in main_module_imports if f'{dep} import' not in imp]
+            if main_module_imports != main_module_imports0:
+                self.filtered_dep_names_list.append(f"{dep}.py")
 
-        for dep in module_bundle_deps:
+        for dep,dep_path in zip(module_bundle_deps,module_bundle_deps_path):
+            main_module_imports0 = main_module_imports
             main_module_imports = [imp for imp in main_module_imports if f'{dep} import' not in imp]
+            if main_module_imports != main_module_imports0:
+                self.filtered_dep_names_list.append(dep_path)
+
 
         main_module_content = self._remove_imports(main_module_content)
 

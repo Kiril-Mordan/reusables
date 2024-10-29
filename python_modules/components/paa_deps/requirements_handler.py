@@ -175,6 +175,7 @@ class RequirementsHandler:
                 if filename.endswith('.py') and not filename.startswith('__'):
                     module_name = filename.rsplit('.', 1)[0]
                     custom_modules.add(module_name)
+
         return list(custom_modules)
 
     def is_standard_library(self,

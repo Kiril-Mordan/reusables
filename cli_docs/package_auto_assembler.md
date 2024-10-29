@@ -15,9 +15,12 @@ Commands:
   check-licenses               Check licenses of the module.
   check-vulnerabilities        Check vulnerabilities of the module.
   extract-module-artifacts     Extracts artifacts from packaged module.
-  extract-module-routes        Extracts routes for fastapi from packages...
-  extract-module-site          Extracts static mkdocs site from packaged...
+  extract-module-requirements  Extract module requirements.
+  extract-module-routes        Extracts routes for fastapi from packages that have them into a file.
+  extract-module-site          Extracts static mkdocs site from packaged module.
+  extract-tracking-version     Get latest package version.
   init-config                  Initialize config file
+  init-paa                     Initialize paa tracking files
   make-package                 Package with package-auto-assembler.
   refresh-module-artifacts     Refreshes module artifact from links.
   run-api-routes               Run fastapi with provided routes.
@@ -41,6 +44,21 @@ paa init-config  --help
 Usage: paa init-config [OPTIONS]
 
   Initialize config file
+
+Options:
+  --help  Show this message and exit.
+```
+
+Packaging repository needs a place to keep some tracking files. 
+
+``` bash
+paa init-paa  --help
+```
+
+``` bash
+Usage: paa init-paa
+
+  Initialize paa tracking files
 
 Options:
   --help  Show this message and exit.

@@ -143,7 +143,15 @@ class ArtifactsHandler:
             setup_directory = self.setup_directory
 
         # create folder for paa files
-        os.makedirs(os.path.join(setup_directory,'.paa.tracking'))
+        if not os.path.exists(os.path.join(
+                setup_directory, ".paa.tracking")):
+            os.makedirs(os.path.join(setup_directory,'.paa.tracking'))
+        if not os.path.exists(os.path.join(
+                setup_directory, ".paa.tracking", 'python_modules')):
+            os.makedirs(os.path.join(setup_directory,'.paa.tracking', 'python_modules'))
+        if not os.path.exists(os.path.join(
+                setup_directory, ".paa.tracking", 'python_modules','components')):
+            os.makedirs(os.path.join(setup_directory,'.paa.tracking', 'python_modules','components'))
 
         try:
             # Get the package version
@@ -167,9 +175,6 @@ class ArtifactsHandler:
         for artifact_name, artifacts_filepath in artifacts_filepaths.items():
 
             if os.path.isdir(artifacts_filepath):
-
-                print(artifact_name)
-                print(artifacts_filepath)
 
                 link_artifacts_filepaths = self._get_artifact_links(
                     artifact_name = artifact_name,
@@ -235,6 +240,9 @@ class ArtifactsHandler:
 
 
             else:
+                directory = Path(os.path.join(setup_directory, artifact_name)).parent
+                directory.mkdir(parents=True, exist_ok=True)
+                
                 shutil.copy(artifacts_filepath,
                     os.path.join(setup_directory, artifact_name))
                 manifest_lines.append(f"include {module_name}/{artifact_name} \n")
