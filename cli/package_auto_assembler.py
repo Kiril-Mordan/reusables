@@ -43,6 +43,7 @@ test_install_config = {
     "add_mkdocs_site" : False,
     "artifacts_dir" : None,
     "drawio_dir" : None,
+    "tests_dir" : None,
     "cli_dir" : None,
     "cli_docs_dir" : None,
     "api_routes_dir" : None,
@@ -153,6 +154,10 @@ def test_install(ctx,
         "check_vulnerabilities" : False
 
     }
+
+    if test_install_config.get("tests_dir"):
+        paa_params["tests_dir"] = os.path.join(
+            test_install_config['tests_dir'], f"{module_name}")
 
     if test_install_config.get("drawio_dir"):
         paa_params["drawio_filepath"] = os.path.join(
@@ -322,6 +327,10 @@ def make_package(ctx,
         "check_vulnerabilities" : test_install_config.get("check_vulnerabilities", True),
         "check_dependencies_licenses" : test_install_config.get("check_dependencies_licenses", True)
     }
+
+    if test_install_config.get("tests_dir"):
+        paa_params["tests_dir"] = os.path.join(
+            test_install_config['tests_dir'], f"{module_name}")
 
     if test_install_config.get("drawio_dir"):
         paa_params["drawio_dir"] = test_install_config["drawio_dir"]

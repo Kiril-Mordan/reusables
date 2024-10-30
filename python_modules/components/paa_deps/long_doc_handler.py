@@ -81,18 +81,23 @@ class LongDocHandler:
         Get badge for module that was pushed to pypi.
         """
 
-        # Convert underscores to hyphens
-        module_name_hyphenated = module_name.replace('_', '-')
-        pypi_module_link = f"https://pypi.org/project/{module_name_hyphenated}/"
         pypi_link = ""
 
-        # Send a HEAD request to the PyPI module link
-        response = requests.head(pypi_module_link)
+        try:
 
-        # Check if the response status code is 200 (OK)
-        if response.status_code == 200:
-            pypi_link = f"[![PyPiVersion](https://img.shields.io/pypi/v/{module_name_hyphenated})]({pypi_module_link})"
+            # Convert underscores to hyphens
+            module_name_hyphenated = module_name.replace('_', '-')
+            pypi_module_link = f"https://pypi.org/project/{module_name_hyphenated}/"
 
+            # Send a HEAD request to the PyPI module link
+            response = requests.head(pypi_module_link)
+
+            # Check if the response status code is 200 (OK)
+            if response.status_code == 200:
+                pypi_link = f"[![PyPiVersion](https://img.shields.io/pypi/v/{module_name_hyphenated})]({pypi_module_link})"
+        except Exception as e:
+            self.logger.warning("Pypi link not found!")
+            
         return pypi_link
 
 

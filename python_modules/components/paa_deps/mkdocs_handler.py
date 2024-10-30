@@ -105,9 +105,9 @@ class MkDocsHandler:
                         counter += 1
 
                 shutil.copy(file_path, destination)
-                print(f"Copied {file_path} to {destination}")
+                self.logger.debug(f"Copied {file_path} to {destination}")
             else:
-                print(f"File not found: {file_path}")
+                self.logger.warning(f"File not found: {file_path}")
 
     def _clean_filename(self, filename: str, package_name: str) -> str:
         """

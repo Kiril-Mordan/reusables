@@ -31,6 +31,7 @@ from .components.paa_deps.requirements_handler import RequirementsHandler
 from .components.paa_deps.setup_dir_handler import SetupDirHandler
 from .components.paa_deps.version_handler import VersionHandler
 from .components.paa_deps.ppr_handler import PprHandler
+from .components.paa_deps.tests_handler import TestsHandler
 
 #@ pip_audit==2.7.3
 #@ mkdocs==1.6.0
@@ -54,9 +55,9 @@ class PackageAutoAssembler:
 
     ## inputs
     module_name = attr.ib(type=str)
+    module_filepath = attr.ib(type=str)
 
     ## paths
-    module_filepath = attr.ib(type=str)
     cli_module_filepath = attr.ib(default=None)
     fastapi_routes_filepath = attr.ib(default=None)
     mapping_filepath = attr.ib(default=None)
@@ -73,6 +74,7 @@ class PackageAutoAssembler:
     drawio_filepath = attr.ib(default=None)
 
     paa_dir = attr.ib(default="./.paa")
+    tests_dir = attr.ib(default=None)
     artifacts_dir = attr.ib(default=None)
     dependencies_dir = attr.ib(default=None)
     docs_path = attr.ib(default=None)
@@ -121,6 +123,7 @@ class PackageAutoAssembler:
     mkdocs_h_class = attr.ib(default=MkDocsHandler)
     drawio_h_class = attr.ib(default=DrawioHandler) 
     ppr_h_class = attr.ib(default=PprHandler)
+    tests_h_class = attr.ib(default=TestsHandler)
 
     ## handlers
     setup_dir_h = attr.ib(default = None, type = SetupDirHandler)
@@ -138,6 +141,7 @@ class PackageAutoAssembler:
     mkdocs_h = attr.ib(default = None, type=MkDocsHandler)
     drawio_h = attr.ib(default = None, type=DrawioHandler)
     ppr_h = attr.ib(default = None, type=PprHandler)
+    tests_h = attr.ib(default = None, type=TestsHandler)
 
     ## output
     custom_modules_list = attr.ib(default=[], type=list)
@@ -189,6 +193,17 @@ class PackageAutoAssembler:
 
         self.ppr_h = self.ppr_h_class(
             paa_dir = self.paa_dir,
+            logger = self.logger)
+
+    def _initialize_tests_handler(self):
+
+        """
+        Initialize tests handler with available parameters.
+        """
+
+        self.ppr_h = self.ppr_h_class(
+            tests_dir = self.tests_dir,
+            setup_directory = self.setup_directory,
             logger = self.logger)
 
     def _initialize_version_handler(self):
@@ -771,7 +786,7 @@ class PackageAutoAssembler:
                 for package_doc in package_docs:
 
                     if package_doc == f"{package_name}.md":
-                        docs_file_paths[os.path.join(self.docs_path,package_doc)] = "usage-examples.md"
+                        docs_file_paths[os.path.join(self.docs_path,package_doc)] = "description.md"
                     else:
                         docs_file_paths[os.path.join(self.docs_path,package_doc)] = package_doc
 
@@ -868,6 +883,10 @@ class PackageAutoAssembler:
             if (self.drawio_filepath is not None\
                 and os.path.exists(self.drawio_filepath)):
                 artifacts_filepaths['.paa.tracking/.drawio'] = self.drawio_filepath
+
+            if (self.tests_dir is not None\
+                and os.path.exists(self.tests_dir)):
+                artifacts_filepaths['tests'] = self.tests_dir
 
             if (self.config_filepath is not None \
                 and os.path.exists(self.config_filepath)):
