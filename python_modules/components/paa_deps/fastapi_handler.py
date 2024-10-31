@@ -183,6 +183,9 @@ class FastApiHandler:
                 "host" : "0.0.0.0",
                 "port" : 8000
             }
+        else:
+            if run_parameters.get("port"):
+                run_parameters["port"] = int(run_parameters["port"])
 
         app = FastAPI(**description)
 
