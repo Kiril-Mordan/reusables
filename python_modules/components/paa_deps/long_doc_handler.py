@@ -239,7 +239,31 @@ class LongDocHandler:
         # Write the final combined content to the output file
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(final_content)
-        print(f"Combined Markdown with Table of Contents written to {output_file}")
+        self.logger.debug(f"Combined Markdown with Table of Contents written to {output_file}")
+
+    def get_referenced_images(self, md_file_path : str):
+
+        """
+        Extracts as list of image path referenced in the text file.
+        """
+
+        # Regex pattern to match image references in markdown files
+        image_pattern = re.compile(r"!\[.*?\]\((.*?)\)")
+        images = []
+
+        if md_file_path and os.path.exists(md_file_path):
+
+            # Open the markdown file and read its contents
+            with open(md_file_path, 'r', encoding='utf-8') as md_file:
+                content = md_file.read()
+
+                # Find all image paths
+                images = image_pattern.findall(content)
+
+        images = [img for img in images if img.endswith(".png")]
+
+        return images
+
 
     def return_long_description(self,
                                 markdown_filepath : str = None):

@@ -22,6 +22,7 @@ class SetupDirHandler:
     classifiers = attr.ib(default=[], type=list)
     setup_directory = attr.ib(default='./setup_dir')
     add_cli_tool = attr.ib(default=False, type = bool)
+    version = attr.ib(default=None, type = str)
 
     logger = attr.ib(default=None)
     logger_name = attr.ib(default='Package Setup Dir Handler')
@@ -103,7 +104,8 @@ class SetupDirHandler:
     def create_init_file(self,
                          module_name : str = None,
                          docstring : str = None,
-                         setup_directory : str = None):
+                         setup_directory : str = None,
+                         version : str = None):
 
         """
         Create __init__.py for the package.
@@ -121,10 +123,15 @@ class SetupDirHandler:
         if docstring is None:
             docstring = self.docstring
 
+        if version is None:
+            version = self.version
+
         init_content = ''
         if docstring:
             init_content = f"""\n\"\"\"\n{docstring}\n\"\"\"\n"""
         init_content += f"""from .{module_name} import *\n"""
+        if version:
+            init_content += f"""__version__='{version}'"""
 
         # Creating temporary __init__.py file
         init_file_path = os.path.join(setup_directory, '__init__.py')

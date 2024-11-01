@@ -144,11 +144,12 @@ class PackageAutoAssembler:
     tests_h = attr.ib(default = None, type=TestsHandler)
 
     ## output
+    version = attr.ib(default=None)
+    metadata = attr.ib(default={})
     custom_modules_list = attr.ib(default=[], type=list)
     cli_metadata = attr.ib(default={}, type = dict)
     add_cli_tool = attr.ib(default = None, type = bool)
     package_result = attr.ib(init=False)
-    metadata = attr.ib(init=False)
 
 
     logger = attr.ib(default=None)
@@ -275,6 +276,7 @@ class PackageAutoAssembler:
             license_path = self.license_path,
             license_label = self.license_label,
             docs_url = self.docs_url,
+            version = self.metadata.get("version"),
             logger = self.logger)
 
     def _initialize_cli_handler(self):
@@ -783,12 +785,33 @@ class PackageAutoAssembler:
                 package_docs = [doc_file for doc_file in doc_files \
                     if doc_file.startswith(package_name)]
 
+                additional_images = []
+
                 for package_doc in package_docs:
 
                     if package_doc == f"{package_name}.md":
                         docs_file_paths[os.path.join(self.docs_path,package_doc)] = "description.md"
                     else:
                         docs_file_paths[os.path.join(self.docs_path,package_doc)] = package_doc
+
+                    if package_doc.endswith(".md"):
+                        additional_images += LongDocHandler().get_referenced_images(
+                            md_file_path = os.path.join(self.docs_path, 
+                                package_doc)
+                        )
+
+                # remove docs path from images path
+                #additional_images = [os.path.relpath(p, self.docs_path) for p in additional_images]
+
+                image_path_replacements = {}
+                for img in additional_images:
+                    docs_file_paths[os.path.join(self.docs_path,img)] = os.path.join(
+                        "images",
+                        os.path.basename(img))
+                    image_path_replacements[
+                        img] = os.path.join(
+                        "images",
+                        os.path.basename(img))
 
                 if self.docs_file_paths:
                     docs_file_paths.update(self.docs_file_paths)
@@ -811,7 +834,9 @@ class PackageAutoAssembler:
                     license_badge=self.license_badge)
 
             self.mkdocs_h.create_mkdocs_dir()
-            self.mkdocs_h.move_files_to_docs()
+            self.mkdocs_h.move_files_to_docs(
+                image_path_replacements = image_path_replacements
+            )
             self.mkdocs_h.generate_markdown_for_images()
             self.mkdocs_h.create_index()
             self.mkdocs_h.create_mkdocs_yml()

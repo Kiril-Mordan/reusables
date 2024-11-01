@@ -51,7 +51,7 @@ class MkDocsHandler:
             project_name = self.project_name
 
         subprocess.run(["mkdocs", "new", project_name])
-        print(f"Created new MkDocs project: {project_name}")
+        self.logger.debug(f"Created new MkDocs project: {project_name}")
 
     def create_mkdocs_dir(self, project_name: str = None):
         """
@@ -65,12 +65,41 @@ class MkDocsHandler:
             shutil.rmtree(project_name)
         os.makedirs(project_name)
 
-        print(f"Created new MkDocs dir: {project_name}")
+        self.logger.debug(f"Created new MkDocs dir: {project_name}")
+
+    
+    def _replace_image_paths(self, 
+                            md_file_path : str, 
+                            new_md_file_path : str, 
+                            path_replacements : dict):
+
+        # Regex pattern to match image paths
+        image_pattern = re.compile(r"(!\[.*?\]\()(.*?)(\))")
+
+        # Read the markdown file content
+        with open(md_file_path, 'r', encoding='utf-8') as md_file:
+            content = md_file.read()
+
+        # Replace image paths using the provided path replacements dictionary
+        def replace_match(match):
+            original_path = match.group(2)
+            # Replace only if the original path is in path_replacements
+            new_path = path_replacements.get(original_path, original_path)
+            return f"{match.group(1)}{new_path}{match.group(3)}"
+
+        updated_content = image_pattern.sub(replace_match, content)
+
+        # Write the updated content to a new markdown file
+        with open(new_md_file_path, 'w', encoding='utf-8') as new_md_file:
+            new_md_file.write(updated_content)
+
+        self.logger.debug(f"Image paths replaced and written to: {new_md_file_path}")
 
     def move_files_to_docs(self,
                            file_paths: dict = None,
                            project_name: str = None,
-                           package_name: str = None):
+                           package_name: str = None,
+                           image_path_replacements : dict = {}):
         """
         Move files from given list of paths to the docs directory.
         """
@@ -88,6 +117,9 @@ class MkDocsHandler:
         if not os.path.exists(docs_dir):
             os.makedirs(docs_dir)
 
+        if not os.path.exists(os.path.join(docs_dir, "images")):
+            os.makedirs(os.path.join(docs_dir, "images"))
+
         for file_path in file_paths:
             if os.path.exists(file_path):
                 filename = file_paths[file_path]
@@ -104,7 +136,15 @@ class MkDocsHandler:
                         destination = os.path.join(docs_dir, new_filename)
                         counter += 1
 
-                shutil.copy(file_path, destination)
+                if destination.endswith(".md"):
+                    self._replace_image_paths(
+                        md_file_path = file_path, 
+                        new_md_file_path = destination, 
+                        path_replacements = image_path_replacements
+                    )
+                else:
+                    shutil.copy(file_path, destination)
+
                 self.logger.debug(f"Copied {file_path} to {destination}")
             else:
                 self.logger.warning(f"File not found: {file_path}")
@@ -182,11 +222,13 @@ pip install {package_name.replace("_", "-")}
         mkdocs_index_path = os.path.join(project_name,"docs", "index.md")
         with open(mkdocs_index_path, 'w', encoding='utf-8') as file:
             file.write(content)
-        print(f"index.md has been created with site_name: {package_name}")
+        self.logger.debug(f"index.md has been created with site_name: {package_name}")
 
 
 
-    def generate_markdown_for_images(self, package_name: str = None, project_name: str = None):
+    def generate_markdown_for_images(self, 
+        package_name: str = None, 
+        project_name: str = None):
         """
         Generate .md files for each .png file in the specified directory based on naming rules.
 
@@ -204,7 +246,7 @@ pip install {package_name.replace("_", "-")}
         directory = os.path.join(project_name, "docs")
 
         if not os.path.exists(directory):
-            print(f"The directory {directory} does not exist.")
+            self.logger.warning(f"The directory {directory} does not exist.")
             return
 
         for filename in os.listdir(directory):
@@ -219,7 +261,7 @@ pip install {package_name.replace("_", "-")}
                 with open(md_filepath, 'w') as md_file:
                     md_content = f"![{filename}](./{filename})"
                     md_file.write(md_content)
-                print(f"Created {md_filepath}")
+                self.logger.debug(f"Created {md_filepath}")
 
     def create_mkdocs_yml(self, package_name: str = None, project_name: str = None):
         """
@@ -263,7 +305,7 @@ extra_css:
         mkdocs_yml_path = os.path.join(project_name, "mkdocs.yml")
         with open(mkdocs_yml_path, "w") as file:
             file.write(content.strip())
-        print(f"mkdocs.yml has been created with site_name: {package_name}")
+        self.logger.debug(f"mkdocs.yml has been created with site_name: {package_name}")
 
         css_dir = os.path.join(project_name, "docs", "css")
         if not os.path.exists(css_dir):
@@ -313,7 +355,7 @@ table {
         css_path = os.path.join(css_dir, "extra.css")
         with open(css_path, "w") as file:
             file.write(css_content.strip())
-        print(f"Custom CSS created at {css_path}")
+        self.logger.debug(f"Custom CSS created at {css_path}")
 
     def build_mkdocs_site(self, project_name: str = None):
         """
