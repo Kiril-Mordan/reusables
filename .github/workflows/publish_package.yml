@@ -57,11 +57,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install setuptools wheel twine
-          pip install -r .paa/requirements/requirements.txt
+          pip install -r .paa/requirements_dev.txt
 
-      - name: Add Python Kernel
-        if: steps.changed-modules.outputs.files != ''
-        run: python -m ipykernel install --user --name python3
+      # - name: Add Python Kernel
+      #   if: steps.changed-modules.outputs.files != ''
+      #   run: python -m ipykernel install --user --name python3
 
       - name: Pull latest changes from the remote repository
         if: steps.changed-modules.outputs.files != ''

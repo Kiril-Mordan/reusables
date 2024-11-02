@@ -57,10 +57,10 @@ jobs:
           source venv/bin/activate
 
       - name: Install python dependencies
-        run: pip install -r .paa/requirements/requirements.txt
+        run: pip install -r .paa/requirements_dev.txt
 
-      - name: Add Python Kernel
-        run: python -m ipykernel install --user --name python3
+      # - name: Add Python Kernel
+      #   run: python -m ipykernel install --user --name python3
 
       - name: Generate md files from jupyter for changed modules
         if: steps.changed-modules.outputs.files != ''

@@ -7,7 +7,9 @@ pylint==3.0.3
 mkdocs-material==9.5.30
 google-auth-httplib2
 jupyter
+nbconvert
+ipykernel
 ipykernel
 tox
 tox-gh-actions
-package-auto-assembler
+package-auto-assembler==0.5.10

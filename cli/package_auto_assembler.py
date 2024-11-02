@@ -333,7 +333,8 @@ def make_package(ctx,
             test_install_config['tests_dir'], f"{module_name}")
 
     if test_install_config.get("drawio_dir"):
-        paa_params["drawio_dir"] = test_install_config["drawio_dir"]
+        paa_params["drawio_filepath"] = os.path.join(
+            test_install_config['drawio_dir'], f"{module_name}.drawio")
 
     if test_install_config.get("example_notebooks_path"):
         paa_params["example_notebook_path"] = os.path.join(test_install_config["example_notebooks_path"],
