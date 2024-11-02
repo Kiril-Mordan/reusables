@@ -12,4 +12,4 @@ ipykernel
 ipykernel
 tox
 tox-gh-actions
-package-auto-assembler==0.5.10
+package-auto-assembler

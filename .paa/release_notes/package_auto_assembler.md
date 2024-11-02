@@ -1,5 +1,15 @@
 # Release notes
 
+### 0.5.12
+
+    - ability to package docs with referenced images from docs folder
+
+    - minor fix for bug in run-api-routes that prevented usage of optional port flag
+
+    - adding tests to packaging
+
+    - adding drawio and unmerged .py files to tracking
+
 ### 0.5.10
 
     - initial cli method to extract requirements
