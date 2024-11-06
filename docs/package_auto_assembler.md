@@ -1349,14 +1349,14 @@ Tools from main `.py` file could still be imported like the following:
 from package_name.package_name import ToBeImported
 ```
 
-Api description, middleware and run parameters could be provided via optional `yml` file, which for example would look like:
+Api description, middleware and run parameters could be provided via optional `.paa.api.config` file, which for example would look like:
 
 ```
 DESCRIPTION : {
     'version' : 0.0.0
 }
 MIDDLEWARE : {
-    origin : ['*']
+    allow_origins : ['*']
 }
 RUN : {
  host : 0.0.0.0
@@ -1366,7 +1366,24 @@ RUN : {
 where DESCRIPTION contains parameters for `FastAPI`, MIDDLEWARE for `CORSMiddleware` and RUN for `uvicorn.run`
 
 
-### 12. Adding artifacts to packages
+### 12. Adding ui and running streamlit application
+
+The tools allows to make a package with optional [`streamlit`](https://streamlit.io/) application as interface to the packaged code.  Each package can have one streamlit file. Package-auto-assembler itself would then be used to run packaged applications from the package. 
+
+A `.py`  file with the same name of the package should be stored within `streamlit_dir` provided in `.paa.config`.
+
+Dependencies from these files are extracted in the similar manner to the main module.
+
+Tools from main `.py` file could still be imported like the following:
+
+```python
+from package_name.package_name import ToBeImported
+```
+
+Config file with server, theme and other settings can be provided via optional `.paa.streamlit.config`. 
+
+
+### 13 Adding artifacts to packages
 
 The tool allows to add files to packages that could be accessed from the package or extracted into selected directory.
 
@@ -1414,7 +1431,7 @@ where key would contain name of the artifact and value its link.
 These files would not be downloaded and only links would be packaged. After package installation both kinds of links could be refreshed/donwloaded using [`cli interface`](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/) from `package-auto-assembler`.
 
 
-### 13. Making a package
+### 14. Making a package
 
 Main wrapper for the package integrates described above components into a class that could be used to build package building pipelines within python scripts. 
 
@@ -1647,7 +1664,7 @@ paa.make_package(
 
 
 
-### 14. Making simple MkDocs site
+### 15. Making simple MkDocs site
 
 Package documentation can be presented in a form of mkdocs static site, which could be either served or deployed to something like github packages. 
 
