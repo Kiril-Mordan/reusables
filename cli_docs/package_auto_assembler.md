@@ -16,14 +16,16 @@ Commands:
   check-vulnerabilities        Check vulnerabilities of the module.
   extract-module-artifacts     Extracts artifacts from packaged module.
   extract-module-requirements  Extract module requirements.
-  extract-module-routes        Extracts routes for fastapi from packages that have them into a file.
-  extract-module-site          Extracts static mkdocs site from packaged module.
+  extract-module-routes        Extracts routes for fastapi from packages...
+  extract-module-site          Extracts static mkdocs site from packaged...
+  extract-module-streamlit     Extracts streamlit from packages that have...
   extract-tracking-version     Get latest package version.
   init-config                  Initialize config file
   init-paa                     Initialize paa tracking files
   make-package                 Package with package-auto-assembler.
   refresh-module-artifacts     Refreshes module artifact from links.
   run-api-routes               Run fastapi with provided routes.
+  run-streamlit                Run streamlit application from the package.
   show-module-artifacts        Shows module artifacts.
   show-module-artifacts-links  Shows module artifact links.
   show-module-info             Shows module info.
@@ -227,6 +229,27 @@ Options:
   --help             Show this message and exit.
 ```
 
+
+One of the convinient ways to access packaged code could be a streamlit application. This package allows for streamlit application to be stored within a package and then run with the following. Parameters that would be passed to `~/.streamlit/config.toml` can be provided via optional `.paa.streamlit.config` file, at which point it would copied to default location. The command can be used to run streamlit apps from a selected package, built with the tool, or from normal `.py` file with streamlit app.
+
+``` bash
+paa run-streamlit --help
+```
+
+``` bash
+Usage: paa run-streamlit [OPTIONS]
+
+  Run streamlit application from the package.
+
+Options:
+  --app-config TEXT  Path to yml config for streamlit app.
+  --host TEXT        The host to bind to.
+  --port TEXT        The port to bind to.
+  --package TEXT     Package name from which streamlit app should be run.
+  --path TEXT        Path to streamlit app.
+  --help             Show this message and exit.
+```
+
 Storing routes within package could be convinient, but extracting them from a package is not. To mitigate that, the following exists to extract `routes.py` from a package that contains it.
 
 ``` bash
@@ -246,6 +269,9 @@ Options:
   --help              Show this message and exit.
 ```
 
+``` bash
+paa extract-module-site --help
+```
 
 ``` bash
 Usage: paa extract-module-site [OPTIONS] PACKAGE_NAME
@@ -360,7 +386,24 @@ Options:
   --help              Show this message and exit.
 ```
 
+Another option to access the packaged streamlit app is to copy it to a selected directory.
 
+``` bash
+paa extract-module-streamlit --help
+```
+
+``` bash
+Usage: paa extract-module-streamlit [OPTIONS] PACKAGE_NAME
+
+  Extracts streamlit from packages that have them into a file.
+
+Options:
+  --output-dir TEXT   Directory where streamplit extracted from the package
+                      will be copied to.
+  --output-path TEXT  Filepath to which streamlit extracted from the package
+                      will be copied to.
+  --help              Show this message and exit.
+```
 
 Some artifacts can come from links and there might be a need to refresh or even download these files (depending on how a link was provided). I might be useful to inspect which artifacts come from links, whether these links are available and refresh these artifacts within installed package.
 
