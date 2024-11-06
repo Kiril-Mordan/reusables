@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.5.13
+
+    - initial support for streamlit app packaging
+
 ### 0.5.12
 
     - ability to package docs with referenced images from docs folder
