@@ -3,6 +3,7 @@ import os
 import sys
 import shutil
 import attr #>=22.2.0
+import importlib
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -12,7 +13,7 @@ import uvicorn
 class FastApiHandler:
 
     """
-    Contains set of tools to prepare and handler api routes for packages.
+    Contains set of tools to prepare and handle api routes for packages.
     """
 
     # inputs
@@ -98,7 +99,7 @@ class FastApiHandler:
 
             except ImportError as e:
                 print(e)
-                print(f"Error importing routes from {package_name}: {e}")
+                self.logger.error(f"Error importing routes from {package_name}: {e}")
                 sys.exit(1)
 
         for routes_path in routes_paths:
@@ -210,10 +211,10 @@ class FastApiHandler:
 
     def extract_routes_from_package(self,
                               package_name : str,
-                              output_directory : str = '.',
+                              output_directory : str = None,
                               output_filepath : str = None):
         """
-        Extracts the routes.py file from the specified package.
+        Extracts the `routes.py` file from the specified package.
         """
         try:
 

@@ -21,6 +21,7 @@ from .components.paa_deps.cli_handler import CliHandler
 from .components.paa_deps.drawio_handler import DrawioHandler
 from .components.paa_deps.dependencies_analyzer import DependenciesAnalyser
 from .components.paa_deps.fastapi_handler import FastApiHandler
+from .components.paa_deps.streamlit_handler import StreamlitHandler
 from .components.paa_deps.import_mapping_handler import ImportMappingHandler
 from .components.paa_deps.local_dependencies_handler import LocalDependaciesHandler
 from .components.paa_deps.long_doc_handler import LongDocHandler
@@ -33,9 +34,11 @@ from .components.paa_deps.version_handler import VersionHandler
 from .components.paa_deps.ppr_handler import PprHandler
 from .components.paa_deps.tests_handler import TestsHandler
 
+#@ numpy==1.26.0
 #@ pip_audit==2.7.3
 #@ mkdocs==1.6.0
 #@ mkdocs-material==9.5.30
+#@ streamlit>=1.39.0
 
 # Metadata for package creation
 __package_metadata__ = {
@@ -72,6 +75,7 @@ class PackageAutoAssembler:
     config_filepath = attr.ib(default=None)
     cli_docs_filepath = attr.ib(default=None)
     drawio_filepath = attr.ib(default=None)
+    streamlit_filepath = attr.ib(default=None)
 
     paa_dir = attr.ib(default="./.paa")
     tests_dir = attr.ib(default=None)
@@ -124,6 +128,7 @@ class PackageAutoAssembler:
     drawio_h_class = attr.ib(default=DrawioHandler) 
     ppr_h_class = attr.ib(default=PprHandler)
     tests_h_class = attr.ib(default=TestsHandler)
+    streamlit_h_class = attr.ib(default=StreamlitHandler)
 
     ## handlers
     setup_dir_h = attr.ib(default = None, type = SetupDirHandler)
@@ -142,6 +147,7 @@ class PackageAutoAssembler:
     drawio_h = attr.ib(default = None, type=DrawioHandler)
     ppr_h = attr.ib(default = None, type=PprHandler)
     tests_h = attr.ib(default = None, type=TestsHandler)
+    streamlit_h = attr.ib(default = None, type=StreamlitHandler)
 
     ## output
     version = attr.ib(default=None)
@@ -310,6 +316,18 @@ class PackageAutoAssembler:
 
         self.fastapi_h = self.fastapi_h_class(
             fastapi_routes_filepath = self.fastapi_routes_filepath,
+            setup_directory = self.setup_directory,
+            logger = self.logger)
+
+    def _initialize_streamlit_handler(self):
+
+        """
+        Initialize fastapi handler with available parameters.
+        """
+
+        self.streamlit_h = self.streamlit_h_class(
+            package_name = self.module_name,
+            streamlit_filepath = self.streamlit_filepath,
             setup_directory = self.setup_directory,
             logger = self.logger)
 
@@ -718,6 +736,40 @@ class PackageAutoAssembler:
                 add_header = False
             )
 
+    def add_requirements_from_streamlit(self,
+                                     module_name : str = None,
+                                     streamlit_filepath : str = None,
+                                     custom_modules : list = None,
+                                     import_mappings : str = None,
+                                     check_vulnerabilities : bool = None,
+                                     check_dependencies_licenses : bool = None):
+
+        """
+        Extract and add requirements from the module.
+        """
+
+        if streamlit_filepath is None:
+            streamlit_filepath = self.streamlit_filepath
+
+        if module_name is None:
+            module_name = self.module_name
+
+        if custom_modules is None:
+            custom_modules = []
+
+        if (streamlit_filepath is not None) and \
+            os.path.exists(streamlit_filepath) \
+                and os.path.isfile(streamlit_filepath):
+
+            self._add_requirements(
+                module_filepath = streamlit_filepath,
+                custom_modules = custom_modules + [module_name],
+                import_mappings = import_mappings,
+                check_vulnerabilities = check_vulnerabilities,
+                check_dependencies_licenses = check_dependencies_licenses,
+                add_header = False
+            )
+
     def add_readme(self,
                     example_notebook_path : str = None,
                     output_path : str = None,
@@ -949,6 +1001,7 @@ class PackageAutoAssembler:
                        module_name : str = None,
                        cli_module_filepath : str = None,
                        fastapi_routes_filepath : str = None,
+                       streamlit_filepath : str = None,
                        metadata : dict = None,
                        cli_metadata : dict = None,
                        requirements : list = None,
@@ -972,6 +1025,9 @@ class PackageAutoAssembler:
 
         if fastapi_routes_filepath is None:
             fastapi_routes_filepath = self.fastapi_routes_filepath
+
+        if streamlit_filepath is None:
+            streamlit_filepath = self.streamlit_filepath
 
         if metadata is None:
             metadata = self.metadata
@@ -1032,6 +1088,17 @@ class PackageAutoAssembler:
 
             add_fastapi = self.fastapi_h.prepare_routes(
                 fastapi_routes_filepath = fastapi_routes_filepath
+            )
+
+        if streamlit_filepath is not None \
+            and os.path.exists(streamlit_filepath) \
+                and os.path.isfile(streamlit_filepath):
+
+            if self.streamlit_h is None:
+                self._initialize_streamlit_handler()
+
+            add_streamlit = self.streamlit_h.prepare_streamlit(
+                streamlit_filepath = streamlit_filepath
             )
 
 

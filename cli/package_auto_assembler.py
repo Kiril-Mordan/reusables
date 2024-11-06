@@ -16,7 +16,8 @@ from package_auto_assembler.package_auto_assembler import (
     DependenciesAnalyser,
     FastApiHandler,
     ArtifactsHandler,
-    PprHandler)
+    PprHandler,
+    StreamlitHandler)
 
 
 __cli_metadata__ = {
@@ -47,6 +48,7 @@ test_install_config = {
     "cli_dir" : None,
     "cli_docs_dir" : None,
     "api_routes_dir" : None,
+    "streamlit_dir" : None,
     "docs_dir" : None,
     "release_notes_dir" : None,
     "mapping_filepath" : None,
@@ -180,6 +182,10 @@ def test_install(ctx,
         paa_params["fastapi_routes_filepath"] = os.path.join(
             test_install_config['api_routes_dir'], f"{module_name}.py")
 
+    if test_install_config.get("streamlit_dir"):
+        paa_params["streamlit_filepath"] = os.path.join(
+            test_install_config['streamlit_dir'], f"{module_name}.py")
+
     if test_install_config.get("artifacts_dir"):
         paa_params["artifacts_dir"] = os.path.join(
             test_install_config["artifacts_dir"], module_name)
@@ -243,6 +249,7 @@ def test_install(ctx,
         paa.add_requirements_from_module()
         paa.add_requirements_from_cli_module()
         paa.add_requirements_from_api_route()
+        paa.add_requirements_from_streamlit()
         paa.make_mkdocs_site()
         paa.prepare_artifacts()
         paa.prep_setup_file()
@@ -363,6 +370,10 @@ def make_package(ctx,
         paa_params["fastapi_routes_filepath"] = os.path.join(
             test_install_config['api_routes_dir'], f"{module_name}.py")
 
+    if test_install_config.get("streamlit_dir"):
+        paa_params["streamlit_filepath"] = os.path.join(
+            test_install_config['streamlit_dir'], f"{module_name}.py")
+
     if test_install_config.get("artifacts_dir"):
         paa_params["artifacts_dir"] = os.path.join(
             test_install_config["artifacts_dir"], module_name)
@@ -431,7 +442,7 @@ def make_package(ctx,
         paa.add_requirements_from_module()
         paa.add_requirements_from_cli_module()
         paa.add_requirements_from_api_route()
-
+        paa.add_requirements_from_streamlit()
         paa.add_readme(execute_notebook = execute_notebook)
         paa.make_mkdocs_site()
         paa.prepare_artifacts()
@@ -1110,6 +1121,41 @@ def run_api_routes(ctx,
     )
 
 @click.command()
+@click.option('--app-config','app_config', type=str, 
+             default=".paa.streamlit.config",
+             required=False, 
+             help='Path to yml config for streamlit app.')
+@click.option('--host', default=None, help='The host to bind to.')
+@click.option('--port', default=None, help='The port to bind to.')
+@click.option('--package', 
+              'package_name',
+              required=False, 
+              help='Package name from which streamlit app should be run.')
+@click.option('--path', 
+              'streamlit_filepath',
+              required=False, 
+              help='Path to streamlit app.')
+@click.pass_context
+def run_streamlit(ctx,
+        app_config,
+        package_name,
+        streamlit_filepath,
+        host,
+        port):
+    """Run streamlit application from the package."""
+
+
+    sh = StreamlitHandler(loggerLvl = logging.INFO)
+    
+    sh.run_app(
+        package_name = package_name,
+        streamlit_filepath = streamlit_filepath,
+        config_path = app_config,
+        host = host,
+        port = port
+    )
+
+@click.command()
 @click.argument('package_name')
 @click.option('--output-dir', 
               'output_dir', 
@@ -1129,6 +1175,31 @@ def extract_module_routes(ctx,
     fah = FastApiHandler(loggerLvl = logging.INFO)
 
     fah.extract_routes_from_package(
+        package_name = package_name.replace("-", "_"), 
+        output_directory = output_dir, 
+        output_filepath = output_path
+    )
+
+@click.command()
+@click.argument('package_name')
+@click.option('--output-dir', 
+              'output_dir', 
+              type=str, required=False, 
+              help='Directory where streamplit extracted from the package will be copied to.')
+@click.option('--output-path', 
+              'output_path', 
+              type=str, required=False, 
+              help='Filepath to which streamlit extracted from the package will be copied to.')
+@click.pass_context
+def extract_module_streamlit(ctx,
+        package_name,
+        output_dir,
+        output_path):
+    """Extracts streamlit from packages that have them into a file."""
+
+    sh = StreamlitHandler(loggerLvl = logging.INFO)
+
+    sh.extract_streamlit_from_package(
         package_name = package_name.replace("-", "_"), 
         output_directory = output_dir, 
         output_filepath = output_path
@@ -1429,6 +1500,7 @@ cli.add_command(check_vulnerabilities, "check-vulnerabilities")
 cli.add_command(check_licenses, "check-licenses")
 cli.add_command(update_release_notes, "update-release-notes")
 cli.add_command(run_api_routes, "run-api-routes")
+cli.add_command(run_streamlit, "run-streamlit")
 cli.add_command(show_module_list, "show-module-list")
 cli.add_command(show_module_info, "show-module-info")
 cli.add_command(show_module_requirements, "show-module-requirements")
@@ -1438,6 +1510,7 @@ cli.add_command(show_module_artifact_links, "show-module-artifacts-links")
 cli.add_command(refresh_module_artifacts, "refresh-module-artifacts")
 cli.add_command(extract_tracking_version, "extract-tracking-version")
 cli.add_command(extract_module_routes, "extract-module-routes")
+cli.add_command(extract_module_streamlit, "extract-module-streamlit")
 cli.add_command(extract_module_artifacts, "extract-module-artifacts")
 cli.add_command(extract_module_requirements, "extract-module-requirements")
 cli.add_command(extract_module_site, "extract-module-site")
