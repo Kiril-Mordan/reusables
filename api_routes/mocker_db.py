@@ -24,10 +24,13 @@ MOCKER_SETUP_PARAMS = {
 
 API_SETUP_PARAMS = {
     'memory_scaler_from_bytes': 1048576,
-    'allocated_mb': 8192
+    'allocated_mb': 8192,
+    'use_env_vars': True
 }
 
 config = ".mockerdb.api.config"
+if os.getenv("MOCKER_API_CONFIG") and os.path.exists(os.getenv("MOCKER_API_CONFIG")):
+    config = os.getenv("MOCKER_API_CONFIG")
 
 if os.path.exists(config):
     with open(config, 'r') as file:
@@ -39,6 +42,13 @@ if os.path.exists(config):
     API_SETUP_PARAMS.update(
         api_config_up.get('API_SETUP_PARAMS', {}))
 
+if API_SETUP_PARAMS.get('use_env_vars'):
+
+    if os.getenv("MOCKER_PERSIST_PATH"):
+        MOCKER_SETUP_PARAMS['file_path'] = os.getenv("MOCKER_PERSIST_PATH")
+        MOCKER_SETUP_PARAMS['embs_file_path'] = os.getenv("MOCKER_PERSIST_PATH")
+    if os.getenv("MOCKER_ALLOCATED_MB"):
+        API_SETUP_PARAMS['allocated_mb'] = os.getenv("MOCKER_ALLOCATED_MB")
 
 
 handlers = {}
@@ -187,7 +197,7 @@ def insert_data(insert_request: InsertItem):
 @router.post("/search",
           description = "Searches the database based on the provided query and criteria.",
           responses = SearchDesc)
-def search_data(search_request: SearchRequest):
+async def search_data(search_request: SearchRequest):
 
     if search_request.database_name is None:
         search_request.database_name = "default"
@@ -197,7 +207,7 @@ def search_data(search_request: SearchRequest):
 
         try:
 
-            results = handlers[search_request.database_name].search_database(
+            results = await handlers[search_request.database_name].search_database_async(
                 query=search_request.query,
                 search_results_n=search_request.search_results_n,
                 llm_search_keys=search_request.llm_search_keys,

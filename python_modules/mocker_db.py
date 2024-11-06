@@ -1,5 +1,5 @@
 """
-MockerDB is a python module that contains mock vector database like solution built around
+`mocker-db` is a python module that contains mock vector database like solution built around
 python dictionary data type. It contains methods necessary to interact with this 'database',
 embed, search and persist.
 """
@@ -11,33 +11,34 @@ import json
 import time
 import copy
 import numpy as np #==1.26.0
-import dill #==0.3.7
+import dill #>=0.3.7
 import attr #>=22.2.0
 ## for making keys
 import hashlib
-## for search
-import concurrent.futures
-#! import hnswlib #==0.8.0
-#! import sentence_transformers #==2.2.2
-#! import torch
+
 from gridlooper import GridLooper #>=0.0.1
 from difflib import get_close_matches
-## for connect to remote mocker and llm search
-import requests
-import httpx
+
+# local dependencies
+from .components.mocker_db_deps.sentence_transformer_embedder import SentenceTransformerEmbedder
+from .components.mocker_db_deps.mocker_similarity_search import MockerSimilaritySearch
+from .components.mocker_db_deps.mocker_connector import MockerConnector
+from .components.mocker_db_deps.llm_filter_connector import LlmFilterConnector
+
 # dependencies for routes
 from .components.mocker_db_deps.data_types import InitializeParams, InsertItem, SearchRequest, DeleteItem, UpdateItem, EmbeddingRequest, RemoveHandlersRequest
 from .components.mocker_db_deps.memory_management import check_and_offload_handlers, obj_size
 from .components.mocker_db_deps.other import extract_directory
 from .components.mocker_db_deps.response_descriptions import ActivateHandlersDesc, RemoveHandlersDesc, InitializeDesc, InsertDesc, SearchDesc, DeleteDesc, EmbedDesc
 
+
 # Metadata for package creation
 __package_metadata__ = {
     "author": "Kyrylo Mordan",
     "author_email": "parachute.repo@gmail.com",
     "description": "A mock handler for simulating a vector database.",
-    'license' : 'mit'
-    # Add other metadata as needed
+    'license' : 'mit',
+    "url" : 'https://kiril-mordan.github.io/reusables/mocker_db/'
 }
 
 __design_choices__ = {
@@ -46,527 +47,6 @@ __design_choices__ = {
                            'on retrieval by not providing query similarity search is not performed, only filters are used']
 
 }
-
-class SentenceTransformerEmbedder:
-
-    def __init__(self,tbatch_size = 32, processing_type = 'batch', max_workers = 2, *args, **kwargs):
-        # Suppress SentenceTransformer logging
-
-        try:
-            from sentence_transformers import SentenceTransformer
-        except ImportError:
-            print("Please install `sentence_transformers` to use this feature.")
-
-        logging.getLogger('sentence_transformers').setLevel(logging.ERROR)
-        self.tbatch_size = tbatch_size
-        self.processing_type = processing_type
-        self.max_workers = max_workers
-        self.model = SentenceTransformer(*args, **kwargs)
-
-    def embed_sentence_transformer(self, text):
-
-        """
-        Embeds single query with sentence tranformer embedder.
-        """
-
-        return self.model.encode(text)
-
-    def embed(self, text, processing_type : str = None):
-
-        """
-        Embeds single query with sentence with selected embedder.
-        """
-
-        if processing_type is None:
-            processing_type = self.processing_type
-
-        if processing_type == 'batch':
-           return self.embed_texts_in_batches(texts = text)
-
-        if processing_type == 'parallel':
-           return self.embed_sentences_in_batches_parallel(texts = text)
-
-        return self.embed_sentence_transformer(text = str(text))
-
-    def embed_texts_in_batches(self, texts, batch_size : int = None):
-        """
-        Embeds a list of texts in batches.
-        """
-        if batch_size is None:
-            batch_size = self.tbatch_size
-
-        embeddings = []
-        for i in range(0, len(texts), batch_size):
-            batch = texts[i:i + batch_size]
-            batch_embeddings = self.model.encode(batch, show_progress_bar=False)
-            embeddings.extend(batch_embeddings)
-        return embeddings
-
-    def embed_sentences_in_batches_parallel(self, texts, batch_size: int = None, max_workers: int = None):
-        """
-        Embeds a list of texts in batches in parallel using processes.
-        """
-
-        if batch_size is None:
-            batch_size = self.tbatch_size
-
-        if max_workers is None:
-            max_workers = self.max_workers
-
-        batches = [texts[i:i + batch_size] for i in range(0, len(texts), batch_size)]
-
-        embeddings = []
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-            future_to_batch = {executor.submit(self.embed_sentence_transformer, batch): batch for batch in batches}
-
-            for future in concurrent.futures.as_completed(future_to_batch):
-                embeddings.extend(future.result())
-
-        return embeddings
-
-@attr.s
-class MockerSimilaritySearch:
-
-    search_results_n = attr.ib(default=10000, type=int)
-    similarity_params = attr.ib(default={'space':'cosine'}, type=dict)
-    similarity_search_type = attr.ib(default='linear')
-
-    # output
-    hnsw_index = attr.ib(init=False)
-
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Similarity search')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
-
-
-    def __attrs_post_init__(self):
-        self._initialize_logger()
-
-        if self.similarity_search_type == 'hnsw':
-            try:
-                from hnswlib import Index
-            except ImportError:
-                print("Please install `hnswlib` to use this feature.")
-
-            self.hnsw_index = Index
-
-        if self.similarity_search_type == 'linear_torch':
-            try:
-                import torch as t
-                self.torch = t
-            except ImportError:
-                print("Please install `pytorch` to use this feature.")
-
-
-    def _initialize_logger(self):
-
-        """
-        Initialize a logger for the class instance based on the specified logging level and logger name.
-        """
-
-        if self.logger is None:
-            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
-            logger = logging.getLogger(self.logger_name)
-            logger.setLevel(self.loggerLvl)
-
-            self.logger = logger
-
-    def hnsw_search(self, search_emb, doc_embs, k=1, space='cosine', ef_search=50, M=16, ef_construction=200):
-        """
-        Perform Hierarchical Navigable Small World search.
-
-        Args:
-        - search_emb (numpy array): The query embedding. Shape (1, dim).
-        - doc_embs (numpy array): Array of reference embeddings. Shape (num_elements, dim).
-        - k (int): Number of nearest neighbors to return.
-        - space (str): Space type for the index ('cosine' or 'l2').
-        - ef_search (int): Search parameter. Higher means more accurate but slower.
-        - M (int): Index parameter.
-        - ef_construction (int): Index construction parameter.
-
-        Returns:
-        - labels (numpy array): Indices of the k nearest embeddings from doc_embs to search_emb.
-        - distances (numpy array): Distances of the k nearest embeddings.
-        """
-
-        # Declare index
-        dim = len(search_emb)#.shape[1]
-        p = self.hnsw_index(space=space, dim=dim)
-
-        # Initialize the index using the data
-        p.init_index(max_elements=len(doc_embs), ef_construction=ef_construction, M=M)
-
-        # Add data to index
-        p.add_items(doc_embs)
-
-        # Set the query ef parameter
-        p.set_ef(ef_search)
-
-        #self.hnsw_index = p
-
-        # Query the index
-        labels, distances = p.knn_query(search_emb, k=k)
-
-        return labels[0], distances[0]
-
-    
-    def linear_search_torch(self, search_emb, doc_embs, k=1, space='cosine'):
-        """
-        Perform a linear (brute force) search.
-
-        Args:
-        - search_emb (numpy array): The query embedding. Shape (1, dim).
-        - doc_embs (numpy array): Array of reference embeddings. Shape (num_elements, dim).
-        - k (int): Number of nearest neighbors to return.
-        - space (str): Space type for the distance calculation ('cosine' or 'l2').
-
-        Returns:
-        - labels (numpy array): Indices of the k nearest embeddings from doc_embs to search_emb.
-        - distances (numpy array): Distances of the k nearest embeddings.
-        """
-
-        # Convert numpy arrays to PyTorch tensors with float64 precision
-        search_emb_tensor = self.torch.tensor(search_emb, dtype=self.torch.float64)
-        doc_embs_tensor = self.torch.tensor(doc_embs, dtype=self.torch.float64)
-
-        # Calculate distances from the query to all document embeddings
-        if space == 'cosine':
-            # Normalize embeddings for cosine similarity
-            search_emb_norm = self.torch.nn.functional.normalize(search_emb_tensor, p=2, dim=0)
-            doc_embs_norm = self.torch.nn.functional.normalize(doc_embs_tensor, p=2, dim=1)
-
-            # Compute cosine distances
-            distances = self.torch.matmul(doc_embs_norm, search_emb_norm).flatten()
-
-        elif space == 'l2':
-            # Compute L2 distances
-            distances = self.torch.norm(doc_embs_tensor - search_emb_tensor, dim=1)
-
-        k = min(k, len(distances))
-
-        # Get the indices of the top k closest embeddings
-        if space == 'cosine':
-            # For cosine, larger values mean closer distance
-            top_distances, labels = self.torch.topk(distances, k, largest=True)
-        else:
-            # For L2, smaller values mean closer distance
-            top_distances, labels = self.torch.topk(distances, k, largest=False)
-
-        # Convert results to numpy arrays
-        labels = labels.cpu().numpy()
-        top_distances = top_distances.cpu().numpy()
-
-        return labels, top_distances
-
-    def linear_search(self, search_emb, doc_embs, k=1, space='cosine'):
-
-        """
-        Perform a linear (brute force) search.
-
-        Args:
-        - search_emb (numpy array): The query embedding. Shape (1, dim).
-        - doc_embs (numpy array): Array of reference embeddings. Shape (num_elements, dim).
-        - k (int): Number of nearest neighbors to return.
-        - space (str): Space type for the distance calculation ('cosine' or 'l2').
-
-        Returns:
-        - labels (numpy array): Indices of the k nearest embeddings from doc_embs to search_emb.
-        - distances (numpy array): Distances of the k nearest embeddings.
-        """
-
-        # Calculate distances from the query to all document embeddings
-        if space == 'cosine':
-            # Normalize embeddings for cosine similarity
-            search_emb_norm = search_emb / np.linalg.norm(search_emb)
-            doc_embs_norm = doc_embs / np.linalg.norm(doc_embs, axis=1)[:, np.newaxis]
-
-            # Compute cosine distances
-            distances = np.dot(doc_embs_norm, search_emb_norm.T).flatten()
-
-        elif space == 'l2':
-            # Compute L2 distances
-            distances = np.linalg.norm(doc_embs - search_emb, axis=1)
-
-        # Get the indices of the top k closest embeddings
-        if space == 'cosine':
-            # For cosine, larger values mean closer distance
-            labels = np.argsort(-distances)[:k]
-
-        else:
-            # For L2, smaller values mean closer distance
-            labels = np.argsort(distances)[:k]
-
-        # Get the distances of the top k closest embeddings
-        top_distances = distances[labels]
-
-        return labels, top_distances
-
-    def search(self,
-               query_embedding,
-               data_embeddings,
-               k : int = None,
-               similarity_search_type: str = None,
-               similarity_params : dict = None):
-
-        if k is None:
-            k = self.search_results_n
-        if similarity_search_type is None:
-            similarity_search_type = self.similarity_search_type
-        if similarity_params is None:
-            similarity_params = self.similarity_params
-
-        if similarity_search_type == 'linear':
-            return self.linear_search(
-                search_emb = query_embedding, 
-                doc_embs = data_embeddings, 
-                k=k, 
-                **similarity_params)
-        if similarity_search_type == 'hnsw':
-            return self.hnsw_search(
-                search_emb = query_embedding, 
-                doc_embs = data_embeddings, 
-                k=k, 
-                **similarity_params)
-        if similarity_search_type == 'linear_torch':
-            return self.linear_search_torch(
-                search_emb = query_embedding, 
-                doc_embs = data_embeddings, 
-                k=k, 
-                **similarity_params)
-
-@attr.s
-class MockerConnector:
-
-    connection_details = attr.ib(
-        default = {
-            "base_url" : "http://localhost:8000"
-        })
-
-
-
-    def __attrs_post_init__(self):
-        self.client = httpx.Client(
-            **self.connection_details)
-
-    def read_root(self):
-        response = self.client.get("/")
-        return response.text
-
-    def show_handlers(self):
-
-        """
-        Show active handlers
-        """
-
-        response = self.client.get("/active_handlers")
-        return response.json()
-
-    
-    def initialize_database(self,
-                            database_name : str = 'default',
-                            embedder_params : dict = None):
-
-        """
-        Initialize database handler.
-        """
-
-        params = {}
-
-        if database_name is not None:
-            params["database_name"] = database_name
-
-        if embedder_params is not None:
-            params["embedder_params"] = embedder_params
-
-        response = self.client.post("/initialize", json=params)
-        return response.json()
-
-    def remove_handlers(self,
-                        handler_names : list):
-
-        """
-        Remove active handlers
-        """
-
-        response = self.client.post("/remove_handlers", json={"handler_names": handler_names})
-        if response.status_code == 404:
-            raise Exception(response.json()['detail'])
-        return response.json()
-
-    def insert_data(self,
-                    data : list,
-                    database_name : str = 'default',
-                    var_for_embedding_name : str = None,
-                    embed=False):
-
-        """
-        Insert data into a select handler.
-        """
-
-        request_body = {"data": data,
-                        "var_for_embedding_name" : "text"}
-
-        if var_for_embedding_name is not None:
-            request_body["var_for_embedding_name"] = var_for_embedding_name
-        if database_name is not None:
-            request_body["database_name"] = database_name
-        if embed is not None:
-            request_body["embed"] = embed
-
-        response = self.client.post("/insert", json=request_body)
-        return response.json()
-
-    def search_data(self,
-                    database_name : str = 'default',
-                    query : str = None,
-                    filter_criteria : dict = None,
-                    llm_search_keys: list = None,
-                    keyword_check_keys : list = None,
-                    keyword_check_cutoff : float = None,
-                    return_keys_list : list = None,
-                    search_results_n : int = None,
-                    similarity_search_type : str = None,
-                    similarity_params : dict = None,
-                    perform_similarity_search : bool = None):
-
-        """
-        Search data in selected handler.
-        """
-
-        request_body = {"database_name" : database_name}
-
-        if query is not None:
-            request_body["query"] = query
-        if filter_criteria is not None:
-            request_body["filter_criteria"] = filter_criteria
-        if llm_search_keys is not None:
-            request_body["llm_search_keys"] = llm_search_keys
-        if keyword_check_keys is not None:
-            request_body["keyword_check_keys"] = keyword_check_keys
-        if keyword_check_cutoff is not None:
-            request_body["keyword_check_cutoff"] = keyword_check_cutoff
-        if return_keys_list is not None:
-            request_body["return_keys_list"] = return_keys_list
-        if search_results_n is not None:
-            request_body["search_results_n"] = search_results_n
-        if similarity_search_type is not None:
-            request_body["similarity_search_type"] = similarity_search_type
-        if similarity_params is not None:
-            request_body["similarity_params"] = similarity_params
-        if perform_similarity_search is not None:
-            request_body["perform_similarity_search"] = perform_similarity_search
-
-        response = self.client.post("/search", json=request_body)
-        return response.json()
-
-    def delete_data(self,
-                    database_name : str,
-                    filter_criteria : dict = None):
-
-        """
-        Delete data from selected handler
-        """
-
-        request_body = {"database_name": database_name}
-
-        if filter_criteria is not None:
-            request_body["filter_criteria"] = filter_criteria
-
-        response = self.client.post("/delete", json=request_body)
-        return response.json()
-
-    def embed_texts(self,
-                    texts : list,
-                    embedding_model : str = None):
-
-        """
-        Embed list of text
-        """
-
-        request_body = {"texts": texts}
-
-        if embedding_model is not None:
-            request_body["embedding_model"] = embedding_model
-
-        response = self.client.post("/embed", json=request_body)
-        return response.json()
-
-
-@attr.s
-class LlmFilterConnector:
-
-    connection_string = attr.ib(default = "http://localhost:8000/prompt_chat_parallel")
-    headers = attr.ib(default={})
-    system_message = attr.ib(default = """You are an advanced language model designed to search for specific content within a text snippet. Your task is to determine whether the provided text snippet contains information relevant to a given query. Your response should be strictly "true" if the relevant information is present and "false" if it is not. Do not provide any additional information or explanation. Here is how you should proceed:
-
-1. Carefully read the provided text snippet.
-2. Analyze the given query.
-3. Determine if the text snippet contains information relevant to the query.
-4. Respond only with "true" or "false" based on your determination.""")
-
-    template = attr.ib(default = "Query: Does the text mention {query}? \nText Snippet: '''\n {text} \n'''")
-
-
-
-    def _make_inputs(self, query : str, inserts : list, search_key : str, system_message = None, template = None):
-
-        if system_message is None:
-            system_message = self.system_message
-
-        if template is None:
-            template = self.template
-
-        return [[{'role' : 'system',
-                'content' : system_message},
-                {'role' : 'user',
-                'content' : template.format(query = query, text = dd[search_key])}] for dd in inserts]
-
-    def _call_sync_llm(self, messages : list):
-
-        """
-        Calls llm.
-        """
-
-        request_body = {
-            "messages": messages
-        }
-
-
-        response = requests.post(self.connection_string,
-                                 headers = self.headers,
-                                 json=request_body)
-
-        return response.json()
-
-
-    def filter_data(self,
-                    query : str,
-                    data : list,
-                    search_key : str,
-                    system_message = None,
-                    template = None):
-
-        """
-        Prompts chat for search.
-        """
-
-        inserts = [value for _, value in data.items()]
-
-        messages = self._make_inputs(query = query,
-                                     inserts = inserts,
-                                     search_key = search_key,
-                                     system_message = system_message,
-                                     template = template)
-
-
-        responses = self._call_sync_llm(messages = messages)
-
-        outputs = [res['message']['content'] for res in responses]
-
-        output_filter = ['true' in out.lower() for out in outputs]
-
-        return {d : data[d] for d,b in zip(data,output_filter) if b}
 
 
 @attr.s
@@ -640,11 +120,6 @@ class MockerDB:
 
     skip_post_init = attr.ib(default=False)
 
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Mock handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
-
     ## data
     data = attr.ib(default=None, init=False)
     embs = attr.ib(default=None, init=False)
@@ -654,6 +129,12 @@ class MockerDB:
     keys_list = attr.ib(default=None, init = False)
     results_keys = attr.ib(default=None, init = False)
     results_dictances = attr.ib(default=None, init = False)
+
+    # logger
+    logger = attr.ib(default=None)
+    logger_name = attr.ib(default='MockerDB')
+    loggerLvl = attr.ib(default=logging.INFO)
+    logger_format = attr.ib(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()
@@ -685,7 +166,9 @@ class MockerDB:
         """
 
         if self.llm_filter_h is None:
-            self.llm_filter_h = self.llm_filter(**self.llm_filter_params)
+            self.llm_filter_h = self.llm_filter(
+                **self.llm_filter_params,
+                logger=self.logger)
 
     def _initialize_embedder(self):
 
@@ -908,6 +391,37 @@ class MockerDB:
 
             self.filtered_data.update(filtered_data)
 
+        return {'llm_search_keys' : llm_search_keys,
+                'keyword_check_keys' : keyword_check_keys,
+                'filter_criteria_list' : filter_criteria_list,
+                'llm_search_check_dict' : llm_search_check_dict}
+
+        # if llm_search_keys:
+
+        #     filtered_data = self.filtered_data
+        #     if keyword_check_keys == [] and filter_criteria_list == []:
+        #         filtered_data = self.data
+
+        #     for key, queries in llm_search_check_dict.items():
+
+        #         for query in queries:
+
+        #             filtered_data = self.llm_filter_h.filter_data(
+        #                 data = filtered_data,
+        #                 search_key = key,
+        #                 query = query)
+
+        #     self.filtered_data = filtered_data
+
+        # if len(self.filtered_data) == 0:
+        #     self.logger.warning("No data was found with applied filters!")
+
+    def _filter_llm(self, 
+                    llm_search_keys : bool, 
+                    keyword_check_keys : list,
+                    filter_criteria_list : list,
+                    llm_search_check_dict : dict):
+
         if llm_search_keys:
 
             filtered_data = self.filtered_data
@@ -925,10 +439,29 @@ class MockerDB:
 
             self.filtered_data = filtered_data
 
-        if len(self.filtered_data) == 0:
-            self.logger.warning("No data was found with applied filters!")
+    async def _filter_llm_async(self, 
+                    llm_search_keys : list, 
+                    keyword_check_keys : list,
+                    filter_criteria_list : list,
+                    llm_search_check_dict : dict):
 
-    
+        if llm_search_keys:
+
+            filtered_data = self.filtered_data
+            if keyword_check_keys == [] and filter_criteria_list == []:
+                filtered_data = self.data
+
+            for key, queries in llm_search_check_dict.items():
+
+                for query in queries:
+
+                    filtered_data = await self.llm_filter_h.filter_data_async(
+                        data = filtered_data,
+                        search_key = key,
+                        query = query)
+
+            self.filtered_data = filtered_data
+
     def _search_database_keys(self,
         query: str,
         search_results_n: int = None,
@@ -1338,12 +871,94 @@ class MockerDB:
             return self.mdbc_h.search_data(**mdbc_input)
 
         if filter_criteria:
-            self._filter_database(
+            temp = self._filter_database(
                 filter_criteria = filter_criteria,
                 llm_search_keys = llm_search_keys,
                 keyword_check_keys = keyword_check_keys,
                 keyword_check_cutoff = keyword_check_cutoff
                 )
+
+            self._filter_llm(**temp)
+
+            if len(self.filtered_data) == 0:
+                self.logger.warning("No data was found with applied filters!")
+        else:
+            self.filtered_data = self.data
+
+        self._search_database_keys(query = query,
+                                    search_results_n = search_results_n,
+                                    similarity_search_type = similarity_search_type,
+                                    similarity_params = similarity_params,
+                                    perform_similarity_search = perform_similarity_search)
+
+        results = self._get_dict_results(return_keys_list = return_keys_list)
+
+        # resetting search
+        self.filtered_data = None
+        self.keys_list = None
+        self.results_keys = None
+
+        return results
+
+
+    async def search_database_async(self,
+                        query: str = None,
+                        search_results_n: int = None,
+                        llm_search_keys : list = None,
+                        keyword_check_keys : list = None,
+                        keyword_check_cutoff : float = None,
+                        filter_criteria : dict = None,
+                        similarity_search_type: str = None,
+                        similarity_params: dict = None,
+                        perform_similarity_search: bool = None,
+                        return_keys_list : list = None,
+                        database_name : str = None) -> list:
+
+        """
+        Searches through keys and retrieves specified fields from the search results
+        in the mock database for a given filter.
+        """
+
+        if query is None:
+            perform_similarity_search = False
+
+
+        if self.mdbc_h:
+
+            mdbc_input = {}
+
+            if database_name:
+                mdbc_input['database_name'] = database_name
+
+            mdbc_input.update({
+                'query' : query,
+                'search_results_n' : search_results_n,
+                'llm_search_keys' : llm_search_keys,
+                'keyword_check_keys' : keyword_check_keys,
+                'keyword_check_cutoff' : keyword_check_cutoff,
+                'filter_criteria' : filter_criteria,
+                'similarity_search_type': similarity_search_type,
+                'similarity_params': similarity_params,
+                'perform_similarity_search': perform_similarity_search,
+                'return_keys_list' : return_keys_list,
+                'database_name' : database_name
+            }
+            )
+
+            return self.mdbc_h.search_data(**mdbc_input)
+
+        if filter_criteria:
+            temp = self._filter_database(
+                filter_criteria = filter_criteria,
+                llm_search_keys = llm_search_keys,
+                keyword_check_keys = keyword_check_keys,
+                keyword_check_cutoff = keyword_check_cutoff
+                )
+
+            await self._filter_llm_async(**temp)
+
+            if len(self.filtered_data) == 0:
+                self.logger.warning("No data was found with applied filters!")
         else:
             self.filtered_data = self.data
 
