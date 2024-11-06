@@ -12,7 +12,7 @@
         <link rel="prev" href="..">
       
       
-        <link rel="next" href="../flow/">
+        <link rel="next" href="../description/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -272,6 +272,26 @@
   
   
     <li class="md-nav__item">
+      <a href="../description/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Description
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../flow/" class="md-nav__link">
         
   
@@ -317,26 +337,6 @@
   
   <span class="md-ellipsis">
     Release notes
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage-examples/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Usage examples
   </span>
   
 
@@ -412,14 +412,16 @@ Commands:
   check-vulnerabilities        Check vulnerabilities of the module.
   extract-module-artifacts     Extracts artifacts from packaged module.
   extract-module-requirements  Extract module requirements.
-  extract-module-routes        Extracts routes for fastapi from packages that have them into a file.
-  extract-module-site          Extracts static mkdocs site from packaged module.
+  extract-module-routes        Extracts routes for fastapi from packages...
+  extract-module-site          Extracts static mkdocs site from packaged...
+  extract-module-streamlit     Extracts streamlit from packages that have...
   extract-tracking-version     Get latest package version.
   init-config                  Initialize config file
   init-paa                     Initialize paa tracking files
   make-package                 Package with package-auto-assembler.
   refresh-module-artifacts     Refreshes module artifact from links.
   run-api-routes               Run fastapi with provided routes.
+  run-streamlit                Run streamlit application from the package.
   show-module-artifacts        Shows module artifacts.
   show-module-artifacts-links  Shows module artifact links.
   show-module-info             Shows module info.
@@ -583,6 +585,21 @@ Options:
   --docs TEXT        Paths to static docs site which will be added to the app.
   --help             Show this message and exit.
 </code></pre>
+<p>One of the convinient ways to access packaged code could be a streamlit application. This package allows for streamlit application to be stored within a package and then run with the following. Parameters that would be passed to <code>~/.streamlit/config.toml</code> can be provided via optional <code>.paa.streamlit.config</code> file, at which point it would copied to default location. The command can be used to run streamlit apps from a selected package, built with the tool, or from normal <code>.py</code> file with streamlit app.</p>
+<pre><code class="language-bash">paa run-streamlit --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa run-streamlit [OPTIONS]
+
+  Run streamlit application from the package.
+
+Options:
+  --app-config TEXT  Path to yml config for streamlit app.
+  --host TEXT        The host to bind to.
+  --port TEXT        The port to bind to.
+  --package TEXT     Package name from which streamlit app should be run.
+  --path TEXT        Path to streamlit app.
+  --help             Show this message and exit.
+</code></pre>
 <p>Storing routes within package could be convinient, but extracting them from a package is not. To mitigate that, the following exists to extract <code>routes.py</code> from a package that contains it.</p>
 <pre><code class="language-bash">paa extract-module-routes --help
 </code></pre>
@@ -596,6 +613,8 @@ Options:
   --output-path TEXT  Filepath to which routes extracted from the package will
                       be copied to.
   --help              Show this message and exit.
+</code></pre>
+<pre><code class="language-bash">paa extract-module-site --help
 </code></pre>
 <pre><code class="language-bash">Usage: paa extract-module-site [OPTIONS] PACKAGE_NAME
 
@@ -676,6 +695,20 @@ Options:
   --output-dir TEXT   Directory where artifacts extracted from the package
                       will be copied to.
   --output-path TEXT  Filepath to which artifact extracted from the package
+                      will be copied to.
+  --help              Show this message and exit.
+</code></pre>
+<p>Another option to access the packaged streamlit app is to copy it to a selected directory.</p>
+<pre><code class="language-bash">paa extract-module-streamlit --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa extract-module-streamlit [OPTIONS] PACKAGE_NAME
+
+  Extracts streamlit from packages that have them into a file.
+
+Options:
+  --output-dir TEXT   Directory where streamplit extracted from the package
+                      will be copied to.
+  --output-path TEXT  Filepath to which streamlit extracted from the package
                       will be copied to.
   --help              Show this message and exit.
 </code></pre>
