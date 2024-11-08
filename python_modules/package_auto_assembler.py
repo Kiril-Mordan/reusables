@@ -63,8 +63,8 @@ class PackageAutoAssembler:
     ## paths
     cli_module_filepath = attr.ib(default=None)
     fastapi_routes_filepath = attr.ib(default=None)
-    mapping_filepath = attr.ib(default=None)
-    licenses_filepath = attr.ib(default=None)
+    mapping_filepath = attr.ib(default=".paa/package_mapping.json")
+    licenses_filepath = attr.ib(default=".paa/package_licenses.json")
     allowed_licenses = attr.ib(default=['mit', 'apache-2.0', 'lgpl-3.0',
                             'bsd-3-clause', 'bsd-2-clause', '-', 'mpl-2.0'])
     example_notebook_path = attr.ib(default=None)
@@ -78,10 +78,11 @@ class PackageAutoAssembler:
     streamlit_filepath = attr.ib(default=None)
 
     paa_dir = attr.ib(default="./.paa")
+    docs_path = attr.ib(default="./.paa/docs")
     tests_dir = attr.ib(default=None)
     artifacts_dir = attr.ib(default=None)
     dependencies_dir = attr.ib(default=None)
-    docs_path = attr.ib(default=None)
+    extra_docs_dir = attr.ib(default=None)
 
     # optional parameters
     classifiers = attr.ib(default=['Development Status :: 3 - Alpha'])
@@ -91,7 +92,7 @@ class PackageAutoAssembler:
     docs_url = attr.ib(default=None)
     requirements_list = attr.ib(default=[])
     optional_requirements_list = attr.ib(default=[])
-    python_version = attr.ib(default="3.8")
+    python_version = attr.ib(default="3.9")
     version_increment_type = attr.ib(default="patch", type = str)
     default_version = attr.ib(default="0.0.0", type = str)
     kernel_name = attr.ib(default = 'python', type = str)
@@ -786,9 +787,14 @@ class PackageAutoAssembler:
         if example_notebook_path is None:
             example_notebook_path = self.example_notebook_path
 
+        output_path_docs = None
         if output_path is None:
             output_path = os.path.join(self.setup_directory,
                                        "README.md")
+
+            if self.docs_path:
+                output_path_docs = os.path.join(self.docs_path,
+                                        f"{self.module_name}.md")
 
         self.logger.info(f"Adding README from {example_notebook_path} to {output_path}")
 
@@ -806,6 +812,31 @@ class PackageAutoAssembler:
                 notebook_path = example_notebook_path,
                 output_path = output_path
             )
+
+        if output_path_docs:
+            shutil.copy(output_path, output_path_docs)
+
+    def add_extra_docs(self, 
+                       extra_docs_dir : str = None):
+
+        """
+        Add extra docs from provided path for a given package.
+        """
+
+        if self.long_doc_h is None:
+            self._initialize_long_doc_handler()
+
+        if extra_docs_dir is None:
+            extra_docs_dir = self.extra_docs_dir
+
+        if extra_docs_dir:
+            self.long_doc_h.prep_extra_docs(
+                package_name = self.module_name,
+                extra_docs_dir = extra_docs_dir,
+                docs_path = self.docs_path)
+
+
+
 
     def make_mkdocs_site(self):
 
@@ -872,9 +903,9 @@ class PackageAutoAssembler:
                     and os.path.exists(self.release_notes_filepath):
                     docs_file_paths[self.release_notes_filepath] = "release-notes.md"
 
-                if (self.cli_docs_filepath is not None) \
-                    and os.path.exists(self.cli_docs_filepath):
-                    docs_file_paths[self.cli_docs_filepath] = "cli.md"
+                # if (self.cli_docs_filepath is not None) \
+                #     and os.path.exists(self.cli_docs_filepath):
+                #     docs_file_paths[self.cli_docs_filepath] = "cli.md"
 
 
                 self.mkdocs_h = self.mkdocs_h_class(

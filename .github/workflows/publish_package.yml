@@ -73,8 +73,8 @@ jobs:
 
           echo "Assembling for:"
           echo ${{ steps.changed-modules.outputs.files }}
-          echo "Test-installing paa ..."
-          paa test-install package-auto-assembler
+          # echo "Test-installing paa ..."
+          # paa test-install package-auto-assembler
           echo "Assembling..."
           chmod +x .github/tools/make_package.sh
           .github/tools/make_package.sh ${{ steps.changed-modules.outputs.files }}
@@ -107,10 +107,6 @@ jobs:
           git config --local user.name "GitHub Action"
 
           git pull origin HEAD:main
-
-          # git add env_spec/lsts_package_versions.yml
-          # git add env_spec/version_logs.csv
-          # git add release_notes
 
           git add .paa
 

@@ -78,7 +78,7 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git pull origin HEAD:main
-          git add docs README.md
+          git add .paa/docs README.md
           # Check if there are any changes in the working directory
           if git diff --cached --quiet; then
             echo "No changes to commit"

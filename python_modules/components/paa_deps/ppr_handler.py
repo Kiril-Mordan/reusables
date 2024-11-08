@@ -102,6 +102,8 @@ class PprHandler:
                 self._create_init_requirements(paa_dir = paa_dir)
             if not os.path.exists(os.path.join(paa_dir,'release_notes')):
                 os.makedirs(os.path.join(paa_dir,'release_notes'))
+            if not os.path.exists(os.path.join(paa_dir,'docs')):
+                os.makedirs(os.path.join(paa_dir,'docs'))
         except Exception as e:
             self.logger.warning("Failed to initialize paa dir!")
             self.logger.error(f"e")

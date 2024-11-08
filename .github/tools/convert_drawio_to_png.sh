@@ -1,7 +1,7 @@
 #!/bin/bash
 
 input_dir="drawio"
-output_dir="docs"
+output_dir=".paa/docs"
 format="png"
 
 # Ensure output directory exists
