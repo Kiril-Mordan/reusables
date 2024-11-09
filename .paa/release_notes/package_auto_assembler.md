@@ -1,5 +1,13 @@
 # Release notes
 
+### 0.5.14
+
+    - support for individually defined development status overwrites
+
+    - support for extra docs from separate dir in a form of .ipynb .md .png
+
+    - moving cli docs to new extra docs
+
 ### 0.5.13
 
     - initial support for streamlit app packaging
