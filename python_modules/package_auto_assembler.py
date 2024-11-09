@@ -47,7 +47,8 @@ __package_metadata__ = {
     "description": "A tool to automate package creation within ci based on just .py and optionally .ipynb file.",
     "keywords" : ['python', 'packaging'],
     'license' : 'mit',
-    "url" : 'https://kiril-mordan.github.io/reusables/package_auto_assembler/'
+    "url" : 'https://kiril-mordan.github.io/reusables/package_auto_assembler/',
+    "classifiers" : ["Development Status :: 5 - Production/Stable"]
 }
 
 
@@ -466,7 +467,8 @@ class PackageAutoAssembler:
             module_filepath = self.module_filepath
 
         # extracting package metadata
-        self.metadata = self.metadata_h.get_package_metadata(module_filepath = module_filepath)
+        self.metadata = self.metadata_h.get_package_metadata(
+            module_filepath = module_filepath)
 
 
     def add_metadata_from_cli_module(self,

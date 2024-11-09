@@ -7,8 +7,16 @@ format="png"
 # Ensure output directory exists
 mkdir -p "$output_dir"
 
-# Find all .drawio files in the input directory
-find "$input_dir" -name '*.drawio' | while read -r input_file; do
+# Check if files were provided as arguments
+if [ "$#" -gt 0 ]; then
+    files_to_process=("$@")
+else
+    # If no arguments, find all .drawio files in the input directory
+    files_to_process=($(find "$input_dir" -name '*.drawio'))
+fi
+
+# Process each file
+for input_file in "${files_to_process[@]}"; do
   base_name=$(basename "$input_file" .drawio)
 
   # Extract page names from the .drawio file

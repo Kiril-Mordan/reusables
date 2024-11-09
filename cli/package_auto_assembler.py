@@ -17,6 +17,7 @@ from package_auto_assembler.package_auto_assembler import (
     FastApiHandler,
     ArtifactsHandler,
     PprHandler,
+    LocalDependaciesHandler,
     StreamlitHandler)
 
 
@@ -817,6 +818,56 @@ def show_module_artifacts(ctx,
     else:
         click.echo(f"No package artifacts found for {label_name}")
 
+
+@click.command()
+@click.argument('label_name')
+@click.option('--config', type=str, required=False, help='Path to config file for paa.')
+@click.option('--module-dir', 'module_dir', type=str, required=False, help='Path to folder with .py file to be packaged.')
+@click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
+@click.pass_context
+def show_ref_local_deps(ctx,
+        config,
+        label_name,
+        module_dir,
+        dependencies_dir):
+    """Shows paths to local dependencies referenced in the module."""
+
+    if config is None:
+        config = ".paa.config"
+
+    if os.path.exists(config):
+        with open(config, 'r') as file:
+            test_install_config_up = yaml.safe_load(file)
+
+        test_install_config.update(test_install_config_up)
+
+    test_install_config["loggerLvl"] = logging.INFO
+
+    module_name = label_name.replace('-','_')
+
+    if module_dir:
+        test_install_config['module_dir'] = module_dir
+    if dependencies_dir:
+        test_install_config['dependencies_dir'] = dependencies_dir
+
+    ld_params = {
+        "main_module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
+        "dependencies_dir" : test_install_config.get("dependencies_dir")
+    }
+
+    ldh = LocalDependaciesHandler(
+        **ld_params
+
+    )
+
+    ref_local_deps = ldh.get_module_deps_path()
+
+    if ref_local_deps:
+        # Print each package and its version
+        for rld in ref_local_deps:
+            click.echo(f"{rld}")
+
+
 @click.command()
 @click.argument('label_name')
 # @click.option('--is-cli', 
@@ -1525,6 +1576,7 @@ cli.add_command(show_module_requirements, "show-module-requirements")
 cli.add_command(show_module_licenses, "show-module-licenses")
 cli.add_command(show_module_artifacts, "show-module-artifacts")
 cli.add_command(show_module_artifact_links, "show-module-artifacts-links")
+cli.add_command(show_ref_local_deps, "show-ref-local-deps")
 cli.add_command(refresh_module_artifacts, "refresh-module-artifacts")
 cli.add_command(extract_tracking_version, "extract-tracking-version")
 cli.add_command(extract_module_routes, "extract-module-routes")

@@ -138,6 +138,13 @@ class SetupDirHandler:
         with open(init_file_path, 'w') as init_file:
             init_file.write(init_content)
 
+    def _prep_metadata_elem(self, key, value):
+
+        if isinstance(value, str):
+            return f'{key}="{value}"'
+        else:
+            return f'{key}={value}'
+
     def write_setup_file(self,
                          module_name : str = None,
                          module_docstring : str = None,
@@ -211,8 +218,24 @@ class SetupDirHandler:
 
         #classifiers.append(f"PAA-CLI :: {add_cli_tool}")
 
+        development_statuses = [
+            "Development Status :: 1 - Planning",
+            "Development Status :: 2 - Pre-Alpha",
+            "Development Status :: 3 - Alpha",
+            "Development Status :: 4 - Beta",
+            "Development Status :: 5 - Production/Stable",
+            "Development Status :: 6 - Mature",
+            "Development Status :: 7 - Inactive"]
+
         if 'classifiers' in metadata.keys():
-            classifiers+=metadata['classifiers']
+
+            metadata_classifiers = metadata['classifiers'] 
+
+            if any([mc.startswith("Development Status") for mc in metadata_classifiers]):
+                classifiers = [c for c in classifiers if not c.startswith("Development Status")]
+                
+            classifiers+=metadata_classifiers
+
             del metadata['classifiers']
 
         if setup_directory is None:
@@ -237,8 +260,10 @@ class SetupDirHandler:
             requirements+=metadata['install_requires']
             del metadata['install_requires']
 
+    
         metadata_str = None
-        metadata_str = ',\n    '.join([f'{key}="{value}"' for key, value in metadata.items()])
+        metadata_str = ',\n    '.join([self._prep_metadata_elem(key, value) \
+            for key, value in metadata.items()])
 
 
         title = module_name.capitalize()

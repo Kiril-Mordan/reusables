@@ -20,9 +20,17 @@ function run_pylint() {
     echo "$pylint_score"
 }
 
-# Loop through Python files that match the pattern and check Pylint score
+# Check if files were provided as arguments
+if [ "$#" -gt 0 ]; then
+    files_to_check=("$@")
+else
+    # If no arguments, find all Python files in the module directory
+    files_to_check=($(find "$module_directory" -type f -name "*.py"))
+fi
+
+# Loop through specified Python files and check Pylint score
 all_pass=true
-find "$module_directory" -type f -name "*.py" | while read -r script; do
+for script in "${files_to_check[@]}"; do
     if [[ "$script" =~ $script_pattern ]]; then
         score=$(run_pylint "$script")
         echo "Pylint score for $script is $score"
