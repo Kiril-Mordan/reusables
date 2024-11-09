@@ -17,6 +17,7 @@ from package_auto_assembler.package_auto_assembler import (
     FastApiHandler,
     ArtifactsHandler,
     PprHandler,
+    LocalDependaciesHandler,
     StreamlitHandler)
 
 
@@ -34,8 +35,8 @@ def cli(ctx):
 test_install_config = {
     "module_dir" : "python_modules",
     "example_notebooks_path" : "example_notebooks",
-    "versions_filepath" : "lsts_package_versions.yml",
-    "log_filepath" : "version_logs.csv",
+    #"versions_filepath" : "lsts_package_versions.yml",
+    #"log_filepath" : "version_logs.csv",
     "include_local_dependecies" : True,
     "use_commit_messages" : True,
     "check_vulnerabilities" : True,
@@ -46,13 +47,14 @@ test_install_config = {
     "drawio_dir" : None,
     "tests_dir" : None,
     "cli_dir" : None,
-    "cli_docs_dir" : None,
+    #"cli_docs_dir" : None,
+    "extra_docs_dir" : None,
     "api_routes_dir" : None,
     "streamlit_dir" : None,
-    "docs_dir" : None,
+    #"docs_dir" : None,
     "release_notes_dir" : None,
-    "mapping_filepath" : None,
-    "licenses_filepath" : None,
+    #"mapping_filepath" : None,
+    #"licenses_filepath" : None,
     "dependencies_dir" : None,
     "license_path" : None,
     "license_label" : None,
@@ -143,13 +145,13 @@ def test_install(ctx,
         "config_filepath" : config,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
-        "mapping_filepath" : test_install_config.get("mapping_filepath"),
-        "licenses_filepath" : test_install_config.get("licenses_filepath"),
+        #"mapping_filepath" : test_install_config.get("mapping_filepath"),
+        #"licenses_filepath" : test_install_config.get("licenses_filepath"),
         "dependencies_dir" : test_install_config.get("dependencies_dir"),
         "setup_directory" : f"./{module_name}",
         "add_artifacts" : test_install_config.get("add_artifacts"),
         "artifacts_filepaths" : test_install_config.get("artifacts_filepaths"),
-        "docs_path" : test_install_config.get("docs_dir"),
+        #"docs_path" : test_install_config.get("docs_dir"),
         "license_badge" : test_install_config.get("license_badge"),
         "add_mkdocs_site" : False,
         "check_dependencies_licenses" : False,
@@ -157,6 +159,11 @@ def test_install(ctx,
 
     }
 
+
+    if test_install_config.get("extra_docs_dir"):
+        paa_params["extra_docs_dir"] = os.path.join(
+            test_install_config['extra_docs_dir'], f"{module_name}")
+        
     if test_install_config.get("tests_dir"):
         paa_params["tests_dir"] = os.path.join(
             test_install_config['tests_dir'], f"{module_name}")
@@ -164,6 +171,10 @@ def test_install(ctx,
     if test_install_config.get("drawio_dir"):
         paa_params["drawio_filepath"] = os.path.join(
             test_install_config['drawio_dir'], f"{module_name}.drawio")
+
+    if test_install_config.get("example_notebooks_path"):
+        paa_params["example_notebook_path"] = os.path.join(test_install_config["example_notebooks_path"],
+                                                           f"{module_name}.ipynb")
 
     if test_install_config.get("default_version"):
         paa_params["default_version"] = test_install_config["default_version"]
@@ -193,9 +204,9 @@ def test_install(ctx,
     if test_install_config.get("release_notes_dir"):
         paa_params["release_notes_filepath"] = os.path.join(test_install_config["release_notes_dir"],
                                                             f"{module_name}.md")
-    if test_install_config.get("cli_docs_dir"):
-        paa_params["cli_docs_filepath"] = os.path.join(test_install_config["cli_docs_dir"],
-                                                            f"{module_name}.md")
+    # if test_install_config.get("cli_docs_dir"):
+    #     paa_params["cli_docs_filepath"] = os.path.join(test_install_config["cli_docs_dir"],
+    #                                                         f"{module_name}.md")
 
     if build_mkdocs:
         paa_params["add_mkdocs_site"] = True
@@ -250,7 +261,10 @@ def test_install(ctx,
         paa.add_requirements_from_cli_module()
         paa.add_requirements_from_api_route()
         paa.add_requirements_from_streamlit()
-        paa.make_mkdocs_site()
+        if paa_params.get("add_mkdocs_site"):
+            paa.add_readme(execute_notebook = False)
+            paa.add_extra_docs()
+            paa.make_mkdocs_site()
         paa.prepare_artifacts()
         paa.prep_setup_file()
         paa.make_package()
@@ -316,12 +330,12 @@ def make_package(ctx,
         "config_filepath" : config,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
-        "mapping_filepath" : test_install_config.get("mapping_filepath"),
-        "licenses_filepath" : test_install_config.get("licenses_filepath"),
+        #"mapping_filepath" : test_install_config.get("mapping_filepath"),
+        #"licenses_filepath" : test_install_config.get("licenses_filepath"),
         "dependencies_dir" : test_install_config.get("dependencies_dir"),
         "setup_directory" : f"./{module_name}",
-        "versions_filepath" : test_install_config["versions_filepath"],
-        "log_filepath" : test_install_config["log_filepath"],
+        #"versions_filepath" : test_install_config["versions_filepath"],
+        #"log_filepath" : test_install_config["log_filepath"],
         "use_commit_messages" : test_install_config["use_commit_messages"],
         "license_path" : test_install_config.get("license_path", None),
         "license_label" : test_install_config.get("license_label", None),
@@ -330,10 +344,14 @@ def make_package(ctx,
         "add_artifacts" : test_install_config.get("add_artifacts"),
         "add_mkdocs_site" : test_install_config.get("add_mkdocs_site"),
         "artifacts_filepaths" : test_install_config.get("artifacts_filepaths"),
-        "docs_path" : test_install_config.get("docs_dir"),
+        #"docs_path" : test_install_config.get("docs_dir"),
         "check_vulnerabilities" : test_install_config.get("check_vulnerabilities", True),
         "check_dependencies_licenses" : test_install_config.get("check_dependencies_licenses", True)
     }
+
+    if test_install_config.get("extra_docs_dir"):
+        paa_params["extra_docs_dir"] = os.path.join(
+            test_install_config['extra_docs_dir'], f"{module_name}")
 
     if test_install_config.get("tests_dir"):
         paa_params["tests_dir"] = os.path.join(
@@ -381,9 +399,9 @@ def make_package(ctx,
     if test_install_config.get("release_notes_dir"):
         paa_params["release_notes_filepath"] = os.path.join(test_install_config["release_notes_dir"],
                                                             f"{module_name}.md")
-    if test_install_config.get("cli_docs_dir"):
-        paa_params["cli_docs_filepath"] = os.path.join(test_install_config["cli_docs_dir"],
-                                                            f"{module_name}.md")
+    # if test_install_config.get("cli_docs_dir"):
+    #     paa_params["cli_docs_filepath"] = os.path.join(test_install_config["cli_docs_dir"],
+    #                                                         f"{module_name}.md")
 
     if test_install_config.get("docs_file_paths"):
         paa_params["docs_file_paths"] = test_install_config.get("docs_file_paths")
@@ -444,6 +462,7 @@ def make_package(ctx,
         paa.add_requirements_from_api_route()
         paa.add_requirements_from_streamlit()
         paa.add_readme(execute_notebook = execute_notebook)
+        paa.add_extra_docs()
         paa.make_mkdocs_site()
         paa.prepare_artifacts()
         paa.prep_setup_file()
@@ -487,11 +506,11 @@ def check_vulnerabilities(ctx,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
-        "mapping_filepath" : test_install_config["mapping_filepath"],
+        #"mapping_filepath" : test_install_config["mapping_filepath"],
         "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
-        "versions_filepath" : test_install_config["versions_filepath"],
-        "log_filepath" : test_install_config["log_filepath"],
+        #"versions_filepath" : test_install_config["versions_filepath"],
+        #"log_filepath" : test_install_config["log_filepath"],
         "check_vulnerabilities" : True,
         "add_artifacts" : False
     }
@@ -586,12 +605,12 @@ def check_licenses(ctx,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
-        "mapping_filepath" : test_install_config["mapping_filepath"],
-        "licenses_filepath" : test_install_config["licenses_filepath"],
+        #"mapping_filepath" : test_install_config["mapping_filepath"],
+        #"licenses_filepath" : test_install_config["licenses_filepath"],
         "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
-        "versions_filepath" : test_install_config["versions_filepath"],
-        "log_filepath" : test_install_config["log_filepath"],
+        #"versions_filepath" : test_install_config["versions_filepath"],
+        #"log_filepath" : test_install_config["log_filepath"],
         "check_vulnerabilities" : False,
         "check_dependencies_licenses" : True,
         "add_artifacts" : False
@@ -798,6 +817,56 @@ def show_module_artifacts(ctx,
             click.echo(f"{artifact}")
     else:
         click.echo(f"No package artifacts found for {label_name}")
+
+
+@click.command()
+@click.argument('label_name')
+@click.option('--config', type=str, required=False, help='Path to config file for paa.')
+@click.option('--module-dir', 'module_dir', type=str, required=False, help='Path to folder with .py file to be packaged.')
+@click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
+@click.pass_context
+def show_ref_local_deps(ctx,
+        config,
+        label_name,
+        module_dir,
+        dependencies_dir):
+    """Shows paths to local dependencies referenced in the module."""
+
+    if config is None:
+        config = ".paa.config"
+
+    if os.path.exists(config):
+        with open(config, 'r') as file:
+            test_install_config_up = yaml.safe_load(file)
+
+        test_install_config.update(test_install_config_up)
+
+    test_install_config["loggerLvl"] = logging.INFO
+
+    module_name = label_name.replace('-','_')
+
+    if module_dir:
+        test_install_config['module_dir'] = module_dir
+    if dependencies_dir:
+        test_install_config['dependencies_dir'] = dependencies_dir
+
+    ld_params = {
+        "main_module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
+        "dependencies_dir" : test_install_config.get("dependencies_dir")
+    }
+
+    ldh = LocalDependaciesHandler(
+        **ld_params
+
+    )
+
+    ref_local_deps = ldh.get_module_deps_path()
+
+    if ref_local_deps:
+        # Print each package and its version
+        for rld in ref_local_deps:
+            click.echo(f"{rld}")
+
 
 @click.command()
 @click.argument('label_name')
@@ -1330,7 +1399,7 @@ def extract_module_requirements(ctx,
         "module_name" : f"{module_name}",
         "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
         "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
-        "mapping_filepath" : test_install_config["mapping_filepath"],
+        #"mapping_filepath" : test_install_config["mapping_filepath"],
         "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
         "check_vulnerabilities" : False,
@@ -1468,8 +1537,8 @@ def extract_tracking_version(ctx,
 
         test_install_config.update(test_install_config_up)
 
-    MAPPING_FILE = test_install_config['mapping_filepath']
-    VERSIONS_FILE = test_install_config['versions_filepath']
+    MAPPING_FILE = ".paa/tracking/lsts_package_versions.yml"#test_install_config['mapping_filepath']
+    VERSIONS_FILE = ".paa/tracking/version_logs.csv" #test_install_config['versions_filepath']
 
     # if os.path.exists(MAPPING_FILE):
 
@@ -1507,6 +1576,7 @@ cli.add_command(show_module_requirements, "show-module-requirements")
 cli.add_command(show_module_licenses, "show-module-licenses")
 cli.add_command(show_module_artifacts, "show-module-artifacts")
 cli.add_command(show_module_artifact_links, "show-module-artifacts-links")
+cli.add_command(show_ref_local_deps, "show-ref-local-deps")
 cli.add_command(refresh_module_artifacts, "refresh-module-artifacts")
 cli.add_command(extract_tracking_version, "extract-tracking-version")
 cli.add_command(extract_module_routes, "extract-module-routes")

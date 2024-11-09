@@ -247,7 +247,7 @@
     </mxGraphModel>
   </diagram>
   <diagram name="flow" id="WLMHj4V7T1tkh2896ld8">
-    <mxGraphModel dx="2843" dy="2563" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2649" dy="2449" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -332,8 +332,8 @@
         <mxCell id="rKDuYdVevO0EODqZjKq1-20" value="release_notes.md" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
           <mxGeometry x="-34" y="-134" width="163" height="107" as="geometry" />
         </mxCell>
-        <mxCell id="rKDuYdVevO0EODqZjKq1-21" value="extract readme from notebooks" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="-89" y="-1070" width="120" height="60" as="geometry" />
+        <mxCell id="rKDuYdVevO0EODqZjKq1-21" value="extract readme from notebooks/ extra docs" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="-91" y="-1072" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="rKDuYdVevO0EODqZjKq1-26" value="run mkdocs documentation for package" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-21" y="-535" width="120" height="60" as="geometry" />
@@ -530,7 +530,7 @@
         <mxCell id="jS9VcDbqMC5c32hotzqq-19" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-623" y="130" width="320" height="144" as="geometry" />
         </mxCell>
-        <mxCell id="jS9VcDbqMC5c32hotzqq-20" value="docs" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+        <mxCell id="jS9VcDbqMC5c32hotzqq-20" value="extra_docs" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="-607" y="133" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="jS9VcDbqMC5c32hotzqq-21" value="doc1.md" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
@@ -572,11 +572,8 @@
         <mxCell id="iJYY7QMdzL_WmRZI-q_U-2" value="routes.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=21;" parent="1" vertex="1">
           <mxGeometry x="-505" y="-151" width="98" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="iJYY7QMdzL_WmRZI-q_U-3" value="cli_doc.md" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=21;" parent="1" vertex="1">
-          <mxGeometry x="-620" y="-100.5" width="230" height="40" as="geometry" />
-        </mxCell>
         <mxCell id="iJYY7QMdzL_WmRZI-q_U-4" value="module_name.ipynb" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=21;" parent="1" vertex="1">
-          <mxGeometry x="-619" y="-50" width="230" height="40" as="geometry" />
+          <mxGeometry x="-620" y="-104" width="230" height="40" as="geometry" />
         </mxCell>
         <mxCell id="iJYY7QMdzL_WmRZI-q_U-5" value="doc_n.png" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
           <mxGeometry x="-430" y="215" width="121" height="38" as="geometry" />
@@ -623,17 +620,17 @@
         <mxCell id="NUpiJraVuSpxZ0E8_Pmo-2" value="extract streamlit app from packages" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="258" y="-470" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="vES-BqMGwAYMSnsNv8OG-1" value="streamlit.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=21;" vertex="1" parent="1">
+        <mxCell id="vES-BqMGwAYMSnsNv8OG-1" value="streamlit.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=21;" parent="1" vertex="1">
           <mxGeometry x="-394" y="-151" width="98" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="vES-BqMGwAYMSnsNv8OG-2" value="streamlit.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" vertex="1" parent="1">
+        <mxCell id="vES-BqMGwAYMSnsNv8OG-2" value="streamlit.py" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" parent="1" vertex="1">
           <mxGeometry x="330" y="-147" width="117" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="vES-BqMGwAYMSnsNv8OG-3" value=".drawio" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=15;" vertex="1" parent="1">
+        <mxCell id="vES-BqMGwAYMSnsNv8OG-3" value=".drawio" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=15;" parent="1" vertex="1">
           <mxGeometry x="188" y="264" width="99" height="57" as="geometry" />
         </mxCell>
-        <mxCell id="vES-BqMGwAYMSnsNv8OG-4" value="module_name.drawio" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=21;" vertex="1" parent="1">
-          <mxGeometry x="-617.5" y="-1" width="229.5" height="40" as="geometry" />
+        <mxCell id="vES-BqMGwAYMSnsNv8OG-4" value="module_name.drawio" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=21;" parent="1" vertex="1">
+          <mxGeometry x="-619.75" y="-55" width="229.5" height="40" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

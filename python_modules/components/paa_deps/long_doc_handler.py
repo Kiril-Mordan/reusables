@@ -8,6 +8,7 @@ from nbconvert import MarkdownExporter #==7.16.4
 from nbconvert.preprocessors import ExecutePreprocessor
 import attr #>=22.2.0
 import requests
+import shutil
 
 @attr.s
 class LongDocHandler:
@@ -279,3 +280,38 @@ class LongDocHandler:
             long_description = "\n" + fh.read()
 
         return long_description
+
+    def prep_extra_docs(self, 
+                        package_name : str,
+                        extra_docs_dir : str,
+                        docs_path : str):
+
+        """
+        Prepares extra docs for packaging.
+        """
+
+        if extra_docs_dir and os.path.exists(extra_docs_dir):
+
+            files = os.listdir(extra_docs_dir)
+
+            for f in files:
+
+                if os.path.isdir(os.path.join(extra_docs_dir,f)):
+
+                    if os.path.exists(os.path.join(docs_path,f)):
+                        shutil.rmtree(os.path.join(docs_path,f))
+
+                    shutil.copytree(
+                        os.path.join(extra_docs_dir,f), 
+                        os.path.join(docs_path,f))
+
+                if f.endswith(".md") or f.endswith(".png") :
+                    shutil.copy(
+                        os.path.join(extra_docs_dir,f), 
+                        os.path.join(docs_path,f"{package_name}-{f}"))
+
+                if f.endswith(".ipynb"):
+                    self.convert_notebook_to_md(
+                        notebook_path = os.path.join(extra_docs_dir,f),
+                        output_path = os.path.join(docs_path,
+                        f"{package_name}-{f.replace('.ipynb', '.md')}"))

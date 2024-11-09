@@ -2,7 +2,7 @@
 
 # Specify the root directory to start the conversion
 root_dir="example_notebooks/"
-output_directory="docs/"
+output_directory=".paa/docs/"
 
 # Function to convert a Jupyter notebook to markdown
 convert_to_markdown() {
