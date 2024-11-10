@@ -1,4 +1,4 @@
-name: Publish packages
+name: Package-auto-assembler workflow
 
 on:
   workflow_dispatch:
@@ -6,7 +6,9 @@ on:
       package_name:
         description: 'Name of the package'
         required: false
-        default: 'package_auto_assembler'
+  push:
+    branches:
+      - main
 
 
 jobs:
@@ -32,6 +34,21 @@ jobs:
               echo "::set-output name=files::$(cat changed_files)"
           fi
 
+      - name: Install Draw.io Desktop and Dependencies
+        if: steps.changed-modules.outputs.files != ''
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget xvfb libnotify4 libxml2-utils
+          wget https://github.com/jgraph/drawio-desktop/releases/download/v24.6.4/drawio-amd64-24.6.4.deb
+          sudo dpkg -i drawio-amd64-24.6.4.deb
+          sudo apt-get install -f
+
+      - name: Export drawio files to png files
+        if: steps.changed-modules.outputs.files != ''
+        run: |
+          chmod +x .github/tools/convert_drawio_to_png.sh
+          .github/tools/convert_drawio_to_png.sh "drawio/${{ steps.changed-modules.outputs.files }}.drawio"
+
       - name: Install jq
         if: steps.changed-modules.outputs.files != ''
         run: sudo apt-get update && sudo apt-get install jq
@@ -55,10 +72,6 @@ jobs:
           python -m pip install setuptools wheel twine
           pip install -r .paa/requirements_dev.txt
 
-      # - name: Add Python Kernel
-      #   if: steps.changed-modules.outputs.files != ''
-      #   run: python -m ipykernel install --user --name python3
-
       - name: Pull latest changes from the remote repository
         if: steps.changed-modules.outputs.files != ''
         run: git pull origin main
@@ -69,8 +82,8 @@ jobs:
 
           echo "Assembling for:"
           echo ${{ steps.changed-modules.outputs.files }}
-          echo "Test-installing paa ..."
-          paa test-install package-auto-assembler
+          # echo "Test-installing paa ..."
+          # paa test-install package-auto-assembler
           echo "Assembling..."
           chmod +x .github/tools/make_package.sh
           .github/tools/make_package.sh ${{ steps.changed-modules.outputs.files }}
@@ -84,6 +97,11 @@ jobs:
         run: |
           ls -la
           python -m twine upload dist/*
+
+      - name: Update README.md
+        run: |
+          chmod +x .github/tools/update_README.sh
+          .github/tools/update_README.sh
 
       - name: Commit changes
         if: steps.changed-modules.outputs.files != ''
@@ -104,11 +122,11 @@ jobs:
 
           git pull origin HEAD:main
 
-          git add .paa
+          git add .paa README.md
 
           # Check if there are any changes in the working directory
           if [ -n "$(git status --porcelain)" ]; then
-            COMMIT_MESSAGE="Update package version tracking files"
+            COMMIT_MESSAGE="Update paa tracking files"
             TAG_NAME="v${PACKAGE_VERSION}_${LABEL_NAME}"
             TAG_MESSAGE="${LABEL_NAME}==${PACKAGE_VERSION}"
 

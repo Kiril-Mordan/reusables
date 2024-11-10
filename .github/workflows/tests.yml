@@ -76,7 +76,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ['3.9', '3.10', '3.11']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
 
     steps:
       - uses: actions/checkout@v2
@@ -110,8 +110,7 @@ jobs:
               tox -- "tests/${{ needs.update-requirements.outputs.changed-files }}"
             else
               echo "No tests for module."
-            .github/tools/pylint_test.sh
-            #.github/tools/pylint_test.sh $(paa show-ref-local-deps "${{ needs.update-requirements.outputs.changed-files }}")
+            .github/tools/pylint_test.sh $(paa show-ref-local-deps "${{ needs.update-requirements.outputs.changed-files }}")
             fi
           elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             if [ -d "tests/${{ needs.update-requirements.outputs.changed-files }}" ]; then
