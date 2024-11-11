@@ -73,6 +73,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#initializing-paa" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -251,6 +256,17 @@
       
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Cli
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -260,6 +276,86 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#initializing-paa" class="md-nav__link">
+    <span class="md-ellipsis">
+      Initializing PAA
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating packages
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checking-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checking dependencies
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-apps-from-packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running apps from packages
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extracting-files-from-packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extracting files from packages
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#show-modules-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      Show modules info
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other" class="md-nav__link">
+    <span class="md-ellipsis">
+      Other
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -383,6 +479,77 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#initializing-paa" class="md-nav__link">
+    <span class="md-ellipsis">
+      Initializing PAA
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating packages
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checking-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checking dependencies
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-apps-from-packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running apps from packages
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extracting-files-from-packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extracting files from packages
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#show-modules-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      Show modules info
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other" class="md-nav__link">
+    <span class="md-ellipsis">
+      Other
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -410,6 +577,7 @@ Options:
 Commands:
   check-licenses               Check licenses of the module.
   check-vulnerabilities        Check vulnerabilities of the module.
+  convert-drawio-to-png        Converts drawio file to .png
   extract-module-artifacts     Extracts artifacts from packaged module.
   extract-module-requirements  Extract module requirements.
   extract-module-routes        Extracts routes for fastapi from packages...
@@ -417,10 +585,12 @@ Commands:
   extract-module-streamlit     Extracts streamlit from packages that have...
   extract-tracking-version     Get latest package version.
   init-config                  Initialize config file
-  init-paa                     Initialize paa tracking files
+  init-paa                     Initialize paa tracking files and...
+  init-ppr                     Initialize ppr for a given workflows...
   make-package                 Package with package-auto-assembler.
   refresh-module-artifacts     Refreshes module artifact from links.
   run-api-routes               Run fastapi with provided routes.
+  run-pylint-tests             Run pylint tests for a given module, file,...
   run-streamlit                Run streamlit application from the package.
   show-module-artifacts        Shows module artifacts.
   show-module-artifacts-links  Shows module artifact links.
@@ -428,9 +598,11 @@ Commands:
   show-module-licenses         Shows module licenses.
   show-module-list             Shows module list.
   show-module-requirements     Shows module requirements.
+  show-ref-local-deps          Shows paths to local dependencies...
   test-install                 Test install module into local environment.
   update-release-notes         Update release notes.
 </code></pre>
+<h2 id="initializing-paa">Initializing PAA</h2>
 <p>Creating config file could be useful to avoid providing parameters manually. If no config file will be provided, by default values from <code>.paa.config</code> will be used.</p>
 <pre><code class="language-bash">paa init-config  --help
 </code></pre>
@@ -441,7 +613,9 @@ Commands:
 Options:
   --help  Show this message and exit.
 </code></pre>
-<p>Packaging repository needs a place to keep some tracking files. </p>
+<p>Packaging repository needs a place to keep some tracking files.
+Running it first time also initializes <code>.paa.config</code> and the second time
+will create directories specified there, if not already created.  </p>
 <pre><code class="language-bash">paa init-paa  --help
 </code></pre>
 <pre><code class="language-bash">Usage: paa init-paa
@@ -450,6 +624,47 @@ Options:
 
 Options:
   --help  Show this message and exit.
+</code></pre>
+<p>The package provides some templates for packaging repositories. Packaging repository after some additional preparations should allow to create and publish new packages with a use of ci/cd pipeline. </p>
+<pre><code class="language-bash">paa init-ppr --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa init-ppr [OPTIONS]
+
+  Initialize ppr for a given workflows platform.
+
+Options:
+  --github  If checked, git actions template would be set up.
+  --azure   If checked, azure devops pipelines template would be set up.
+  --help    Show this message and exit.
+</code></pre>
+<h2 id="creating-packages">Creating packages</h2>
+<p>Installing packages for a test in local environments could be a useful step to make sure everything works as expected before pushing changes to publishing repo. This creates an instance of the package in local environment with default version, with a greatly simplified building process that avoids making documentation, versioning and so on.</p>
+<pre><code class="language-bash">paa test-install [OPTIONS] MODULE_NAME
+</code></pre>
+<pre><code class="language-bash">Usage: paa test-install [OPTIONS] MODULE_NAME
+
+  Test install module into local environment.
+
+Options:
+  --config TEXT                   Path to config file for paa.
+  --module-filepath TEXT          Path to .py file to be packaged.
+  --mapping-filepath TEXT         Path to .json file that maps import to
+                                  install dependecy names.
+  --cli-module-filepath TEXT      Path to .py file that contains cli logic.
+  --fastapi-routes-filepath TEXT  Path to .py file that routes for fastapi.
+  --dependencies-dir TEXT         Path to directory with local dependencies of
+                                  the module.
+  --default-version TEXT          Default version.
+  --check-vulnerabilities         If checked, checks module dependencies with
+                                  pip-audit for vulnerabilities.
+  --build-mkdocs                  If checked, builds mkdocs documentation.
+  --check-licenses                If checked, checks module dependencies
+                                  licenses.
+  --keep-temp-files               If checked, setup directory won't be removed
+                                  after setup is done.
+  --skip-deps-install             If checked, existing dependencies from env
+                                  will be reused.
+  --help                          Show this message and exit.
 </code></pre>
 <p>Making package based on provided parameters can be useful in ci/cd pipelines to streamline creation of packages before publishing from something that could be as simple as <code>.py</code> file.</p>
 <pre><code class="language-bash">paa make-package --help
@@ -480,39 +695,11 @@ Options:
                                   packages are recorded.
   --help                          Show this message and exit.
 </code></pre>
-<p>Installing packages for a test in local environments could be a useful step to make sure everything works as expected before pushing changes to publishing repo. This creates an instance of the package in local environment with default version, with a greatly simplified building process that avoids making documentation, versioning and so on.</p>
-<pre><code class="language-bash">paa test-install [OPTIONS] MODULE_NAME
-</code></pre>
-<pre><code class="language-bash">Usage: paa test-install [OPTIONS] MODULE_NAME
-
-  Test install module into local environment.
-
-Options:
-  --config TEXT                   Path to config file for paa.
-  --module-filepath TEXT          Path to .py file to be packaged.
-  --mapping-filepath TEXT         Path to .json file that maps import to
-                                  install dependecy names.
-  --cli-module-filepath TEXT      Path to .py file that contains cli logic.
-  --fastapi-routes-filepath TEXT  Path to .py file that routes for fastapi.
-  --dependencies-dir TEXT         Path to directory with local dependencies of
-                                  the module.
-  --default-version TEXT          Default version.
-  --check-vulnerabilities         If checked, checks module dependencies with
-                                  pip-audit for vulnerabilities.
-  --build-mkdocs                  If checked, builds mkdocs documentation.
-  --check-licenses                If checked, checks module dependencies
-                                  licenses.
-  --keep-temp-files               If checked, setup directory won't be removed
-                                  after setup is done.
-  --skip-deps-install             If checked, existing dependencies from env
-                                  will be reused.
-  --help                          Show this message and exit.
-</code></pre>
+<h2 id="checking-dependencies">Checking dependencies</h2>
 <p>Checking vulnerabilities with <code>pip-audit</code> is usefull. This checks vulnerabilities of .py files and its local dependencies with <code>pip-audit</code>.</p>
 <pre><code class="language-bash">paa check-vulnerabilities --help
 </code></pre>
-<p>bash</p>
-<pre><code>Usage: paa check-vulnerabilities [OPTIONS] MODULE_NAME
+<pre><code class="language-bash">Usage: paa check-vulnerabilities [OPTIONS] MODULE_NAME
 
   Check vulnerabilities of the module.
 
@@ -546,25 +733,7 @@ Options:
                                   normalized.
   --help                          Show this message and exit.
 </code></pre>
-<p>Maintaining release notes could be very useful, but also tedious task. 
-Since commit messages are rather standard practice, by taking advantage of them and constructing release notes based on them, each release could contain notes with appropriate version automatically, when itegrated into ci/cd pipeline, given that commit messages are written in a specific way. </p>
-<pre><code class="language-bash">paa update-release-notes --help
-</code></pre>
-<pre><code>Usage: paa update-release-notes [OPTIONS] LABEL_NAME
-
-  Update release notes.
-
-Options:
-  --version TEXT           Version of new release.
-  --notes TEXT             Optional manually provided notes string, where each
-                           note is separated by ; and increment type is
-                           provide in accordance to paa documentation.
-  --notes-filepath TEXT    Path to .md wit release notes.
-  --max-search-depth TEXT  Max search depth in commit history.
-  --use-pip-latest         If checked, attempts to pull latest version from
-                           pip.
-  --help                   Show this message and exit.
-</code></pre>
+<h2 id="running-apps-from-packages">Running apps from packages</h2>
 <p>Packaging process could help building APIs as well. This package would call routes stored within other packages and routes stored in files to form one application, so that repeatable structure does not need to copied between projects, but instead built in one places and extended with some config files in many. Since routes are python code that can have its dependencies, it makes sense to store them within packages sometimes to take advantage of automated dependency handling and import code straight from the package, eliminating in turn situation when package release in no compatible anymore with routes based on them. </p>
 <p>Parameters for fastapi app description, middleware and run could be supplied via optional <code>.paa.api.config</code> file, with <code>DESCRIPTION</code> , <code>MIDDLEWARE</code> and <code>RUN</code> dictionary of parameters respectively. </p>
 <p>It could be beneficial to add a static page with documentation, so additional pages could be addded. First one would be accessible via <code>\mkdocs</code> and the following ones via <code>\mkdocs {i+1}</code>. Static package within package, that were packages by <code>package-auto-assemble&gt;0.5.1</code> would be accessible via <code>\{package_name}\docs</code> if available.</p>
@@ -600,6 +769,7 @@ Options:
   --path TEXT        Path to streamlit app.
   --help             Show this message and exit.
 </code></pre>
+<h2 id="extracting-files-from-packages">Extracting files from packages</h2>
 <p>Storing routes within package could be convinient, but extracting them from a package is not. To mitigate that, the following exists to extract <code>routes.py</code> from a package that contains it.</p>
 <pre><code class="language-bash">paa extract-module-routes --help
 </code></pre>
@@ -627,6 +797,36 @@ Options:
                       be copied to.
   --help              Show this message and exit.
 </code></pre>
+<p>Another option to access the artifacts is to copy them to a selected directory.</p>
+<pre><code class="language-bash">paa extract-module-artifacts --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
+
+  Extracts artifacts from packaged module.
+
+Options:
+  --artifact TEXT     Name of the artifact to be extracted.
+  --output-dir TEXT   Directory where artifacts extracted from the package
+                      will be copied to.
+  --output-path TEXT  Filepath to which artifact extracted from the package
+                      will be copied to.
+  --help              Show this message and exit.
+</code></pre>
+<p>Another option to access the packaged streamlit app is to copy it to a selected directory.</p>
+<pre><code class="language-bash">paa extract-module-streamlit --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa extract-module-streamlit [OPTIONS] PACKAGE_NAME
+
+  Extracts streamlit from packages that have them into a file.
+
+Options:
+  --output-dir TEXT   Directory where streamplit extracted from the package
+                      will be copied to.
+  --output-path TEXT  Filepath to which streamlit extracted from the package
+                      will be copied to.
+  --help              Show this message and exit.
+</code></pre>
+<h2 id="show-modules-info">Show modules info</h2>
 <p>Cli interface provides some additional tools to analyse locally installed packages if they were build with package-auto-assembler&gt;0.4.2. These include methods to list modules, show module info, extract requirements.</p>
 <pre><code class="language-bash">paa show-module-list --help
 </code></pre>
@@ -683,36 +883,7 @@ Options:
 Options:
   --help  Show this message and exit.
 </code></pre>
-<p>Another option to access the artifacts is to copy them to a selected directory.</p>
-<pre><code class="language-bash">paa extract-module-artifacts --help
-</code></pre>
-<pre><code class="language-bash">Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
-
-  Extracts artifacts from packaged module.
-
-Options:
-  --artifact TEXT     Name of the artifact to be extracted.
-  --output-dir TEXT   Directory where artifacts extracted from the package
-                      will be copied to.
-  --output-path TEXT  Filepath to which artifact extracted from the package
-                      will be copied to.
-  --help              Show this message and exit.
-</code></pre>
-<p>Another option to access the packaged streamlit app is to copy it to a selected directory.</p>
-<pre><code class="language-bash">paa extract-module-streamlit --help
-</code></pre>
-<pre><code class="language-bash">Usage: paa extract-module-streamlit [OPTIONS] PACKAGE_NAME
-
-  Extracts streamlit from packages that have them into a file.
-
-Options:
-  --output-dir TEXT   Directory where streamplit extracted from the package
-                      will be copied to.
-  --output-path TEXT  Filepath to which streamlit extracted from the package
-                      will be copied to.
-  --help              Show this message and exit.
-</code></pre>
-<p>Some artifacts can come from links and there might be a need to refresh or even download these files (depending on how a link was provided). I might be useful to inspect which artifacts come from links, whether these links are available and refresh these artifacts within installed package.</p>
+<p>It might be useful to inspect which artifacts come from links, whether these links are available and refresh these artifacts within installed package.</p>
 <pre><code class="language-bash">paa show-module-artifacts-links --help
 </code></pre>
 <pre><code class="language-bash">Usage: paa show-module-artifacts-links [OPTIONS] LABEL_NAME
@@ -722,6 +893,22 @@ Options:
 Options:
   --help  Show this message and exit.
 </code></pre>
+<p>A module can referance multiple other local dependencies. The following is meant to extract all of paths relates to the module within PPR.</p>
+<pre><code class="language-bash">paa show-ref-local-deps --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa show-ref-local-deps [OPTIONS] LABEL_NAME
+
+  Shows paths to local dependencies referenced in the module.
+
+Options:
+  --config TEXT            Path to config file for paa.
+  --module-dir TEXT        Path to folder with .py file to be packaged.
+  --dependencies-dir TEXT  Path to directory with local dependencies of
+                           the module.
+  --help                   Show this message and exit.
+</code></pre>
+<h2 id="other">Other</h2>
+<p>Some artifacts can come from links and there might be a need to refresh or even download these files (depending on how a link was provided). </p>
 <pre><code class="language-bash">paa refresh-module-artifacts --help
 </code></pre>
 <pre><code class="language-bash">Usage: paa refresh-module-artifacts [OPTIONS] LABEL_NAME
@@ -730,6 +917,96 @@ Options:
 
 Options:
   --help  Show this message and exit.
+</code></pre>
+<p>Core of paa automation is the ability to extract requirements from <code>.py</code> files. The tool shown below is a part of requirements extraction pipeline, designed to run within PPR, but could also work outside, if imports are handled in a specific way (more in description).</p>
+<pre><code class="language-bash">paa extract-module-requirements --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa extract-module-requirements [OPTIONS] MODULE_NAME
+
+  Extract module requirements.
+
+Options:
+  --config TEXT                   Path to config file for paa.
+  --module-dir TEXT               Path to folder where module is stored.
+  --mapping-filepath TEXT         Path to .json file that maps import to
+                                  install dependecy names.
+  --cli-module-filepath TEXT      Path to .py file that contains cli logic.
+  --routes-module-filepath TEXT   Path to .py file that contains fastapi
+                                  routes.
+  --streamlit-module-filepath TEXT
+                                  Path to .py file that contains streamlit
+                                  app.
+  --dependencies-dir TEXT         Path to directory with local dependencies of
+                                  the module.
+  --show-extra                    If checked, list will show which
+                                  requirements are extra.
+  --skip-extra                    If checked, list will not include extra.
+  --help                          Show this message and exit.
+</code></pre>
+<p>Maintaining release notes could be very useful, but also tedious task. 
+Since commit messages are rather standard practice, by taking advantage of them and constructing release notes based on them, each release could contain notes with appropriate version automatically, when itegrated into ci/cd pipeline, given that commit messages are written in a specific way. </p>
+<pre><code class="language-bash">paa update-release-notes --help
+</code></pre>
+<pre><code>Usage: paa update-release-notes [OPTIONS] LABEL_NAME
+
+  Update release notes.
+
+Options:
+  --version TEXT           Version of new release.
+  --notes TEXT             Optional manually provided notes string, where each
+                           note is separated by ; and increment type is
+                           provide in accordance to paa documentation.
+  --notes-filepath TEXT    Path to .md wit release notes.
+  --max-search-depth TEXT  Max search depth in commit history.
+  --use-pip-latest         If checked, attempts to pull latest version from
+                           pip.
+  --help                   Show this message and exit.
+</code></pre>
+<p>Running pylint tests is useful and usually done in pull request to PPR. It could also be run locally for all the modules or select modules and their local dependencies to identify modules that need improvements to pass preset threshold. </p>
+<pre><code class="language-bash">paa run-pylint-tests --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa run-pylint-tests [OPTIONS] [FILES]...
+
+  Run pylint tests for a given module, file, files or files in a directory.
+
+Options:
+  --config TEXT      Path to config file for paa.
+  --label-name TEXT  Label name.
+  --module-dir TEXT  Path to a directory where .py files are stored.
+  --threshold TEXT   Pylint threshold.
+  --help             Show this message and exit.
+</code></pre>
+<p>It might be useful to know what is the last version a given module that was published from the PPR, mostly within ci/cd workflows.</p>
+<pre><code class="language-bash">paa extract-tracking-version --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa extract-tracking-version [OPTIONS] MODULE_NAME
+
+  Get latest package version.
+
+Options:
+  --config TEXT  Path to config file for paa.
+  --help         Show this message and exit.
+</code></pre>
+<p>Some pieces of documentation within PPR may come from drawio files. One of the steps in packaging process is to convert <code>.drawio</code> file for a package into <code>.png</code> files. 
+For this functionality to work, first some dependencies would need to be installed.</p>
+<pre><code class="language-bash">sudo apt-get update
+sudo apt-get install -y wget xvfb libnotify4 libxml2-utils
+wget https://github.com/jgraph/drawio-desktop/releases/download/v24.6.4/drawio-amd64-24.6.4.deb
+sudo dpkg -i drawio-amd64-24.6.4.deb
+sudo apt-get install -f
+</code></pre>
+<pre><code class="language-bash">paa convert-drawio-to-png --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa convert-drawio-to-png [OPTIONS]
+
+  Converts drawio file to .png
+
+Options:
+  --config TEXT      Path to config file for paa.
+  --label-name TEXT  Label name.
+  --drawio-dir TEXT  Path to a directory where drawio files are stored.
+  --docs-dir TEXT    Path to the output directory for .png file.
+  --help             Show this message and exit.
 </code></pre>
 
 
