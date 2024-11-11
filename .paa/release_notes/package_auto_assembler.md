@@ -1,5 +1,15 @@
 # Release notes
 
+### 0.5.15
+
+    - github template workflows for ppr
+
+    - init methods to setup ppr directories from template
+
+    - additiona cli tools for pylint checks, extracting requirements and in general to handle ppr mostly from .paa.config
+
+    - scripts to run pylint check and convert drawio to png accessible through ppr_handler
+
 ### 0.5.14
 
     - support for individually defined development status overwrites
