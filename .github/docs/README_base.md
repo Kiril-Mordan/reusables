@@ -1,6 +1,6 @@
 # Reusables
 
-<a><img src="https://github.com/Kiril-Mordan/reusables/raw/main/docs/reuse_logo.png" width="35%" height="35%" align="right" /></a>
+<a><img src="https://raw.githubusercontent.com/Kiril-Mordan/reusables/refs/heads/main/.github/docs/reuse_logo.png" width="35%" height="35%" align="right" /></a>
 
 Contains pieces of code that have been generalized to the extent that they can be reused in other projects. The repository is designed to shorten the development cycle of single-module packages from the initial idea to a functioning alpha version accessible through PyPI.
 

@@ -1,8 +1,11 @@
 import logging
 import os
-import attr #>=22.2.0
 import csv
 import yaml
+from datetime import datetime
+import pandas as pd
+import re
+import attr #>=22.2.0
 
 @attr.s
 class VersionHandler:
@@ -15,8 +18,10 @@ class VersionHandler:
     log_filepath = attr.ib()
 
     default_version = attr.ib(default="0.0.1")
-
     read_files = attr.ib(default=True)
+
+    log_file = attr.ib(default=True)
+    csv_writer = attr.ib(default=True)
 
     # output
     versions = attr.ib(init=False)
@@ -72,7 +77,7 @@ class VersionHandler:
         """
 
         self.logger.debug(f"Versions file was not found in location '{self.versions_filepath}', creating file!")
-        with open(self.versions_filepath, 'w'):
+        with open(self.versions_filepath, 'w', encoding = "utf-8"):
             pass
 
     def _save_versions(self):
@@ -81,7 +86,7 @@ class VersionHandler:
         Persist versions in yaml file.
         """
 
-        with open(self.versions_filepath, 'w') as file:
+        with open(self.versions_filepath, 'w', encoding = "utf-8") as file:
             yaml.safe_dump(self.versions, file)
 
     def _close_log_file(self):

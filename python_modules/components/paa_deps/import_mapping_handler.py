@@ -1,10 +1,10 @@
 import logging
 import os
 import json
-import attr #>=22.2.0
 import importlib
 import importlib.metadata
 import importlib.resources as pkg_resources
+import attr #>=22.2.0
 
 @attr.s
 class ImportMappingHandler:
@@ -68,7 +68,8 @@ class ImportMappingHandler:
         if (mapping_filepath is not None) \
             and os.path.exists(mapping_filepath):
 
-            with open(mapping_filepath, 'r') as file:
+            with open(mapping_filepath, 'r',
+            encoding = "utf-8") as file:
                 mapping_file = json.load(file)
         else:
             mapping_file = {}
@@ -76,7 +77,8 @@ class ImportMappingHandler:
         if (base_mapping_filepath is not None) and \
             os.path.exists(base_mapping_filepath):
 
-            with open(base_mapping_filepath, 'r') as file:
+            with open(base_mapping_filepath, 'r',
+            encoding = "utf-8") as file:
                 base_mapping_file = json.load(file)
         else:
             base_mapping_file = {}

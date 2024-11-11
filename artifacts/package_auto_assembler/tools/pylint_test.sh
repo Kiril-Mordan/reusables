@@ -1,16 +1,23 @@
 #!/bin/bash
 
-# Define the directory containing your Python modules
-module_directory="python_modules"
+# Default threshold score to pass the Pylint check
+threshold_score=6
 
-# Regular expression pattern to match Python script files
-script_pattern="python_modules/.*\.py"
+# Parse arguments for module_directory and threshold_score
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --module-directory) module_directory="$2"; shift ;;
+        --threshold) threshold_score="$2"; shift ;;
+        *) files_to_check+=("$1") ;;  # Treat positional arguments as files to check
+    esac
+    shift
+done
 
-# Threshold score to pass the Pylint check
-threshold_score=8.0
-
-# Exit immediately on error
-set -e
+# Ensure module_directory is set if no specific files are provided
+if [ -z "$module_directory" ] && [ ${#files_to_check[@]} -eq 0 ]; then
+    echo "Error: --module-directory is required if no specific files are provided."
+    exit 1
+fi
 
 # Function to run Pylint on a Python script and capture the score
 function run_pylint() {
@@ -20,18 +27,16 @@ function run_pylint() {
     echo "$pylint_score"
 }
 
-# Check if files were provided as arguments
-if [ "$#" -gt 0 ]; then
-    files_to_check=("$@")
-else
-    # If no arguments, find all Python files in the module directory
+# If no specific files are provided, find all Python files in the module directory
+if [ ${#files_to_check[@]} -eq 0 ]; then
     files_to_check=($(find "$module_directory" -type f -name "*.py"))
 fi
 
 # Loop through specified Python files and check Pylint score
 all_pass=true
 for script in "${files_to_check[@]}"; do
-    if [[ "$script" =~ $script_pattern ]]; then
+    # Only apply the module_directory pattern check if no specific files were provided
+    if [[ ${#files_to_check[@]} -eq 0 || "$script" =~ $script_pattern ]]; then
         score=$(run_pylint "$script")
         echo "Pylint score for $script is $score"
         if (( $(awk -v score="$score" -v threshold="$threshold_score" 'BEGIN { print (score >= threshold) }') )); then

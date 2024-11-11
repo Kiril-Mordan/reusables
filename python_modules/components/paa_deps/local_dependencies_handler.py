@@ -131,8 +131,8 @@ class LocalDependaciesHandler:
                 self.logger.error(f"Error evaluating __design_choices__ in {module_name}: {e}")
         if return_empty:
             return {module_name: {}}
-        else:
-            return None
+
+        return None
 
     def _combine_design_choices(self, design_choices_list: list) -> dict:
 
@@ -334,5 +334,5 @@ class LocalDependaciesHandler:
         if save_filepath is None:
             save_filepath = self.save_filepath
 
-        with open(save_filepath, 'w') as file:
+        with open(save_filepath, 'w', encoding = "utf-8") as file:
             file.write(combined_module)

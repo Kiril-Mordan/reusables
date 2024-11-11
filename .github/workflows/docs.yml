@@ -2,12 +2,10 @@ name: Update README
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    # workflows: ["Extract requirements"]
-    # types:
-    #   - completed
+    inputs:
+      package_name:
+        description: 'Name of the package'
+        required: false
 
 jobs:
   documentation:
@@ -24,15 +22,18 @@ jobs:
         with:
           python-version: 3.9
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install jq
+
       - name: Find Changed Modules
         id: changed-modules
         run: |
-
           if [ "${{ github.event.inputs.package_name }}" != "" ]; then
             echo "${{ github.event.inputs.package_name }}" > changed_files
           else
             chmod +x .github/tools/find_and_process_changed_files.sh
-            .github/tools/find_and_process_changed_files.sh 'python_modules/' 'drawio/' 'example_notebooks/' '' ''
+            chmod +x .github/tools/get_paa_change_dirs.sh
+            .github/tools/find_and_process_changed_files.sh $(.github/tools/get_paa_change_dirs.sh) '' ''
           fi
 
           if [ -s changed_files ]; then
@@ -48,29 +49,21 @@ jobs:
           sudo dpkg -i drawio-amd64-24.6.4.deb
           sudo apt-get install -f
 
+      - name: Install python dependencies
+        run: pip install -r .paa/requirements_dev.txt
+
       - name: Export drawio files to png files
         if: steps.changed-modules.outputs.files != ''
         run: |
           chmod +x .github/tools/convert_drawio_to_png.sh
           .github/tools/convert_drawio_to_png.sh "drawio/${{ steps.changed-modules.outputs.files }}.drawio"
-
-
-      - name: Create and activate virtual environment
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-
-      - name: Install python dependencies
-        run: pip install -r .paa/requirements_dev.txt
-
-      # - name: Add Python Kernel
-      #   run: python -m ipykernel install --user --name python3
+          #paa convert-drawio-to-png --label-name ${{ steps.changed-modules.outputs.files }}
 
       - name: Generate md files from jupyter for changed modules
         if: steps.changed-modules.outputs.files != ''
         run: |
-          chmod +x .github/tools/convert_ipynb_to_markdown.sh
-          .github/tools/convert_ipynb_to_markdown.sh "example_notebooks/${{ steps.changed-modules.outputs.files }}.ipynb"
+          EXAMPLE_DIR=$(yq -r '.example_notebooks_path' .paa.config)
+          jupyter nbconvert --to markdown "$EXAMPLE_DIR/${{ steps.changed-modules.outputs.files }}.ipynb" --output-dir=".paa/docs/"
 
       - name: Update README.md
         run: |

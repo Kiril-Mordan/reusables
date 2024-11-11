@@ -164,7 +164,8 @@ class DependenciesAnalyser:
                 'package_licenses.json') as path:
                     base_mapping_filepath = path
 
-                with open(base_mapping_filepath, 'r') as file:
+                with open(base_mapping_filepath, 'r',
+                encoding = "utf-8") as file:
                     base_package_licenses = json.load(file)
             else:
                 base_package_licenses = {}
@@ -176,7 +177,8 @@ class DependenciesAnalyser:
             self.logger.debug("No package mapping provided")
             package_licenses = {}
         else:
-            with open(mapping_filepath, 'r') as file:
+            with open(mapping_filepath, 'r',
+            encoding = "utf-8") as file:
                 package_licenses = json.load(file)
 
         base_package_licenses.update(package_licenses)
@@ -454,8 +456,7 @@ class DependenciesAnalyser:
         try:
             metadata = importlib.metadata.metadata(package_name)
             requirements = metadata.get_all("Requires-Dist", [])
-            if requirements != []:
-                requirements = requirements
+
         except Exception as e:
             self.logger.debug(f'No requirements found for {package_name}')
             requirements = []

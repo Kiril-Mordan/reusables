@@ -1,10 +1,11 @@
 import logging
 import os
+import subprocess
 import re
-import attr #>=22.2.0
 from stdlib_list import stdlib_list
 from packaging import version
 import tempfile
+import attr #>=22.2.0
 
 @attr.s
 class RequirementsHandler:
@@ -275,7 +276,7 @@ class RequirementsHandler:
         else:
             new_header = []
 
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding = "utf-8") as file:
             for line in file:
 
                 if "#-" in line:

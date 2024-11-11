@@ -12,9 +12,9 @@ import os
 import sys
 import subprocess
 import shutil
-import attr #>=22.2.0
 import importlib
 import importlib.metadata
+import attr #>=22.2.0
 
 from .components.paa_deps.artifacts_handler import ArtifactsHandler
 from .components.paa_deps.cli_handler import CliHandler
@@ -39,6 +39,11 @@ from .components.paa_deps.tests_handler import TestsHandler
 #@ mkdocs==1.6.0
 #@ mkdocs-material==9.5.30
 #@ streamlit>=1.39.0
+#@ setuptools==75.1.0
+#@ wheel==0.44.0
+#@ twine==5.1.1
+#@ jupyter==1.1.1
+
 
 # Metadata for package creation
 __package_metadata__ = {
@@ -46,7 +51,6 @@ __package_metadata__ = {
     "author_email": "parachute.repo@gmail.com",
     "description": "A tool to automate package creation within ci based on just .py and optionally .ipynb file.",
     "keywords" : ['python', 'packaging'],
-    'license' : 'mit',
     "url" : 'https://kiril-mordan.github.io/reusables/package_auto_assembler/',
     "classifiers" : ["Development Status :: 5 - Production/Stable"]
 }
@@ -78,14 +82,17 @@ class PackageAutoAssembler:
     drawio_filepath = attr.ib(default=None)
     streamlit_filepath = attr.ib(default=None)
 
+    module_dir = attr.ib(default=None)
     paa_dir = attr.ib(default="./.paa")
     docs_path = attr.ib(default="./.paa/docs")
+    drawio_dir = attr.ib(default=None)
     tests_dir = attr.ib(default=None)
     artifacts_dir = attr.ib(default=None)
     dependencies_dir = attr.ib(default=None)
     extra_docs_dir = attr.ib(default=None)
 
     # optional parameters
+    pylint_threshold = attr.ib(default=None)
     classifiers = attr.ib(default=['Development Status :: 3 - Alpha'])
     license_path = attr.ib(default=None)
     license_label = attr.ib(default=None)
@@ -202,6 +209,10 @@ class PackageAutoAssembler:
 
         self.ppr_h = self.ppr_h_class(
             paa_dir = self.paa_dir,
+            drawio_dir = self.drawio_dir,
+            docs_dir = self.docs_path,
+            module_dir = self.module_dir,
+            pylint_threshold = self.pylint_threshold,
             logger = self.logger)
 
     def _initialize_tests_handler(self):
@@ -449,7 +460,8 @@ class PackageAutoAssembler:
         if self.ppr_h is None:
             self._initialize_ppr_handler()
 
-        self.ppr_h.init_paa_dir(paa_dir = paa_dir)
+        self.ppr_h.init_paa_dir(
+            paa_dir = paa_dir)
 
 
     def add_metadata_from_module(self, module_filepath : str = None):
@@ -492,10 +504,10 @@ class PackageAutoAssembler:
                     module_filepath = cli_module_filepath,
                     header_name = "__cli_metadata__"):
 
-                # extracting package metadata
-                self.cli_metadata = self.metadata_h.get_package_metadata(
-                    module_filepath = cli_module_filepath,
-                    header_name = "__cli_metadata__")
+            # extracting package metadata
+            self.cli_metadata = self.metadata_h.get_package_metadata(
+                module_filepath = cli_module_filepath,
+                header_name = "__cli_metadata__")
 
 
 
@@ -693,7 +705,8 @@ class PackageAutoAssembler:
         if custom_modules is None:
             custom_modules = []
 
-        if os.path.exists(cli_module_filepath) \
+        if cli_module_filepath \
+            and os.path.exists(cli_module_filepath) \
                 and os.path.isfile(cli_module_filepath):
 
             self._add_requirements(
@@ -1169,7 +1182,11 @@ class PackageAutoAssembler:
         command = ["python", os.path.join(setup_directory, "setup.py"), "sdist", "bdist_wheel"]
 
         # Execute the command
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result = subprocess.run(command, 
+        stdout=subprocess.PIPE, 
+        stderr=subprocess.PIPE, 
+        text=True,
+        check=True)
 
         return result
 
