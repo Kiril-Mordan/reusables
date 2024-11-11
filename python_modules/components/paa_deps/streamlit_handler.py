@@ -142,7 +142,7 @@ class StreamlitHandler:
             streamlit_run_command.append(f"--server.port={port}")
 
         # Run the Streamlit app with the custom configuration
-        subprocess.run(streamlit_run_command)
+        subprocess.run(streamlit_run_command, check = True)
 
     def extract_streamlit_from_package(self,
                             package_name : str,

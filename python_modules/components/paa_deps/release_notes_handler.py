@@ -251,9 +251,9 @@ class ReleaseNotesHandler:
         elif patch:
             self.version_update_label = patch
             return patch
-        else:
-            self.version_update_label = 'patch'
-            return patch
+
+        self.version_update_label = 'patch'
+        return patch
 
     def extract_latest_version(self, release_notes : list = None):
 
@@ -345,7 +345,7 @@ class ReleaseNotesHandler:
 
         if os.path.exists(filepath):
             # Read the existing release notes
-            with open(filepath, 'r') as file:
+            with open(filepath, 'r', encoding = "utf-8") as file:
                 content = file.readlines()
         else:
             # No existing file, start with empty contents
@@ -369,5 +369,5 @@ class ReleaseNotesHandler:
 
         if self.processed_messages != []:
             # Write the updated or new contents back to the file
-            with open(filepath, 'w') as file:
+            with open(filepath, 'w', encoding = "utf-8") as file:
                 file.writelines(note_entries)

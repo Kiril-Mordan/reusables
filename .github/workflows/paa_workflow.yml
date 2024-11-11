@@ -20,6 +20,9 @@ jobs:
         with:
           fetch-depth: 15  # Fetches prev commits
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install jq
+
       - name: Find Changed Modules
         id: changed-modules
         run: |
@@ -27,7 +30,8 @@ jobs:
             echo "${{ github.event.inputs.package_name }}" > changed_files
           else
             chmod +x .github/tools/find_and_process_changed_files.sh
-            .github/tools/find_and_process_changed_files.sh 'cli/' 'python_modules/' 'example_notebooks/' 'python_modules/' '.py'
+            chmod +x .github/tools/get_paa_change_dirs.sh
+            .github/tools/find_and_process_changed_files.sh $(.github/tools/get_paa_change_dirs.sh) '' ''
           fi
 
           if [ -s changed_files ]; then
@@ -48,11 +52,9 @@ jobs:
         run: |
           chmod +x .github/tools/convert_drawio_to_png.sh
           .github/tools/convert_drawio_to_png.sh "drawio/${{ steps.changed-modules.outputs.files }}.drawio"
+          #paa convert-drawio-to-png --label-name ${{ steps.changed-modules.outputs.files }}
 
-      - name: Install jq
-        if: steps.changed-modules.outputs.files != ''
-        run: sudo apt-get update && sudo apt-get install jq
-
+      
       - name: Set up Python 3.10
         if: steps.changed-modules.outputs.files != ''
         uses: actions/setup-python@v2
@@ -69,7 +71,6 @@ jobs:
         if: steps.changed-modules.outputs.files != ''
         run: |
           python -m pip install --upgrade pip
-          python -m pip install setuptools wheel twine
           pip install -r .paa/requirements_dev.txt
 
       - name: Pull latest changes from the remote repository
@@ -82,11 +83,10 @@ jobs:
 
           echo "Assembling for:"
           echo ${{ steps.changed-modules.outputs.files }}
-          # echo "Test-installing paa ..."
-          # paa test-install package-auto-assembler
+          echo "Test-installing paa ..."
+          paa test-install package-auto-assembler
           echo "Assembling..."
-          chmod +x .github/tools/make_package.sh
-          .github/tools/make_package.sh ${{ steps.changed-modules.outputs.files }}
+          paa make-package ${{ steps.changed-modules.outputs.files }}
           ls -la
 
       - name: Publish to PyPI
@@ -107,15 +107,14 @@ jobs:
         if: steps.changed-modules.outputs.files != ''
         run: |
           set -x
-          chmod +x .github/tools/get_latest_package_version.sh
-
-          PACKAGE_VERSION=$(.github/tools/get_latest_package_version.sh "${{ steps.changed-modules.outputs.files }}")
+   
+          PACKAGE_VERSION=$(paa extract-tracking-version "${{ steps.changed-modules.outputs.files }}")
           if [ -z "${PACKAGE_VERSION}" ]; then
             echo "Failed to get version"
             exit 1
           fi
 
-          LABEL_NAME=$(basename "${{ steps.changed-modules.outputs.files }}" .py)
+          LABEL_NAME=${{ steps.changed-modules.outputs.files }}
 
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
@@ -141,7 +140,7 @@ jobs:
       - name: Prepare site for gh-pages
         if: steps.changed-modules.outputs.files != ''
         run: |
-          LABEL_NAME=$(basename "${{ steps.changed-modules.outputs.files }}" .py)
+          LABEL_NAME=${{ steps.changed-modules.outputs.files }}
           echo "LABEL_NAME=${LABEL_NAME}" >> $GITHUB_ENV
           mv "${LABEL_NAME}_temp_mkdocs" temp_project
 

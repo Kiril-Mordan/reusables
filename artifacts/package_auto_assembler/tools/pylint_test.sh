@@ -13,17 +13,11 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-# Ensure module_directory is set
-if [ -z "$module_directory" ]; then
-    echo "Error: --module-directory is required."
+# Ensure module_directory is set if no specific files are provided
+if [ -z "$module_directory" ] && [ ${#files_to_check[@]} -eq 0 ]; then
+    echo "Error: --module-directory is required if no specific files are provided."
     exit 1
 fi
-
-# Regular expression pattern to match Python script files
-script_pattern="$module_directory/.*\.py"
-
-# Exit immediately on error
-set -e
 
 # Function to run Pylint on a Python script and capture the score
 function run_pylint() {
@@ -41,7 +35,8 @@ fi
 # Loop through specified Python files and check Pylint score
 all_pass=true
 for script in "${files_to_check[@]}"; do
-    if [[ "$script" =~ $script_pattern ]]; then
+    # Only apply the module_directory pattern check if no specific files were provided
+    if [[ ${#files_to_check[@]} -eq 0 || "$script" =~ $script_pattern ]]; then
         score=$(run_pylint "$script")
         echo "Pylint score for $script is $score"
         if (( $(awk -v score="$score" -v threshold="$threshold_score" 'BEGIN { print (score >= threshold) }') )); then

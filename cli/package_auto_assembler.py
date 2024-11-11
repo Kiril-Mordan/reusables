@@ -35,37 +35,25 @@ def cli(ctx):
 test_install_config = {
     "module_dir" : "python_modules",
     "example_notebooks_path" : "example_notebooks",
-    #"versions_filepath" : "lsts_package_versions.yml",
-    #"log_filepath" : "version_logs.csv",
-    "include_local_dependecies" : True,
+    "dependencies_dir" : None,
+    "cli_dir" : None,
+    "api_routes_dir" : None,
+    "streamlit_dir" : None,
+    "artifacts_dir" : None,
+    "drawio_dir" : None,
+    "extra_docs_dir" : None,
+    "tests_dir" : None,
     "use_commit_messages" : True,
     "check_vulnerabilities" : True,
     "check_dependencies_licenses" : False,
     "add_artifacts" : True,
     "add_mkdocs_site" : False,
-    "artifacts_dir" : None,
-    "drawio_dir" : None,
-    "tests_dir" : None,
-    "cli_dir" : None,
-    #"cli_docs_dir" : None,
-    "extra_docs_dir" : None,
-    "api_routes_dir" : None,
-    "streamlit_dir" : None,
-    #"docs_dir" : None,
-    "release_notes_dir" : None,
-    #"mapping_filepath" : None,
-    #"licenses_filepath" : None,
-    "dependencies_dir" : None,
     "license_path" : None,
     "license_label" : None,
     "license_badge" : None,
-    "docs_url" : None,
-    "classifiers" : None,
     "allowed_licenses" : None,
-    "kernel_name" : None,
-    "python_version" : None,
-    "default_version" : None,
-    "version_increment_type" : None
+    "docs_url" : None,
+    "classifiers" : None
 }
 
 @click.command()
@@ -75,9 +63,8 @@ def init_config(ctx):
 
     config = ".paa.config"
 
-    if not os.path.exists(config):
-        with open(config, 'w', encoding='utf-8') as file:
-            yaml.dump(test_install_config, file, sort_keys=False)
+    if not os.path.exists(".paa.config"):
+        PprHandler().init_from_paa_config(default_config = test_install_config)
 
         click.echo(f"Config file {config} initialized!")
         click.echo(f"Edit it to your preferance.")
@@ -88,12 +75,43 @@ def init_config(ctx):
 @click.command()
 @click.pass_context
 def init_paa(ctx):
-    """Initialize paa tracking files"""
+    """Initialize paa tracking files and directores from .paa.config"""
 
     st = PprHandler().init_paa_dir()
+    PprHandler().init_from_paa_config(default_config = test_install_config)
 
     if st:
         click.echo(f"PAA tracking files initialized!")
+
+
+@click.command()
+@click.option('--github', 'github', is_flag=True, type=bool, required=False, help='If checked, git actions template would be set up.')
+@click.option('--azure', 'azure', is_flag=True, type=bool, required=False, help='If checked, azure devops pipelines template would be set up.')
+@click.pass_context
+def init_ppr(ctx,
+    github,
+    azure):
+    """Initialize ppr for a given workflows platform."""
+
+    workflows_platform = None
+    if github:
+        workflows_platform = 'github'
+    if azure:
+        workflows_platform = 'azure'
+
+    if workflows_platform:
+
+        if os.path.exists('.paa.config'):
+            click.echo(f".paa.config already exists!")
+
+        PprHandler().init_from_paa_config(default_config = test_install_config)
+
+    st = PprHandler().init_ppr_repo(workflows_platform = workflows_platform)
+
+    if st:
+        click.echo(f"PPR for {workflows_platform} initialized!")
+    else:
+        click.echo(f"Select workflow type for ppr!")
 
 
 
@@ -153,6 +171,7 @@ def test_install(ctx,
         "artifacts_filepaths" : test_install_config.get("artifacts_filepaths"),
         #"docs_path" : test_install_config.get("docs_dir"),
         "license_badge" : test_install_config.get("license_badge"),
+        "license_label" : test_install_config.get("license_label", None),
         "add_mkdocs_site" : False,
         "check_dependencies_licenses" : False,
         "check_vulnerabilities" : False
@@ -171,6 +190,8 @@ def test_install(ctx,
     if test_install_config.get("drawio_dir"):
         paa_params["drawio_filepath"] = os.path.join(
             test_install_config['drawio_dir'], f"{module_name}.drawio")
+
+        paa_params["drawio_dir"] = test_install_config["drawio_dir"]
 
     if test_install_config.get("example_notebooks_path"):
         paa_params["example_notebook_path"] = os.path.join(test_install_config["example_notebooks_path"],
@@ -253,9 +274,7 @@ def test_install(ctx,
         paa.metadata['version'] = paa.default_version
 
         paa.prep_setup_dir()
-
-        if test_install_config["include_local_dependecies"]:
-            paa.merge_local_dependacies()
+        paa.merge_local_dependacies()
 
         paa.add_requirements_from_module()
         paa.add_requirements_from_cli_module()
@@ -361,6 +380,8 @@ def make_package(ctx,
         paa_params["drawio_filepath"] = os.path.join(
             test_install_config['drawio_dir'], f"{module_name}.drawio")
 
+        paa_params["drawio_dir"] = test_install_config["drawio_dir"]
+
     if test_install_config.get("example_notebooks_path"):
         paa_params["example_notebook_path"] = os.path.join(test_install_config["example_notebooks_path"],
                                                            f"{module_name}.ipynb")
@@ -454,8 +475,7 @@ def make_package(ctx,
             paa.add_or_update_release_notes()
         paa.prep_setup_dir()
 
-        if test_install_config["include_local_dependecies"]:
-            paa.merge_local_dependacies()
+        paa.merge_local_dependacies()
 
         paa.add_requirements_from_module()
         paa.add_requirements_from_cli_module()
@@ -549,8 +569,7 @@ def check_vulnerabilities(ctx,
         paa.prep_setup_dir()
 
         try:
-            if test_install_config["include_local_dependecies"]:
-                paa.merge_local_dependacies()
+            paa.merge_local_dependacies()
 
             paa.add_requirements_from_module()
             paa.add_requirements_from_cli_module()
@@ -657,9 +676,7 @@ def check_licenses(ctx,
         paa.prep_setup_dir()
 
         try:
-            if test_install_config["include_local_dependecies"]:
-                paa.merge_local_dependacies()
-
+            paa.merge_local_dependacies()
             paa.add_requirements_from_module()
             paa.add_requirements_from_cli_module()
         except Exception as e:
@@ -1368,18 +1385,36 @@ def extract_module_site(ctx,
 @click.command()
 @click.argument('module_name')
 @click.option('--config', type=str, required=False, help='Path to config file for paa.')
-@click.option('--module-filepath', 'module_filepath', type=str, required=False, help='Path to .py file to be packaged.')
+@click.option('--module-dir', 'module_dir', type=str, required=False, help='Path to folder where module is stored.')
 @click.option('--mapping-filepath', 'mapping_filepath', type=str, required=False, help='Path to .json file that maps import to install dependecy names.')
 @click.option('--cli-module-filepath', 'cli_module_filepath',  type=str, required=False, help='Path to .py file that contains cli logic.')
+@click.option('--routes-module-filepath', 'routes_module_filepath',  type=str, required=False, help='Path to .py file that contains fastapi routes.')
+@click.option('--streamlit-module-filepath', 'streamlit_module_filepath',  type=str, required=False, help='Path to .py file that contains streamlit app.')
 @click.option('--dependencies-dir', 'dependencies_dir', type=str, required=False, help='Path to directory with local dependencies of the module.')
+@click.option('--show-extra', 
+              'show_extra', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, list will show which requirements are extra.')
+@click.option('--skip-extra', 
+              'skip_extra', 
+              is_flag=True, 
+              type=bool, 
+              required=False, 
+              help='If checked, list will not include extra.')
 @click.pass_context
 def extract_module_requirements(ctx,
         config,
         module_name,
-        module_filepath,
+        module_dir,
         mapping_filepath,
         cli_module_filepath,
-        dependencies_dir):
+        routes_module_filepath,
+        streamlit_module_filepath,
+        dependencies_dir,
+        show_extra,
+        skip_extra):
     """Extract module requirements."""
 
     module_name = module_name.replace('-','_')
@@ -1397,14 +1432,16 @@ def extract_module_requirements(ctx,
 
     paa_params = {
         "module_name" : f"{module_name}",
-        "module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
-        "cli_module_filepath" : os.path.join(test_install_config['cli_dir'], f"{module_name}.py"),
-        #"mapping_filepath" : test_install_config["mapping_filepath"],
-        "dependencies_dir" : test_install_config["dependencies_dir"],
         "setup_directory" : f"./{module_name}",
         "check_vulnerabilities" : False,
         "add_artifacts" : False
     }
+
+    if test_install_config.get("module_dir"):
+        paa_params["module_filepath"] = os.path.join(test_install_config['module_dir'], f"{module_name}.py")
+
+    if test_install_config.get("dependencies_dir"):
+        paa_params["dependencies_dir"] = test_install_config["dependencies_dir"]
 
     if test_install_config.get("default_version"):
         paa_params["default_version"] = test_install_config["default_version"]
@@ -1418,46 +1455,67 @@ def extract_module_requirements(ctx,
     if test_install_config.get("kernel_name"):
         paa_params["kernel_name"] = test_install_config["kernel_name"]
 
-    if module_filepath:
-        paa_params["module_filepath"] = module_filepath
+    if test_install_config.get("cli_dir"):
+        paa_params["cli_module_filepath"] = os.path.join(test_install_config.get("cli_dir"), f"{module_name}.py")
+    if test_install_config.get("api_routes_dir"):
+        paa_params["fastapi_routes_filepath"] = os.path.join(test_install_config.get("api_routes_dir"), f"{module_name}.py")
+    if test_install_config.get("streamlit_dir"):
+        paa_params["streamlit_filepath"] = os.path.join(test_install_config.get("streamlit_dir"), f"{module_name}.py")
+
     if cli_module_filepath:
         paa_params["cli_module_filepath"] = cli_module_filepath
+    if routes_module_filepath:
+        paa_params["fastapi_routes_filepath"] = routes_module_filepath
+    if streamlit_module_filepath:
+        paa_params["streamlit_filepath"] = streamlit_module_filepath
     if mapping_filepath:
         paa_params["mapping_filepath"] = mapping_filepath
     if dependencies_dir:
         paa_params["dependencies_dir"] = dependencies_dir
 
+    if module_dir:
+        paa_params["module_filepath"] = os.path.join(module_dir, f"{module_name}.py")
+
+
     paa = PackageAutoAssembler(
         **paa_params
     )
 
-    if paa.metadata_h.is_metadata_available():
+    paa.metadata = {}
+
+    paa.metadata['version'] = paa.default_version
+    paa.prep_setup_dir()
+
+    try:
+        paa.merge_local_dependacies()
+        paa.add_requirements_from_module()
+        paa.add_requirements_from_cli_module()
+        paa.add_requirements_from_api_route()
+        paa.add_requirements_from_streamlit()
+
+        if skip_extra:
+            opt_req = []
+        else:
+
+            if show_extra:
+
+                opt_req = [r + "; extra == 'all'" for r in paa.optional_requirements_list]
+            else:
+                opt_req = paa.optional_requirements_list
 
 
-        paa.add_metadata_from_module()
-        paa.add_metadata_from_cli_module()
-        paa.metadata['version'] = paa.default_version
-        paa.prep_setup_dir()
 
-        try:
-            if test_install_config["include_local_dependecies"]:
-                paa.merge_local_dependacies()
+        requirements_list = paa.requirements_list + opt_req
 
-            paa.add_requirements_from_module()
-            paa.add_requirements_from_cli_module()
+        for req in requirements_list:
+            click.echo(req)
 
-            requirements_list = paa.requirements_list + paa.optional_requirements_list
+    except Exception as e:
+        print("")
+    finally:
+        shutil.rmtree(paa.setup_directory)
 
-            for req in requirements_list:
-                click.echo(req)
 
-        except Exception as e:
-            print("")
-        finally:
-            shutil.rmtree(paa.setup_directory)
-
-    else:
-        paa.logger.info(f"Metadata condition was not fullfield for {module_name.replace('_','-')}")
 
 @click.command()
 @click.argument('label_name')
@@ -1531,6 +1589,7 @@ def extract_tracking_version(ctx,
     if config is None:
         config = ".paa.config"
 
+    test_install_config = {}
     if os.path.exists(config):
         with open(config, 'r') as file:
             test_install_config_up = yaml.safe_load(file)
@@ -1540,29 +1599,154 @@ def extract_tracking_version(ctx,
     MAPPING_FILE = ".paa/tracking/lsts_package_versions.yml"#test_install_config['mapping_filepath']
     VERSIONS_FILE = ".paa/tracking/version_logs.csv" #test_install_config['versions_filepath']
 
-    # if os.path.exists(MAPPING_FILE):
-
-    #     with open(MAPPING_FILE, 'r') as file:
-    #         # Load the contents of the file
-    #         mapping_file = yaml.safe_load(file) or {}
-
-    #     module_name = mapping_file.get(module_name, module_name)
-
     module_version = "0.0.0"
     if os.path.exists(VERSIONS_FILE):
 
-        with open(VERSIONS_FILE, 'r') as file:
+        with open(MAPPING_FILE, 'r') as file:
             # Load the contents of the file
-            versions_file = yaml.safe_load(file) or {}
+            mapping_file = yaml.safe_load(file) or {}
 
-        module_version = versions_file.get(module_name, 
+        module_version = mapping_file.get(
+            module_name, 
             test_install_config.get("default_version", "0.0.0"))
     
     click.echo(module_version)
     
+@click.command()
+@click.option('--config', type=str, required=False, help='Path to config file for paa.')
+@click.option('--label-name', 'label_name', type=str, required=False, help='Label name.')
+@click.option('--drawio-dir', 'drawio_dir', type=str, required=False, help='Path to a directory where drawio files are stored.')
+@click.option('--docs-dir', 'docs_dir', type=str, required=False, help='Path to the output directory for .png file.')
+@click.pass_context
+def convert_drawio_to_png(ctx,
+        config,
+        label_name,
+        drawio_dir,
+        docs_dir):
+    """Converts drawio file to .png"""
+
+    module_name = None
+    if label_name:
+        module_name = label_name.replace('-','_')
+
+    if config is None:
+        config = ".paa.config"
+
+    test_install_config = {}
+    if os.path.exists(config):
+        with open(config, 'r') as file:
+            test_install_config_up = yaml.safe_load(file)
+
+        test_install_config.update(test_install_config_up)
+
+    paa_params = {
+        "module_filepath" : "",
+        "module_name" : "",
+        "drawio_dir" : test_install_config.get("drawio_dir")
+
+    }
+
+    if drawio_dir:
+        paa_params["drawio_dir"] = drawio_dir
+
+    if docs_dir:
+        paa_params["docs_path"] = docs_dir
+
+    ppr_h = PackageAutoAssembler(
+        **paa_params
+    )
+
+    ppr_h._initialize_ppr_handler()
+
+    status = ppr_h.ppr_h.convert_drawio_to_png(module_name = module_name)
+    
+    if status > 1:
+        click.echo("Path to convert_drawio_to_png.sh not found within packaged artifacts!")
+
+    if status > 0:
+        click.echo("Path to package-auto-assembler package not found!")
+
+@click.command()
+@click.option('--config', type=str, required=False, help='Path to config file for paa.')
+@click.option('--label-name', 'label_name', type=str, required=False, help='Label name.')
+@click.option('--module-dir', 'module_dir', type=str, required=False, help='Path to a directory where .py files are stored.')
+@click.option('--threshold', 'threshold', type=str, required=False, help='Pylint threshold.')
+@click.argument('files', nargs=-1, type=click.Path(exists=True))
+@click.pass_context
+def run_pylint_tests(ctx,
+        config,
+        label_name,
+        module_dir,
+        threshold,
+        files):
+    """Run pylint tests for a given module, file, files or files in a directory."""
+
+
+    module_name = None
+    if label_name:
+        module_name = label_name.replace('-','_')
+
+    if config is None:
+        config = ".paa.config"
+
+    test_install_config = {}
+    if os.path.exists(config):
+        with open(config, 'r') as file:
+            test_install_config_up = yaml.safe_load(file)
+
+        test_install_config.update(test_install_config_up)
+
+    paa_params = {
+        "module_filepath" : "",
+        "module_name" : "",
+        "module_dir" : test_install_config.get("module_dir"),
+        "pylint_threshold" : test_install_config.get("pylint_threshold")
+
+    }
+
+    if module_dir:
+        paa_params["module_dir"] = module_dir
+
+    if threshold:
+        paa_params["pylint_threshold"] = threshold
+
+
+    files_to_check = []
+    if files:
+        files_to_check = files
+    else:
+
+        if module_name:
+
+            ld_params = {
+                "main_module_filepath" : os.path.join(test_install_config['module_dir'], f"{module_name}.py"),
+                "dependencies_dir" : test_install_config.get("dependencies_dir")
+            }
+
+            ldh = LocalDependaciesHandler(
+                **ld_params)
+                
+            files_to_check = ldh.get_module_deps_path()
+
+
+    ppr_h = PackageAutoAssembler(
+        **paa_params
+    )
+
+    ppr_h._initialize_ppr_handler()
+
+    status = ppr_h.ppr_h.run_pylint_tests(files_to_check = files_to_check)
+    
+    if status > 1:
+        click.echo("Path to pylint_test.sh not found within packaged artifacts!")
+
+    if status > 0:
+        click.echo("Path to package-auto-assembler package not found!")
+
 
 cli.add_command(init_paa, "init-paa")
 cli.add_command(init_config, "init-config")
+cli.add_command(init_ppr, "init-ppr")
 cli.add_command(test_install, "test-install")
 cli.add_command(make_package, "make-package")
 cli.add_command(check_vulnerabilities, "check-vulnerabilities")
@@ -1570,6 +1754,7 @@ cli.add_command(check_licenses, "check-licenses")
 cli.add_command(update_release_notes, "update-release-notes")
 cli.add_command(run_api_routes, "run-api-routes")
 cli.add_command(run_streamlit, "run-streamlit")
+cli.add_command(run_pylint_tests, "run-pylint-tests")
 cli.add_command(show_module_list, "show-module-list")
 cli.add_command(show_module_info, "show-module-info")
 cli.add_command(show_module_requirements, "show-module-requirements")
@@ -1584,6 +1769,7 @@ cli.add_command(extract_module_streamlit, "extract-module-streamlit")
 cli.add_command(extract_module_artifacts, "extract-module-artifacts")
 cli.add_command(extract_module_requirements, "extract-module-requirements")
 cli.add_command(extract_module_site, "extract-module-site")
+cli.add_command(convert_drawio_to_png, "convert-drawio-to-png")
 
 
 if __name__ == "__main__":

@@ -5,6 +5,8 @@ import importlib
 import importlib.metadata
 import importlib.resources as pkg_resources
 import csv
+import shutil
+import yaml
 import attr #>=22.2.0
 
 @attr.s
@@ -16,6 +18,11 @@ class PprHandler:
 
     # inputs
     paa_dir = attr.ib(default=".paa")
+    paa_config_file = attr.ib(default=".paa.config")
+
+    init_dirs = attr.ib(default=["module_dir", "example_notebooks_path",
+            "dependencies_dir", "cli_dir", "api_routes_dir", "streamlit_dir",
+            "artifacts_dir", "drawio_dir", "extra_docs_dir", "tests_dir"])
 
     module_dir = attr.ib(default=None)
     drawio_dir = attr.ib(default=None)
@@ -89,39 +96,10 @@ class PprHandler:
             'package-auto-assembler'
         ]
 
-        with open(os.path.join(paa_dir,'requirements', 'requirements_dev.txt'),
+        with open(os.path.join(paa_dir, 'requirements_dev.txt'),
         'w', encoding = "utf-8") as file:
             for req in init_requirements:
                 file.write(req + '\n')
-
-    def init_paa_dir(self, paa_dir : str = None):
-
-        """
-        Prepares .paa dir for packaging
-        """
-
-        if paa_dir is None:
-            paa_dir = self.paa_dir
-
-        try:
-
-            if not os.path.exists(paa_dir):
-                self._create_init_paa_dir(paa_dir = paa_dir)
-
-            if not os.path.exists(os.path.join(paa_dir,'tracking')):
-                self._create_empty_tracking_files(paa_dir = paa_dir)
-            if not os.path.exists(os.path.join(paa_dir,'requirements')):
-                self._create_init_requirements(paa_dir = paa_dir)
-            if not os.path.exists(os.path.join(paa_dir,'release_notes')):
-                os.makedirs(os.path.join(paa_dir,'release_notes'))
-            if not os.path.exists(os.path.join(paa_dir,'docs')):
-                os.makedirs(os.path.join(paa_dir,'docs'))
-        except Exception as e:
-            self.logger.warning("Failed to initialize paa dir!")
-            self.logger.error(e)
-            return False
-
-        return True
 
     def _remove_trailing_whitespace_from_file(self, file_path : str):
         with open(file_path, 'r', encoding = "utf-8") as file:
@@ -178,6 +156,9 @@ class PprHandler:
         if pylint_threshold is None:
             pylint_threshold = self.pylint_threshold
 
+        if pylint_threshold:
+            pylint_threshold = str(pylint_threshold)
+
         paa_path = pkg_resources.files('package_auto_assembler')
 
         if not os.path.exists(paa_path):
@@ -201,7 +182,11 @@ class PprHandler:
         if files_to_check:
             list_of_cmds += files_to_check
 
-        subprocess.run(list_of_cmds, check=True)
+        try:
+            subprocess.run(list_of_cmds, check=True)
+        except subprocess.CalledProcessError as e:
+            sys.exit(e.returncode)
+
 
         return 0
 
@@ -243,3 +228,162 @@ class PprHandler:
         subprocess.run(list_of_cmds, check=True)
 
         return 0
+
+    def init_from_paa_config(self, default_config : dict):
+
+        config = self.paa_config_file
+        init_dirs = self.init_dirs
+
+        if os.path.exists(config):
+            with open(config, 'r') as file:
+                paa_config = yaml.safe_load(file)
+
+            py_ignore = """# Ignore all files
+*
+
+# Allow only .py files
+!*.py
+
+# Allow all directories (so .py files in subdirectories are also tracked)
+!*/         
+            """
+
+            ipynb_ignore = """# Ignore all files
+*
+
+# Allow only .ipynb files
+!*.ipynb
+       
+            """
+
+            drawio_ignore = """# Ignore all files
+*
+
+# Allow only .ipynb files
+!*.drawio
+       
+            """
+
+            gitignore_dict = {
+                "module_dir" : py_ignore,
+                "example_notebooks_path" : ipynb_ignore,
+                "dependencies_dir" : py_ignore,
+                "cli_dir" : py_ignore,
+                "api_routes_dir" : py_ignore,
+                "streamlit_dir" : py_ignore,
+                "drawio_dir" : drawio_ignore
+
+            }
+
+            for d in init_dirs:
+
+                if paa_config.get(d):
+                    if not os.path.exists(paa_config.get(d)):
+                        os.makedirs(paa_config.get(d))
+                    else:
+                        self.logger.warning(f"{paa_config.get(d)} already exists!")
+
+                    gitignore_path = os.path.join(paa_config.get(d), '.gitignore')
+
+                    if gitignore_dict.get(d):
+                        gitignore_text = gitignore_dict.get(d)
+                    else:
+                        gitignore_text = ""
+
+                    if not os.path.exists(gitignore_path):
+                        with open(gitignore_path, "w", encoding = "utf-8") as file:
+                            file.write(gitignore_text)
+                    else:
+                        self.logger.warning(f"{gitignore_path} already exists!")
+            
+        else:
+            with open(config, 'w', encoding='utf-8') as file:
+                yaml.dump(default_config, file, sort_keys=False)
+
+        
+
+
+    def init_paa_dir(self, paa_dir : str = None):
+
+        """
+        Prepares .paa dir for packaging
+        """
+
+        if paa_dir is None:
+            paa_dir = self.paa_dir
+
+        try:
+
+            if not os.path.exists(paa_dir):
+                self._create_init_paa_dir(paa_dir = paa_dir)
+
+            if not os.path.exists(os.path.join(paa_dir,'tracking')):
+                self._create_empty_tracking_files(paa_dir = paa_dir)
+            if not os.path.exists(os.path.join(paa_dir,'requirements')):
+                self._create_init_requirements(paa_dir = paa_dir)
+            if not os.path.exists(os.path.join(paa_dir,'release_notes')):
+                os.makedirs(os.path.join(paa_dir,'release_notes'))
+            if not os.path.exists(os.path.join(paa_dir,'docs')):
+                os.makedirs(os.path.join(paa_dir,'docs'))
+        except Exception as e:
+            self.logger.warning("Failed to initialize paa dir!")
+            self.logger.error(e)
+            return False
+
+        return True
+
+    def init_ppr_repo(self, workflows_platform : str = None):
+
+        """
+        Prepares ppr for package-auto-assembler.
+        """
+
+        if workflows_platform:
+
+            if not os.path.exists(".paa"):
+                self.init_paa_dir()
+            else:
+                self.logger.warning(f".paa already exists!")
+
+            paa_path = pkg_resources.files('package_auto_assembler')
+
+            if not os.path.exists(paa_path):
+                return False
+
+            template_path = os.path.join(paa_path,
+                                    "artifacts",
+                                    "ppr_workflows",
+                                    workflows_platform)
+
+            other_files = ['tox.ini', '.pylintrc']
+
+            if not os.path.exists(template_path):
+
+                if workflows_platform == 'azure':
+                    self.logger.warning(
+                    "Template for azure devops pipeline will be available in future paa releases!")
+
+                return False
+
+            if workflows_platform == 'github':
+                workflows_platform = '.github'
+
+            if not os.path.exists(workflows_platform):
+                shutil.copytree(template_path, workflows_platform)
+            else:
+                self.logger.warning(f"{workflows_platform} already exists!")
+
+            for f in other_files:
+
+                artifact_path = os.path.join(paa_path,
+                                    "artifacts",
+                                    "ppr_workflows",
+                                    f)
+
+                if os.path.exists(artifact_path):
+                    if not os.path.exists(f):
+                        shutil.copy(artifact_path, f)
+
+            return True
+
+        return False

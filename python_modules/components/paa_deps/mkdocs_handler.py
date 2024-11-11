@@ -2,6 +2,7 @@ import logging
 import os
 import subprocess
 import shutil
+import re
 import attr #>=22.2.0
 
 @attr.s
@@ -50,7 +51,7 @@ class MkDocsHandler:
         if project_name is None:
             project_name = self.project_name
 
-        subprocess.run(["mkdocs", "new", project_name])
+        subprocess.run(["mkdocs", "new", project_name], check=True)
         self.logger.debug(f"Created new MkDocs project: {project_name}")
 
     def create_mkdocs_dir(self, project_name: str = None):
@@ -161,7 +162,7 @@ class MkDocsHandler:
             str: The cleaned filename without the package name prefix.
         """
         if filename.startswith(f"{package_name}-"):
-          return filename[len(package_name)+1:]
+            return filename[len(package_name)+1:]
 
         return filename
 
@@ -195,7 +196,7 @@ class MkDocsHandler:
             license_badge = self.license_badge
 
         if license_badge is None:
-             license_badge = ''
+            license_badge = ''
 
         if package_name is None:
             package_name = self.package_name
@@ -258,7 +259,7 @@ pip install {package_name.replace("_", "-")}
                 md_filepath = os.path.join(directory, md_filename)
 
                 # Write Markdown content
-                with open(md_filepath, 'w') as md_file:
+                with open(md_filepath, 'w', encoding = "utf-8") as md_file:
                     md_content = f"![{filename}](./{filename})"
                     md_file.write(md_content)
                 self.logger.debug(f"Created {md_filepath}")
@@ -303,7 +304,7 @@ extra_css:
         """
 
         mkdocs_yml_path = os.path.join(project_name, "mkdocs.yml")
-        with open(mkdocs_yml_path, "w") as file:
+        with open(mkdocs_yml_path, "w", encoding = "utf-8") as file:
             file.write(content.strip())
         self.logger.debug(f"mkdocs.yml has been created with site_name: {package_name}")
 
@@ -353,7 +354,7 @@ table {
         """
 
         css_path = os.path.join(css_dir, "extra.css")
-        with open(css_path, "w") as file:
+        with open(css_path, "w", encoding = "utf-8") as file:
             file.write(css_content.strip())
         self.logger.debug(f"Custom CSS created at {css_path}")
 
@@ -366,7 +367,7 @@ table {
             project_name = self.project_name
 
         os.chdir(project_name)
-        subprocess.run(["mkdocs", "build"])
+        subprocess.run(["mkdocs", "build"], check=True)
         os.chdir("..")
 
     def serve_mkdocs_site(self, project_name: str = None):
@@ -379,7 +380,7 @@ table {
 
         try:
             os.chdir(project_name)
-            subprocess.run(["mkdocs", "serve"])
+            subprocess.run(["mkdocs", "serve"], check=True)
         except Exception as e:
             print(e)
         finally:

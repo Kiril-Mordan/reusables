@@ -7,7 +7,7 @@ module_directory="python_modules"
 script_pattern="python_modules/.*\.py"
 
 # Threshold score to pass the Pylint check
-threshold_score=7.8
+threshold_score=8.0
 
 # Exit immediately on error
 set -e

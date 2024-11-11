@@ -6,7 +6,7 @@ on:
       package_name:
         description: 'Name of the package'
         required: false
-        default: 'package_auto_assembler'
+
 
 jobs:
   build_site:
@@ -15,6 +15,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install jq
+
       - name: Find Changed Modules
         id: changed-modules
         run: |
@@ -22,7 +25,8 @@ jobs:
             echo "${{ github.event.inputs.package_name }}" > changed_files
           else
             chmod +x .github/tools/find_and_process_changed_files.sh
-            .github/tools/find_and_process_changed_files.sh 'python_modules/' 'example_notebooks/' 'release_notes/' '' ''
+            chmod +x .github/tools/get_paa_change_dirs.sh
+            .github/tools/find_and_process_changed_files.sh $(.github/tools/get_paa_change_dirs.sh) '' ''
           fi
 
           if [ -s changed_files ]; then
@@ -38,11 +42,18 @@ jobs:
       - name: Install dependencies
         if: steps.changed-modules.outputs.files != ''
         run: |
-          pip install mkdocs-material attrs package_auto_assembler>=0.1.5
+          pip install -r .paa/requirements_dev.txt
 
       - name: Build site
         if: steps.changed-modules.outputs.files != ''
-        run: python .github/tools/make_mkdocs_site.py "${{ steps.changed-modules.outputs.files }}"
+        run: paa test-install "${{ steps.changed-modules.outputs.files }}" --keep-temp-files --build-mkdocs
+
+      - name: Prepare site for gh-pages
+        if: steps.changed-modules.outputs.files != ''
+        run: |
+          LABEL_NAME=${{ steps.changed-modules.outputs.files }}
+          echo "LABEL_NAME=${LABEL_NAME}" >> $GITHUB_ENV
+          mv "${LABEL_NAME}_temp_mkdocs" temp_project
 
       - name: Deploy to GitHub Pages
         if: steps.changed-modules.outputs.files != ''
@@ -50,5 +61,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./temp_project/site
-          destination_dir: "${{ steps.changed-modules.outputs.files }}"
+          destination_dir: "${{ env.LABEL_NAME }}"
 

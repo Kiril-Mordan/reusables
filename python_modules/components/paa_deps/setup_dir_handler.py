@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import attr #>=22.2.0
 
 @attr.s
@@ -22,6 +23,7 @@ class SetupDirHandler:
     classifiers = attr.ib(default=[], type=list)
     setup_directory = attr.ib(default='./setup_dir')
     add_cli_tool = attr.ib(default=False, type = bool)
+    add_artifacts = attr.ib(default=False, type = bool)
     version = attr.ib(default=None, type = str)
 
     logger = attr.ib(default=None)

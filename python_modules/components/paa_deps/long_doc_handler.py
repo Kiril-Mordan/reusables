@@ -3,12 +3,13 @@ import os
 import codecs
 from datetime import datetime
 import re
+import shutil
 import nbformat
 from nbconvert import MarkdownExporter #==7.16.4
 from nbconvert.preprocessors import ExecutePreprocessor
 import attr #>=22.2.0
 import requests
-import shutil
+
 
 @attr.s
 class LongDocHandler:
@@ -91,7 +92,7 @@ class LongDocHandler:
             pypi_module_link = f"https://pypi.org/project/{module_name_hyphenated}/"
 
             # Send a HEAD request to the PyPI module link
-            response = requests.head(pypi_module_link)
+            response = requests.head(pypi_module_link, timeout=self.timeout)
 
             # Check if the response status code is 200 (OK)
             if response.status_code == 200:

@@ -14,6 +14,7 @@ Options:
 Commands:
   check-licenses               Check licenses of the module.
   check-vulnerabilities        Check vulnerabilities of the module.
+  convert-drawio-to-png        Converts drawio file to .png
   extract-module-artifacts     Extracts artifacts from packaged module.
   extract-module-requirements  Extract module requirements.
   extract-module-routes        Extracts routes for fastapi from packages...
@@ -21,10 +22,12 @@ Commands:
   extract-module-streamlit     Extracts streamlit from packages that have...
   extract-tracking-version     Get latest package version.
   init-config                  Initialize config file
-  init-paa                     Initialize paa tracking files
+  init-paa                     Initialize paa tracking files and...
+  init-ppr                     Initialize ppr for a given workflows...
   make-package                 Package with package-auto-assembler.
   refresh-module-artifacts     Refreshes module artifact from links.
   run-api-routes               Run fastapi with provided routes.
+  run-pylint-tests             Run pylint tests for a given module, file,...
   run-streamlit                Run streamlit application from the package.
   show-module-artifacts        Shows module artifacts.
   show-module-artifacts-links  Shows module artifact links.
@@ -32,9 +35,12 @@ Commands:
   show-module-licenses         Shows module licenses.
   show-module-list             Shows module list.
   show-module-requirements     Shows module requirements.
+  show-ref-local-deps          Shows paths to local dependencies...
   test-install                 Test install module into local environment.
   update-release-notes         Update release notes.
 ```
+
+## Initializing PAA
 
 Creating config file could be useful to avoid providing parameters manually. If no config file will be provided, by default values from `.paa.config` will be used.
 
@@ -51,7 +57,9 @@ Options:
   --help  Show this message and exit.
 ```
 
-Packaging repository needs a place to keep some tracking files. 
+Packaging repository needs a place to keep some tracking files.
+Running it first time also initializes `.paa.config` and the second time
+will create directories specified there, if not already created.  
 
 ``` bash
 paa init-paa  --help
@@ -64,6 +72,58 @@ Usage: paa init-paa
 
 Options:
   --help  Show this message and exit.
+```
+
+The package provides some templates for packaging repositories. Packaging repository after some additional preparations should allow to create and publish new packages with a use of ci/cd pipeline. 
+
+``` bash
+paa init-ppr --help
+```
+
+``` bash
+Usage: paa init-ppr [OPTIONS]
+
+  Initialize ppr for a given workflows platform.
+
+Options:
+  --github  If checked, git actions template would be set up.
+  --azure   If checked, azure devops pipelines template would be set up.
+  --help    Show this message and exit.
+```
+
+## Creating packages
+
+Installing packages for a test in local environments could be a useful step to make sure everything works as expected before pushing changes to publishing repo. This creates an instance of the package in local environment with default version, with a greatly simplified building process that avoids making documentation, versioning and so on.
+
+``` bash
+paa test-install [OPTIONS] MODULE_NAME
+```
+
+``` bash
+Usage: paa test-install [OPTIONS] MODULE_NAME
+
+  Test install module into local environment.
+
+Options:
+  --config TEXT                   Path to config file for paa.
+  --module-filepath TEXT          Path to .py file to be packaged.
+  --mapping-filepath TEXT         Path to .json file that maps import to
+                                  install dependecy names.
+  --cli-module-filepath TEXT      Path to .py file that contains cli logic.
+  --fastapi-routes-filepath TEXT  Path to .py file that routes for fastapi.
+  --dependencies-dir TEXT         Path to directory with local dependencies of
+                                  the module.
+  --default-version TEXT          Default version.
+  --check-vulnerabilities         If checked, checks module dependencies with
+                                  pip-audit for vulnerabilities.
+  --build-mkdocs                  If checked, builds mkdocs documentation.
+  --check-licenses                If checked, checks module dependencies
+                                  licenses.
+  --keep-temp-files               If checked, setup directory won't be removed
+                                  after setup is done.
+  --skip-deps-install             If checked, existing dependencies from env
+                                  will be reused.
+  --help                          Show this message and exit.
 ```
 
 Making package based on provided parameters can be useful in ci/cd pipelines to streamline creation of packages before publishing from something that could be as simple as `.py` file.
@@ -100,46 +160,15 @@ Options:
   --help                          Show this message and exit.
 ```
 
-Installing packages for a test in local environments could be a useful step to make sure everything works as expected before pushing changes to publishing repo. This creates an instance of the package in local environment with default version, with a greatly simplified building process that avoids making documentation, versioning and so on.
-
-``` bash
-paa test-install [OPTIONS] MODULE_NAME
-```
-
-``` bash
-Usage: paa test-install [OPTIONS] MODULE_NAME
-
-  Test install module into local environment.
-
-Options:
-  --config TEXT                   Path to config file for paa.
-  --module-filepath TEXT          Path to .py file to be packaged.
-  --mapping-filepath TEXT         Path to .json file that maps import to
-                                  install dependecy names.
-  --cli-module-filepath TEXT      Path to .py file that contains cli logic.
-  --fastapi-routes-filepath TEXT  Path to .py file that routes for fastapi.
-  --dependencies-dir TEXT         Path to directory with local dependencies of
-                                  the module.
-  --default-version TEXT          Default version.
-  --check-vulnerabilities         If checked, checks module dependencies with
-                                  pip-audit for vulnerabilities.
-  --build-mkdocs                  If checked, builds mkdocs documentation.
-  --check-licenses                If checked, checks module dependencies
-                                  licenses.
-  --keep-temp-files               If checked, setup directory won't be removed
-                                  after setup is done.
-  --skip-deps-install             If checked, existing dependencies from env
-                                  will be reused.
-  --help                          Show this message and exit.
-```
+## Checking dependencies
 
 Checking vulnerabilities with `pip-audit` is usefull. This checks vulnerabilities of .py files and its local dependencies with `pip-audit`.
 
 ``` bash
 paa check-vulnerabilities --help
 ```
- bash
-```
+
+``` bash
 Usage: paa check-vulnerabilities [OPTIONS] MODULE_NAME
 
   Check vulnerabilities of the module.
@@ -178,29 +207,7 @@ Options:
   --help                          Show this message and exit.
 ```
 
-Maintaining release notes could be very useful, but also tedious task. 
-Since commit messages are rather standard practice, by taking advantage of them and constructing release notes based on them, each release could contain notes with appropriate version automatically, when itegrated into ci/cd pipeline, given that commit messages are written in a specific way. 
-
-``` bash
-paa update-release-notes --help
-```
-
-```
-Usage: paa update-release-notes [OPTIONS] LABEL_NAME
-
-  Update release notes.
-
-Options:
-  --version TEXT           Version of new release.
-  --notes TEXT             Optional manually provided notes string, where each
-                           note is separated by ; and increment type is
-                           provide in accordance to paa documentation.
-  --notes-filepath TEXT    Path to .md wit release notes.
-  --max-search-depth TEXT  Max search depth in commit history.
-  --use-pip-latest         If checked, attempts to pull latest version from
-                           pip.
-  --help                   Show this message and exit.
-```
+## Running apps from packages
 
 Packaging process could help building APIs as well. This package would call routes stored within other packages and routes stored in files to form one application, so that repeatable structure does not need to copied between projects, but instead built in one places and extended with some config files in many. Since routes are python code that can have its dependencies, it makes sense to store them within packages sometimes to take advantage of automated dependency handling and import code straight from the package, eliminating in turn situation when package release in no compatible anymore with routes based on them. 
 
@@ -250,6 +257,8 @@ Options:
   --help             Show this message and exit.
 ```
 
+## Extracting files from packages
+
 Storing routes within package could be convinient, but extracting them from a package is not. To mitigate that, the following exists to extract `routes.py` from a package that contains it.
 
 ``` bash
@@ -286,6 +295,47 @@ Options:
   --help              Show this message and exit.
 ```
 
+Another option to access the artifacts is to copy them to a selected directory.
+
+``` bash
+paa extract-module-artifacts --help
+```
+
+``` bash
+Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
+
+  Extracts artifacts from packaged module.
+
+Options:
+  --artifact TEXT     Name of the artifact to be extracted.
+  --output-dir TEXT   Directory where artifacts extracted from the package
+                      will be copied to.
+  --output-path TEXT  Filepath to which artifact extracted from the package
+                      will be copied to.
+  --help              Show this message and exit.
+```
+
+Another option to access the packaged streamlit app is to copy it to a selected directory.
+
+``` bash
+paa extract-module-streamlit --help
+```
+
+``` bash
+Usage: paa extract-module-streamlit [OPTIONS] PACKAGE_NAME
+
+  Extracts streamlit from packages that have them into a file.
+
+Options:
+  --output-dir TEXT   Directory where streamplit extracted from the package
+                      will be copied to.
+  --output-path TEXT  Filepath to which streamlit extracted from the package
+                      will be copied to.
+  --help              Show this message and exit.
+```
+
+
+## Show modules info
 
 Cli interface provides some additional tools to analyse locally installed packages if they were build with package-auto-assembler>0.4.2. These include methods to list modules, show module info, extract requirements.
 
@@ -366,46 +416,7 @@ Options:
   --help  Show this message and exit.
 ```
 
-Another option to access the artifacts is to copy them to a selected directory.
-
-``` bash
-paa extract-module-artifacts --help
-```
-
-``` bash
-Usage: paa extract-module-artifacts [OPTIONS] PACKAGE_NAME
-
-  Extracts artifacts from packaged module.
-
-Options:
-  --artifact TEXT     Name of the artifact to be extracted.
-  --output-dir TEXT   Directory where artifacts extracted from the package
-                      will be copied to.
-  --output-path TEXT  Filepath to which artifact extracted from the package
-                      will be copied to.
-  --help              Show this message and exit.
-```
-
-Another option to access the packaged streamlit app is to copy it to a selected directory.
-
-``` bash
-paa extract-module-streamlit --help
-```
-
-``` bash
-Usage: paa extract-module-streamlit [OPTIONS] PACKAGE_NAME
-
-  Extracts streamlit from packages that have them into a file.
-
-Options:
-  --output-dir TEXT   Directory where streamplit extracted from the package
-                      will be copied to.
-  --output-path TEXT  Filepath to which streamlit extracted from the package
-                      will be copied to.
-  --help              Show this message and exit.
-```
-
-Some artifacts can come from links and there might be a need to refresh or even download these files (depending on how a link was provided). I might be useful to inspect which artifacts come from links, whether these links are available and refresh these artifacts within installed package.
+It might be useful to inspect which artifacts come from links, whether these links are available and refresh these artifacts within installed package.
 
 ``` bash
 paa show-module-artifacts-links --help
@@ -420,6 +431,29 @@ Options:
   --help  Show this message and exit.
 ```
 
+A module can referance multiple other local dependencies. The following is meant to extract all of paths relates to the module within PPR.
+
+``` bash
+paa show-ref-local-deps --help
+```
+
+``` bash
+Usage: paa show-ref-local-deps [OPTIONS] LABEL_NAME
+
+  Shows paths to local dependencies referenced in the module.
+
+Options:
+  --config TEXT            Path to config file for paa.
+  --module-dir TEXT        Path to folder with .py file to be packaged.
+  --dependencies-dir TEXT  Path to directory with local dependencies of
+                           the module.
+  --help                   Show this message and exit.
+```
+
+## Other
+
+Some artifacts can come from links and there might be a need to refresh or even download these files (depending on how a link was provided). 
+
 ``` bash
 paa refresh-module-artifacts --help
 ```
@@ -432,3 +466,122 @@ Usage: paa refresh-module-artifacts [OPTIONS] LABEL_NAME
 Options:
   --help  Show this message and exit.
 ```
+
+Core of paa automation is the ability to extract requirements from `.py` files. The tool shown below is a part of requirements extraction pipeline, designed to run within PPR, but could also work outside, if imports are handled in a specific way (more in description).
+
+``` bash
+paa extract-module-requirements --help
+```
+
+``` bash
+Usage: paa extract-module-requirements [OPTIONS] MODULE_NAME
+
+  Extract module requirements.
+
+Options:
+  --config TEXT                   Path to config file for paa.
+  --module-dir TEXT               Path to folder where module is stored.
+  --mapping-filepath TEXT         Path to .json file that maps import to
+                                  install dependecy names.
+  --cli-module-filepath TEXT      Path to .py file that contains cli logic.
+  --routes-module-filepath TEXT   Path to .py file that contains fastapi
+                                  routes.
+  --streamlit-module-filepath TEXT
+                                  Path to .py file that contains streamlit
+                                  app.
+  --dependencies-dir TEXT         Path to directory with local dependencies of
+                                  the module.
+  --show-extra                    If checked, list will show which
+                                  requirements are extra.
+  --skip-extra                    If checked, list will not include extra.
+  --help                          Show this message and exit.
+```
+
+
+Maintaining release notes could be very useful, but also tedious task. 
+Since commit messages are rather standard practice, by taking advantage of them and constructing release notes based on them, each release could contain notes with appropriate version automatically, when itegrated into ci/cd pipeline, given that commit messages are written in a specific way. 
+
+``` bash
+paa update-release-notes --help
+```
+
+```
+Usage: paa update-release-notes [OPTIONS] LABEL_NAME
+
+  Update release notes.
+
+Options:
+  --version TEXT           Version of new release.
+  --notes TEXT             Optional manually provided notes string, where each
+                           note is separated by ; and increment type is
+                           provide in accordance to paa documentation.
+  --notes-filepath TEXT    Path to .md wit release notes.
+  --max-search-depth TEXT  Max search depth in commit history.
+  --use-pip-latest         If checked, attempts to pull latest version from
+                           pip.
+  --help                   Show this message and exit.
+```
+
+Running pylint tests is useful and usually done in pull request to PPR. It could also be run locally for all the modules or select modules and their local dependencies to identify modules that need improvements to pass preset threshold. 
+
+``` bash
+paa run-pylint-tests --help
+```
+
+``` bash
+Usage: paa run-pylint-tests [OPTIONS] [FILES]...
+
+  Run pylint tests for a given module, file, files or files in a directory.
+
+Options:
+  --config TEXT      Path to config file for paa.
+  --label-name TEXT  Label name.
+  --module-dir TEXT  Path to a directory where .py files are stored.
+  --threshold TEXT   Pylint threshold.
+  --help             Show this message and exit.
+```
+
+It might be useful to know what is the last version a given module that was published from the PPR, mostly within ci/cd workflows.
+
+``` bash
+paa extract-tracking-version --help
+```
+
+``` bash
+Usage: paa extract-tracking-version [OPTIONS] MODULE_NAME
+
+  Get latest package version.
+
+Options:
+  --config TEXT  Path to config file for paa.
+  --help         Show this message and exit.
+```
+
+Some pieces of documentation within PPR may come from drawio files. One of the steps in packaging process is to convert `.drawio` file for a package into `.png` files. 
+For this functionality to work, first some dependencies would need to be installed.
+
+``` bash
+sudo apt-get update
+sudo apt-get install -y wget xvfb libnotify4 libxml2-utils
+wget https://github.com/jgraph/drawio-desktop/releases/download/v24.6.4/drawio-amd64-24.6.4.deb
+sudo dpkg -i drawio-amd64-24.6.4.deb
+sudo apt-get install -f
+```
+
+``` bash
+paa convert-drawio-to-png --help
+```
+
+``` bash
+Usage: paa convert-drawio-to-png [OPTIONS]
+
+  Converts drawio file to .png
+
+Options:
+  --config TEXT      Path to config file for paa.
+  --label-name TEXT  Label name.
+  --drawio-dir TEXT  Path to a directory where drawio files are stored.
+  --docs-dir TEXT    Path to the output directory for .png file.
+  --help             Show this message and exit.
+```
+
