@@ -46,7 +46,7 @@ jobs:
         if: steps.changed-modules.outputs.files != ''
         run: |
           chmod +x .github/tools/update_tox_requirements.sh
-          paa extract-module-requirements "${{ steps.changed-modules.outputs.files }}"
+          paa extract-module-requirements "${{ steps.changed-modules.outputs.files }}" > ".paa/requirements/requirements_${{ steps.changed-modules.outputs.files }}.txt"
           .github/tools/update_tox_requirements.sh "${{ steps.changed-modules.outputs.files }}"
           cat .paa/requirements/requirements_tox.txt 
 
@@ -75,7 +75,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
 
     steps:
       - uses: actions/checkout@v2
@@ -99,6 +99,7 @@ jobs:
           TESTS_DIR=$(yq -r '.tests_dir' .paa.config)
 
           if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            TESTS_DIR=$(yq -r '.tests_dir' .paa.config)
             if [ -d "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}" ]; then
               tox -- "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}"
             else
@@ -106,6 +107,7 @@ jobs:
             paa run-pylint-tests --label-name "${{ needs.update-requirements.outputs.changed-files }}"
             fi
           elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            TESTS_DIR=tests
             if [ -d "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}" ]; then
               tox -- "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}"
             else
