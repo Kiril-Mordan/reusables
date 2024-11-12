@@ -56,7 +56,6 @@ __package_metadata__ = {
 }
 
 
-
 @attr.s
 class PackageAutoAssembler:
     # pylint: disable=too-many-instance-attributes
