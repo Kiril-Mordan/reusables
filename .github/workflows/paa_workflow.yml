@@ -50,9 +50,7 @@ jobs:
       - name: Export drawio files to png files
         if: steps.changed-modules.outputs.files != ''
         run: |
-          chmod +x .github/tools/convert_drawio_to_png.sh
-          .github/tools/convert_drawio_to_png.sh "drawio/${{ steps.changed-modules.outputs.files }}.drawio"
-          #paa convert-drawio-to-png --label-name ${{ steps.changed-modules.outputs.files }}
+          paa convert-drawio-to-png --label-name ${{ steps.changed-modules.outputs.files }}
 
       
       - name: Set up Python 3.10
@@ -83,8 +81,8 @@ jobs:
 
           echo "Assembling for:"
           echo ${{ steps.changed-modules.outputs.files }}
-          echo "Test-installing paa ..."
-          paa test-install package-auto-assembler
+          # echo "Test-installing paa ..."
+          # paa test-install package-auto-assembler
           echo "Assembling..."
           paa make-package ${{ steps.changed-modules.outputs.files }}
           ls -la
