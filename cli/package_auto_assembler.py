@@ -43,7 +43,30 @@ test_install_config = {
     "drawio_dir" : None,
     "extra_docs_dir" : None,
     "tests_dir" : None,
-    "release_notes_dir" : ".paa/release_notes",
+    "use_commit_messages" : True,
+    "check_vulnerabilities" : True,
+    "check_dependencies_licenses" : False,
+    "add_artifacts" : True,
+    "add_mkdocs_site" : False,
+    "license_path" : None,
+    "license_label" : None,
+    "license_badge" : None,
+    "allowed_licenses" : None,
+    "docs_url" : None,
+    "classifiers" : None
+}
+
+test_install_config_full = {
+    "module_dir" : "python_modules",
+    "example_notebooks_path" : "example_notebooks",
+    "dependencies_dir" : "python_modules/components",
+    "cli_dir" : "cli",
+    "api_routes_dir" : "api_routes",
+    "streamlit_dir" : "streamlit",
+    "artifacts_dir" : "artifacts",
+    "drawio_dir" : "drawio",
+    "extra_docs_dir" : "extra_docs",
+    "tests_dir" : "tests",
     "use_commit_messages" : True,
     "check_vulnerabilities" : True,
     "check_dependencies_licenses" : False,
@@ -58,14 +81,20 @@ test_install_config = {
 }
 
 @click.command()
+@click.option('--full', 'full', is_flag=True, type=bool, 
+required=False, help='If checked, dirs beyond essential would be mapped.')
 @click.pass_context
-def init_config(ctx):
+def init_config(ctx, full):
     """Initialize config file"""
 
     config = ".paa.config"
 
     if not os.path.exists(".paa.config"):
-        PprHandler().init_from_paa_config(default_config = test_install_config)
+        if full:
+            default_config = test_install_config_full
+        else:
+            default_config = test_install_config
+        PprHandler().init_from_paa_config(default_config = default_config)
 
         click.echo(f"Config file {config} initialized!")
         click.echo(f"Edit it to your preferance.")
@@ -74,12 +103,19 @@ def init_config(ctx):
 
 
 @click.command()
+@click.option('--full', 'full', is_flag=True, type=bool, 
+required=False, help='If checked, dirs beyond essential would be mapped.')
 @click.pass_context
-def init_paa(ctx):
+def init_paa(ctx, full):
     """Initialize paa tracking files and directores from .paa.config"""
 
     st = PprHandler().init_paa_dir()
-    PprHandler().init_from_paa_config(default_config = test_install_config)
+
+    if full:
+        default_config = test_install_config_full
+    else:
+        default_config = test_install_config
+    PprHandler().init_from_paa_config(default_config = default_config)
 
     if st:
         click.echo(f"PAA tracking files initialized!")
@@ -88,10 +124,13 @@ def init_paa(ctx):
 @click.command()
 @click.option('--github', 'github', is_flag=True, type=bool, required=False, help='If checked, git actions template would be set up.')
 @click.option('--azure', 'azure', is_flag=True, type=bool, required=False, help='If checked, azure devops pipelines template would be set up.')
+@click.option('--full', 'full', is_flag=True, type=bool, 
+required=False, help='If checked, dirs beyond essential would be mapped.')
 @click.pass_context
 def init_ppr(ctx,
     github,
-    azure):
+    azure,
+    full):
     """Initialize ppr for a given workflows platform."""
 
     workflows_platform = None
@@ -105,7 +144,12 @@ def init_ppr(ctx,
         if os.path.exists('.paa.config'):
             click.echo(f".paa.config already exists!")
 
-        PprHandler().init_from_paa_config(default_config = test_install_config)
+        if full:
+            default_config = test_install_config_full
+        else:
+            default_config = test_install_config
+        PprHandler().init_from_paa_config(default_config = default_config)
+
 
     st = PprHandler().init_ppr_repo(workflows_platform = workflows_platform)
 

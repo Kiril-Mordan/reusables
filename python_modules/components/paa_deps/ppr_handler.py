@@ -288,7 +288,7 @@ class PprHandler:
                     if gitignore_dict.get(d):
                         gitignore_text = gitignore_dict.get(d)
                     else:
-                        gitignore_text = ""
+                        gitignore_text = "__pycache__"
 
                     if not os.path.exists(gitignore_path):
                         with open(gitignore_path, "w", encoding = "utf-8") as file:
