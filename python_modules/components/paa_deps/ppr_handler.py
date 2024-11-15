@@ -93,7 +93,10 @@ class PprHandler:
             'ipykernel',
             'tox',
             'tox-gh-actions',
-            'package-auto-assembler'
+            'package-auto-assembler',
+            'setuptools',
+            'wheel', 
+            'twine'
         ]
 
         with open(os.path.join(paa_dir, 'requirements_dev.txt'),
@@ -359,14 +362,17 @@ class PprHandler:
 
             if not os.path.exists(template_path):
 
-                if workflows_platform == 'azure':
-                    self.logger.warning(
-                    "Template for azure devops pipeline will be available in future paa releases!")
+                # if workflows_platform == 'azure':
+                #     self.logger.warning(
+                #     "Template for azure devops pipeline will be available in future paa releases!")
 
                 return False
 
             if workflows_platform == 'github':
                 workflows_platform = '.github'
+
+            if workflows_platform == 'azure':
+                workflows_platform = '.azure'
 
             if not os.path.exists(workflows_platform):
                 shutil.copytree(template_path, workflows_platform)

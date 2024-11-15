@@ -1,0 +1,70 @@
+jobs:
+- job: Tests
+  displayName: 'Run tests and linters'
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+
+  - checkout: self
+    persistCredentials: true 
+    fetchDepth: '5'
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.10'
+      addToPath: true   
+    displayName: 'Set up Python'
+
+  - script: |
+      sudo apt-get update && sudo apt-get install jq
+    displayName: 'Install jq'
+
+  - script: |
+      if [ "${{ parameters.package_name }}" != "" ]; then
+        echo "${{ parameters.package_name }}" > changed_files
+      else
+        chmod +x .azure/tools/find_and_process_changed_files.sh
+        chmod +x .azure/tools/get_paa_change_dirs.sh
+        .azure/tools/find_and_process_changed_files.sh $(.azure/tools/get_paa_change_dirs.sh) '' ''
+      fi
+
+      if [ -s changed_files ]; then
+          files=$(cat changed_files)
+          echo "##vso[task.setvariable variable=files;isOutput=true]$files"
+      fi
+    displayName: 'Find Changed Modules'
+    name: changed_modules
+
+  - script: |
+      chmod +x .azure/tools/update_tox_requirements.sh
+      paa extract-module-requirements "${{ steps.changed-modules.outputs.files }}" > ".paa/requirements/requirements_${{ steps.changed-modules.outputs.files }}.txt"
+      .azure/tools/update_tox_requirements.sh "${{ steps.changed-modules.outputs.files }}"
+      cat .paa/requirements/requirements_tox.txt 
+    displayName: 'Update requirements'
+    condition: and(succeeded(), ne(variables['files'], ''))
+
+  - script: |
+      paa check-vulnerabilities "$(files)"
+    displayName: 'Check requirements for vulnerabilities'
+    condition: and(succeeded(), ne(variables['files'], ''))
+
+  - script: |
+      paa check-licenses "$(files)"
+    displayName: 'Check licenses of module dependencies'
+    condition: and(succeeded(), ne(variables['files'], ''))
+
+  - script: |
+      TESTS_DIR=$(yq -r '.tests_dir' .paa.config)
+      if [ -f "$TESTS_DIR/$(files)" ]; then
+        tox -- "$TESTS_DIR/$(files)"
+      else:
+        echo "No tests for module."
+      fi
+    displayName: 'Test with tox'
+    condition: and(succeeded(), ne(variables['files'], ''))
+
+  - script: |
+      paa run-pylint-tests --label-name "$(files)"
+    displayName: 'Pylint tests'
+    condition: and(succeeded(), ne(variables['files'], ''))
