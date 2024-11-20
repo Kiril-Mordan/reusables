@@ -36,4 +36,5 @@ stages:
           parameters:
             package_name: ${{ parameters.package_name }}
             feed_name: ${{ variables.feed_name }}
-            extra_index_url: ${{ variables.extra_index_url }}
+            organization: ${{ variables.organization }}
+            project_guid: ${{ variables.project_guid }}

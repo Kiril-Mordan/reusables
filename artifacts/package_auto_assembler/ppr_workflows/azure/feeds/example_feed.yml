@@ -1,5 +1,4 @@
 variables:
   feed_name: example-feed
-  repository_index: https://pkgs.dev.azure.com/ORGANIZATION/PROJECT/_packaging/FEED_NAME/pypi/upload/
-  extra_index_url: https://pkgs.dev.azure.com/ORGANIZATION/INDEX/_packaging/FEED_NAME/pypi/simple/
-  feed_url: https://dev.azure.com/ORGANIZATION/PROJECT/_artifacts/feed/FEED_NAME/
+  organization: exampleOrganization
+  project_guid: exampleProjectOrGUID

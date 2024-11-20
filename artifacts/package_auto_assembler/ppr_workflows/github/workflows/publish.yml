@@ -94,29 +94,27 @@ jobs:
           chmod +x .github/tools/update_README.sh
           .github/tools/update_README.sh
 
-      - name: Commit changes
+      - name: Commit paa tracking
         if: steps.changed-modules.outputs.files != ''
         run: |
           set -x
    
+          LABEL_NAME=${{ steps.changed-modules.outputs.files }}
           PACKAGE_VERSION=$(paa extract-tracking-version "${{ steps.changed-modules.outputs.files }}")
           if [ -z "${PACKAGE_VERSION}" ]; then
             echo "Failed to get version"
             exit 1
           fi
 
-          LABEL_NAME=${{ steps.changed-modules.outputs.files }}
-
+          # Add tracking files and README.md
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-
           git pull origin HEAD:main
-
           git add .paa README.md
 
           # Check if there are any changes in the working directory
           if [ -n "$(git status --porcelain)" ]; then
-            COMMIT_MESSAGE="Update paa tracking files"
+            COMMIT_MESSAGE="Update paa tracking files and README"
             TAG_NAME="v${PACKAGE_VERSION}_${LABEL_NAME}"
             TAG_MESSAGE="${LABEL_NAME}==${PACKAGE_VERSION}"
 

@@ -3,8 +3,11 @@ parameters:
     type: string
   - name: package_name
     type: string
-  - name: extra_index_url
+  - name: organization
     type: string
+  - name: project_guid
+    type: string
+
 
 jobs:
 - job: PaaWorkflow
@@ -32,7 +35,7 @@ jobs:
       chmod +x .azure/tools/assemble_pypirc.sh
       chmod +x .azure/tools/assemble_pip_conf.sh
       .azure/tools/assemble_pypirc.sh
-      .azure/tools/assemble_pip_conf.sh ${{ parameters.extra_index_url }}
+      .azure/tools/assemble_pip_conf.sh ${{ parameters.organization }} ${{ parameters.feed_name }} ${{ parameters.project_guid }}
       cp .pypirc ~/.pypirc
     displayName: 'Assemble .pypirc from vars amd pip_conf'
     env:
@@ -79,6 +82,38 @@ jobs:
       chmod +x .azure/tools/update_README.sh
       .azure/tools/update_README.sh
     displayName: 'Update README'
+
+  - script: |
+      set -x
+
+      LABEL_NAME=${{parameters.package_name}}
+      PACKAGE_VERSION=$(paa extract-tracking-version "$package_name_value")
+      if [ -z "$PACKAGE_VERSION" ]; then
+        echo "Failed to get version"
+        exit 1
+      fi
+
+      # Add tracking files and README.md
+      git config --local user.email "action@azure.com"
+      git config --local user.name "Azure DevOps Action"
+      git pull origin HEAD:main
+      git add .paa README.md
+
+      # Check if there are any changes in the working directory
+      if [ -n "$(git status --porcelain)" ]; then
+        COMMIT_MESSAGE="Update paa tracking files and README"
+        TAG_NAME="v${PACKAGE_VERSION}_${LABEL_NAME}"
+        TAG_MESSAGE="${LABEL_NAME}==${PACKAGE_VERSION}"
+
+        git commit -m "${COMMIT_MESSAGE}"
+        git tag -a "${TAG_NAME}" -m "${TAG_MESSAGE}"
+        git push origin HEAD:main
+        git push origin "${TAG_NAME}"
+      else
+        echo "No changes to commit"
+      fi
+
+    displayName: 'Commit paa tracking'
 
   
 

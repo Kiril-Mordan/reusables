@@ -6,31 +6,27 @@ if [ -z "$TWINE_PASSWORD" ]; then
   exit 1
 fi
 
-# Ensure URLs are provided as an argument
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 \"<url1> <url2> ...\""
+# Ensure the correct number of arguments is provided
+if [ "$#" -ne 3 ]; then
+  echo "Usage: $0 <organization> <feed_name> <project_guid>"
   exit 1
 fi
 
-# Retrieve the URLs from the argument
-urls="$1"
+# Retrieve the arguments
+organization="$1"
+feed_name="$2"
+project_guid="$3"
+
+# Construct the URL
+url="https://pkgs.dev.azure.com/$organization/$project_guid/_packaging/$feed_name/pypi/simple/"
 
 # Create the pip.conf file
-output_file="pip.conf"
 mkdir -p ~/.config/pip
-output_path=~/.config/pip/$output_file
+output_path=~/.config/pip/pip.conf
 
-# Start with the [global] section
+# Write to the pip.conf file
 echo "[global]" > "$output_path"
-
-# Process each URL in the argument string
-for url in $urls; do
-  # Ensure URL is not empty
-  if [ ! -z "$url" ]; then
-    # Insert the PAT into the URL
-    full_url=$(echo "$url" | sed "s|https://|https://${TWINE_PASSWORD}@|")
-    echo "extra-index-url=$full_url" >> "$output_path"
-  fi
-done
+full_url=$(echo "$url" | sed "s|https://|https://${TWINE_PASSWORD}@|")
+echo "extra-index-url=$full_url" >> "$output_path"
 
 echo "pip.conf has been created at $output_path"

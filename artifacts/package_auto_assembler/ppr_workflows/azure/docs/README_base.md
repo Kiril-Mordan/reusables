@@ -1,8 +1,8 @@
-# Python Packaging Repository for Github
+# Python Packaging Repository for Azure DevOps
 
-This repository helps automate the development and deployment of Python packages to PyPI using GitHub workflows.
+This repository helps automate the development and deployment of Python packages to Azure DevOps artifacts feeds.
 
-It is an instance of a Python Packaging Repository (PPR) created using the [`package-auto-assembler`](https://kiril-mordan.github.io/reusables/package_auto_assembler/) packaging tool. The repository is designed to streamline the development cycle of `single-module packages`, taking them from an initial idea to a functional alpha version accessible via [PyPI](https://pypi.org/).
+It is an instance of a Python Packaging Repository (PPR) created using the [`package-auto-assembler`](https://kiril-mordan.github.io/reusables/package_auto_assembler/) packaging tool. The repository is designed to streamline the development cycle of `single-module packages`, taking them from an initial idea to a functional alpha version accessible via [configured artifacts feeds](.azure/feeds/).
 
 Its highly automated CI/CD pipeline can package multiple packages stored in this repository, requiring as little as a single `.py` file, for basic designs. Learn more about this type of PPR [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/).
 
@@ -38,14 +38,9 @@ git commit -m "[your_package] change one; comment about change two"
 
 ### Publish a Package
 
-If the test results are satisfactory, merge the pull request with `main`. The pipeline will then:
+If the test results are satisfactory, merge the pull request into `main`. Then, in Azure DevOps, navigate to `Pipelines` -> `your-packaging-repo-pipeline` -> `Run pipeline` and select one of the configured upload feeds in `Upload Feed` as well as indicate package to be published (ensure to use underscores (`_`) instead of hyphens (`-`)) in `Package Name` field. 
 
-1. Initialize the packaging process.
-2. Prepare the package.
-3. Publish it to [PyPI](https://pypi.org/).
-4. Update tracking files in `.paa` and README.
-
-If packaging pipeline is successful, latest release will be available from [PyPI](https://pypi.org/).
+If packaging pipeline is successful, latest release will be available in that artifacts feed. 
 
 ### Additional Information
 
@@ -58,3 +53,4 @@ paa --help
 Or visit [`package-auto-assembler` documentation](https://kiril-mordan.github.io/reusables/package_auto_assembler/).
 
 ---
+
