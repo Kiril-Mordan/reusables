@@ -324,10 +324,48 @@ class PprHandler:
                 self._create_empty_tracking_files(paa_dir = paa_dir)
             if not os.path.exists(os.path.join(paa_dir,'requirements')):
                 self._create_init_requirements(paa_dir = paa_dir)
+            if not os.path.exists(os.path.join(paa_dir,'requirements','.gitignore')):   
+
+                rq_gitignore = """"""
+
+                with open(os.path.join(paa_dir,'requirements','.gitignore'),
+            'w', encoding = 'utf-8') as gitignore:
+                    gitignore.write(rq_gitignore)
             if not os.path.exists(os.path.join(paa_dir,'release_notes')):
                 os.makedirs(os.path.join(paa_dir,'release_notes'))
+            if not os.path.exists(os.path.join(paa_dir,'release_notes','.gitignore')):   
+
+                rn_gitignore = """# Ignore everything by default
+*
+
+# Allow markdown files
+!*.md            
+                """
+
+                with open(os.path.join(paa_dir,'release_notes','.gitignore'),
+            'w', encoding = 'utf-8') as gitignore:
+                    gitignore.write(rn_gitignore)
             if not os.path.exists(os.path.join(paa_dir,'docs')):
                 os.makedirs(os.path.join(paa_dir,'docs'))
+            if not os.path.exists(os.path.join(paa_dir,'docs','.gitignore')):   
+
+                docs_gitignore = """# Ignore everything by default
+*
+
+# Allow markdown files
+!*.md
+
+# Allow PNG image files
+!*.png
+
+# Allow traversal into subdirectories
+!**/              
+                """
+
+                with open(os.path.join(paa_dir,'docs','.gitignore'),
+            'w', encoding = 'utf-8') as gitignore:
+                    gitignore.write(docs_gitignore)
+
         except Exception as e:
             self.logger.warning("Failed to initialize paa dir!")
             self.logger.error(e)
@@ -358,7 +396,10 @@ class PprHandler:
                                     "ppr_workflows",
                                     workflows_platform)
 
-            other_files = ['tox.ini', '.pylintrc']
+            if workflows_platform == 'github':
+                other_files = ['tox.ini', '.pylintrc']
+            else:
+                other_files = [ '.pylintrc']
 
             if not os.path.exists(template_path):
 

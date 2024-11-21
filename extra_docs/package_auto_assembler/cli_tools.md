@@ -1,4 +1,8 @@
 
+## About
+
+One of available interfaces to use PAA capabalities is cli tools. After installing [`package-auto-assembler`](https://kiril-mordan.github.io/reusables/package_auto_assembler/) one can view the list of available cli tools like shown below.
+
 ``` bash
 paa --help
 ```
@@ -40,7 +44,13 @@ Commands:
   update-release-notes         Update release notes.
 ```
 
-## Initializing PAA
+Available cli tools usually employ multiple internal components and range from relatively simple ones to more complex. 
+
+![publishing-repo](package_auto_assembler-cli_capabilities.png)
+
+## Description of tools
+
+### Initializing PAA
 
 Creating config file could be useful to avoid providing parameters manually. If no config file will be provided, by default values from `.paa.config` will be used.
 
@@ -54,6 +64,7 @@ Usage: paa init-config [OPTIONS]
   Initialize config file
 
 Options:
+  --full  If checked, dirs beyond essential would be mapped.
   --help  Show this message and exit.
 ```
 
@@ -66,11 +77,12 @@ paa init-paa  --help
 ```
 
 ``` bash
-Usage: paa init-paa
+Usage: paa init-paa [OPTIONS]
 
-  Initialize paa tracking files
+  Initialize paa tracking files and directores from .paa.config
 
 Options:
+  --full  If checked, dirs beyond essential would be mapped.
   --help  Show this message and exit.
 ```
 
@@ -88,10 +100,11 @@ Usage: paa init-ppr [OPTIONS]
 Options:
   --github  If checked, git actions template would be set up.
   --azure   If checked, azure devops pipelines template would be set up.
+  --full    If checked, dirs beyond essential would be mapped.
   --help    Show this message and exit.
 ```
 
-## Creating packages
+### Creating packages
 
 Installing packages for a test in local environments could be a useful step to make sure everything works as expected before pushing changes to publishing repo. This creates an instance of the package in local environment with default version, with a greatly simplified building process that avoids making documentation, versioning and so on.
 
@@ -160,7 +173,7 @@ Options:
   --help                          Show this message and exit.
 ```
 
-## Checking dependencies
+### Checking dependencies
 
 Checking vulnerabilities with `pip-audit` is usefull. This checks vulnerabilities of .py files and its local dependencies with `pip-audit`.
 
@@ -207,7 +220,7 @@ Options:
   --help                          Show this message and exit.
 ```
 
-## Running apps from packages
+### Running apps from packages
 
 Packaging process could help building APIs as well. This package would call routes stored within other packages and routes stored in files to form one application, so that repeatable structure does not need to copied between projects, but instead built in one places and extended with some config files in many. Since routes are python code that can have its dependencies, it makes sense to store them within packages sometimes to take advantage of automated dependency handling and import code straight from the package, eliminating in turn situation when package release in no compatible anymore with routes based on them. 
 
@@ -257,7 +270,7 @@ Options:
   --help             Show this message and exit.
 ```
 
-## Extracting files from packages
+### Extracting files from packages
 
 Storing routes within package could be convinient, but extracting them from a package is not. To mitigate that, the following exists to extract `routes.py` from a package that contains it.
 
@@ -335,7 +348,7 @@ Options:
 ```
 
 
-## Show modules info
+### Show modules info
 
 Cli interface provides some additional tools to analyse locally installed packages if they were build with package-auto-assembler>0.4.2. These include methods to list modules, show module info, extract requirements.
 
@@ -450,7 +463,7 @@ Options:
   --help                   Show this message and exit.
 ```
 
-## Other
+### Other
 
 Some artifacts can come from links and there might be a need to refresh or even download these files (depending on how a link was provided). 
 
@@ -584,4 +597,5 @@ Options:
   --docs-dir TEXT    Path to the output directory for .png file.
   --help             Show this message and exit.
 ```
+
 
