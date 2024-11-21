@@ -1,5 +1,17 @@
 # Release notes
 
+### 0.5.16
+
+    - default readme plus dynamic list of published packages with links to destination for github and azure templates
+
+    - initial packaging repository setup instructions
+
+    - azure pipelines template workflows for ppr
+
+    - fixes for github template
+
+    - flag to initialize all paa directories
+
 ### 0.5.15
 
     - github template workflows for ppr

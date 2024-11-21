@@ -1,6 +1,7 @@
+The following includes additional details to how some features of the packages work with examples that involve internal components. Even though using the package this way is very much possible, [cli interface](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools) is recomended. 
+
+
 ```python
-import sys
-sys.path.append('../')
 from package_auto_assembler import (VersionHandler, \
     ImportMappingHandler, RequirementsHandler, MetadataHandler, \
         LocalDependaciesHandler, LongDocHandler, SetupDirHandler, \
@@ -16,7 +17,7 @@ Package versioning within paa is done based on semantic versioning.
 
 By default, patch is updated, but the minor and major could also be update based on, for example, commit messages or manually from the log file. 
 
-Package auto assembler does try to pull latest version from package storage, but in case of failure uses version logs.
+Package auto assembler does try to pull latest version from package storage, but in case of failure uses version logs stored in `.paa/tracking`.
 
 #### Initialize VersionHandler
 
@@ -173,7 +174,7 @@ pv.get_latest_pip_version(package_name = 'package-auto-assembler')
 
 ### 2. Import mapping
 
-Install and import names of dependencies may vary. The mapping files maps import names to install names so that requirements extraction from `.py` files is possible.
+Install and import names of dependencies may vary. The mapping files maps import names to install names so that requirements extraction from `.py` files is possible. Some of the mapping are packaged and would not need to provided, but in case a dependency used within new package was not inluded, it is possible to augment default mapping through `.paa/package_mapping.json`
 
 #### Initialize ImportMappingHandler
 
@@ -259,7 +260,7 @@ attrs >=22.2.0
 hnswlib==0.8.0; extra == "hnswlib"
 ```
 
-Sometimes automatic translation of import names to install names via `package_mapping.json`, for packages where these names differ, may not be enough. A manual overwrite can be done with exlusion of some dependencies from automatic extraction pieline with `#-` comment next to import and `#@` prefix before text that is intended to end up in an equvalent requirements file, for example:
+Sometimes automatic translation of import names to install names via `package_mapping.json`, for packages where these names differ, may not be enough. A manual overwrite can be done with exlusion of some dependencies from automatic extraction pipeline with `#-` comment next to import and `#@` prefix before text that is intended to end up in an equivalent requirements file, for example:
 
 ```python
 import os
@@ -519,7 +520,7 @@ Since all of the necessary information for building a package needs to be contai
 
 Even though some general information shared between packages could be provided through general config, but package specific info should be provided through `__package_metadata__`. It should support most text fields from setup file, but for others the following fields are available:
 
-- `classifiers`: adds classifiers to the general ones from config
+- `classifiers`: adds classifiers to the general ones from config, unless it's `Development Status :: ` then module level definition will overwrite the one from config
 - `extras_require`: a dictionary of optional package that wouldn't be installed during normal installation. The key could be used during installation and the value would be a list of dependencies.
 - `install_requires` : adds requirements to the list read from imports
 
@@ -736,13 +737,22 @@ long_description = ldh.return_long_description(
 
 ### 7. Assembling setup directory
 
-Package are created following rather simple sequence of steps. At some point of the process a temporary directory is created to store the following files:
+Packages are created following rather simple sequence of steps. At some point of the process a temporary directory is created to store the following files:
 
 - `__init__.py` is a simple import from a single module
-- `cli.py` is optional packaged cli tool
 - `<package name>.py` is a single module with all of the local dependecies
-- `README.md` is a package description file based on `.ipynb` file
+- `cli.py` is optional packaged cli tool
+- `routes.py` is optional packaged file with fastapi routes
+- `streamlit.py` is optional packaged streamlit app
 - `setup.py` is a setup file for making a package
+- `README.md` is a package description file based on `.ipynb` file
+- `LICENSE` is optional license file
+- `MANIFEST.in` is a list of additional files to be included with the package
+- `mkdocs` is a folder with built mkdocs site based on optional `extra_docs` for the module, module docstring and `README.md`
+- `artifacts` contains optional files that would be packaged with the module
+- `tests` contains files needed to run tests with [`pytest`](https://docs.pytest.org/en/stable/)
+- `.paa.tracking` contains tracking files from `.paa` dir to make each release of the package independent of PPR that released it
+
 
 #### Initializing SetupDirHandler
 
@@ -1038,7 +1048,7 @@ Extracting info from installed dependencies can provide important insight into i
 
 Licenses are extracted from package metadata and normalized for analysis. Missing labels are marked with `-` and not recognized licenses with `unknown`.
 
-Information about unrecognized license labels could be provided through package_licenses json file that contains install package name and corresponding license label.
+Information about unrecognized license labels could be provided through `.paa/package_licenses json` file that would contain install package name and corresponding license label.
 
 
 ```python
