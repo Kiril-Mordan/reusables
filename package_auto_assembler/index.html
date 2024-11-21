@@ -10,7 +10,7 @@
       
       
       
-        <link rel="next" href="cli/">
+        <link rel="next" href="cli_tools/">
       
       
       <link rel="icon" href="assets/images/favicon.png">
@@ -273,6 +273,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       Installation
@@ -296,11 +305,11 @@
   
   
     <li class="md-nav__item">
-      <a href="cli/" class="md-nav__link">
+      <a href="cli_tools/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Cli
+    Cli tools
   </span>
   
 
@@ -336,26 +345,6 @@
   
   
     <li class="md-nav__item">
-      <a href="flow/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Flow
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="package_structure/" class="md-nav__link">
         
   
@@ -376,11 +365,11 @@
   
   
     <li class="md-nav__item">
-      <a href="release-notes/" class="md-nav__link">
+      <a href="python_packaging_repo/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Release notes
+    Python packaging repo
   </span>
   
 
@@ -396,11 +385,11 @@
   
   
     <li class="md-nav__item">
-      <a href="usage/" class="md-nav__link">
+      <a href="release-notes/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Usage
+    Release notes
   </span>
   
 
@@ -436,6 +425,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       Installation
@@ -461,12 +459,21 @@
 
 <h1 id="intro">Intro</h1>
 <p><a href="https://pypi.org/project/package-auto-assembler/"><img alt="PyPiVersion" src="https://img.shields.io/pypi/v/package-auto-assembler" /></a> <a href="https://github.com/Kiril-Mordan/reusables/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/Kiril-Mordan/reusables" /></a></p>
-<p>Package auto assembler is a tool that meant to streamline creation of single module packages.
-Its purpose is to automate as many aspects of python package creation as possible,
-to shorten a development cycle of reusable components, maintain certain standard of quality
-for reusable code. It provides tool to simplify the process of package creatrion
-to a point that it can be triggered automatically within ci/cd pipelines,
-with minimal preparations and requirements for new modules.</p>
+<p><code>package-auto-assembler</code> is a tool that meant to streamline creation of <code>single module packages</code>.
+Its primary goal is to automate as many aspects of python package creation as possible,
+thereby shortening the development cycle of reusable components and maintaining a high standard of quality for reusable code. </p>
+<p>With <code>package-auto-assembler</code>, you can simplify the package creation process to the point where it can be seamlessly triggered within CI/CD pipelines, requiring minimal setup and preparation for new modules.</p>
+<h2 id="key-features">Key features</h2>
+<ul>
+<li><a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/">Set up new Python packaging repositories</a> for Github and Azure DevOps.</li>
+<li><a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#creating-packages">Create new packages dynamically</a>, reducing manual effort.</li>
+<li><a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#checking-dependencies">Check module dependencies</a> for vulnerabilities and unexpected licenses.</li>
+<li><a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#running-apps-from-packages">Run FastAPI and Streamlit apps</a> directly from packages created with this tool.</li>
+<li><a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#extracting-files-from-packages">Extract artifacts and files</a> packaged alongside code.</li>
+<li><a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#show-modules-info">Show detailed information</a> about installed packages made with the tool.</li>
+<li><a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#other">Automatically assemble release notes</a> based on commit messages.</li>
+<li><a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#other">Extract requirements</a> automatically from <code>.py</code> files without maintaining separate <code>requirements.txt</code>.</li>
+</ul>
 <h2 id="installation">Installation</h2>
 <pre><code class="language-bash">pip install package-auto-assembler
 </code></pre>

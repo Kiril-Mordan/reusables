@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../cli/">
+        <link rel="prev" href="../cli_tools/">
       
       
-        <link rel="next" href="../flow/">
+        <link rel="next" href="../package_structure/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -249,11 +249,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../cli/" class="md-nav__link">
+      <a href="../cli_tools/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Cli
+    Cli tools
   </span>
   
 
@@ -1030,26 +1030,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../flow/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Flow
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../package_structure/" class="md-nav__link">
         
   
@@ -1070,11 +1050,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../release-notes/" class="md-nav__link">
+      <a href="../python_packaging_repo/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Release notes
+    Python packaging repo
   </span>
   
 
@@ -1090,11 +1070,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage/" class="md-nav__link">
+      <a href="../release-notes/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Usage
+    Release notes
   </span>
   
 
@@ -1849,9 +1829,8 @@
 
   <h1>Description</h1>
 
-<pre><code class="language-python">import sys
-sys.path.append('../')
-from package_auto_assembler import (VersionHandler, \
+<p>The following includes additional details to how some features of the packages work with examples that involve internal components. Even though using the package this way is very much possible, <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools">cli interface</a> is recomended. </p>
+<pre><code class="language-python">from package_auto_assembler import (VersionHandler, \
     ImportMappingHandler, RequirementsHandler, MetadataHandler, \
         LocalDependaciesHandler, LongDocHandler, SetupDirHandler, \
             ReleaseNotesHandler, MkDocsHandler, PackageAutoAssembler, \
@@ -1861,7 +1840,7 @@ from package_auto_assembler import (VersionHandler, \
 <p>Package versioning within paa is done based on semantic versioning.</p>
 <p><code>major.minor.patch</code></p>
 <p>By default, patch is updated, but the minor and major could also be update based on, for example, commit messages or manually from the log file. </p>
-<p>Package auto assembler does try to pull latest version from package storage, but in case of failure uses version logs.</p>
+<p>Package auto assembler does try to pull latest version from package storage, but in case of failure uses version logs stored in <code>.paa/tracking</code>.</p>
 <h4 id="initialize-versionhandler">Initialize VersionHandler</h4>
 <pre><code class="language-python">pv = VersionHandler(
     # required
@@ -1965,7 +1944,7 @@ pv.flush_logs()
 <pre><code>'0.3.1'
 </code></pre>
 <h3 id="2-import-mapping">2. Import mapping</h3>
-<p>Install and import names of dependencies may vary. The mapping files maps import names to install names so that requirements extraction from <code>.py</code> files is possible.</p>
+<p>Install and import names of dependencies may vary. The mapping files maps import names to install names so that requirements extraction from <code>.py</code> files is possible. Some of the mapping are packaged and would not need to provided, but in case a dependency used within new package was not inluded, it is possible to augment default mapping through <code>.paa/package_mapping.json</code></p>
 <h4 id="initialize-importmappinghandler">Initialize ImportMappingHandler</h4>
 <pre><code class="language-python">im = ImportMappingHandler(
     # required
@@ -2020,7 +1999,7 @@ import attr #&gt;=22.2.0
 attrs &gt;=22.2.0
 hnswlib==0.8.0; extra == &quot;hnswlib&quot;
 </code></pre>
-<p>Sometimes automatic translation of import names to install names via <code>package_mapping.json</code>, for packages where these names differ, may not be enough. A manual overwrite can be done with exlusion of some dependencies from automatic extraction pieline with <code>#-</code> comment next to import and <code>#@</code> prefix before text that is intended to end up in an equvalent requirements file, for example:</p>
+<p>Sometimes automatic translation of import names to install names via <code>package_mapping.json</code>, for packages where these names differ, may not be enough. A manual overwrite can be done with exlusion of some dependencies from automatic extraction pipeline with <code>#-</code> comment next to import and <code>#@</code> prefix before text that is intended to end up in an equivalent requirements file, for example:</p>
 <pre><code class="language-python">import os
 import pandas
 import attr #&gt;=22.2.0
@@ -2172,7 +2151,7 @@ Error: Found vulnerabilities, resolve them or ignore check to move forwards!
 <p>Since all of the necessary information for building a package needs to be contained within main component <code>.py</code> file, basic metadata is provided with the use of <code>__package_metadata__</code> dictionary object, defined within that <code>.py</code> file. It is also used as a trigger for package building within paa pipeline. </p>
 <p>Even though some general information shared between packages could be provided through general config, but package specific info should be provided through <code>__package_metadata__</code>. It should support most text fields from setup file, but for others the following fields are available:</p>
 <ul>
-<li><code>classifiers</code>: adds classifiers to the general ones from config</li>
+<li><code>classifiers</code>: adds classifiers to the general ones from config, unless it's <code>Development Status ::</code> then module level definition will overwrite the one from config</li>
 <li><code>extras_require</code>: a dictionary of optional package that wouldn't be installed during normal installation. The key could be used during installation and the value would be a list of dependencies.</li>
 <li><code>install_requires</code> : adds requirements to the list read from imports</li>
 </ul>
@@ -2319,13 +2298,21 @@ ldh = LongDocHandler(
 )
 </code></pre>
 <h3 id="7-assembling-setup-directory">7. Assembling setup directory</h3>
-<p>Package are created following rather simple sequence of steps. At some point of the process a temporary directory is created to store the following files:</p>
+<p>Packages are created following rather simple sequence of steps. At some point of the process a temporary directory is created to store the following files:</p>
 <ul>
 <li><code>__init__.py</code> is a simple import from a single module</li>
-<li><code>cli.py</code> is optional packaged cli tool</li>
 <li><code>&lt;package name&gt;.py</code> is a single module with all of the local dependecies</li>
-<li><code>README.md</code> is a package description file based on <code>.ipynb</code> file</li>
+<li><code>cli.py</code> is optional packaged cli tool</li>
+<li><code>routes.py</code> is optional packaged file with fastapi routes</li>
+<li><code>streamlit.py</code> is optional packaged streamlit app</li>
 <li><code>setup.py</code> is a setup file for making a package</li>
+<li><code>README.md</code> is a package description file based on <code>.ipynb</code> file</li>
+<li><code>LICENSE</code> is optional license file</li>
+<li><code>MANIFEST.in</code> is a list of additional files to be included with the package</li>
+<li><code>mkdocs</code> is a folder with built mkdocs site based on optional <code>extra_docs</code> for the module, module docstring and <code>README.md</code></li>
+<li><code>artifacts</code> contains optional files that would be packaged with the module</li>
+<li><code>tests</code> contains files needed to run tests with <a href="https://docs.pytest.org/en/stable/"><code>pytest</code></a></li>
+<li><code>.paa.tracking</code> contains tracking files from <code>.paa</code> dir to make each release of the package independent of PPR that released it</li>
 </ul>
 <h4 id="initializing-setupdirhandler">Initializing SetupDirHandler</h4>
 <pre><code class="language-python">sdh = SetupDirHandler(
@@ -2533,7 +2520,7 @@ rnh.get_release_notes_content()
 <h3 id="9-analysing-package-dependencies">9. Analysing package dependencies</h3>
 <p>Extracting info from installed dependencies can provide important insight into inner workings of a package and help avoid some of the licenses. </p>
 <p>Licenses are extracted from package metadata and normalized for analysis. Missing labels are marked with <code>-</code> and not recognized licenses with <code>unknown</code>.</p>
-<p>Information about unrecognized license labels could be provided through package_licenses json file that contains install package name and corresponding license label.</p>
+<p>Information about unrecognized license labels could be provided through <code>.paa/package_licenses json</code> file that would contain install package name and corresponding license label.</p>
 <pre><code class="language-python">da = DependenciesAnalyser(
     # optional
     package_name = 'mocker-db',
