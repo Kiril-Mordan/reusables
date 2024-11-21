@@ -18,7 +18,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install jq
@@ -53,7 +53,6 @@ jobs:
       - name: Check requirements for vulnerabilities
         if: steps.changed-modules.outputs.files != ''
         run: |
-          #./tools/check_for_vulnerabilities.sh
           paa check-vulnerabilities "${{ steps.changed-modules.outputs.files }}"
 
 
@@ -62,12 +61,26 @@ jobs:
         run: |
           paa check-licenses "${{ steps.changed-modules.outputs.files }}"
 
+      - name: Prepare temp tests name
+        if: steps.changed-modules.outputs.files != ''
+        run: |
+          TESTS_DIR=$(yq -r '.tests_dir' .paa.config)
+          mkdir tempdir
+          echo "$TESTS_DIR" > tempdir/temp_test_name.txt
+
       - name: Upload updated requirements
         if: steps.changed-modules.outputs.files != ''
         uses: actions/upload-artifact@v4
         with:
           name: updated-requirements
           path: .paa/requirements/requirements_tox.txt
+
+      - name: Upload tests-name
+        if: steps.changed-modules.outputs.files != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-name
+          path: tempdir/temp_test_name.txt
 
   test:
     needs: update-requirements
@@ -91,24 +104,29 @@ jobs:
           name: updated-requirements
           path: .paa/requirements/
 
+      - name: Download tests-name
+        uses: actions/download-artifact@v4
+        with:
+          name: tests-name
+          path: tempdir/
+
       - name: Install dependencies
         run: | 
           pip install -r .paa/requirements_dev.txt
 
       - name: Test with tox
         run: |
-          
+          TESTS_DIR=$(cat tempdir/temp_test_name.txt)
           if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            TESTS_DIR=$(yq -r '.tests_dir' .paa.config)
+            #TESTS_DIR=$(yq -r '.tests_dir' .paa.config)
             if [ -d "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}" ]; then
               tox -- "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}"
             else
               echo "No tests for module."
-            .github/tools/pylint_test.sh $(paa show-ref-local-deps "${{ needs.update-requirements.outputs.changed-files }}")
-            #paa run-pylint-tests --label-name "${{ needs.update-requirements.outputs.changed-files }}"
+            paa run-pylint-tests --label-name "${{ needs.update-requirements.outputs.changed-files }}"
             fi
           elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            TESTS_DIR=tests
+            #TESTS_DIR=tests
             if [ -d "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}" ]; then
               tox -- "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}"
             else

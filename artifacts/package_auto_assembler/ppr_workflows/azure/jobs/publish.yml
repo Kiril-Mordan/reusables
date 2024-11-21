@@ -1,0 +1,120 @@
+parameters:
+  - name: feed_name
+    type: string
+  - name: package_name
+    type: string
+  - name: organization
+    type: string
+  - name: project_guid
+    type: string
+
+
+jobs:
+- job: PaaWorkflow
+  displayName: 'Package-auto-assembler workflow'
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+
+  - checkout: self
+    persistCredentials: true 
+    fetchDepth: '15'
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.10'
+      addToPath: true   
+    displayName: 'Set up Python'
+
+  - script: |
+      sudo apt-get update && sudo apt-get install jq
+    displayName: 'Install jq'
+
+  - script: |
+      chmod +x .azure/tools/assemble_pypirc.sh
+      chmod +x .azure/tools/assemble_pip_conf.sh
+      .azure/tools/assemble_pypirc.sh
+      .azure/tools/assemble_pip_conf.sh ${{ parameters.organization }} ${{ parameters.feed_name }} ${{ parameters.project_guid }}
+      cp .pypirc ~/.pypirc
+    displayName: 'Assemble .pypirc from vars amd pip_conf'
+    env:
+      TWINE_PASSWORD: $(TWINE_PASSWORD)
+
+  - script: |
+      sudo apt-get update
+      sudo apt-get install -y wget xvfb libnotify4 libxml2-utils
+      wget https://github.com/jgraph/drawio-desktop/releases/download/v24.6.4/drawio-amd64-24.6.4.deb
+      sudo dpkg -i drawio-amd64-24.6.4.deb
+      sudo apt-get install -f
+    displayName: 'Install Draw.io Desktop and Dependencies'
+
+  - script: |
+      python -m pip install --upgrade pip
+      pip install -r .paa/requirements_dev.txt
+    displayName: 'Install Python Dependencies'
+
+  - script: |
+      paa convert-drawio-to-png --label-name ${{ parameters.package_name }}
+    displayName: 'Export drawio files to png files'
+
+  - script: |
+      git pull origin main
+    displayName: 'Pull latest changes from the remote repository'
+
+  - script: |
+      paa make-package ${{ parameters.package_name }}
+    displayName: 'Assemble and build package'
+
+  - task: TwineAuthenticate@1
+    inputs:
+      artifactFeed: ${{ parameters.feed_name }}
+    displayName: 'Twine Authenticate'
+
+  - script: |
+      python -m twine upload -r ${{ parameters.feed_name }} dist/*.whl --verbose
+    displayName: 'Upload to feed'
+    env:
+      TWINE_USERNAME: $(TWINE_USERNAME)
+      TWINE_PASSWORD: $(TWINE_PASSWORD)
+
+  - script: |
+      chmod +x .azure/tools/update_README.sh
+      .azure/tools/update_README.sh
+    displayName: 'Update README'
+
+  - script: |
+      set -x
+
+      LABEL_NAME=${{parameters.package_name}}
+      PACKAGE_VERSION=$(paa extract-tracking-version "$package_name_value")
+      if [ -z "$PACKAGE_VERSION" ]; then
+        echo "Failed to get version"
+        exit 1
+      fi
+
+      # Add tracking files and README.md
+      git config --local user.email "action@azure.com"
+      git config --local user.name "Azure DevOps Action"
+      git pull origin HEAD:main
+      git add .paa README.md
+
+      # Check if there are any changes in the working directory
+      if [ -n "$(git status --porcelain)" ]; then
+        COMMIT_MESSAGE="Update paa tracking files and README"
+        TAG_NAME="v${PACKAGE_VERSION}_${LABEL_NAME}"
+        TAG_MESSAGE="${LABEL_NAME}==${PACKAGE_VERSION}"
+
+        git commit -m "${COMMIT_MESSAGE}"
+        git tag -a "${TAG_NAME}" -m "${TAG_MESSAGE}"
+        git push origin HEAD:main
+        git push origin "${TAG_NAME}"
+      else
+        echo "No changes to commit"
+      fi
+
+    displayName: 'Commit paa tracking'
+
+  
+
+  

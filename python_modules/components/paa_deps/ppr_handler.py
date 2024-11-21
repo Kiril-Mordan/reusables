@@ -93,7 +93,10 @@ class PprHandler:
             'ipykernel',
             'tox',
             'tox-gh-actions',
-            'package-auto-assembler'
+            'package-auto-assembler',
+            'setuptools',
+            'wheel', 
+            'twine'
         ]
 
         with open(os.path.join(paa_dir, 'requirements_dev.txt'),
@@ -288,7 +291,7 @@ class PprHandler:
                     if gitignore_dict.get(d):
                         gitignore_text = gitignore_dict.get(d)
                     else:
-                        gitignore_text = ""
+                        gitignore_text = "__pycache__"
 
                     if not os.path.exists(gitignore_path):
                         with open(gitignore_path, "w", encoding = "utf-8") as file:
@@ -321,10 +324,48 @@ class PprHandler:
                 self._create_empty_tracking_files(paa_dir = paa_dir)
             if not os.path.exists(os.path.join(paa_dir,'requirements')):
                 self._create_init_requirements(paa_dir = paa_dir)
+            if not os.path.exists(os.path.join(paa_dir,'requirements','.gitignore')):   
+
+                rq_gitignore = """"""
+
+                with open(os.path.join(paa_dir,'requirements','.gitignore'),
+            'w', encoding = 'utf-8') as gitignore:
+                    gitignore.write(rq_gitignore)
             if not os.path.exists(os.path.join(paa_dir,'release_notes')):
                 os.makedirs(os.path.join(paa_dir,'release_notes'))
+            if not os.path.exists(os.path.join(paa_dir,'release_notes','.gitignore')):   
+
+                rn_gitignore = """# Ignore everything by default
+*
+
+# Allow markdown files
+!*.md            
+                """
+
+                with open(os.path.join(paa_dir,'release_notes','.gitignore'),
+            'w', encoding = 'utf-8') as gitignore:
+                    gitignore.write(rn_gitignore)
             if not os.path.exists(os.path.join(paa_dir,'docs')):
                 os.makedirs(os.path.join(paa_dir,'docs'))
+            if not os.path.exists(os.path.join(paa_dir,'docs','.gitignore')):   
+
+                docs_gitignore = """# Ignore everything by default
+*
+
+# Allow markdown files
+!*.md
+
+# Allow PNG image files
+!*.png
+
+# Allow traversal into subdirectories
+!**/              
+                """
+
+                with open(os.path.join(paa_dir,'docs','.gitignore'),
+            'w', encoding = 'utf-8') as gitignore:
+                    gitignore.write(docs_gitignore)
+
         except Exception as e:
             self.logger.warning("Failed to initialize paa dir!")
             self.logger.error(e)
@@ -355,18 +396,24 @@ class PprHandler:
                                     "ppr_workflows",
                                     workflows_platform)
 
-            other_files = ['tox.ini', '.pylintrc']
+            if workflows_platform == 'github':
+                other_files = ['tox.ini', '.pylintrc']
+            else:
+                other_files = [ '.pylintrc']
 
             if not os.path.exists(template_path):
 
-                if workflows_platform == 'azure':
-                    self.logger.warning(
-                    "Template for azure devops pipeline will be available in future paa releases!")
+                # if workflows_platform == 'azure':
+                #     self.logger.warning(
+                #     "Template for azure devops pipeline will be available in future paa releases!")
 
                 return False
 
             if workflows_platform == 'github':
                 workflows_platform = '.github'
+
+            if workflows_platform == 'azure':
+                workflows_platform = '.azure'
 
             if not os.path.exists(workflows_platform):
                 shutil.copytree(template_path, workflows_platform)

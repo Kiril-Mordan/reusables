@@ -1,0 +1,4 @@
+variables:
+  feed_name: example-feed
+  organization: exampleOrganization
+  project_guid: exampleProjectOrGUID

@@ -1,0 +1,40 @@
+pool:
+  vmImage: 'ubuntu-latest'
+
+pr:
+  branches:
+    include:
+    - main
+
+parameters:
+  - name: feed
+    displayName: Upload Feed
+    type: object
+    default:
+      -feed: example_feed
+  - name: package_name
+    displayName: Package Name
+    type: string
+    default: 'example_module'
+
+stages:
+
+  - stage: Tests
+    displayName: 'Run linter and tests'
+    condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
+    jobs:
+      - template: jobs/tests.yml
+
+  - ${{ each stage in parameters.feed }}:
+    - stage: Publish
+      displayName: 'Package-auto-assembler workflow'
+      condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'Manual'))
+      variables:
+        - template: feeds/${{ lower(stage.feed) }}.yml
+      jobs:
+        - template: jobs/publish.yml
+          parameters:
+            package_name: ${{ parameters.package_name }}
+            feed_name: ${{ variables.feed_name }}
+            organization: ${{ variables.organization }}
+            project_guid: ${{ variables.project_guid }}

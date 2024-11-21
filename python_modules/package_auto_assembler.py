@@ -1,10 +1,21 @@
 """
-Package auto assembler is a tool that meant to streamline creation of single module packages.
-Its purpose is to automate as many aspects of python package creation as possible,
-to shorten a development cycle of reusable components, maintain certain standard of quality
-for reusable code. It provides tool to simplify the process of package creatrion
-to a point that it can be triggered automatically within ci/cd pipelines,
-with minimal preparations and requirements for new modules.
+`package-auto-assembler` is a tool that meant to streamline creation of `single module packages`.
+Its primary goal is to automate as many aspects of python package creation as possible,
+thereby shortening the development cycle of reusable components and maintaining a high standard of quality for reusable code. 
+
+With `package-auto-assembler`, you can simplify the package creation process to the point where it can be seamlessly triggered within CI/CD pipelines, requiring minimal setup and preparation for new modules.
+
+## Key features
+
+- [Set up new Python packaging repositories](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/) for Github and Azure DevOps.
+- [Create new packages dynamically](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#creating-packages), reducing manual effort.
+- [Check module dependencies](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#checking-dependencies) for vulnerabilities and unexpected licenses.
+- [Run FastAPI and Streamlit apps](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#running-apps-from-packages) directly from packages created with this tool.
+- [Extract artifacts and files](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#extracting-files-from-packages) packaged alongside code.
+- [Show detailed information](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#show-modules-info) about installed packages made with the tool.
+- [Automatically assemble release notes](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#other) based on commit messages.
+- [Extract requirements](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#other) automatically from `.py` files without maintaining separate `requirements.txt`.
+
 """
 
 import logging
@@ -56,7 +67,6 @@ __package_metadata__ = {
 }
 
 
-
 @attr.s
 class PackageAutoAssembler:
     # pylint: disable=too-many-instance-attributes
@@ -73,11 +83,11 @@ class PackageAutoAssembler:
     allowed_licenses = attr.ib(default=['mit', 'apache-2.0', 'lgpl-3.0',
                             'bsd-3-clause', 'bsd-2-clause', '-', 'mpl-2.0'])
     example_notebook_path = attr.ib(default=None)
-    versions_filepath = attr.ib(default='./.paa/tracking/lsts_package_versions.yml')
-    log_filepath = attr.ib(default='./.paa/tracking/version_logs.csv')
+    versions_filepath = attr.ib(default='.paa/tracking/lsts_package_versions.yml')
+    log_filepath = attr.ib(default='.paa/tracking/version_logs.csv')
     setup_directory = attr.ib(default='./setup_dir')
     release_notes_filepath = attr.ib(default=None)
-    config_filepath = attr.ib(default=None)
+    config_filepath = attr.ib(default=".paa.config")
     cli_docs_filepath = attr.ib(default=None)
     drawio_filepath = attr.ib(default=None)
     streamlit_filepath = attr.ib(default=None)
@@ -100,7 +110,7 @@ class PackageAutoAssembler:
     docs_url = attr.ib(default=None)
     requirements_list = attr.ib(default=[])
     optional_requirements_list = attr.ib(default=[])
-    python_version = attr.ib(default="3.9")
+    python_version = attr.ib(default="3.10")
     version_increment_type = attr.ib(default="patch", type = str)
     default_version = attr.ib(default="0.0.0", type = str)
     kernel_name = attr.ib(default = 'python', type = str)

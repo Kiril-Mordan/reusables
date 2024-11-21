@@ -25,8 +25,15 @@ __cli_metadata__ = {
     "name" : "paa"
 }
 
+# Reading paa version
+with pkg_resources.path('package_auto_assembler', '.paa.tracking') as path:
+    paa_path = path
+with open(os.path.join(paa_path,".paa.version"), 'r') as f:
+    paa_version = f.read()
+
 
 @click.group()
+@click.version_option(version=paa_version, prog_name="package-auto-assembler")
 @click.pass_context
 def cli(ctx):
     """Package Auto Assembler CLI tool."""
@@ -43,7 +50,30 @@ test_install_config = {
     "drawio_dir" : None,
     "extra_docs_dir" : None,
     "tests_dir" : None,
-    "release_notes_dir" : ".paa/release_notes",
+    "use_commit_messages" : True,
+    "check_vulnerabilities" : True,
+    "check_dependencies_licenses" : False,
+    "add_artifacts" : True,
+    "add_mkdocs_site" : False,
+    "license_path" : None,
+    "license_label" : None,
+    "license_badge" : None,
+    "allowed_licenses" : None,
+    "docs_url" : None,
+    "classifiers" : None
+}
+
+test_install_config_full = {
+    "module_dir" : "python_modules",
+    "example_notebooks_path" : "example_notebooks",
+    "dependencies_dir" : "python_modules/components",
+    "cli_dir" : "cli",
+    "api_routes_dir" : "api_routes",
+    "streamlit_dir" : "streamlit",
+    "artifacts_dir" : "artifacts",
+    "drawio_dir" : "drawio",
+    "extra_docs_dir" : "extra_docs",
+    "tests_dir" : "tests",
     "use_commit_messages" : True,
     "check_vulnerabilities" : True,
     "check_dependencies_licenses" : False,
@@ -58,14 +88,20 @@ test_install_config = {
 }
 
 @click.command()
+@click.option('--full', 'full', is_flag=True, type=bool, 
+required=False, help='If checked, dirs beyond essential would be mapped.')
 @click.pass_context
-def init_config(ctx):
+def init_config(ctx, full):
     """Initialize config file"""
 
     config = ".paa.config"
 
     if not os.path.exists(".paa.config"):
-        PprHandler().init_from_paa_config(default_config = test_install_config)
+        if full:
+            default_config = test_install_config_full
+        else:
+            default_config = test_install_config
+        PprHandler().init_from_paa_config(default_config = default_config)
 
         click.echo(f"Config file {config} initialized!")
         click.echo(f"Edit it to your preferance.")
@@ -74,12 +110,19 @@ def init_config(ctx):
 
 
 @click.command()
+@click.option('--full', 'full', is_flag=True, type=bool, 
+required=False, help='If checked, dirs beyond essential would be mapped.')
 @click.pass_context
-def init_paa(ctx):
+def init_paa(ctx, full):
     """Initialize paa tracking files and directores from .paa.config"""
 
     st = PprHandler().init_paa_dir()
-    PprHandler().init_from_paa_config(default_config = test_install_config)
+
+    if full:
+        default_config = test_install_config_full
+    else:
+        default_config = test_install_config
+    PprHandler().init_from_paa_config(default_config = default_config)
 
     if st:
         click.echo(f"PAA tracking files initialized!")
@@ -88,10 +131,13 @@ def init_paa(ctx):
 @click.command()
 @click.option('--github', 'github', is_flag=True, type=bool, required=False, help='If checked, git actions template would be set up.')
 @click.option('--azure', 'azure', is_flag=True, type=bool, required=False, help='If checked, azure devops pipelines template would be set up.')
+@click.option('--full', 'full', is_flag=True, type=bool, 
+required=False, help='If checked, dirs beyond essential would be mapped.')
 @click.pass_context
 def init_ppr(ctx,
     github,
-    azure):
+    azure,
+    full):
     """Initialize ppr for a given workflows platform."""
 
     workflows_platform = None
@@ -105,7 +151,17 @@ def init_ppr(ctx,
         if os.path.exists('.paa.config'):
             click.echo(f".paa.config already exists!")
 
-        PprHandler().init_from_paa_config(default_config = test_install_config)
+        if full:
+            default_config = test_install_config_full
+        else:
+            default_config = test_install_config
+
+        if workflows_platform == 'github':
+            default_config.update({'gh_pages_base_url' : None,
+                                   'docker_username' : None})
+
+        PprHandler().init_from_paa_config(default_config = default_config)
+
 
     st = PprHandler().init_ppr_repo(workflows_platform = workflows_platform)
 
@@ -173,6 +229,8 @@ def test_install(ctx,
         #"docs_path" : test_install_config.get("docs_dir"),
         "license_badge" : test_install_config.get("license_badge"),
         "license_label" : test_install_config.get("license_label", None),
+        "release_notes_filepath" : os.path.join('.paa/release_notes',
+                                                            f"{module_name}.md"),
         "add_mkdocs_site" : False,
         "check_dependencies_licenses" : False,
         "check_vulnerabilities" : False
@@ -223,9 +281,6 @@ def test_install(ctx,
         paa_params["artifacts_dir"] = os.path.join(
             test_install_config["artifacts_dir"], module_name)
 
-    if test_install_config.get("release_notes_dir"):
-        paa_params["release_notes_filepath"] = os.path.join(test_install_config["release_notes_dir"],
-                                                            f"{module_name}.md")
     # if test_install_config.get("cli_docs_dir"):
     #     paa_params["cli_docs_filepath"] = os.path.join(test_install_config["cli_docs_dir"],
     #                                                         f"{module_name}.md")
@@ -364,6 +419,8 @@ def make_package(ctx,
         "add_artifacts" : test_install_config.get("add_artifacts"),
         "add_mkdocs_site" : test_install_config.get("add_mkdocs_site"),
         "artifacts_filepaths" : test_install_config.get("artifacts_filepaths"),
+        "release_notes_filepath" : os.path.join('.paa/release_notes',
+                                                            f"{module_name}.md"),
         #"docs_path" : test_install_config.get("docs_dir"),
         "check_vulnerabilities" : test_install_config.get("check_vulnerabilities", True),
         "check_dependencies_licenses" : test_install_config.get("check_dependencies_licenses", True)
@@ -418,9 +475,9 @@ def make_package(ctx,
         paa_params["artifacts_dir"] = os.path.join(
             test_install_config["artifacts_dir"], module_name)
 
-    if test_install_config.get("release_notes_dir"):
-        paa_params["release_notes_filepath"] = os.path.join(test_install_config["release_notes_dir"],
-                                                            f"{module_name}.md")
+    # if test_install_config.get("release_notes_dir"):
+    #     paa_params["release_notes_filepath"] = os.path.join(test_install_config["release_notes_dir"],
+    #                                                         f"{module_name}.md")
     # if test_install_config.get("cli_docs_dir"):
     #     paa_params["cli_docs_filepath"] = os.path.join(test_install_config["cli_docs_dir"],
     #                                                         f"{module_name}.md")
