@@ -54,7 +54,7 @@ handler.insert_values(values_list, "text")
 print(f"Items in the database {len(handler.data)}")
 ```
 
-    Items in the database 12
+    Items in the database 14
 
 
 ### 2. Searching and retrieving values from the database
@@ -66,7 +66,7 @@ There are multiple options for search which could be used together or separately
 - llm filter
 - search based on similarity
 
-- get all keys
+#### get all keys
 
 
 ```python
@@ -82,7 +82,7 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
     [{'text': 'The cat slept....', 'n_words': '3...'}, {'text': 'She smiled gently....', 'n_words': '3...'}, {'text': 'It rained today....', 'n_words': '3...'}, {'text': 'Books hold knowledge....', 'n_words': '3...'}]
 
 
-- get all keys with keywords search
+#### get all keys with keywords search
 
 
 ```python
@@ -102,7 +102,7 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
     [{'text': 'The sun set behind the mountai...'}]
 
 
-- get all key - n_words
+#### get all key - n_words
 
 
 ```python
@@ -118,7 +118,7 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
     [{'text': 'The cat slept....'}, {'text': 'She smiled gently....'}, {'text': 'It rained today....'}, {'text': 'Books hold knowledge....'}]
 
 
-- get all keys + distance
+#### get all keys + distance
 
 
 ```python
@@ -135,7 +135,7 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
     [{'text': 'The cat slept....', 'n_words': '3...', '&distance': '0.9757655658500587...'}, {'text': 'She smiled gently....', 'n_words': '3...', '&distance': '0.255370996400475...'}, {'text': 'It rained today....', 'n_words': '3...', '&distance': '0.049663160920329866...'}, {'text': 'Books hold knowledge....', 'n_words': '3...', '&distance': '0.011214848789777708...'}]
 
 
-- get distance
+#### get distance
 
 
 ```python
@@ -152,7 +152,7 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
     [{'&distance': '0.9757655658500587...'}, {'&distance': '0.255370996400475...'}, {'&distance': '0.049663160920329866...'}, {'&distance': '0.011214848789777708...'}]
 
 
-- get all keys + embeddings
+#### get all keys + embeddings
 
 
 ```python
@@ -169,7 +169,7 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
     [{'text': 'The cat slept....', 'n_words': '3...', 'embedding': '[-3.86438631e-02  1.23167999e-...'}, {'text': 'She smiled gently....', 'n_words': '3...', 'embedding': '[-2.46711988e-02  2.37020120e-...'}, {'text': 'It rained today....', 'n_words': '3...', 'embedding': '[-1.35887757e-01 -2.52719939e-...'}, {'text': 'Books hold knowledge....', 'n_words': '3...', 'embedding': '[ 6.20862879e-02  1.13785893e-...'}]
 
 
-- get embeddings
+#### get embeddings
 
 
 ```python
@@ -187,7 +187,7 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
     [{'embedding': '[-3.86438631e-02  1.23167999e-...'}, {'embedding': '[-2.46711988e-02  2.37020120e-...'}, {'embedding': '[-1.35887757e-01 -2.52719939e-...'}, {'embedding': '[ 6.20862879e-02  1.13785893e-...'}]
 
 
-- get embeddings and embedded field
+#### get embeddings and embedded field
 
 
 ```python
@@ -203,6 +203,37 @@ print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results
 ```
 
     [{'&embedded_field': 'text...', 'embedding': '[-3.86438631e-02  1.23167999e-...'}, {'&embedded_field': 'text...', 'embedding': '[-2.46711988e-02  2.37020120e-...'}, {'&embedded_field': 'text...', 'embedding': '[-1.35887757e-01 -2.52719939e-...'}, {'&embedded_field': 'text...', 'embedding': '[ 6.20862879e-02  1.13785893e-...'}]
+
+
+#### get all keys with llm search
+
+
+```python
+# Initialization
+handler = MockerDB(
+    # optional
+    persist = True,
+    llm_filter_params = {
+        "connection_string" : "http://127.0.0.1:8000/proompter/prompt_chat"
+    }
+)
+# Initialize empty database
+handler.establish_connection(
+    # optional for persist
+    file_path = "./mock_persist",
+    embs_file_path = "./mock_embs_persist",
+)
+
+results = await handler.search_database_async(
+    llm_search_keys=['text'],
+    filter_criteria = {
+        "text" : ["cat"],
+    }
+)
+print([{k: str(v)[:30] + "..." for k, v in result.items()} for result in results])
+```
+
+    [{'text': 'The cat slept....', 'n_words': '3...'}]
 
 
 ### 3. Removing values from the database

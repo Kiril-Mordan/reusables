@@ -1,5 +1,11 @@
 # Release notes
 
+### 0.2.7
+
+    - minor fixes for initial llm filter
+
+    - separate async search_database_async method
+
 ### 0.2.6
 
     - cosine similarity with torch
