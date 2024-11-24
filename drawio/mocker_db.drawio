@@ -1,6 +1,6 @@
-<mxfile host="Electron" modified="2024-07-26T01:37:13.336Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.6.4 Chrome/124.0.6367.207 Electron/30.0.6 Safari/537.36" etag="0j67pRIgDVKfkLqn1dyg" version="24.6.4" type="device">
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
   <diagram name="flow" id="uL73W-lj93WwKyVfi338">
-    <mxGraphModel dx="2408" dy="1598" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="1654" math="0" shadow="0">
+    <mxGraphModel dx="1835" dy="1270" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="1654" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -190,7 +190,7 @@
         <mxCell id="iSVjwkVqsMs2VOfXNG-q-52" value="" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;size=8;" parent="1" vertex="1">
           <mxGeometry x="457" y="245" width="37" height="25" as="geometry" />
         </mxCell>
-        <mxCell id="iSVjwkVqsMs2VOfXNG-q-53" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="iSVjwkVqsMs2VOfXNG-q-32" target="iSVjwkVqsMs2VOfXNG-q-52" edge="1">
+        <mxCell id="iSVjwkVqsMs2VOfXNG-q-53" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0.227;entryY=0.053;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryPerimeter=0;" parent="1" source="iSVjwkVqsMs2VOfXNG-q-32" target="vUyvmiQPVuYUyWJHTBPi-5" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="161" y="60" as="sourcePoint" />
             <mxPoint x="211" y="10" as="targetPoint" />
@@ -309,6 +309,27 @@
         </mxCell>
         <mxCell id="iSVjwkVqsMs2VOfXNG-q-87" value="Module that includes logic of connecting to remote MockerDB and performing request calls." style="rounded=1;whiteSpace=wrap;html=1;dashed=1;" parent="1" vertex="1">
           <mxGeometry x="662.5" y="354.5" width="145" height="89" as="geometry" />
+        </mxCell>
+        <mxCell id="vUyvmiQPVuYUyWJHTBPi-1" value="LLM Connector" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;" vertex="1" parent="1">
+          <mxGeometry x="236" y="148" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="vUyvmiQPVuYUyWJHTBPi-2" value="Module that sends requests to LLM API to find data related to a query in the database" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="44" y="148" width="145" height="89" as="geometry" />
+        </mxCell>
+        <mxCell id="vUyvmiQPVuYUyWJHTBPi-4" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="vUyvmiQPVuYUyWJHTBPi-2" target="vUyvmiQPVuYUyWJHTBPi-1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="145" y="223" as="sourcePoint" />
+            <mxPoint x="195" y="173" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vUyvmiQPVuYUyWJHTBPi-5" value="" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;size=8;" vertex="1" parent="1">
+          <mxGeometry x="501.5" y="245" width="37" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="vUyvmiQPVuYUyWJHTBPi-6" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.832;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="vUyvmiQPVuYUyWJHTBPi-1" target="iSVjwkVqsMs2VOfXNG-q-52">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="363" y="220" as="sourcePoint" />
+            <mxPoint x="397" y="267" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>

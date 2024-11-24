@@ -1,7 +1,10 @@
 from python_modules.mocker_db import MockerDB, SentenceTransformerEmbedder, MockerSimilaritySearch
 import numpy as np
 
+
+
 def test_initialization():
+
     # Test with default parameters
     default_handler = MockerDB(use_embedder = False)
     assert default_handler.file_path == "./mock_persist", "Default file path should be './mock_persist'"

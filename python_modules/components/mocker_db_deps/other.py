@@ -8,5 +8,5 @@ def extract_directory(path):
         # If the path is a file, return its directory
         return os.path.dirname(path)
     else:
-        # If the path does not exist, raise an error
-        raise ValueError("The provided path does not exist")
+        # If the path does not exist, make dir
+        os.makedirs(path)
