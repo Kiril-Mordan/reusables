@@ -186,68 +186,72 @@ class ArtifactsHandler:
         # copy files and create manifest
         for artifact_name, artifacts_filepath in artifacts_filepaths.items():
 
-            # artifact_name = os.path.basename(
-            #     os.path.normpath(artifacts_filepath))
+            if os.path.exists(artifacts_filepath):
 
-            if os.path.isdir(artifacts_filepath):
-                shutil.copytree(artifacts_filepath,
-                    os.path.join(setup_directory, artifact_name))
-                artifact_name += "/**/*"
-                manifest_lines.append(
-                    f"recursive-include {module_name}/{artifact_name} \n")
-            elif artifacts_filepath.endswith(".link"):
+                # artifact_name = os.path.basename(
+                #     os.path.normpath(artifacts_filepath))
 
-                try:
+                if os.path.isdir(artifacts_filepath):
+                    shutil.copytree(artifacts_filepath,
+                        os.path.join(setup_directory, artifact_name))
+                    artifact_name += "/**/*"
+                    manifest_lines.append(
+                        f"recursive-include {module_name}/{artifact_name} \n")
+                elif artifacts_filepath.endswith(".link"):
 
-                    # Open the file and read the content
-                    with open(artifacts_filepath, 'r') as file:
-                        artifacts_url = file.readline().strip()
+                    try:
 
-                    # Add link file
+                        # Open the file and read the content
+                        with open(artifacts_filepath, 'r') as file:
+                            artifacts_url = file.readline().strip()
+
+                        # Add link file
+                        shutil.copy(artifacts_filepath,
+                            os.path.join(setup_directory, artifact_name))
+
+                        manifest_lines.append(f"include {module_name}/{artifact_name} \n")
+
+                        updated_artifacts_filepaths[artifact_name] = artifacts_filepath
+
+                        artifact_name = artifact_name.replace(".link", "")
+
+                        # Make a GET request to download the file
+                        response = requests.get(artifacts_url, stream=True)
+
+                        # Open the file in binary mode and write the content to it
+                        with open(os.path.join(setup_directory, artifact_name), 'wb') as file:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                if chunk:  # Filter out keep-alive chunks
+                                    file.write(chunk)
+
+                        manifest_lines.append(f"include {module_name}/{artifact_name} \n")
+
+                    except Exception as e:
+                        self.logger.warning(f"Failed to download {artifacts_filepath} artifact!")
+                elif artifact_name.endswith(".link"):
+
+                    try:
+
+                        # Open the file in binary mode and write the content to it
+                        with open(os.path.join(setup_directory, artifact_name), 'w') as file:
+                            file.write(f"{artifacts_filepath}")
+
+                        manifest_lines.append(f"include {module_name}/{artifact_name} \n")
+                    except Exception as e:
+                        self.logger.warning(f"Failed to save {artifacts_filepath} link as artifact!")
+
+
+                else:
+                    directory = Path(os.path.join(setup_directory, artifact_name)).parent
+                    directory.mkdir(parents=True, exist_ok=True)
+
                     shutil.copy(artifacts_filepath,
                         os.path.join(setup_directory, artifact_name))
-
                     manifest_lines.append(f"include {module_name}/{artifact_name} \n")
 
-                    updated_artifacts_filepaths[artifact_name] = artifacts_filepath
-
-                    artifact_name = artifact_name.replace(".link", "")
-
-                    # Make a GET request to download the file
-                    response = requests.get(artifacts_url, stream=True)
-
-                    # Open the file in binary mode and write the content to it
-                    with open(os.path.join(setup_directory, artifact_name), 'wb') as file:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            if chunk:  # Filter out keep-alive chunks
-                                file.write(chunk)
-
-                    manifest_lines.append(f"include {module_name}/{artifact_name} \n")
-
-                except Exception as e:
-                    self.logger.warning(f"Failed to download {artifacts_filepath} artifact!")
-            elif artifact_name.endswith(".link"):
-
-                try:
-
-                    # Open the file in binary mode and write the content to it
-                    with open(os.path.join(setup_directory, artifact_name), 'w') as file:
-                        file.write(f"{artifacts_filepath}")
-
-                    manifest_lines.append(f"include {module_name}/{artifact_name} \n")
-                except Exception as e:
-                    self.logger.warning(f"Failed to save {artifacts_filepath} link as artifact!")
-
-
+                updated_artifacts_filepaths[artifact_name] = artifacts_filepath
             else:
-                directory = Path(os.path.join(setup_directory, artifact_name)).parent
-                directory.mkdir(parents=True, exist_ok=True)
-                
-                shutil.copy(artifacts_filepath,
-                    os.path.join(setup_directory, artifact_name))
-                manifest_lines.append(f"include {module_name}/{artifact_name} \n")
-
-            updated_artifacts_filepaths[artifact_name] = artifacts_filepath
+                self.logger.warning(f"Filepath {artifacts_filepath} does not exist!")
 
         manifest_lines.append(f"include {module_name}/{'.paa.tracking/.paa.version'} \n")
         updated_artifacts_filepaths['.paa.tracking/.paa.version'] = os.path.join(setup_directory,'.paa.tracking','.paa.version')

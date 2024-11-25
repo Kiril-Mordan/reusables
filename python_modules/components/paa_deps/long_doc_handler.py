@@ -297,22 +297,25 @@ class LongDocHandler:
 
             for f in files:
 
-                if os.path.isdir(os.path.join(extra_docs_dir,f)):
+                full_path = os.path.join(extra_docs_dir,f)
 
-                    if os.path.exists(os.path.join(docs_path,f)):
-                        shutil.rmtree(os.path.join(docs_path,f))
+                if os.path.exists(full_path): 
+                    if os.path.isdir(full_path):
 
-                    shutil.copytree(
-                        os.path.join(extra_docs_dir,f), 
-                        os.path.join(docs_path,f))
+                        if os.path.exists(os.path.join(docs_path,f)):
+                            shutil.rmtree(os.path.join(docs_path,f))
 
-                if f.endswith(".md") or f.endswith(".png") :
-                    shutil.copy(
-                        os.path.join(extra_docs_dir,f), 
-                        os.path.join(docs_path,f"{package_name}-{f}"))
+                        shutil.copytree(
+                            full_path, 
+                            os.path.join(docs_path,f))
 
-                if f.endswith(".ipynb"):
-                    self.convert_notebook_to_md(
-                        notebook_path = os.path.join(extra_docs_dir,f),
-                        output_path = os.path.join(docs_path,
-                        f"{package_name}-{f.replace('.ipynb', '.md')}"))
+                    if f.endswith(".md") or f.endswith(".png") :
+                        shutil.copy(
+                            full_path, 
+                            os.path.join(docs_path,f"{package_name}-{f}"))
+
+                    if f.endswith(".ipynb"):
+                        self.convert_notebook_to_md(
+                            notebook_path = full_path,
+                            output_path = os.path.join(docs_path,
+                            f"{package_name}-{f.replace('.ipynb', '.md')}"))

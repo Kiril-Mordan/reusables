@@ -50,7 +50,7 @@ class DrawioHandler:
             setup_directory = self.setup_directory
 
         # Copying module to setup directory
-        if drawio_filepath:
+        if (drawio_filepath is not None) and os.path.exists(drawio_filepath):
             
             if not os.path.exists(os.path.join(
                 setup_directory, ".paa.tracking")):
@@ -59,4 +59,5 @@ class DrawioHandler:
             shutil.copy(drawio_filepath, os.path.join(
                 setup_directory, ".paa.tracking",".drawio"))
 
-        return True
+            return True
+        return False
