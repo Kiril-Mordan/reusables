@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.5.17
+
+    - minor fixes for problems with missing optional files
+
 ### 0.5.16
 
     - default readme plus dynamic list of published packages with links to destination for github and azure templates
