@@ -49,7 +49,11 @@ class CliHandler:
         if setup_directory is None:
             setup_directory = self.setup_directory
 
-        # Copying module to setup directory
-        shutil.copy(cli_module_filepath, os.path.join(setup_directory, "cli.py"))
+        if (cli_module_filepath is not None) and os.path.exists(cli_module_filepath):
 
-        return True
+            # Copying module to setup directory
+            shutil.copy(cli_module_filepath, os.path.join(setup_directory, "cli.py"))
+
+            return True
+
+        return False

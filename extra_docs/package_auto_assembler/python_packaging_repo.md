@@ -29,6 +29,7 @@ Each package can include optional features:
 ## Setting up new PPR
 
 A Python Packaging Repository can be created for:
+
 - [GitHub](https://github.com/) with PyPI
 - [Azure DevOps](https://azure.microsoft.com/en-us/products/devops) with Azure Artifacts
 
