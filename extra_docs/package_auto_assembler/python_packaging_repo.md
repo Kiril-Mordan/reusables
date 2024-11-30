@@ -18,13 +18,66 @@ Each package can include optional features:
 - [CLI interface](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#10-adding-cli-interfaces) - Add command-line utilities to the package.
 - [FastAPI routes](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#11-adding-routes-and-running-fastapi-application) - Embed API routes to run FastAPI applications from packages.
 - [Streamlit apps](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#12-adding-ui-and-running-streamlit-application) - Include interactive UIs.
-- [MkDocs pages](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#15-making-simple-mkdocs-site) - Generate simple static documentation websites for each package.
+- [MkDocs pages](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#16-making-simple-mkdocs-site) - Generate simple static documentation websites for each package.
 
 ![Publishing Repo Input/Output](package_auto_assembler-input_output_files.png)
 
 *Diagram: The structure includes core package files and additional optional components such as CLI interfaces, FastAPI routes, or documentation.*
 
 
+## Basic usage
+
+### Prepare a Local Environment
+
+Before developing code within a packaging repository, ensure that the `package-auto-assembler` python package is installed in your environment:
+
+``` bash
+pip install package-auto-assembler
+```
+
+**Note**: Some config files, like `.pipirc` and `.pip.conf`, might be required to [configure access to private packages from Azure Artifacts storage](https://learn.microsoft.com/en-us/azure/devops/artifacts/quickstarts/python-packages?view=azure-devops&tabs=Windows#connect-to-your-feed). 
+
+### Add or Edit a Package
+
+To prepare your code for packaging:
+
+1. Create/find a `.py` file in `module_dir` with a name of the package (use underscores (`_`) instead of hyphens (`-`) and spaces)
+
+2. Make sure the module you're trying to create/edit follows basic requirements, described [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#preparing-code-for-packaging)
+
+3. Add/edit [optional files](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#preparing-files-for-packaging) and [additional documentation](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#preparing-documentation-for-packaging). 
+
+
+**Note**: Relevant names of the directories, like `module_dir`, could be checked in `.paa.config` file from your instance of a packaging repository. This and the following steps assume that an instance of a packaging repository was already created or pulled. If not, to setup a new ppr take a look [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#setting-up-new-ppr). 
+
+### Test-Install a Package
+
+After adding or editing files related to your package, install it locally and ensure it works as expected.
+
+``` bash
+paa test-install your-package
+```
+
+**Note**: Use the `--skip-deps-install` flag if reinstalling dependencies is unnecessary. More flags could be seen [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#creating-packages).
+
+### Push Changes to PPR
+
+When code is ready for release, commit changes, including the package name and a list of changes in your commit messages. Push the changes to a new branch your packaging repository, then create a pull request to the `main` branch.
+
+``` bash
+git commit -m "[your_package] change one; comment about change two"
+```
+
+**Note**: Merge files for only one package at a time. The pipeline relies on commit history to determine which package to test and publish.
+
+### Publish a Package
+
+If the test results are satisfactory, merge the pull request with `main`. The pipeline will then:
+
+1. Initialize the packaging process.
+2. Prepare the package.
+3. Publish it to package storage.
+4. Update tracking files in `.paa` and README.
 
 ## Setting up new PPR
 
@@ -49,12 +102,12 @@ Only two templates are provided:
 
 1. **Set Up GitHub Pages**:
     - Navigate to `Settings` -> `Pages`.
-    - Select "Deploy from a branch," choose the `gh-pages` branch (if it does not exist, create a new branch named `gh-pages`), and set the directory to `/root`. [More details](https://docs.github.com/en/pages/quickstart).
+    - Select `Deploy from a branch` choose the `gh-pages` branch (if it does not exist, create a new branch named `gh-pages`), and set the directory to `/root`. [More details](https://docs.github.com/en/pages/quickstart).
 
 2. **Configure GitHub Actions**:
     - Navigate to `Settings` -> `Actions` -> `General`.
-    - Under "Actions permissions," select "Allow all actions and reusable workflows."
-    - Under "Workflow permissions," select "Read and write permissions." [More details](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository).
+    - Under `Actions permissions` select `Allow all actions and reusable workflows`
+    - Under `Workflow permissions` select `Read and write permissions` [More details](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository).
 
 3. **Add PyPI Credentials**:
     - Go to `Settings` -> `Secrets and variables` -> `Actions`.
@@ -62,15 +115,16 @@ Only two templates are provided:
 
 4. **Initialize the Template**:
     - Use `paa` to set up the PPR:
-     ``` bash
-     paa init-ppr --github
-     ```
      
-     Or include all optional directories:
+    ```
+    paa init-ppr --github
+    ```
+     
+    Or include all optional directories:
 
-     ``` bash
-     paa init-ppr --github --full
-     ```
+    ```
+    paa init-ppr --github --full
+    ```
 
     - Edit `.paa.config` if needed
     - Run `paa init-ppr --github` or `paa init-paa` a second time to initialize directories for storing packaging files based on `.paa.config`.
@@ -92,19 +146,20 @@ Once setup is complete, pushing changes to the `main` will automatically trigger
 
 
 3. **Add Credentials**:
-    - Generate a Personal Access Token (`TWINE_USERNAME` and `TWINE_PASSWORD`) with "Read & write" permissions for "Packaging." [More details](https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops).
+    - Generate a Personal Access Token (`TWINE_USERNAME` and `TWINE_PASSWORD`) with `Read & write`e permissions for `Packaging` [More details](https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops).
 
 
 4. **Initialize the Template**:
+
     - Use `paa` to set up the PPR:
 
-    ``` bash
+    ```
     paa init-ppr --azure
     ```
-     
+
     Or include all optional directories:
 
-    ``` bash
+    ```
     paa init-ppr --azure --full
     ```
 
