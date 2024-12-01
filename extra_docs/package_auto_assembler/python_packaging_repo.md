@@ -27,7 +27,7 @@ Each package can include optional features:
 
 ## Basic usage
 
-### Prepare a Local Environment
+### 1. Prepare Local Environment
 
 Before developing code within a packaging repository, ensure that the `package-auto-assembler` python package is installed in your environment:
 
@@ -37,7 +37,7 @@ pip install package-auto-assembler
 
 **Note**: Some config files, like `.pipirc` and `.pip.conf`, might be required to [configure access to private packages from Azure Artifacts storage](https://learn.microsoft.com/en-us/azure/devops/artifacts/quickstarts/python-packages?view=azure-devops&tabs=Windows#connect-to-your-feed). 
 
-### Add or Edit a Package
+### 2. Add or Edit a Package
 
 To prepare your code for packaging:
 
@@ -50,7 +50,7 @@ To prepare your code for packaging:
 
 **Note**: Relevant names of the directories, like `module_dir`, could be checked in `.paa.config` file from your instance of a packaging repository. This and the following steps assume that an instance of a packaging repository was already created or pulled. If not, to setup a new ppr take a look [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#setting-up-new-ppr). 
 
-### Test-Install a Package
+### 3. Test-Install a Package
 
 After adding or editing files related to your package, install it locally and ensure it works as expected.
 
@@ -60,7 +60,7 @@ paa test-install your-package
 
 **Note**: Use the `--skip-deps-install` flag if reinstalling dependencies is unnecessary. More flags could be seen [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#creating-packages).
 
-### Push Changes to PPR
+### 4. Push Changes to PPR
 
 When code is ready for release, commit changes, including the package name and a list of changes in your commit messages. Push the changes to a new branch your packaging repository, then create a pull request to the `main` branch.
 
@@ -70,7 +70,7 @@ git commit -m "[your_package] change one; comment about change two"
 
 **Note**: Merge files for only one package at a time. The pipeline relies on commit history to determine which package to test and publish.
 
-### Publish a Package
+### 5. Publish a Package
 
 If the test results are satisfactory, merge the pull request with `main`. The pipeline will then:
 
@@ -78,6 +78,20 @@ If the test results are satisfactory, merge the pull request with `main`. The pi
 2. Prepare the package.
 3. Publish it to package storage.
 4. Update tracking files in `.paa` and README.
+
+**Note** Due to possibility of multiple packaging feeds, trigger for `azure devops + azure artifacts feed` template would not be automatic on merge, but would need to be triggered manually after merging with `main`. To do so, in your Azure DevOps project, navigate to `Pipelines` -> `your-packaging-repo-pipeline` -> `Run pipeline` and select one of the configured upload feeds in `Upload Feed` as well as indicate package to be published (ensure to use underscores (`_`) instead of hyphens (`-`)) in `Package Name` field. 
+
+### Additional Information
+
+To see more CLI tools and options, run:
+
+``` bash
+paa --help
+```
+
+Or visit [`package-auto-assembler` documentation](https://kiril-mordan.github.io/reusables/package_auto_assembler/).
+
+---
 
 ## Setting up new PPR
 
