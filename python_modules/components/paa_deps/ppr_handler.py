@@ -409,6 +409,14 @@ class PprHandler:
 
                 return False
 
+            README_path = os.path.join(paa_path,
+                                    "artifacts",
+                                    "ppr_workflows",
+                                    workflows_platform,
+                                    "docs",
+                                    "README_base.md"
+                                    )
+
             if workflows_platform == 'github':
                 workflows_platform = '.github'
 
@@ -430,6 +438,11 @@ class PprHandler:
                 if os.path.exists(artifact_path):
                     if not os.path.exists(f):
                         shutil.copy(artifact_path, f)
+
+        
+            if os.path.exists(README_path):
+                if not os.path.exists("README.md"):
+                    shutil.copy(README_path, "README.md")
 
             return True
 

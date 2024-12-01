@@ -10,51 +10,15 @@ Its highly automated CI/CD pipeline can package multiple packages stored in this
 
 ## Basic usage
 
-### Prepare the Environment
+Instuctions for the packaging repository include basics of how to:
 
-Before developing code within this repository, ensure that the `package-auto-assembler` Python package is installed in your environment:
+1. Prepare Local Environment
+2. Add or Edit a Package
+3. Test-Install a Package
+4. Push Changes to PPR
+5. Publish a Package
 
-``` bash
-pip install package-auto-assembler
-```
-
-### Test-Install a Package
-
-After adding or editing files related to your package, install it locally and ensure it works as expected. Use the `--skip-deps-install` flag if reinstalling dependencies is unnecessary:
-
-``` bash
-paa test-install your-package
-```
-
-### Push Changes to PPR
-
-When code is ready for release, commit changes, including the package name and a list of changes in your commit messages. Push the changes to a new branch in this repository, then create a pull request to the `main` branch.
-
-``` bash
-git commit -m "[your_package] change one; comment about change two"
-```
-
-**Note**: Merge files for only one package at a time. The pipeline relies on commit history to determine which package to test and publish.
-
-### Publish a Package
-
-If the test results are satisfactory, merge the pull request with `main`. The pipeline will then:
-
-1. Initialize the packaging process.
-2. Prepare the package.
-3. Publish it to [PyPI](https://pypi.org/).
-4. Update tracking files in `.paa` and README.
-
-If packaging pipeline is successful, latest release will be available from [PyPI](https://pypi.org/).
-
-### Additional Information
-
-To see more CLI tools and options, run:
-
-``` bash
-paa --help
-```
-
-Or visit [`package-auto-assembler` documentation](https://kiril-mordan.github.io/reusables/package_auto_assembler/).
+These instructions could be accessed by vising [`package-auto-assembler` documentation](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#basic-usage).
 
 ---
+

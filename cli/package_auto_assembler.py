@@ -26,10 +26,18 @@ __cli_metadata__ = {
 }
 
 # Reading paa version
-with pkg_resources.path('package_auto_assembler', '.paa.tracking') as path:
+with pkg_resources.path('package_auto_assembler', '__init__.py') as path:
     paa_path = path
-with open(os.path.join(paa_path,".paa.version"), 'r') as f:
-    paa_version = f.read()
+with open(paa_path, 'r', encoding = "utf-8") as f:
+    paa_init = f.readlines()
+
+paa_version_lines = [line\
+    .replace('__version__=', '')\
+    .replace("'","")\
+    .strip() \
+    for line in paa_init if '__version__' in line]
+if paa_version_lines:
+    paa_version = paa_version_lines[0]
 
 
 @click.group()
