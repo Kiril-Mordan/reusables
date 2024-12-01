@@ -1,5 +1,13 @@
 # Release notes
 
+### 0.5.18
+
+    - adding base README to initial ppr instance
+
+    - intructions for preparing module for packaging
+
+    - basic usage instructions for ppr
+
 ### 0.5.17
 
     - minor fixes for problems with missing optional files

@@ -19,7 +19,9 @@ By default, patch is updated, but the minor and major could also be update based
 
 Package auto assembler does try to pull latest version from package storage, but in case of failure uses version logs stored in `.paa/tracking`.
 
-#### Initialize VersionHandler
+---
+
+initialize VersionHandler
 
 
 ```python
@@ -31,7 +33,7 @@ pv = VersionHandler(
     default_version = "0.0.1")
 ```
 
-#### Add new package
+add new package
 
 
 ```python
@@ -42,7 +44,7 @@ pv.add_package(
 )
 ```
 
-#### Update package version
+update package version
 
 
 ```python
@@ -60,7 +62,7 @@ pv.increment_patch(
     There are no known versions of 'another_new_package', 0.0.1 will be used!
 
 
-#### Display current versions and logs
+display current versions and logs
 
 
 ```python
@@ -150,7 +152,7 @@ pv.get_logs(
 
 
 
-#### Flush versions and logs
+flush versions and logs
 
 
 ```python
@@ -158,7 +160,7 @@ pv.flush_versions()
 pv.flush_logs()
 ```
 
-#### Get latest available version with pip
+get latest available version with pip
 
 
 ```python
@@ -174,9 +176,11 @@ pv.get_latest_pip_version(package_name = 'package-auto-assembler')
 
 ### 2. Import mapping
 
-Install and import names of dependencies may vary. The mapping files maps import names to install names so that requirements extraction from `.py` files is possible. Some of the mapping are packaged and would not need to provided, but in case a dependency used within new package was not inluded, it is possible to augment default mapping through `.paa/package_mapping.json`
+Install and import names of dependencies may vary. The mapping files maps import names to install names so that requirements extraction from `.py` files is possible. Some of the mapping are packaged and would not need to provided, but in case a dependency used within new package was not inluded, it is possible to augment default mapping through `.paa/package_mapping.json`.
 
-#### Initialize ImportMappingHandler
+---
+
+initialize ImportMappingHandler
 
 
 ```python
@@ -186,7 +190,7 @@ im = ImportMappingHandler(
 )
 ```
 
-#### Load package mappings
+load package mappings
 
 
 ```python
@@ -279,9 +283,9 @@ attrs >=22.2.0
 tensorflow-gpu
 ```
 
+---
 
-
-#### Initialize RequirementsHandler
+initialize RequirementsHandler
 
 
 ```python
@@ -307,7 +311,7 @@ rh = RequirementsHandler(
 )
 ```
 
-#### List custom modules for a given directory
+list custom modules for a given directory
 
 
 ```python
@@ -324,7 +328,7 @@ rh.list_custom_modules(
 
 
 
-#### Check if module is a standard python library
+check if module is a standard python library
 
 
 ```python
@@ -360,7 +364,7 @@ rh.is_standard_library(
 
 
 
-#### Extract requirements from the module file
+extract requirements from the module file
 
 
 ```python
@@ -416,7 +420,7 @@ rh.optional_requirements_list
 
 
 
-#### Audit dependencies
+audit dependencies
 
 
 ```python
@@ -484,7 +488,7 @@ rh.vulnerabilities
 
 
 
-#### Save requirements to a file
+save requirements to a file
 
 
 ```python
@@ -497,7 +501,7 @@ rh.write_requirements_file(
 )
 ```
 
-#### Read requirements
+read requirements
 
 
 ```python
@@ -526,8 +530,10 @@ Even though some general information shared between packages could be provided t
 
 \* Note that providing dependencies this way does not check them through pip-audit or translate them through package mapping
 
+---
 
-#### Initializing MetadataHandler
+
+initializing MetadataHandler
 
 
 ```python
@@ -537,7 +543,7 @@ mh = MetadataHandler(
 )
 ```
 
-#### Check if metadata is available
+check if metadata is available
 
 
 ```python
@@ -554,7 +560,7 @@ mh.is_metadata_available(
 
 
 
-#### Extract metadata from module
+extract metadata from module
 
 
 ```python
@@ -591,7 +597,9 @@ packaging repo/
 
 During packaging process paa merges main module with its local dependies into a single file.
 
-#### Initializing LocalDependaciesHandler
+---
+
+initializing LocalDependaciesHandler
 
 
 ```python
@@ -604,7 +612,7 @@ ldh = LocalDependaciesHandler(
 )
 ```
 
-#### Combine main module with dependacies
+combine main module with dependacies
 
 
 ```python
@@ -666,7 +674,7 @@ ldh.dependencies_names_list
 
 
 
-#### Save combined module
+save combined module
 
 
 ```python
@@ -680,6 +688,8 @@ ldh.save_combined_modules(
 ### 6. Prepare README
 
 Package description is based on `.ipynb` with same name as the `.py`. By default it is converted to markdown as is, but there is also an option to execute it.
+
+---
 
 
 ```python
@@ -695,7 +705,7 @@ ldh = LongDocHandler(
 )
 ```
 
-#### Convert notebook to md without executing
+convert notebook to md without executing
 
 
 ```python
@@ -709,7 +719,7 @@ ldh.convert_notebook_to_md(
     Converted ../tests/package_auto_assembler/example_module.ipynb to ../example_module.md
 
 
-#### Convert notebook to md with executing
+convert notebook to md with executing
 
 
 ```python
@@ -725,7 +735,7 @@ ldh.convert_and_execute_notebook_to_md(
     Converted and executed ../tests/package_auto_assembler/example_module.ipynb to ../example_module.md
 
 
-#### Return long description
+return long description
 
 
 ```python
@@ -753,8 +763,10 @@ Packages are created following rather simple sequence of steps. At some point of
 - `tests` contains files needed to run tests with [`pytest`](https://docs.pytest.org/en/stable/)
 - `.paa.tracking` contains tracking files from `.paa` dir to make each release of the package independent of PPR that released it
 
+---
 
-#### Initializing SetupDirHandler
+
+initializing SetupDirHandler
 
 
 ```python
@@ -783,7 +795,7 @@ sdh = SetupDirHandler(
 )
 ```
 
-#### Create empty setup dir
+create empty setup dir
 
 
 ```python
@@ -793,7 +805,7 @@ sdh.flush_n_make_setup_dir(
 )
 ```
 
-#### Copy module to setup dir
+copy module to setup dir
 
 
 ```python
@@ -804,7 +816,7 @@ sdh.copy_module_to_setup_dir(
 )
 ```
 
-#### Copy license to setup dir
+copy license to setup dir
 
 
 ```python
@@ -815,7 +827,7 @@ sdh.copy_module_to_setup_dir(
 )
 ```
 
-#### Create init file
+create init file
 
 
 ```python
@@ -826,7 +838,7 @@ sdh.create_init_file(
 )
 ```
 
-#### Create setup file
+create setup file
 
 
 ```python
@@ -866,6 +878,8 @@ Commit messages could also be used to increment version by something other then 
 
 \* First release within new packaging repo may struggle to extract release note since commit messages are only analysed from merges in the commit history. 
 
+---
+
 
 
 ```python
@@ -885,7 +899,7 @@ rnh = ReleaseNotesHandler(
     No messages to clean were provided
 
 
-##### - overwritting commit messages from example
+overwritting commit messages from example
 
 
 ```python
@@ -919,7 +933,7 @@ example_commit_messages = [
 rnh.commit_messages = example_commit_messages
 ```
 
-##### - internal methods that run on intialiazation of ReleaseNotesHandler
+internal methods that run on intialiazation of ReleaseNotesHandler
 
 
 ```python
@@ -940,7 +954,7 @@ print(rnh.processed_messages)
     ['usage example for initial release notes', 'bugfixes for RNH', 'initial release notes handler']
 
 
-##### - get version update from relevant messages
+get version update from relevant messages
 
 
 ```python
@@ -951,7 +965,7 @@ print(f"Example version_update: {version_update}")
     Example version_update: 0.1.2
 
 
-##### - get latest version from relevant release notes
+get latest version from relevant release notes
 
 
 ```python
@@ -962,7 +976,7 @@ print(f"Example latest_version: {latest_version}")
     Example latest_version: 0.1.2
 
 
-##### - augment existing release note with new entries or create new
+augment existing release note with new entries or create new
 
 
 ```python
@@ -981,7 +995,7 @@ print(rnh.processed_note_entries)
     ['# Release notes\n', '\n', '### 0.1.2\n', '\n', '    - usage example for initial release notes\n', '\n', '    - bugfixes for RNH\n', '\n', '    - initial release notes handler\n', '\n', '### 0.0.1\n', '\n', '    - initial version of example_module\n']
 
 
-##### - saving updated relese notes
+saving updated relese notes
 
 
 ```python
@@ -1050,6 +1064,8 @@ Licenses are extracted from package metadata and normalized for analysis. Missin
 
 Information about unrecognized license labels could be provided through `.paa/package_licenses json` file that would contain install package name and corresponding license label.
 
+---
+
 
 ```python
 da = DependenciesAnalyser(
@@ -1060,7 +1076,7 @@ da = DependenciesAnalyser(
 )
 ```
 
-#### Finding installed packages with a list of tags
+finding installed packages with a list of tags
 
 
 ```python
@@ -1077,7 +1093,7 @@ da.filter_packages_by_tags(tags=['aa-paa-tool'])
 
 
 
-#### Extracting some metadata from the installed package
+extracting some metadata from the installed package
 
 
 ```python
@@ -1111,7 +1127,7 @@ package_metadata
 
 
 
-#### Extracting package requirements
+extracting package requirements
 
 
 ```python
@@ -1135,7 +1151,7 @@ package_requirements
 
 
 
-#### Extracting tree of dependencies
+extracting tree of dependencies
 
 
 ```python
@@ -1170,7 +1186,7 @@ extracted_dependencies_tree
 
 
 
-#### Addding license labels to tree of dependencies
+addding license labels to tree of dependencies
 
 
 ```python
@@ -1220,7 +1236,7 @@ extracted_dependencies_tree_license
 
 
 
-#### Printing extracted tree of dependencies
+printing extracted tree of dependencies
 
 
 ```python
@@ -1263,7 +1279,7 @@ da.print_flattened_tree(extracted_dependencies_tree_license)
     └── numpy : bsd-3-clause
 
 
-#### Filtering for unexpected licenses in tree of dependencies
+filtering for unexpected licenses in tree of dependencies
 
 
 ```python
@@ -1345,6 +1361,7 @@ __cli_metadata__ = {
 Package-auto-assembler tool itself uses [`click`](https://pypi.org/project/click/) dependency to build that file, use its [cli definition](https://github.com/Kiril-Mordan/reusables/blob/main/cli/package_auto_assembler.py) as example.
 
 
+
 ### 11. Adding routes and running FastAPI application
 
 The tool allows to make a package with optional routes for FastAPI application and run them. Each packages can have one routes file where its logic should be defined. Package-auto-assembler itself can combine multiple routes from packages and filepaths into one application.
@@ -1398,11 +1415,16 @@ Config file with server, theme and other settings can be provided via optional `
 The tool allows to add files to packages that could be accessed from the package or extracted into selected directory.
 
 There are different types of artifacts with a package like this:
+
 - `.paa.tracking` : includes some tracking files for the purposes of the tool, added to every package
 - `mkdocs` : optional static mkdocs site 
-- `artifacts` contains directories, files and links to files
+- `artifacts` contains directories, files and links to files copied from `artifacts_dir/<package_name>` (from `.paa.config`)
+- `tests` contains optional directory with tests with `pytest`, copied from `tests_dir/<package_name>` (from `.paa.config`)
+
+##### 1. Description of default tracking files
 
 Tracking files are added automatically of artifacts adding was not turned off. At the moment contains:
+
 - `.paa.config` : config file that specifies how paa show work
 - `.paa.version`: version of `package-auto-assembler` that was used for packaging
 - `release_notes.md` : latest release notes for the package
@@ -1410,25 +1432,23 @@ Tracking files are added automatically of artifacts adding was not turned off. A
 - `lsts_package_versions.yml` : latests versions of all packages in the packaging repo
 - `package_mapping.json` : additional user-provided remapping of package import names to install names
 - `package_licenses.json` : additional user-provided license labels to overwrite detected ones
-- `notebook.ipynb` : optional jupyter notebook that was used for package description
+- `notebook.ipynb` : optional jupyter notebook that was used for package description`
+
+##### 2. Adding files
 
 User provided artifacts could be provided in two ways:
-- adding directory, file or link to the file under `artifacts/<package_name>`
 
-These files would be packaged with the packages, and files from links would be downloaded and packaged as well.
+1. adding directory, file or link to the file under `artifacts_dir/<package_name>`
 
-- adding `artifact_urls` dictionary to `__package_metadata__` within module `.py` file
+    These files would be packaged with the packages, and files from links would be downloaded and packaged as well. To add a link, create a file with `.link` extension in the name.
+
+2. adding `artifact_urls` dictionary to `__package_metadata__` within module `.py` file
 
 Example of `__package_metadata__` with these additional dictionary would be:
 
 ```python
 __package_metadata__ = {
-    "author": "Kyrylo Mordan",
-    "author_email": "parachute.repo@gmail.com",
-    "description": "A tool to automate package creation within ci based on just .py and optionally .ipynb file.",
-    "keywords" : ['python', 'packaging'],
-    'license' : 'mit',
-    "url" : 'https://kiril-mordan.github.io/reusables/package_auto_assembler/',
+    ...,
     "artifact_urls" : {
         'downloaded.md' : 'https://raw.githubusercontent.com/Kiril-Mordan/reusables/refs/heads/main/docs/module_from_raw_file.md',
         'downloaded.png' : 'https://raw.githubusercontent.com/Kiril-Mordan/reusables/refs/heads/main/docs/reuse_logo.png'
@@ -1440,14 +1460,143 @@ where key would contain name of the artifact and value its link.
 
 These files would not be downloaded and only links would be packaged. After package installation both kinds of links could be refreshed/donwloaded using [`cli interface`](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/) from `package-auto-assembler`.
 
+##### 3. Accessing packaged artifacts
 
-### 14. Making a package
+Artifacts packaged within the package could be accessed in two ways:
+
+1. using [`package-auto-assembler` cli tools](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#extracting-files-from-packages) to copy a file or files into a selected directory
+
+2. reading packaged artifacts from the package, by the use of similar code that finds path to installed package in your system:
+
+```python
+import importlib
+import importlib.metadata
+import importlib.resources as pkg_resources
+
+installed_package_path = pkg_resources.files('<package_name>')
+
+file_name_path = None
+if 'artifacts' in os.listdir(installed_package_path):
+
+    with pkg_resources.path('<package_name>.artifacts', '<file_name>') as path:
+        file_name_path = path
+```
+
+
+### 14. Preparing module for packaging
+
+#### 1. Preparing code for packaging
+
+To add/edit a python package with `package-auto-assembler`, its building blocks would need to follow requirements mentioned below. 
+
+**Note**: For basic package only `main module` would be required. More about role of optional files could be seen [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#inputs-and-outputs-of-ppr).
+
+- Main module **[required]**
+
+    Main module is considered to be a `<package_name>.py` file stored in `module_dir` (from `.paa.config`), which can also me called `packaging layer`. 
+    This is where most code of the package would be, unless `local dependencies` are used. 
+
+    Requirements to this file:
+
+    1. starts with module docstring (will be used in package description)
+    2. contains [`__package_metadata__`](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#4-preparing-metadata) (a way to provide package metadata)
+    3. **[optional]** import from `local dependencies` stored only in `dependencies_dir`
+    4. **[optional]** contains [versions of module dependencies](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#3-extracting-and-merging-requirements) (specifying requirements)
+
+
+- Local dependencies
+
+    Local dependencies are optional modules that other modules from `packaging layer` would import from, and are not packaged on their own. These are useful for segmenting codebase into smaller independent components.
+    They would be stored in subdirectory of `module_dir`, specified as `dependencies_dir` in `.paa.config`. 
+
+    Requirements for these files:
+
+    1. stored only in `dependencies_dir` or its subdirectories 
+    2. do not import any other moduled stored locally
+    3. **[optional]** contain [versions of module dependencies](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#3-extracting-and-merging-requirements) (specifying requirements)
+
+
+- Cli interface
+
+    Command line interface could be optionally defined for a package by placing `<package_name>.py` file into `cli_dir` (from `.paa.config`). More about adding cli could be found [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#10-adding-cli-interfaces).
+
+    Requirements for this file:
+
+    1. imports and uses [`click`](https://pypi.org/project/click/) to define cli tools
+    2. contains [`__cli_metadata__`](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#10-adding-cli-interfaces) (a way to provide alias for cli tools)
+    3. **[optional]** imports from packaging layer and local dependencies only with `from <package_name>.<package_name> import ToBeImported`
+    4. **[optional]** contains [versions of module dependencies](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#3-extracting-and-merging-requirements) (specifying requirements)
+
+
+
+- API routes
+
+    Routes for FastAPI application could be optionally defined for a package by placing `<package_name>.py` file into `api_routes_dir` (from `.paa.config`). More about adding api routes could be found [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#11-adding-routes-and-running-fastapi-application).
+
+    Requirements for this file:
+
+    1. imports `from fastapi import APIRouter`
+    2. defines `router = APIRouter(prefix = "/<package-name>")`
+    3. uses `@router.*` to define endpoints
+    4. **[optional]** import from packaging layer and local dependencies only with `from <package_name>.<package_name> import ToBeImported`
+    5. **[optional]** contain [versions of module dependencies](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#3-extracting-and-merging-requirements) (specifying requirements)
+
+
+- Streamlit app
+
+    Streamlit application could be optionally defined for a package by placing `<package_name>.py` file into `streamlit_dir` (from `.paa.config`). More about adding streamlit app could be found [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#12-adding-ui-and-running-streamlit-application).
+
+    Requirements for this file:
+
+    1. imports [`streamlit`](https://pypi.org/project/streamlit/)
+    2. **[optional]** import from packaging layer and local dependencies only with `from <package_name>.<package_name> import ToBeImported`
+    3. **[optional]** contain [versions of module dependencies](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#3-extracting-and-merging-requirements) (specifying requirements)
+
+
+
+#### 2. Preparing documentation for packaging
+
+- Package description
+
+    Providing package description is a useful way to show what the package is about to the intended audience. By default, [`main_module`](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#preparing-code-for-packaging) docstring would be used for this purpose and stored alongside the package in a `README.md` file, as shown [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#inputs-and-outputs-of-ppr). 
+
+    Optionally, one could provide additional information that would be appended to the package docstring via `<package_name>.ipynb` file, placed into `example_notebooks_path` (from `.paa.config`). In the early stages of development, this file could both serve as a place where code is developed/tested before a release and a way to show usage examples.
+
+
+- Additional documentation
+
+    Package description may not be enough to store documentation. 
+    A simple [mkdocs](https://www.mkdocs.org/) static site is built by default for every package with for followig tabs:
+
+    - `intro` contains module docstring and `pypi` link for `github + pypi` type of packaging repository
+    - `description` contains optional content from `<package_name>.ipynb` file, placed into `example_notebooks_path` (from `.paa.config`)
+    - `release notes` contains release notes assembled based on commit messages
+
+    Additional documentation can be provided via the following files:
+
+    1. `<package_name>.drawio` file, placed into `drawio_dir` (from `.paa.config`). Each tab would be turned into `<package_name>-<tab_name>.png`, which if not referenced would be presented as a separate tab;
+    2. `.png`, `.ipynb` or `.md` files placed in `extra_docs_dir/<package_name>` (from `.paa.config`). Each file would be turned into a separate tab, but just like `.png` from drawio, if referenced, would not be presented as a separate tab.
+
+    **Note**: During packaging process files derived from `<package_name>.drawio` conversion and files from `extra_docs_dir/<package_name>` would both be placed into `.paa/docs` with `<package_name>-*` prefix. Make sure not to name drawio tabs and extra docs with the same names. 
+
+#### 3. Preparing files for packaging
+
+Packaging files alongside code and documentation could be achieved by placing files  into `artifacts_dir/<package_name>` directory (from `.paa.config`). These files could be referenced from within the package and there is an option to provide links instead of physical files. More about adding artifacts to the package could be found [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#13-adding-artifacts-to-packages).
+
+Tests that would be used in ci/cd pipeline are expected to be placed into `tests_dir<package_name>` directory (from `.paa.config`). These would be copied into the package as well. 
+
+
+
+
+### 15. Making a package
 
 Main wrapper for the package integrates described above components into a class that could be used to build package building pipelines within python scripts. 
 
 To simplify usage [cli interface](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/) is recomended instead. 
 
-#### Initializing PackageAutoAssembler
+---
+
+initializing PackageAutoAssembler
 
 
 ```python
@@ -1487,7 +1636,7 @@ paa = PackageAutoAssembler(
 )
 ```
 
-#### Add metadata from module
+add metadata from module
 
 
 ```python
@@ -1500,7 +1649,7 @@ paa.add_metadata_from_module(
     Adding metadata ...
 
 
-#### Add or update version
+add or update version
 
 
 ```python
@@ -1528,7 +1677,7 @@ paa.add_or_update_version(
     No messages to clean were provided
 
 
-#### Add release notes from commit messages
+add release notes from commit messages
 
 
 ```python
@@ -1542,7 +1691,7 @@ paa.add_or_update_release_notes(
     Updating release notes ...
 
 
-#### Prepare setup directory
+prepare setup directory
 
 
 ```python
@@ -1552,7 +1701,7 @@ paa.prep_setup_dir()
     Preparing setup directory ...
 
 
-#### Merge local dependacies
+merge local dependacies
 
 
 ```python
@@ -1567,7 +1716,7 @@ paa.merge_local_dependacies(
     Merging ../tests/package_auto_assembler/other/example_module.py with dependecies from ../tests/package_auto_assembler/dependancies/ into ./example_module/example_module.py
 
 
-#### Add requirements from module
+add requirements from module
 
 
 ```python
@@ -1609,7 +1758,7 @@ paa.requirements_list
 
 
 
-#### Make README out of example notebook
+make README out of example notebook
 
 
 ```python
@@ -1624,7 +1773,7 @@ paa.add_readme(
     Adding README from ../tests/package_auto_assembler/other/example_module.ipynb to ./example_module/README.md
 
 
-#### Prepare setup file
+prepare setup file
 
 
 ```python
@@ -1654,7 +1803,7 @@ paa.prep_setup_file(
     Preparing setup file for example-module package ...
 
 
-#### Make package
+make package
 
 
 ```python
@@ -1674,7 +1823,7 @@ paa.make_package(
 
 
 
-### 15. Making simple MkDocs site
+### 16. Making simple MkDocs site
 
 Package documentation can be presented in a form of mkdocs static site, which could be either served or deployed to something like github packages. 
 
@@ -1682,9 +1831,11 @@ Main module docstring is used as intro package that contains something like opti
  
 The one for this package can be seen [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/)
 
-It can be packaged with the package and be displayed in webrowser like documentation for api via `{package_name}\docs` when using included api handling capabilities.
+It can be packaged with the package and be displayed in web browser like documentation for api via `<package-name>\docs` when using included api handling capabilities.
 
-##### - preparing inputs
+---
+
+##### 1. Preparing inputs
 
 
 ```python
@@ -1721,7 +1872,7 @@ mdh = MkDocsHandler(
     project_name = "temp_project")
 ```
 
-##### - preparing site
+##### 2. Preparing site
 
 
 ```python
@@ -1746,7 +1897,7 @@ mdh.build_mkdocs_site()
     INFO    -  Documentation built in 0.12 seconds
 
 
-##### - test runing site
+##### 3. Test-running site
 
 
 ```python
