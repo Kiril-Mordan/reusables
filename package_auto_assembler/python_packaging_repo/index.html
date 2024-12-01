@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.30">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.30">
     
     
       
@@ -375,6 +375,75 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-prepare-local-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Prepare Local Environment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-add-or-edit-a-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Add or Edit a Package
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-test-install-a-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Test-Install a Package
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-push-changes-to-ppr" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Push Changes to PPR
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-publish-a-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Publish a Package
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Information
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#setting-up-new-ppr" class="md-nav__link">
     <span class="md-ellipsis">
       Setting up new PPR
@@ -493,6 +562,75 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-prepare-local-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Prepare Local Environment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-add-or-edit-a-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Add or Edit a Package
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-test-install-a-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Test-Install a Package
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-push-changes-to-ppr" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Push Changes to PPR
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-publish-a-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Publish a Package
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Information
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#setting-up-new-ppr" class="md-nav__link">
     <span class="md-ellipsis">
       Setting up new PPR
@@ -564,10 +702,55 @@
 <li><a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#10-adding-cli-interfaces">CLI interface</a> - Add command-line utilities to the package.</li>
 <li><a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#11-adding-routes-and-running-fastapi-application">FastAPI routes</a> - Embed API routes to run FastAPI applications from packages.</li>
 <li><a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#12-adding-ui-and-running-streamlit-application">Streamlit apps</a> - Include interactive UIs.</li>
-<li><a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#15-making-simple-mkdocs-site">MkDocs pages</a> - Generate simple static documentation websites for each package.</li>
+<li><a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#16-making-simple-mkdocs-site">MkDocs pages</a> - Generate simple static documentation websites for each package.</li>
 </ul>
 <p><img alt="Publishing Repo Input/Output" src="../images/package_auto_assembler-input_output_files.png" /></p>
 <p><em>Diagram: The structure includes core package files and additional optional components such as CLI interfaces, FastAPI routes, or documentation.</em></p>
+<h2 id="basic-usage">Basic usage</h2>
+<h3 id="1-prepare-local-environment">1. Prepare Local Environment</h3>
+<p>Before developing code within a packaging repository, ensure that the <code>package-auto-assembler</code> python package is installed in your environment:</p>
+<pre><code class="language-bash">pip install package-auto-assembler
+</code></pre>
+<p><strong>Note</strong>: Some config files, like <code>.pipirc</code> and <code>.pip.conf</code>, might be required to <a href="https://learn.microsoft.com/en-us/azure/devops/artifacts/quickstarts/python-packages?view=azure-devops&amp;tabs=Windows#connect-to-your-feed">configure access to private packages from Azure Artifacts storage</a>. </p>
+<h3 id="2-add-or-edit-a-package">2. Add or Edit a Package</h3>
+<p>To prepare your code for packaging:</p>
+<ol>
+<li>
+<p>Create/find a <code>.py</code> file in <code>module_dir</code> with a name of the package (use underscores (<code>_</code>) instead of hyphens (<code>-</code>) and spaces)</p>
+</li>
+<li>
+<p>Make sure the module you're trying to create/edit follows basic requirements, described <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#preparing-code-for-packaging">here</a></p>
+</li>
+<li>
+<p>Add/edit <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#preparing-files-for-packaging">optional files</a> and <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#preparing-documentation-for-packaging">additional documentation</a>. </p>
+</li>
+</ol>
+<p><strong>Note</strong>: Relevant names of the directories, like <code>module_dir</code>, could be checked in <code>.paa.config</code> file from your instance of a packaging repository. This and the following steps assume that an instance of a packaging repository was already created or pulled. If not, to setup a new ppr take a look <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#setting-up-new-ppr">here</a>. </p>
+<h3 id="3-test-install-a-package">3. Test-Install a Package</h3>
+<p>After adding or editing files related to your package, install it locally and ensure it works as expected.</p>
+<pre><code class="language-bash">paa test-install your-package
+</code></pre>
+<p><strong>Note</strong>: Use the <code>--skip-deps-install</code> flag if reinstalling dependencies is unnecessary. More flags could be seen <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#creating-packages">here</a>.</p>
+<h3 id="4-push-changes-to-ppr">4. Push Changes to PPR</h3>
+<p>When code is ready for release, commit changes, including the package name and a list of changes in your commit messages. Push the changes to a new branch your packaging repository, then create a pull request to the <code>main</code> branch.</p>
+<pre><code class="language-bash">git commit -m &quot;[your_package] change one; comment about change two&quot;
+</code></pre>
+<p><strong>Note</strong>: Merge files for only one package at a time. The pipeline relies on commit history to determine which package to test and publish.</p>
+<h3 id="5-publish-a-package">5. Publish a Package</h3>
+<p>If the test results are satisfactory, merge the pull request with <code>main</code>. The pipeline will then:</p>
+<ol>
+<li>Initialize the packaging process.</li>
+<li>Prepare the package.</li>
+<li>Publish it to package storage.</li>
+<li>Update tracking files in <code>.paa</code> and README.</li>
+</ol>
+<p><strong>Note</strong> Due to possibility of multiple packaging feeds, trigger for <code>azure devops + azure artifacts feed</code> template would not be automatic on merge, but would need to be triggered manually after merging with <code>main</code>. To do so, in your Azure DevOps project, navigate to <code>Pipelines</code> -&gt; <code>your-packaging-repo-pipeline</code> -&gt; <code>Run pipeline</code> and select one of the configured upload feeds in <code>Upload Feed</code> as well as indicate package to be published (ensure to use underscores (<code>_</code>) instead of hyphens (<code>-</code>)) in <code>Package Name</code> field. </p>
+<h3 id="additional-information">Additional Information</h3>
+<p>To see more CLI tools and options, run:</p>
+<pre><code class="language-bash">paa --help
+</code></pre>
+<p>Or visit <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/"><code>package-auto-assembler</code> documentation</a>.</p>
+<hr />
 <h2 id="setting-up-new-ppr">Setting up new PPR</h2>
 <p>A Python Packaging Repository can be created for:</p>
 <ul>
@@ -593,15 +776,15 @@
 <p><strong>Set Up GitHub Pages</strong>:</p>
 <ul>
 <li>Navigate to <code>Settings</code> -&gt; <code>Pages</code>.</li>
-<li>Select "Deploy from a branch," choose the <code>gh-pages</code> branch (if it does not exist, create a new branch named <code>gh-pages</code>), and set the directory to <code>/root</code>. <a href="https://docs.github.com/en/pages/quickstart">More details</a>.</li>
+<li>Select <code>Deploy from a branch</code> choose the <code>gh-pages</code> branch (if it does not exist, create a new branch named <code>gh-pages</code>), and set the directory to <code>/root</code>. <a href="https://docs.github.com/en/pages/quickstart">More details</a>.</li>
 </ul>
 </li>
 <li>
 <p><strong>Configure GitHub Actions</strong>:</p>
 <ul>
 <li>Navigate to <code>Settings</code> -&gt; <code>Actions</code> -&gt; <code>General</code>.</li>
-<li>Under "Actions permissions," select "Allow all actions and reusable workflows."</li>
-<li>Under "Workflow permissions," select "Read and write permissions." <a href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository">More details</a>.</li>
+<li>Under <code>Actions permissions</code> select <code>Allow all actions and reusable workflows</code></li>
+<li>Under <code>Workflow permissions</code> select <code>Read and write permissions</code> <a href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository">More details</a>.</li>
 </ul>
 </li>
 <li>
@@ -614,13 +797,11 @@
 <li>
 <p><strong>Initialize the Template</strong>:</p>
 <ul>
-<li>Use <code>paa</code> to set up the PPR:
- <code>bash
- paa init-ppr --github</code></li>
+<li>Use <code>paa</code> to set up the PPR:</li>
 </ul>
+<p><code>paa init-ppr --github</code></p>
 <p>Or include all optional directories:</p>
-<p><code>bash
- paa init-ppr --github --full</code></p>
+<p><code>paa init-ppr --github --full</code></p>
 <ul>
 <li>Edit <code>.paa.config</code> if needed</li>
 <li>Run <code>paa init-ppr --github</code> or <code>paa init-paa</code> a second time to initialize directories for storing packaging files based on <code>.paa.config</code>.</li>
@@ -652,7 +833,7 @@
 <li>
 <p><strong>Add Credentials</strong>:</p>
 <ul>
-<li>Generate a Personal Access Token (<code>TWINE_USERNAME</code> and <code>TWINE_PASSWORD</code>) with "Read &amp; write" permissions for "Packaging." <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops">More details</a>.</li>
+<li>Generate a Personal Access Token (<code>TWINE_USERNAME</code> and <code>TWINE_PASSWORD</code>) with <code>Read &amp; write</code>e permissions for <code>Packaging</code> <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops">More details</a>.</li>
 </ul>
 </li>
 <li>
@@ -660,11 +841,9 @@
 <ul>
 <li>Use <code>paa</code> to set up the PPR:</li>
 </ul>
-<p><code>bash
-paa init-ppr --azure</code></p>
+<p><code>paa init-ppr --azure</code></p>
 <p>Or include all optional directories:</p>
-<p><code>bash
-paa init-ppr --azure --full</code></p>
+<p><code>paa init-ppr --azure --full</code></p>
 <ul>
 <li>Edit <code>.paa.config</code> if needed</li>
 <li>Run <code>paa init-ppr --azure</code> or <code>paa init-paa</code> a second time to initialize  directories for storing packaging files based on <code>.paa.config</code>.</li>
