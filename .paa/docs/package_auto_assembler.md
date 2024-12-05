@@ -1404,7 +1404,7 @@ Dependencies from these files are extracted in the similar manner to the main mo
 Tools from main `.py` file could still be imported like the following:
 
 ```python
-from package_name.package_name import ToBeImported
+from package_name import ToBeImported
 ```
 
 Config file with server, theme and other settings can be provided via optional `.paa.streamlit.config`. 

@@ -1,5 +1,13 @@
 # Release notes
 
+### 0.5.19
+
+    - adding extra_docs to paa.tracking
+
+    - fix for streamlit requiring optional config file
+
+    - fix for show-module-info
+
 ### 0.5.18
 
     - adding base README to initial ppr instance
