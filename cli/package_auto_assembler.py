@@ -627,25 +627,26 @@ def check_vulnerabilities(ctx,
     )
 
     if paa.metadata_h.is_metadata_available():
-
-
         paa.add_metadata_from_module()
         paa.add_metadata_from_cli_module()
-        paa.metadata['version'] = paa.default_version
-        paa.prep_setup_dir()
-
-        try:
-            paa.merge_local_dependacies()
-
-            paa.add_requirements_from_module()
-            paa.add_requirements_from_cli_module()
-        except Exception as e:
-            print("")
-        finally:
-            shutil.rmtree(paa.setup_directory)
-
     else:
-        paa.logger.info(f"Metadata condition was not fullfield for {module_name.replace('_','-')}")
+        paa.metadata = {}
+
+
+    paa.metadata['version'] = paa.default_version
+    paa.prep_setup_dir()
+
+    try:
+        paa.merge_local_dependacies()
+
+        paa.add_requirements_from_module()
+        paa.add_requirements_from_cli_module()
+    except Exception as e:
+        print("")
+    finally:
+        shutil.rmtree(paa.setup_directory)
+
+    
 
 @click.command()
 @click.argument('module_name')
@@ -734,24 +735,24 @@ def check_licenses(ctx,
         normalize_labels = True
 
     if paa.metadata_h.is_metadata_available():
-
-
         paa.add_metadata_from_module()
         paa.add_metadata_from_cli_module()
-        paa.metadata['version'] = paa.default_version
-        paa.prep_setup_dir()
-
-        try:
-            paa.merge_local_dependacies()
-            paa.add_requirements_from_module()
-            paa.add_requirements_from_cli_module()
-        except Exception as e:
-            print("")
-        finally:
-            shutil.rmtree(paa.setup_directory)
-
     else:
-        paa.logger.info(f"Metadata condition was not fullfield for {module_name.replace('_','-')}")
+        paa.metadata = {}
+
+    paa.metadata['version'] = paa.default_version
+    paa.prep_setup_dir()
+
+    try:
+        paa.merge_local_dependacies()
+        paa.add_requirements_from_module()
+        paa.add_requirements_from_cli_module()
+    except Exception as e:
+        print("")
+    finally:
+        shutil.rmtree(paa.setup_directory)
+
+
 
 @click.command()
 @click.argument('label_name')

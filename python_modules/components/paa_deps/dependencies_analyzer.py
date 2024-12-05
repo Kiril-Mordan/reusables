@@ -7,7 +7,7 @@ import difflib
 import importlib
 import importlib.metadata
 import importlib.resources as pkg_resources
-import pkg_resources as pkgr
+import pkg_resources as pkgr #-
 
 @attr.s
 class DependenciesAnalyser:
