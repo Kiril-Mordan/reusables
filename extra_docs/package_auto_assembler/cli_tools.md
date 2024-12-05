@@ -518,7 +518,7 @@ Since commit messages are rather standard practice, by taking advantage of them 
 paa update-release-notes --help
 ```
 
-```
+``` bash
 Usage: paa update-release-notes [OPTIONS] LABEL_NAME
 
   Update release notes.

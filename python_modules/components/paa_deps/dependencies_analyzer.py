@@ -7,6 +7,7 @@ import difflib
 import importlib
 import importlib.metadata
 import importlib.resources as pkg_resources
+import pkg_resources as pkgr #-
 
 @attr.s
 class DependenciesAnalyser:
@@ -364,9 +365,8 @@ class DependenciesAnalyser:
         dependencies and returns of names of those that match.
         """
 
-        import pkg_resources
         matches = []
-        for dist in pkg_resources.working_set:
+        for dist in pkgr.working_set:
             try:
                 metadata_lines = dist.get_metadata_lines('METADATA')
                 if all(any(tag in line for line in metadata_lines) for tag in tags):
@@ -399,8 +399,7 @@ class DependenciesAnalyser:
         if package_name is None:
             raise ValueError(f"Provide package_name!")
 
-        import pkg_resources
-        dist = pkg_resources.get_distribution(package_name)
+        dist = pkgr.get_distribution(package_name)
         metadata = dist.get_metadata_lines('METADATA')
 
         try:
@@ -418,7 +417,18 @@ class DependenciesAnalyser:
 
         for line in metadata:
             if line.startswith("Keywords:"):
-                keywords = ast.literal_eval(line.split("Keywords: ")[1])
+                value = line.split("Keywords: ", 1)[1].strip()  # Safely split and clean
+                try:
+                    # Attempt to parse as a Python literal if possible
+                    if value.startswith("[") and value.endswith("]"):  # Likely a list-like string
+                        keywords = ast.literal_eval(value)
+                    else:
+                        # Otherwise, treat as a plain comma-separated string
+                        keywords = [keyword.strip() for keyword in value.split(",")]
+                except (ValueError, SyntaxError):
+                    # If parsing fails, default to an empty list (or handle as needed)
+                    print(f"Warning: Could not parse Keywords: {value}")
+                    keywords = []
             if line.startswith("Author:"):
                 author = line.split("Author: ")[1]
             if line.startswith("Author-email:"):

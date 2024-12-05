@@ -1017,6 +1017,10 @@ class PackageAutoAssembler:
                 and os.path.exists(self.drawio_filepath)):
                 artifacts_filepaths['.paa.tracking/.drawio'] = self.drawio_filepath
 
+            if (self.extra_docs_dir is not None\
+                and os.path.exists(self.extra_docs_dir)):
+                artifacts_filepaths['.paa.tracking/extra_docs'] = self.extra_docs_dir
+
             if (self.tests_dir is not None\
                 and os.path.exists(self.tests_dir)):
                 artifacts_filepaths['tests'] = self.tests_dir

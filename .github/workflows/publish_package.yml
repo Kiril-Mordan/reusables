@@ -57,6 +57,10 @@ jobs:
         if: steps.changed-modules.outputs.files != ''
         run: git pull origin main
 
+      - name: Save module requirements
+        if: steps.changed-modules.outputs.files != ''
+        run: paa extract-module-requirements "${{ steps.changed-modules.outputs.files }}" > ".paa/requirements/requirements_${{ steps.changed-modules.outputs.files }}.txt"
+
       - name: Assemble and build package
         if: steps.changed-modules.outputs.files != ''
         run: |

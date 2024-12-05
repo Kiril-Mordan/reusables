@@ -105,7 +105,7 @@ class StreamlitHandler:
         if config_path is None:
             config_path = self.config_path
 
-        if config_path:
+        if (config_path is not None) and os.path.exists(config_path):
             self._prep_custom_config(config_path = config_path)
             
         if package_name is None:
