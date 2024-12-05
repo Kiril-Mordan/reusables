@@ -1068,8 +1068,9 @@ def show_module_info(ctx,
 
     try:
         package_metadata = da.get_package_metadata(label_name)
-    except Exception:
+    except Exception as e:
         click.echo(f"Failed to extract {label_name} metadata!")
+        print(e)
 
     # get docstring
     try:

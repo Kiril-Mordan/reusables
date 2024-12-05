@@ -43,9 +43,9 @@ To prepare your code for packaging:
 
 1. Create/find a `.py` file in `module_dir` with a name of the package (use underscores (`_`) instead of hyphens (`-`) and spaces)
 
-2. Make sure the module you're trying to create/edit follows basic requirements, described [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#preparing-code-for-packaging)
+2. Make sure the module you're trying to create/edit follows basic requirements, described [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#1-preparing-code-for-packaging)
 
-3. Add/edit [optional files](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#preparing-files-for-packaging) and [additional documentation](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#preparing-documentation-for-packaging). 
+3. Add/edit [optional files](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#3-preparing-files-for-packaging) and [additional documentation](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#2-preparing-documentation-for-packaging). 
 
 
 **Note**: Relevant names of the directories, like `module_dir`, could be checked in `.paa.config` file from your instance of a packaging repository. This and the following steps assume that an instance of a packaging repository was already created or pulled. If not, to setup a new ppr take a look [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#setting-up-new-ppr). 
