@@ -179,6 +179,33 @@ def init_ppr(ctx,
         click.echo(f"Select workflow type for ppr!")
 
 
+@click.command()
+@click.argument('module_name')
+@click.option('--debug', is_flag=True, type=bool, required=False, help='If checked, debug messages will be shown.')
+@click.pass_context
+def unfold_package(ctx,
+        module_name,
+        debug):
+
+    """Unfold paa package inside ppr"""
+
+    if debug:
+        loggerLvl = logging.DEBUG
+    else:
+        loggerLvl = logging.INFO
+
+    status = PprHandler(
+        loggerLvl = loggerLvl
+    ).unfold_package(module_name = module_name)
+
+    if status == 2:
+        click.echo(f"Package does not have .paa.tracking !")
+    
+    if status == 1:
+        click.echo(f"Package was not found!")
+
+
+
 
 @click.command()
 @click.argument('module_name')
@@ -1815,6 +1842,7 @@ def run_pylint_tests(ctx,
 cli.add_command(init_paa, "init-paa")
 cli.add_command(init_config, "init-config")
 cli.add_command(init_ppr, "init-ppr")
+cli.add_command(unfold_package, "unfold-package")
 cli.add_command(test_install, "test-install")
 cli.add_command(make_package, "make-package")
 cli.add_command(check_vulnerabilities, "check-vulnerabilities")
