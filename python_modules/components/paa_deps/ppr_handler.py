@@ -7,6 +7,7 @@ import importlib.resources as pkg_resources
 import csv
 import shutil
 import yaml
+import json
 import attr #>=22.2.0
 
 @attr.s
@@ -447,3 +448,398 @@ class PprHandler:
             return True
 
         return False
+
+    def _copy_missing_files(self, src : str, dst : str):
+        """
+        Copy only missing files and directories from src to dst.
+
+        Args:
+            src (str): Source directory.
+            dst (str): Destination directory.
+        """
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+
+        for root, dirs, files in os.walk(src):
+            # Construct the relative path from the source root
+            rel_path = os.path.relpath(root, src)
+            dest_root = os.path.join(dst, rel_path)
+
+            # Create directories in the destination if they don't exist
+            for directory in dirs:
+                dest_dir = os.path.join(dest_root, directory)
+                if not os.path.exists(dest_dir):
+                    os.makedirs(dest_dir)
+                else:
+                    self.logger.warning(f"{dest_dir} already exists!")
+
+            # Copy files that don't exist in the destination
+            for file in files:
+                src_file = os.path.join(root, file)
+                dest_file = os.path.join(dest_root, file)
+
+                if not os.path.exists(dest_file):
+                    shutil.copy2(src_file, dest_file)  # Preserve metadata
+                else:
+                    self.logger.warning(f"{dest_file} already exists!")
+
+    def _unfold_paa_config(self, paa_tracking_dir):
+
+        self.logger.debug("Preparing .paa.config ...")
+
+        package_paa_config_path = os.path.join(paa_tracking_dir, ".paa.config")
+        repo_paa_config_path = ".paa.config"
+
+        with open(package_paa_config_path, 'r') as file:
+            paa_config = yaml.safe_load(file)
+
+        if os.path.exists(repo_paa_config_path):
+            with open(repo_paa_config_path, 'r') as file:
+                repo_paa_config = yaml.safe_load(file)
+
+            paa_config.update(repo_paa_config)
+        else:
+            shutil.copy(package_paa_config_path, repo_paa_config_path)
+
+        return paa_config
+
+    def _unfold_components(self, 
+                         paa_tracking_dir : str, 
+                         paa_config : dict):
+
+        if paa_config.get("dependencies_dir"):
+
+            self.logger.debug(f"Preparing components ...")
+            p_components_path = os.path.join(paa_tracking_dir,
+                "python_modules", "components") 
+
+            r_components_path = paa_config.get("dependencies_dir")
+
+            if not os.path.exists(r_components_path):
+                os.makedirs(r_components_path)
+
+            if os.path.exists(p_components_path):
+                self._copy_missing_files(p_components_path,
+                                r_components_path)
+
+                            
+    def _unfold_dirs(self,
+                     repo_dir : str,
+                     dir_type : str,
+                     packaged_name : str,
+                    package_path : str,
+                    module_name_subdir : bool,
+                    module_name : str):
+
+        if repo_dir:
+
+            self.logger.debug(f"Preparing {dir_type} ...")
+            p_dir_path = os.path.join(package_path, 
+                                        packaged_name) 
+
+            if not os.path.exists(repo_dir):
+                os.makedirs(repo_dir)
+
+            if module_name_subdir:
+                repo_path = os.path.join(repo_dir, module_name)
+            else:
+                repo_path = repo_dir
+
+            if os.path.exists(p_dir_path):
+                self._copy_missing_files(p_dir_path,
+                                repo_path)
+
+
+    def _unfold_file(self,
+                    repo_path : str,
+                    file_type : str,
+                    file_extension : str,
+                    packaged_name : str,
+                    package_path : str,
+                    module_name : str):
+
+        if repo_path:
+
+            self.logger.debug(f"Preparing {file_type} ...")
+
+            p_module_path = os.path.join(
+                os.path.join(package_path, 
+                            packaged_name))
+            r_module_path = os.path.join(
+                repo_path,
+                f"{module_name}{file_extension}"
+            )
+
+            if not os.path.exists(repo_path):
+                os.makedirs(repo_path)
+
+            if (not os.path.exists(r_module_path)) and os.path.exists(p_module_path):
+                shutil.copy(p_module_path, r_module_path)
+            else:
+                if os.path.exists(r_module_path):
+                    self.logger.warning(f"{r_module_path} already exists!")
+
+    def _unfold_lsts_package_version(self, 
+                                     paa_tracking_dir : str,
+                                     module_name : str):
+
+        self.logger.debug(f"Preparing lsts package version ...")
+
+        p_versions_filepath = os.path.join(
+            paa_tracking_dir, "lsts_package_versions.yml")
+        r_versions_filepath = ".paa/tracking/lsts_package_versions.yml"
+
+        if os.path.exists(p_versions_filepath):
+            with open(p_versions_filepath, 'r') as file:
+                # Load the contents of the file
+                p_lsts_versions = yaml.safe_load(file) or {}
+        else:
+            p_lsts_versions = {}
+
+        if os.path.exists(r_versions_filepath):
+            with open(r_versions_filepath, 'r') as file:
+                # Load the contents of the file
+                r_lsts_versions = yaml.safe_load(file) or {}
+        else:
+            r_lsts_versions = {}
+
+        r_lsts_versions[module_name] = p_lsts_versions.get(module_name, "0.0.0")
+
+        with open(r_versions_filepath, 'w', encoding='utf-8') as file:
+            yaml.safe_dump(r_lsts_versions, file)
+
+    def _unfold_version_logs(self, 
+                            paa_tracking_dir : str,
+                            module_name : str):
+
+        self.logger.debug(f"Preparing version logs ...")
+
+        try:
+
+            p_versions_filepath = os.path.join(
+                paa_tracking_dir, "version_logs.csv")
+            r_versions_filepath = ".paa/tracking/version_logs.csv"
+
+            if os.path.exists(p_versions_filepath):
+                p_logs = pd.read_csv(p_versions_filepath)
+            else:
+                p_logs = pd.DataFrame([], columns=["Timestamp","Package","Version"])
+
+            if os.path.exists(r_versions_filepath):
+                r_logs = pd.read_csv(r_versions_filepath)
+            else:
+                r_logs = pd.DataFrame([], columns=["Timestamp","Package","Version"])
+
+            new_logs = pd.concat([
+                p_logs.query(f"Package == '{module_name}'"),
+                r_logs.query(f"Package != '{module_name}'")]).sort_values(by="Timestamp", ascending=True)
+        
+            new_logs.to_csv(r_versions_filepath, index=False)
+        
+        except Exception as e:
+            self.logger.error(f"Merging version logs for {module_name} failed! {e}")
+
+    def _unfold_package_mappings(self, 
+                            paa_tracking_dir : str,
+                            module_name : str):
+
+        self.logger.debug(f"Preparing package mappings ...")
+
+        try:
+
+            p_mappings_filepath = os.path.join(
+                paa_tracking_dir, "package_mapping.json")
+            r_mappings_filepath = ".paa/package_mapping.json"
+
+            if os.path.exists(p_mappings_filepath):
+                with open(p_mappings_filepath, 'r',
+                encoding = "utf-8") as file:
+                    p_mappings = json.load(file)
+            else:
+                p_mappings = {}
+
+            if os.path.exists(r_mappings_filepath):
+                with open(r_mappings_filepath, 'r',
+                encoding = "utf-8") as file:
+                    r_mappings = json.load(file)
+            else:
+                r_mappings = {}
+
+            r_mappings.update(p_mappings)
+        
+            with open(r_mappings_filepath, "w") as json_file:
+                json.dump(r_mappings, json_file, indent=4)
+        
+        except Exception as e:
+            self.logger.error(f"Merging package mappings for {module_name} failed! {e}")
+
+    def _unfold_package_licenses(self, 
+                            paa_tracking_dir : str,
+                            module_name : str):
+
+        self.logger.debug(f"Preparing package licenses ...")
+
+        try:
+
+            p_mappings_filepath = os.path.join(
+                paa_tracking_dir, "package_licenses.json")
+            r_mappings_filepath = ".paa/package_licenses.json"
+
+            if os.path.exists(p_mappings_filepath):
+                with open(p_mappings_filepath, 'r',
+                encoding = "utf-8") as file:
+                    p_mappings = json.load(file)
+            else:
+                p_mappings = {}
+
+            if os.path.exists(r_mappings_filepath):
+                with open(r_mappings_filepath, 'r',
+                encoding = "utf-8") as file:
+                    r_mappings = json.load(file)
+            else:
+                r_mappings = {}
+
+            r_mappings.update(p_mappings)
+        
+            with open(r_mappings_filepath, "w") as json_file:
+                json.dump(r_mappings, json_file, indent=4)
+        
+        except Exception as e:
+            self.logger.error(f"Merging package licenses for {module_name} failed! {e}")
+
+    def unfold_package(self, 
+                       module_name : str = None):
+
+        """
+        Unfold package into PPR.
+        """
+
+        module_name = module_name.replace("-","_")
+
+        package_path = pkg_resources.files(module_name)
+        if not os.path.exists(package_path):
+            return 1
+
+        paa_tracking_dir = os.path.join(package_path, ".paa.tracking")
+
+        if not os.path.exists(paa_tracking_dir):
+            return 2
+
+        paa_config = self._unfold_paa_config(paa_tracking_dir = paa_tracking_dir)
+
+        files_to_unfold = {
+            "main_module" : {
+                "repo_path" : paa_config.get("module_dir"),
+                "file_extension" : ".py",
+                "packaged_name" : os.path.join(
+                    ".paa.tracking", 
+                    "python_modules",
+                    f"{module_name}.py"),
+            },
+            "cli" : {
+                "repo_path" : paa_config.get("cli_dir"),
+                "file_extension" : ".py",
+                "packaged_name" : f"cli.py",
+            },
+            "routes" : {
+                "repo_path" : paa_config.get("api_routes_dir"),
+                "file_extension" : ".py",
+                "packaged_name" : f"routes.py",
+            },
+            "streamlit" : {
+                "repo_path" : paa_config.get("streamlit_dir"),
+                "file_extension" : ".py",
+                "packaged_name" : f"streamlit.py",
+            },
+            "example_notebooks" : {
+                "repo_path" : paa_config.get("example_notebooks_path"),
+                "file_extension" : ".ipynb",
+                "packaged_name" : os.path.join(
+                    ".paa.tracking", 
+                    f"notebook.ipynb"),
+            },
+            "drawio" : {
+                "repo_path" : paa_config.get("drawio_dir"),
+                "file_extension" : ".drawio",
+                "packaged_name" : os.path.join(
+                    ".paa.tracking", 
+                    f".drawio")
+            },
+            "release_notes" : {
+                "repo_path" : ".paa/release_notes",
+                "file_extension" : ".md",
+                "packaged_name" : os.path.join(
+                    ".paa.tracking", 
+                    f"release_notes.md"),
+            }
+        }
+
+        dirs_to_unfold = {
+            "components" : {
+                "repo_dir" : paa_config.get("dependencies_dir"),
+                "module_name_subdir" : False,
+                "packaged_name" : os.path.join(
+                    ".paa.tracking", 
+                    "python_modules",
+                    f"components"),
+
+            },
+            "tests" : {
+                "repo_dir" : paa_config.get("tests_dir"),
+                "module_name_subdir" : True,
+                "packaged_name" : "tests",
+
+            },
+            "artifacts" : {
+                "repo_dir" : paa_config.get("artifacts_dir"),
+                "module_name_subdir" : True,
+                "packaged_name" : "artifacts",
+
+            },
+            "extra_docs" : {
+                "repo_dir" : paa_config.get("extra_docs_dir"),
+                "module_name_subdir" : True,
+                "packaged_name" : os.path.join(
+                    ".paa.tracking", "extra_docs"),
+
+            }
+        }
+
+        if not os.path.exists(".paa"):
+            self.init_paa_dir()
+
+        for file_name, file_spec in files_to_unfold.items():
+
+            self._unfold_file(
+                **file_spec,
+                package_path = package_path,
+                module_name = module_name,
+                file_type = file_name
+            )
+
+        for dir_name, dir_spec in dirs_to_unfold.items():
+
+            self._unfold_dirs(
+                **dir_spec,
+                package_path = package_path,
+                module_name = module_name,
+                dir_type = dir_name
+            )
+
+        self._unfold_lsts_package_version(
+            paa_tracking_dir = paa_tracking_dir,
+            module_name = module_name
+        )
+        self._unfold_version_logs(
+            paa_tracking_dir = paa_tracking_dir,
+            module_name = module_name
+        )
+        self._unfold_package_mappings(
+            paa_tracking_dir = paa_tracking_dir,
+            module_name = module_name
+        )
+        self._unfold_package_licenses(
+            paa_tracking_dir = paa_tracking_dir,
+            module_name = module_name
+        )
+

@@ -187,6 +187,8 @@ class PackageAutoAssembler:
         self._initialize_metadata_handler()
         self._initialize_import_mapping_handler()
 
+        self.original_module_filepath = self.module_filepath
+
 
     def _initialize_logger(self):
 
@@ -1032,7 +1034,7 @@ class PackageAutoAssembler:
             if (self.module_filepath  is not None \
                 and os.path.exists(self.module_filepath)):
                 artifacts_filepaths[
-                    f'.paa.tracking/python_modules/{self.module_name}.py'] = self.module_filepath
+                    f'.paa.tracking/python_modules/{self.module_name}.py'] = self.original_module_filepath
             
             if (self.local_dependacies_list  \
                 and os.path.exists(self.dependencies_dir)):
