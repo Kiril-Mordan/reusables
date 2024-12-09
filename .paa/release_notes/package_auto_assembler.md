@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.5.20
+
+    - initial support for package unfolding
+
 ### 0.5.19
 
     - adding extra_docs to paa.tracking
