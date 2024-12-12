@@ -1,5 +1,13 @@
 # Release notes
 
+### 0.5.21
+
+    - brief description of artifact-centric approach
+
+    - support for package renaming in ppr
+
+    - support for package removal from ppr
+
 ### 0.5.20
 
     - initial support for package unfolding
