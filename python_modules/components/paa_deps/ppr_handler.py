@@ -843,3 +843,314 @@ class PprHandler:
             module_name = module_name
         )
 
+    def _remove_dirs(self,
+                     repo_dir : str,
+                     dir_type : str,
+                    module_name_subdir : bool,
+                    module_name : str):
+
+        if repo_dir:
+
+            self.logger.debug(f"Removing {dir_type} for {module_name} ...")
+
+            if module_name_subdir:
+                repo_path = os.path.join(repo_dir, module_name)
+            else:
+                repo_path = repo_dir
+
+            if os.path.exists(repo_path):
+                shutil.rmtree(repo_path)
+
+
+    def _remove_file(self,
+                    repo_path : str,
+                    file_type : str,
+                    file_extension : str,
+                    module_name : str):
+
+        if repo_path:
+
+            self.logger.debug(f"Removing {file_type} for {module_name} ...")
+
+            r_module_path = os.path.join(
+                repo_path,
+                f"{module_name}{file_extension}"
+            )
+
+            if os.path.exists(r_module_path):
+                os.remove(r_module_path)
+
+
+    def _remove_lsts_package_version(self, 
+                                     module_name : str):
+
+        self.logger.debug(f"Cleaning lsts package version ...")
+
+        r_versions_filepath = ".paa/tracking/lsts_package_versions.yml"
+
+        if os.path.exists(r_versions_filepath):
+            with open(r_versions_filepath, 'r') as file:
+                # Load the contents of the file
+                r_lsts_versions = yaml.safe_load(file) or {}
+        else:
+            r_lsts_versions = {}
+
+        if r_lsts_versions.get(module_name):
+            del r_lsts_versions[module_name]
+
+            with open(r_versions_filepath, 'w', encoding='utf-8') as file:
+                yaml.safe_dump(r_lsts_versions, file)
+
+    def _remove_version_logs(self, 
+                            module_name : str):
+
+        self.logger.debug(f"Cleaning version logs ...")
+
+        try:
+
+            r_versions_filepath = ".paa/tracking/version_logs.csv"
+
+            if os.path.exists(r_versions_filepath):
+                r_logs = pd.read_csv(r_versions_filepath)
+            else:
+                r_logs = pd.DataFrame([], columns=["Timestamp","Package","Version"])
+
+            new_logs = r_logs.query(f"Package != '{module_name}'")
+        
+            new_logs.to_csv(r_versions_filepath, index=False)
+        
+        except Exception as e:
+            self.logger.error(f"Merging version logs for {module_name} failed! {e}")
+
+    def remove_package(self, 
+                       module_name : str = None):
+
+        """
+        Remove package from PPR.
+        """
+
+        module_name = module_name.replace("-","_")
+
+        repo_paa_config_path = ".paa.config"
+
+        paa_config = {}
+
+        if os.path.exists(repo_paa_config_path):
+            with open(repo_paa_config_path, 'r') as file:
+                repo_paa_config = yaml.safe_load(file)
+
+            paa_config.update(repo_paa_config)
+        else:
+            return 1
+
+        files_to_remove = {
+            "main_module" : {
+                "repo_path" : paa_config.get("module_dir"),
+                "file_extension" : ".py"
+            },
+            "cli" : {
+                "repo_path" : paa_config.get("cli_dir"),
+                "file_extension" : ".py",
+            },
+            "routes" : {
+                "repo_path" : paa_config.get("api_routes_dir"),
+                "file_extension" : ".py",
+            },
+            "streamlit" : {
+                "repo_path" : paa_config.get("streamlit_dir"),
+                "file_extension" : ".py",
+            },
+            "example_notebooks" : {
+                "repo_path" : paa_config.get("example_notebooks_path"),
+                "file_extension" : ".ipynb",
+            },
+            "drawio" : {
+                "repo_path" : paa_config.get("drawio_dir"),
+                "file_extension" : ".drawio"
+            },
+            "release_notes" : {
+                "repo_path" : ".paa/release_notes",
+                "file_extension" : ".md"
+            }
+        }
+
+        dirs_to_remove = {
+            "components" : {
+                "repo_dir" : paa_config.get("dependencies_dir"),
+                "module_name_subdir" : False,
+
+            },
+            "tests" : {
+                "repo_dir" : paa_config.get("tests_dir"),
+                "module_name_subdir" : True
+
+            },
+            "artifacts" : {
+                "repo_dir" : paa_config.get("artifacts_dir"),
+                "module_name_subdir" : True,
+
+            },
+            "extra_docs" : {
+                "repo_dir" : paa_config.get("extra_docs_dir"),
+                "module_name_subdir" : True
+
+            }
+        }
+
+        if not os.path.exists(".paa"):
+            self.init_paa_dir()
+
+        for file_name, file_spec in files_to_remove.items():
+
+            self._remove_file(
+                **file_spec,
+                module_name = module_name,
+                file_type = file_name
+            )
+
+        for dir_name, dir_spec in dirs_to_remove.items():
+
+            self._remove_dirs(
+                **dir_spec,
+                module_name = module_name,
+                dir_type = dir_name
+            )
+
+        self._remove_lsts_package_version(
+            module_name = module_name
+        )
+        self._remove_version_logs(
+            module_name = module_name
+        )
+
+    def _rename_dirs(self,
+                     repo_dir : str,
+                     dir_type : str,
+                    module_name : str,
+                    new_module_name : str):
+
+        if repo_dir:
+
+            self.logger.debug(f"Renaming {dir_type} for {module_name} ...")
+
+            repo_path = os.path.join(repo_dir, module_name)
+            new_repo_path = os.path.join(repo_dir, new_module_name)
+                  
+            if os.path.exists(repo_path) and (not os.path.exists(new_repo_path)):
+                os.rename(repo_path, new_repo_path)
+
+
+    def _rename_file(self,
+                    repo_path : str,
+                    file_type : str,
+                    file_extension : str,
+                    module_name : str,
+                    new_module_name : str):
+
+        if repo_path:
+
+            self.logger.debug(f"Renaming {file_type} for {module_name} ...")
+
+            r_module_path = os.path.join(
+                repo_path,
+                f"{module_name}{file_extension}"
+            )
+
+            r_new_module_path = os.path.join(
+                repo_path,
+                f"{new_module_name}{file_extension}"
+            )
+
+            if os.path.exists(r_module_path) and (not os.path.exists(r_new_module_path)):
+                os.rename(r_module_path, r_new_module_path)
+
+    def rename_package(self, 
+                       module_name : str = None,
+                       new_module_name : str = None):
+
+        """
+        Rename package in PPR.
+        """
+
+        module_name = module_name.replace("-","_")
+
+        repo_paa_config_path = ".paa.config"
+
+        paa_config = {}
+
+        if os.path.exists(repo_paa_config_path):
+            with open(repo_paa_config_path, 'r') as file:
+                repo_paa_config = yaml.safe_load(file)
+
+            paa_config.update(repo_paa_config)
+        else:
+            return 1
+
+        files_to_rename = {
+            "main_module" : {
+                "repo_path" : paa_config.get("module_dir"),
+                "file_extension" : ".py"
+            },
+            "cli" : {
+                "repo_path" : paa_config.get("cli_dir"),
+                "file_extension" : ".py",
+            },
+            "routes" : {
+                "repo_path" : paa_config.get("api_routes_dir"),
+                "file_extension" : ".py",
+            },
+            "streamlit" : {
+                "repo_path" : paa_config.get("streamlit_dir"),
+                "file_extension" : ".py",
+            },
+            "example_notebooks" : {
+                "repo_path" : paa_config.get("example_notebooks_path"),
+                "file_extension" : ".ipynb",
+            },
+            "drawio" : {
+                "repo_path" : paa_config.get("drawio_dir"),
+                "file_extension" : ".drawio"
+            },
+            "release_notes" : {
+                "repo_path" : ".paa/release_notes",
+                "file_extension" : ".md"
+            }
+        }
+
+        dirs_to_rename = {
+            "tests" : {
+                "repo_dir" : paa_config.get("tests_dir"),
+
+            },
+            "artifacts" : {
+                "repo_dir" : paa_config.get("artifacts_dir"),
+
+            },
+            "extra_docs" : {
+                "repo_dir" : paa_config.get("extra_docs_dir"),
+
+            }
+        }
+
+        if not os.path.exists(".paa"):
+            self.init_paa_dir()
+
+        for file_name, file_spec in files_to_rename.items():
+
+            self._rename_file(
+                **file_spec,
+                module_name = module_name,
+                new_module_name = new_module_name,
+                file_type = file_name
+            )
+
+        for dir_name, dir_spec in dirs_to_rename.items():
+
+            self._rename_dirs(
+                **dir_spec,
+                module_name = module_name,
+                new_module_name = new_module_name,
+                dir_type = dir_name
+            )
+    
+
