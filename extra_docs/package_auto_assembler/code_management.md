@@ -61,9 +61,9 @@ This setup allows local development to occur seamlessly while maintaining versio
 
 Highly automated package creation is achieved by decoupling the code representation used for editing from the one stored in the final package. This decoupling enables automation in the packaging pipeline, allowing flexible transformations between the two states. For more details, see [Inputs and Outputs of PPR](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#inputs-and-outputs-of-ppr).
 
-The diagram above showcases how Python code can be structured for modularity, as well as the distinctions between editable code and its packaged form when using `package-auto-assembler`.
-
 ![](package_auto_assembler-modular_design.png)
+
+The diagram above showcases how Python code can be structured for modularity, as well as the distinctions between editable code and its packaged form when using `package-auto-assembler`.
 
 
 ### Package Structure

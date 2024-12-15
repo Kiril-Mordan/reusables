@@ -20,6 +20,7 @@ class PprHandler:
     # inputs
     paa_dir = attr.ib(default=".paa")
     paa_config_file = attr.ib(default=".paa.config")
+    paa_config = attr.ib(default=None)
 
     init_dirs = attr.ib(default=["module_dir", "example_notebooks_path",
             "dependencies_dir", "cli_dir", "api_routes_dir", "streamlit_dir",
@@ -934,6 +935,8 @@ class PprHandler:
         repo_paa_config_path = ".paa.config"
 
         paa_config = {}
+        if self.paa_config:
+            paa_config = self.paa_config
 
         if os.path.exists(repo_paa_config_path):
             with open(repo_paa_config_path, 'r') as file:
@@ -1064,6 +1067,40 @@ class PprHandler:
             if os.path.exists(r_module_path) and (not os.path.exists(r_new_module_path)):
                 os.rename(r_module_path, r_new_module_path)
 
+    import os
+
+    def _replace_package_name(self, 
+                              repo_path : str,
+                              package_name : str, 
+                              new_package_name : str):
+
+        file_path = None
+        if repo_path:
+            file_path = os.path.join(repo_path, f"{new_package_name}.py")
+
+        if file_path and os.path.exists(file_path):
+            
+            with open(file_path, 'r', encoding = 'utf-8') as file:
+                content = file.readlines()
+
+            modified = False
+            new_content = []
+
+            for line in content:
+                if ("from" in line) and (package_name in line):
+                    # Replace old package name with the new one
+                    new_line = line.replace(package_name, new_package_name)
+                    new_content.append(new_line)
+                    modified = True
+                else:
+                    new_content.append(line)
+
+            if modified:
+                with open(file_path, 'w') as file:
+                    file.writelines(new_content)
+
+
+
     def rename_package(self, 
                        module_name : str = None,
                        new_module_name : str = None):
@@ -1073,10 +1110,13 @@ class PprHandler:
         """
 
         module_name = module_name.replace("-","_")
+        new_module_name = new_module_name.replace("-","_")
 
         repo_paa_config_path = ".paa.config"
 
         paa_config = {}
+        if self.paa_config:
+            paa_config = self.paa_config
 
         if os.path.exists(repo_paa_config_path):
             with open(repo_paa_config_path, 'r') as file:
@@ -1132,6 +1172,18 @@ class PprHandler:
             }
         }
 
+        files_to_rename_imports = {
+            "cli" : {
+                "repo_path" : paa_config.get("cli_dir"),
+            },
+            "routes" : {
+                "repo_path" : paa_config.get("api_routes_dir"),
+            },
+            "streamlit" : {
+                "repo_path" : paa_config.get("streamlit_dir"),
+            }
+        }
+
         if not os.path.exists(".paa"):
             self.init_paa_dir()
 
@@ -1151,6 +1203,14 @@ class PprHandler:
                 module_name = module_name,
                 new_module_name = new_module_name,
                 dir_type = dir_name
+            )
+
+        for _, ftri in files_to_rename_imports.items():
+
+            self._replace_package_name(
+                **ftri,
+                package_name = module_name,
+                new_package_name = new_module_name
             )
     
 
