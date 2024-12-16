@@ -328,6 +328,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#working-with-packages-within-paa" class="md-nav__link">
+    <span class="md-ellipsis">
+      Working with packages within PAA
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#checking-dependencies" class="md-nav__link">
     <span class="md-ellipsis">
       Checking dependencies
@@ -527,6 +536,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#working-with-packages-within-paa" class="md-nav__link">
+    <span class="md-ellipsis">
+      Working with packages within PAA
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#checking-dependencies" class="md-nav__link">
     <span class="md-ellipsis">
       Checking dependencies
@@ -619,6 +637,8 @@ Commands:
   init-ppr                     Initialize ppr for a given workflows...
   make-package                 Package with package-auto-assembler.
   refresh-module-artifacts     Refreshes module artifact from links.
+  remove-package               Remove paa package from ppr
+  rename-package               Rename paa package in ppr
   run-api-routes               Run fastapi with provided routes.
   run-pylint-tests             Run pylint tests for a given module, file,...
   run-streamlit                Run streamlit application from the package.
@@ -630,6 +650,7 @@ Commands:
   show-module-requirements     Shows module requirements.
   show-ref-local-deps          Shows paths to local dependencies...
   test-install                 Test install module into local environment.
+  unfold-package               Unfold paa package inside ppr
   update-release-notes         Update release notes.
 </code></pre>
 <p>Available cli tools usually employ multiple internal components and range from relatively simple ones to more complex. </p>
@@ -730,6 +751,40 @@ Options:
   --versions-filepath TEXT        Path to file where latest versions of the
                                   packages are recorded.
   --help                          Show this message and exit.
+</code></pre>
+<h3 id="working-with-packages-within-paa">Working with packages within PAA</h3>
+<p>Published packages could be installed and unfolded for editing anywhere, given that they are independent of a packaging repositories and enviroment that produced them.</p>
+<pre><code class="language-bash">paa unfold-package --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa unfold-package [OPTIONS] MODULE_NAME
+
+  Unfold paa package inside ppr
+
+Options:
+  --debug  If checked, debug messages will be shown.
+  --help   Show this message and exit.
+</code></pre>
+<p>Since packaging repository is just a workbench, ability to remove packages that no longer being published there could be useful. </p>
+<pre><code class="language-bash">paa remove-package --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa remove-package [OPTIONS] MODULE_NAME
+
+  Remove paa package from ppr
+
+Options:
+  --debug  If checked, debug messages will be shown.
+  --help   Show this message and exit.
+</code></pre>
+<p>Ability to unfold packages created with <code>package-auto-assembler</code>, paired with a method to rename them, would allow to fork the package and start publishing it in the same package storage, just under different name.</p>
+<pre><code class="language-bash">paa rename-package --help
+</code></pre>
+<pre><code class="language-bash">Usage: paa rename-package [OPTIONS] MODULE_NAME NEW_MODULE_NAME
+
+  Rename paa package in ppr
+
+Options:
+  --debug  If checked, debug messages will be shown.
+  --help   Show this message and exit.
 </code></pre>
 <h3 id="checking-dependencies">Checking dependencies</h3>
 <p>Checking vulnerabilities with <code>pip-audit</code> is usefull. This checks vulnerabilities of .py files and its local dependencies with <code>pip-audit</code>.</p>
