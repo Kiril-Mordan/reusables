@@ -47,31 +47,19 @@ def cli(ctx):
     """Package Auto Assembler CLI tool."""
     ctx.ensure_object(dict)
 
-test_install_config = {
+test_install_config_minimal = {
     "module_dir" : "python_modules",
     "example_notebooks_path" : "example_notebooks",
-    "dependencies_dir" : None,
-    "cli_dir" : None,
-    "api_routes_dir" : None,
-    "streamlit_dir" : None,
-    "artifacts_dir" : None,
-    "drawio_dir" : None,
-    "extra_docs_dir" : None,
-    "tests_dir" : None,
+    "dependencies_dir" : "python_modules.components",
     "use_commit_messages" : True,
     "check_vulnerabilities" : True,
     "check_dependencies_licenses" : False,
     "add_artifacts" : True,
     "add_mkdocs_site" : False,
-    "license_path" : None,
-    "license_label" : None,
-    "license_badge" : None,
-    "allowed_licenses" : None,
-    "docs_url" : None,
     "classifiers" : None
 }
 
-test_install_config_full = {
+test_install_config = {
     "module_dir" : "python_modules",
     "example_notebooks_path" : "example_notebooks",
     "dependencies_dir" : "python_modules/components",
@@ -106,9 +94,9 @@ def init_config(ctx, full):
 
     if not os.path.exists(".paa.config"):
         if full:
-            default_config = test_install_config_full
-        else:
             default_config = test_install_config
+        else:
+            default_config = test_install_config_minimal
         PprHandler().init_from_paa_config(default_config = default_config)
 
         click.echo(f"Config file {config} initialized!")
@@ -127,9 +115,9 @@ def init_paa(ctx, full):
     st = PprHandler().init_paa_dir()
 
     if full:
-        default_config = test_install_config_full
-    else:
         default_config = test_install_config
+    else:
+        default_config = test_install_config_minimal
     PprHandler().init_from_paa_config(default_config = default_config)
 
     if st:
@@ -160,9 +148,9 @@ def init_ppr(ctx,
             click.echo(f".paa.config already exists!")
 
         if full:
-            default_config = test_install_config_full
-        else:
             default_config = test_install_config
+        else:
+            default_config = test_install_config_minimal
 
         if workflows_platform == 'github':
             default_config.update({'gh_pages_base_url' : None,
@@ -220,6 +208,7 @@ def remove_package(ctx,
         loggerLvl = logging.INFO
 
     status = PprHandler(
+        paa_config = test_install_config,
         loggerLvl = loggerLvl
     ).remove_package(module_name = module_name)
 
@@ -245,6 +234,7 @@ def rename_package(ctx,
         loggerLvl = logging.INFO
 
     status = PprHandler(
+        paa_config = test_install_config,
         loggerLvl = loggerLvl
     ).rename_package(
         module_name = module_name,
