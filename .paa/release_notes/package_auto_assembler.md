@@ -1,5 +1,11 @@
 # Release notes
 
+### 0.5.22
+
+    - removing the need to define default locations in .paa.config
+
+    - changing imports in cli, api routes and streamlit when renaming a package
+
 ### 0.5.21
 
     - brief description of artifact-centric approach

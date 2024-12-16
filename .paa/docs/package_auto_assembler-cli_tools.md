@@ -30,6 +30,8 @@ Commands:
   init-ppr                     Initialize ppr for a given workflows...
   make-package                 Package with package-auto-assembler.
   refresh-module-artifacts     Refreshes module artifact from links.
+  remove-package               Remove paa package from ppr
+  rename-package               Rename paa package in ppr
   run-api-routes               Run fastapi with provided routes.
   run-pylint-tests             Run pylint tests for a given module, file,...
   run-streamlit                Run streamlit application from the package.
@@ -41,6 +43,7 @@ Commands:
   show-module-requirements     Shows module requirements.
   show-ref-local-deps          Shows paths to local dependencies...
   test-install                 Test install module into local environment.
+  unfold-package               Unfold paa package inside ppr
   update-release-notes         Update release notes.
 ```
 
@@ -172,6 +175,58 @@ Options:
                                   packages are recorded.
   --help                          Show this message and exit.
 ```
+
+### Working with packages within PAA
+
+Published packages could be installed and unfolded for editing anywhere, given that they are independent of a packaging repositories and enviroment that produced them.
+
+``` bash
+paa unfold-package --help
+```
+
+``` bash
+Usage: paa unfold-package [OPTIONS] MODULE_NAME
+
+  Unfold paa package inside ppr
+
+Options:
+  --debug  If checked, debug messages will be shown.
+  --help   Show this message and exit.
+```
+
+Since packaging repository is just a workbench, ability to remove packages that no longer being published there could be useful. 
+
+``` bash
+paa remove-package --help
+```
+
+``` bash
+Usage: paa remove-package [OPTIONS] MODULE_NAME
+
+  Remove paa package from ppr
+
+Options:
+  --debug  If checked, debug messages will be shown.
+  --help   Show this message and exit.
+```
+
+Ability to unfold packages created with `package-auto-assembler`, paired with a method to rename them, would allow to fork the package and start publishing it in the same package storage, just under different name.
+
+``` bash
+paa rename-package --help
+```
+
+``` bash
+Usage: paa rename-package [OPTIONS] MODULE_NAME NEW_MODULE_NAME
+
+  Rename paa package in ppr
+
+Options:
+  --debug  If checked, debug messages will be shown.
+  --help   Show this message and exit.
+```
+
+
 
 ### Checking dependencies
 
