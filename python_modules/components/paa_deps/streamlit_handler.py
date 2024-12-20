@@ -6,6 +6,8 @@ import shutil
 import importlib
 import attr #>=22.2.0
 
+#@ streamlit>=1.39.0
+
 @attr.s
 class StreamlitHandler:
 

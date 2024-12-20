@@ -5,6 +5,10 @@ import shutil
 import re
 import attr #>=22.2.0
 
+#@ mkdocs>=1.6.0
+#@ mkdocs-material>=9.5.30
+#@ mkdocs-mermaid2-plugin>=1.2.1
+
 @attr.s
 class MkDocsHandler:
 
@@ -298,6 +302,9 @@ theme:
       toggle:
         icon: material/lightbulb-outline
         name: Switch to light mode
+
+plugins:
+  - mermaid2
 
 extra_css:
   - css/extra.css

@@ -7,6 +7,8 @@ from packaging import version
 import tempfile
 import attr #>=22.2.0
 
+#@ pip_audit==2.7.3
+
 @attr.s
 class RequirementsHandler:
 
