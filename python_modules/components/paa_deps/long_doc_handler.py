@@ -10,6 +10,8 @@ from nbconvert.preprocessors import ExecutePreprocessor
 import attr #>=22.2.0
 import requests
 
+#@ jupyter>=1.1.1
+
 
 @attr.s
 class LongDocHandler:
