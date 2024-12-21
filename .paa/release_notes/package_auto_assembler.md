@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.5.23
+
+    - initial support for mermaid diagrams within mkdocs sites
+
 ### 0.5.22
 
     - removing the need to define default locations in .paa.config
