@@ -46,14 +46,9 @@ from .components.paa_deps.ppr_handler import PprHandler
 from .components.paa_deps.tests_handler import TestsHandler
 
 #@ numpy==1.26.0
-#@ pip_audit==2.7.3
-#@ mkdocs>=1.6.0
-#@ mkdocs-material==9.5.30
-#@ streamlit>=1.39.0
 #@ setuptools==75.1.0
 #@ wheel>=0.44.0
 #@ twine>=5.1.1
-#@ jupyter>=1.1.1
 
 
 # Metadata for package creation
