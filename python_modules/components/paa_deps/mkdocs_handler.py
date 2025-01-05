@@ -358,6 +358,7 @@ theme:
 
 plugins:
   - mermaid2
+  - search
 
 extra_css:
   - css/extra.css
