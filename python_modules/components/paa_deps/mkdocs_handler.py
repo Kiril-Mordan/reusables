@@ -3,13 +3,13 @@ import os
 import subprocess
 import shutil
 import re
-import attr #>=22.2.0
+import attrs #>=22.2.0
 
 #@ mkdocs>=1.6.0
 #@ mkdocs-material>=9.5.30
 #@ mkdocs-mermaid2-plugin>=1.2.1
 
-@attr.s
+@attrs.define
 class MkDocsHandler:
 
     """
@@ -17,20 +17,20 @@ class MkDocsHandler:
     """
 
     # inputs
-    package_name = attr.ib(type=str)
-    docs_file_paths = attr.ib(type=list)
+    package_name = attrs.field(type=str)
+    docs_file_paths = attrs.field(type=list)
 
-    module_docstring = attr.ib(default=None, type=str)
-    pypi_badge = attr.ib(default='', type=str)
-    license_badge = attr.ib(default='', type=str)
+    module_docstring = attrs.field(default=None, type=str)
+    pypi_badge = attrs.field(default='', type=str)
+    license_badge = attrs.field(default='', type=str)
 
-    project_name = attr.ib(default="temp_project", type=str)
+    project_name = attrs.field(default="temp_project", type=str)
 
     # processed
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='MkDocs Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='MkDocs Handler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()
@@ -72,10 +72,10 @@ class MkDocsHandler:
 
         self.logger.debug(f"Created new MkDocs dir: {project_name}")
 
-    
-    def _replace_image_paths(self, 
-                            md_file_path : str, 
-                            new_md_file_path : str, 
+
+    def _replace_image_paths(self,
+                            md_file_path : str,
+                            new_md_file_path : str,
                             path_replacements : dict):
 
         # Regex pattern to match image paths
@@ -143,10 +143,24 @@ class MkDocsHandler:
 
                 if destination.endswith(".md"):
                     self._replace_image_paths(
-                        md_file_path = file_path, 
-                        new_md_file_path = destination, 
+                        md_file_path = file_path,
+                        new_md_file_path = destination,
                         path_replacements = image_path_replacements
                     )
+                elif os.path.isdir(file_path):
+
+                    shutil.copytree(file_path, destination)
+
+                    subfolder_mds = os.listdir(destination)
+
+                    for file in subfolder_mds:
+                        if file.endswith(".md"):
+                            self._replace_image_paths(
+                                md_file_path = os.path.join(destination, file),
+                                new_md_file_path = os.path.join(destination, file),
+                                path_replacements = image_path_replacements
+                            )
+
                 else:
                     shutil.copy(file_path, destination)
 
@@ -231,8 +245,8 @@ pip install {package_name.replace("_", "-")}
 
 
 
-    def generate_markdown_for_images(self, 
-        package_name: str = None, 
+    def generate_markdown_for_images(self,
+        package_name: str = None,
         project_name: str = None):
         """
         Generate .md files for each .png file in the specified directory based on naming rules.
@@ -267,6 +281,45 @@ pip install {package_name.replace("_", "-")}
                     md_content = f"![{filename}](./{filename})"
                     md_file.write(md_content)
                 self.logger.debug(f"Created {md_filepath}")
+
+
+    def _generate_nav_entries(self, base_path: str, indent: int = 2):
+        nav_entries = []
+        # List all files and directories at the base level
+        for entry in os.listdir(base_path):
+
+            if entry in ['css', 'images','index.md']:
+                continue
+
+            entry_path = os.path.join(base_path, entry)
+
+            # Process files directly in the base directory
+            if os.path.isfile(entry_path) and entry.endswith(".md"):
+                file_name = os.path.splitext(entry)[0].replace("_", " ").replace("-", " ")
+                file_indent = " " * indent
+                nav_entries.append(f"{file_indent}- {file_name.capitalize()}: {entry}")
+
+            # Process subdirectories
+            elif os.path.isdir(entry_path):
+                md_files = [f for f in os.listdir(entry_path) if f.endswith(".md")]
+
+                # Add subfolder as a section in nav
+                section_indent = " " * indent
+                nav_entries.append(f"{section_indent}- {entry.capitalize()}: ")
+
+                # Copy files from subfolder to base path but structure in nav as if in folder
+                for md_file in md_files:
+                    src_path = os.path.join(entry_path, md_file)
+                    dest_path = os.path.join(base_path, md_file)
+                    shutil.copy(src_path, dest_path)
+                    file_indent = " " * (indent + 2)
+                    file_name = os.path.splitext(md_file)[0].replace("_", " ").replace("-", " ")
+                    nav_entries.append(f"{file_indent}- {file_name.capitalize()}: {md_file}")
+
+                shutil.rmtree(entry_path)
+
+        return "\n".join(nav_entries) if nav_entries else None
+
 
     def create_mkdocs_yml(self, package_name: str = None, project_name: str = None):
         """
@@ -305,10 +358,21 @@ theme:
 
 plugins:
   - mermaid2
+  - search
 
 extra_css:
   - css/extra.css
+
         """
+
+        nav_content = self._generate_nav_entries(os.path.join(project_name, "docs"))
+
+        if nav_content:
+            content += f"""
+nav:
+  - Intro: index.md
+{nav_content}
+            """
 
         mkdocs_yml_path = os.path.join(project_name, "mkdocs.yml")
         with open(mkdocs_yml_path, "w", encoding = "utf-8") as file:

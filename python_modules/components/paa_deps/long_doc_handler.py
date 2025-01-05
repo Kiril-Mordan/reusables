@@ -7,28 +7,28 @@ import shutil
 import nbformat
 from nbconvert import MarkdownExporter #==7.16.4
 from nbconvert.preprocessors import ExecutePreprocessor
-import attr #>=22.2.0
+import attrs #>=22.2.0
 import requests
 
 #@ jupyter>=1.1.1
 
 
-@attr.s
+@attrs.define
 class LongDocHandler:
 
     """
     Contains set of tools to prepare package description.
     """
 
-    notebook_path = attr.ib(default = None)
-    markdown_filepath = attr.ib(default = None)
-    timeout = attr.ib(default = 600, type = int)
-    kernel_name = attr.ib(default = 'python', type = str)
+    notebook_path = attrs.field(default = None)
+    markdown_filepath = attrs.field(default = None)
+    timeout = attrs.field(default = 600, type = int)
+    kernel_name = attrs.field(default = 'python', type = str)
 
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='README Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='README Handler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()
@@ -101,7 +101,7 @@ class LongDocHandler:
                 pypi_link = f"[![PyPiVersion](https://img.shields.io/pypi/v/{module_name_hyphenated})]({pypi_module_link})"
         except Exception as e:
             self.logger.warning("Pypi link not found!")
-            
+
         return pypi_link
 
 
@@ -284,7 +284,7 @@ class LongDocHandler:
 
         return long_description
 
-    def prep_extra_docs(self, 
+    def prep_extra_docs(self,
                         package_name : str,
                         extra_docs_dir : str,
                         docs_path : str):
@@ -301,19 +301,19 @@ class LongDocHandler:
 
                 full_path = os.path.join(extra_docs_dir,f)
 
-                if os.path.exists(full_path): 
+                if os.path.exists(full_path):
                     if os.path.isdir(full_path):
 
-                        if os.path.exists(os.path.join(docs_path,f)):
-                            shutil.rmtree(os.path.join(docs_path,f))
+                        if os.path.exists(os.path.join(docs_path,f"{package_name}-{f}")):
+                            shutil.rmtree(os.path.join(docs_path,f"{package_name}-{f}"))
 
                         shutil.copytree(
-                            full_path, 
-                            os.path.join(docs_path,f))
+                            full_path,
+                            os.path.join(docs_path,f"{package_name}-{f}"))
 
                     if f.endswith(".md") or f.endswith(".png") :
                         shutil.copy(
-                            full_path, 
+                            full_path,
                             os.path.join(docs_path,f"{package_name}-{f}"))
 
                     if f.endswith(".ipynb"):
