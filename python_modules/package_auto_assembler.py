@@ -1,7 +1,7 @@
 """
 `package-auto-assembler` is a tool that meant to streamline creation of `single module packages`.
 Its primary goal is to automate as many aspects of python package creation as possible,
-thereby shortening the development cycle of reusable components and maintaining a high standard of quality for reusable code. 
+thereby shortening the development cycle of reusable components and maintaining a high standard of quality for reusable code.
 
 With `package-auto-assembler`, you can simplify the package creation process to the point where it can be seamlessly triggered within CI/CD pipelines, requiring minimal setup and preparation for new modules.
 
@@ -25,7 +25,7 @@ import subprocess
 import shutil
 import importlib
 import importlib.metadata
-import attr #>=22.2.0
+import attrs #>=22.2.0
 
 from .components.paa_deps.artifacts_handler import ArtifactsHandler
 from .components.paa_deps.cli_handler import CliHandler
@@ -62,120 +62,122 @@ __package_metadata__ = {
 }
 
 
-@attr.s
+@attrs.define
 class PackageAutoAssembler:
     # pylint: disable=too-many-instance-attributes
 
     ## inputs
-    module_name = attr.ib(type=str)
-    module_filepath = attr.ib(type=str)
+    module_name = attrs.field(type=str)
+    module_filepath = attrs.field(type=str)
 
     ## paths
-    cli_module_filepath = attr.ib(default=None)
-    fastapi_routes_filepath = attr.ib(default=None)
-    mapping_filepath = attr.ib(default=".paa/package_mapping.json")
-    licenses_filepath = attr.ib(default=".paa/package_licenses.json")
-    allowed_licenses = attr.ib(default=['mit', 'apache-2.0', 'lgpl-3.0',
+    cli_module_filepath = attrs.field(default=None)
+    fastapi_routes_filepath = attrs.field(default=None)
+    mapping_filepath = attrs.field(default=".paa/package_mapping.json")
+    licenses_filepath = attrs.field(default=".paa/package_licenses.json")
+    allowed_licenses = attrs.field(default=['mit', 'apache-2.0', 'lgpl-3.0',
                             'bsd-3-clause', 'bsd-2-clause', '-', 'mpl-2.0'])
-    example_notebook_path = attr.ib(default=None)
-    versions_filepath = attr.ib(default='.paa/tracking/lsts_package_versions.yml')
-    log_filepath = attr.ib(default='.paa/tracking/version_logs.csv')
-    setup_directory = attr.ib(default='./setup_dir')
-    release_notes_filepath = attr.ib(default=None)
-    config_filepath = attr.ib(default=".paa.config")
-    cli_docs_filepath = attr.ib(default=None)
-    drawio_filepath = attr.ib(default=None)
-    streamlit_filepath = attr.ib(default=None)
+    example_notebook_path = attrs.field(default=None)
+    versions_filepath = attrs.field(default='.paa/tracking/lsts_package_versions.yml')
+    log_filepath = attrs.field(default='.paa/tracking/version_logs.csv')
+    setup_directory = attrs.field(default='./setup_dir')
+    release_notes_filepath = attrs.field(default=None)
+    config_filepath = attrs.field(default=".paa.config")
+    cli_docs_filepath = attrs.field(default=None)
+    drawio_filepath = attrs.field(default=None)
+    streamlit_filepath = attrs.field(default=None)
 
-    module_dir = attr.ib(default=None)
-    paa_dir = attr.ib(default="./.paa")
-    docs_path = attr.ib(default="./.paa/docs")
-    drawio_dir = attr.ib(default=None)
-    tests_dir = attr.ib(default=None)
-    artifacts_dir = attr.ib(default=None)
-    dependencies_dir = attr.ib(default=None)
-    extra_docs_dir = attr.ib(default=None)
+    module_dir = attrs.field(default=None)
+    paa_dir = attrs.field(default="./.paa")
+    docs_path = attrs.field(default="./.paa/docs")
+    drawio_dir = attrs.field(default=None)
+    tests_dir = attrs.field(default=None)
+    artifacts_dir = attrs.field(default=None)
+    dependencies_dir = attrs.field(default=None)
+    extra_docs_dir = attrs.field(default=None)
 
     # optional parameters
-    pylint_threshold = attr.ib(default=None)
-    classifiers = attr.ib(default=['Development Status :: 3 - Alpha'])
-    license_path = attr.ib(default=None)
-    license_label = attr.ib(default=None)
-    license_badge = attr.ib(default=None)
-    docs_url = attr.ib(default=None)
-    requirements_list = attr.ib(default=[])
-    optional_requirements_list = attr.ib(default=[])
-    python_version = attr.ib(default="3.10")
-    version_increment_type = attr.ib(default="patch", type = str)
-    default_version = attr.ib(default="0.0.0", type = str)
-    kernel_name = attr.ib(default = 'python', type = str)
-    max_git_search_depth = attr.ib(default=5, type = int)
-    artifacts_filepaths = attr.ib(default=None, type = dict)
-    docs_file_paths = attr.ib(default=None, type = dict)
+    pylint_threshold = attrs.field(default=None)
+    classifiers = attrs.field(default=['Development Status :: 3 - Alpha'])
+    license_path = attrs.field(default=None)
+    license_label = attrs.field(default=None)
+    license_badge = attrs.field(default=None)
+    docs_url = attrs.field(default=None)
+    requirements_list = attrs.field(default=[])
+    optional_requirements_list = attrs.field(default=[])
+    python_version = attrs.field(default="3.10")
+    version_increment_type = attrs.field(default="patch", type = str)
+    default_version = attrs.field(default="0.0.0", type = str)
+    kernel_name = attrs.field(default = 'python', type = str)
+    max_git_search_depth = attrs.field(default=5, type = int)
+    artifacts_filepaths = attrs.field(default=None, type = dict)
+    docs_file_paths = attrs.field(default=None, type = dict)
 
     # switches
-    add_artifacts = attr.ib(default=True, type = bool)
-    remove_temp_files = attr.ib(default=True, type = bool)
-    skip_deps_install = attr.ib(default=False, type = bool)
-    check_vulnerabilities = attr.ib(default=True, type = bool)
-    add_requirements_header = attr.ib(default=True, type = bool)
-    use_commit_messages = attr.ib(default=True, type = bool)
-    check_dependencies_licenses = attr.ib(default=False, type = bool)
-    execute_readme_notebook = attr.ib(default=True, type = bool)
-    add_mkdocs_site = attr.ib(default=True, type = bool)
+    add_artifacts = attrs.field(default=True, type = bool)
+    remove_temp_files = attrs.field(default=True, type = bool)
+    skip_deps_install = attrs.field(default=False, type = bool)
+    check_vulnerabilities = attrs.field(default=True, type = bool)
+    add_requirements_header = attrs.field(default=True, type = bool)
+    use_commit_messages = attrs.field(default=True, type = bool)
+    check_dependencies_licenses = attrs.field(default=False, type = bool)
+    execute_readme_notebook = attrs.field(default=True, type = bool)
+    add_mkdocs_site = attrs.field(default=True, type = bool)
 
 
     ## handler classes
-    setup_dir_h_class = attr.ib(default=SetupDirHandler)
-    version_h_class = attr.ib(default=VersionHandler)
-    import_mapping_h_class = attr.ib(default=ImportMappingHandler)
-    local_dependacies_h_class = attr.ib(default=LocalDependaciesHandler)
-    requirements_h_class = attr.ib(default=RequirementsHandler)
-    metadata_h_class = attr.ib(default=MetadataHandler)
-    long_doc_h_class = attr.ib(default=LongDocHandler)
-    cli_h_class = attr.ib(default=CliHandler)
-    release_notes_h_class = attr.ib(default=ReleaseNotesHandler)
-    dependencies_analyzer_h_class = attr.ib(default=DependenciesAnalyser)
-    fastapi_h_class = attr.ib(default=FastApiHandler)
-    artifacts_h_class = attr.ib(default=ArtifactsHandler)
-    mkdocs_h_class = attr.ib(default=MkDocsHandler)
-    drawio_h_class = attr.ib(default=DrawioHandler) 
-    ppr_h_class = attr.ib(default=PprHandler)
-    tests_h_class = attr.ib(default=TestsHandler)
-    streamlit_h_class = attr.ib(default=StreamlitHandler)
+    setup_dir_h_class = attrs.field(default=SetupDirHandler)
+    version_h_class = attrs.field(default=VersionHandler)
+    import_mapping_h_class = attrs.field(default=ImportMappingHandler)
+    local_dependacies_h_class = attrs.field(default=LocalDependaciesHandler)
+    requirements_h_class = attrs.field(default=RequirementsHandler)
+    metadata_h_class = attrs.field(default=MetadataHandler)
+    long_doc_h_class = attrs.field(default=LongDocHandler)
+    cli_h_class = attrs.field(default=CliHandler)
+    release_notes_h_class = attrs.field(default=ReleaseNotesHandler)
+    dependencies_analyzer_h_class = attrs.field(default=DependenciesAnalyser)
+    fastapi_h_class = attrs.field(default=FastApiHandler)
+    artifacts_h_class = attrs.field(default=ArtifactsHandler)
+    mkdocs_h_class = attrs.field(default=MkDocsHandler)
+    drawio_h_class = attrs.field(default=DrawioHandler)
+    ppr_h_class = attrs.field(default=PprHandler)
+    tests_h_class = attrs.field(default=TestsHandler)
+    streamlit_h_class = attrs.field(default=StreamlitHandler)
 
     ## handlers
-    setup_dir_h = attr.ib(default = None, type = SetupDirHandler)
-    version_h = attr.ib(default = None, type = VersionHandler)
-    import_mapping_h = attr.ib(default = None, type=ImportMappingHandler)
-    local_dependacies_h = attr.ib(default = None, type=LocalDependaciesHandler)
-    requirements_h = attr.ib(default = None, type=RequirementsHandler)
-    metadata_h = attr.ib(default = None, type=MetadataHandler)
-    long_doc_h = attr.ib(default = None, type=LongDocHandler)
-    cli_h = attr.ib(default = None, type=CliHandler)
-    release_notes_h = attr.ib(default = None, type=ReleaseNotesHandler)
-    dependencies_analyzer_h = attr.ib(default = None, type=DependenciesAnalyser)
-    fastapi_h = attr.ib(default = None, type=FastApiHandler)
-    artifacts_h = attr.ib(default = None, type=ArtifactsHandler)
-    mkdocs_h = attr.ib(default = None, type=MkDocsHandler)
-    drawio_h = attr.ib(default = None, type=DrawioHandler)
-    ppr_h = attr.ib(default = None, type=PprHandler)
-    tests_h = attr.ib(default = None, type=TestsHandler)
-    streamlit_h = attr.ib(default = None, type=StreamlitHandler)
+    setup_dir_h = attrs.field(default = None, type = SetupDirHandler)
+    version_h = attrs.field(default = None, type = VersionHandler)
+    import_mapping_h = attrs.field(default = None, type=ImportMappingHandler)
+    local_dependacies_h = attrs.field(default = None, type=LocalDependaciesHandler)
+    requirements_h = attrs.field(default = None, type=RequirementsHandler)
+    metadata_h = attrs.field(default = None, type=MetadataHandler)
+    long_doc_h = attrs.field(default = None, type=LongDocHandler)
+    cli_h = attrs.field(default = None, type=CliHandler)
+    release_notes_h = attrs.field(default = None, type=ReleaseNotesHandler)
+    dependencies_analyzer_h = attrs.field(default = None, type=DependenciesAnalyser)
+    fastapi_h = attrs.field(default = None, type=FastApiHandler)
+    artifacts_h = attrs.field(default = None, type=ArtifactsHandler)
+    mkdocs_h = attrs.field(default = None, type=MkDocsHandler)
+    drawio_h = attrs.field(default = None, type=DrawioHandler)
+    ppr_h = attrs.field(default = None, type=PprHandler)
+    tests_h = attrs.field(default = None, type=TestsHandler)
+    streamlit_h = attrs.field(default = None, type=StreamlitHandler)
 
     ## output
-    version = attr.ib(default=None)
-    metadata = attr.ib(default={})
-    custom_modules_list = attr.ib(default=[], type=list)
-    cli_metadata = attr.ib(default={}, type = dict)
-    add_cli_tool = attr.ib(default = None, type = bool)
-    package_result = attr.ib(init=False)
+    original_module_filepath = attrs.field(default = None)
+    local_dependacies_list = attrs.field(default = None)
+    version = attrs.field(default=None)
+    metadata = attrs.field(default={})
+    custom_modules_list = attrs.field(default=[], type=list)
+    cli_metadata = attrs.field(default={}, type = dict)
+    add_cli_tool = attrs.field(default = None, type = bool)
+    package_result = attrs.field(init=False)
 
 
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Package Auto Assembler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='Package Auto Assembler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()
@@ -838,7 +840,7 @@ class PackageAutoAssembler:
         if output_path_docs:
             shutil.copy(output_path, output_path_docs)
 
-    def add_extra_docs(self, 
+    def add_extra_docs(self,
                        extra_docs_dir : str = None):
 
         """
@@ -899,11 +901,24 @@ class PackageAutoAssembler:
                     else:
                         docs_file_paths[os.path.join(self.docs_path,package_doc)] = package_doc
 
-                    if package_doc.endswith(".md"):
-                        additional_images += LongDocHandler().get_referenced_images(
-                            md_file_path = os.path.join(self.docs_path, 
-                                package_doc)
-                        )
+                    if os.path.isdir(os.path.join(self.docs_path,package_doc)):
+
+                        package_docs = os.listdir(os.path.join(self.docs_path,package_doc))
+
+                        for package_doc_f in package_docs:
+
+                            if package_doc_f.endswith(".md"):
+                                additional_images += LongDocHandler().get_referenced_images(
+                                    md_file_path = os.path.join(self.docs_path,
+                                        package_doc, package_doc_f)
+                                )
+                    else:
+
+                        if package_doc.endswith(".md"):
+                            additional_images += LongDocHandler().get_referenced_images(
+                                md_file_path = os.path.join(self.docs_path,
+                                    package_doc)
+                            )
 
                 # remove docs path from images path
                 #additional_images = [os.path.relpath(p, self.docs_path) for p in additional_images]
@@ -1030,14 +1045,14 @@ class PackageAutoAssembler:
                 and os.path.exists(self.module_filepath)):
                 artifacts_filepaths[
                     f'.paa.tracking/python_modules/{self.module_name}.py'] = self.original_module_filepath
-            
+
             if (self.local_dependacies_list  \
                 and os.path.exists(self.dependencies_dir)):
                 for component in self.local_dependacies_list:
                     artifacts_filepaths[
                     f'.paa.tracking/python_modules/components/{component}'] = os.path.join(
                         self.dependencies_dir, f"{component}")
-   
+
             if 'artifact_urls' in self.metadata.keys():
                 artifact_urls=self.metadata['artifact_urls']
                 del self.metadata['artifact_urls']
@@ -1193,9 +1208,9 @@ class PackageAutoAssembler:
         command = ["python", os.path.join(setup_directory, "setup.py"), "sdist", "bdist_wheel"]
 
         # Execute the command
-        result = subprocess.run(command, 
-        stdout=subprocess.PIPE, 
-        stderr=subprocess.PIPE, 
+        result = subprocess.run(command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         text=True,
         check=True)
 
