@@ -31,15 +31,21 @@ jobs:
 
       if [ -s changed_files ]; then
           files=$(cat changed_files)
-          echo "##vso[task.setvariable variable=files;isOutput=true]$files"
+          echo "##vso[task.setvariable variable=files]$files"
       fi
     displayName: 'Find Changed Modules'
     name: changed_modules
 
   - script: |
+      python -m pip install --upgrade pip
+      pip install -r .paa/requirements_dev.txt
+    displayName: 'Install Python Dependencies'
+    condition: and(succeeded(), ne(variables['files'], ''))
+
+  - script: |
       chmod +x .azure/tools/update_tox_requirements.sh
-      paa extract-module-requirements "${{ steps.changed-modules.outputs.files }}" > ".paa/requirements/requirements_${{ steps.changed-modules.outputs.files }}.txt"
-      .azure/tools/update_tox_requirements.sh "${{ steps.changed-modules.outputs.files }}"
+      paa extract-module-requirements "$(files)" > ".paa/requirements/requirements_$(files).txt"
+      .azure/tools/update_tox_requirements.sh "$(files)"
       cat .paa/requirements/requirements_tox.txt 
     displayName: 'Update requirements'
     condition: and(succeeded(), ne(variables['files'], ''))

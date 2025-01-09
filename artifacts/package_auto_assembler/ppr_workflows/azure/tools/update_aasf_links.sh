@@ -28,7 +28,7 @@ EOF
     API_URL="https://almsearch.dev.azure.com/$organization/_apis/search/packagesearchresults?api-version=7.0"
 
     # Perform POST request
-    response=$(curl -s -u ":$AZURE_PAT" -X POST \
+    response=$(curl -s -u ":$TWINE_PASSWORD" -X POST \
     -H "Content-Type: application/json" \
     -d "$payload" \
     "$API_URL" || echo "{}")

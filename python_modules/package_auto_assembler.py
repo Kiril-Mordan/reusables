@@ -50,8 +50,6 @@ from .components.paa_deps.tests_handler import TestsHandler
 #@ wheel>=0.44.0
 #@ twine>=5.1.1
 
-
-# Metadata for package creation
 __package_metadata__ = {
     "author": "Kyrylo Mordan",
     "author_email": "parachute.repo@gmail.com",

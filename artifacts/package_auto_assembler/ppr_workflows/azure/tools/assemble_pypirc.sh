@@ -22,7 +22,7 @@ for yml_file in "$yml_directory"/*.yml; do
     # Extract feed_name and repository_index again
     feed_name=$(grep 'feed_name:' $yml_file | awk '{print $2}')
     organization_name=$(grep 'organization:' $yml_file | awk '{print $2}')
-    project_name=$(grep 'project:' $yml_file | awk '{print $2}')
+    project_name=$(grep 'project_guid:' $yml_file | awk '{print $2}')
     repository_index="https://pkgs.dev.azure.com/$organization_name/$project_name/_packaging/$feed_name/pypi/upload/"
 
     # Add repository details to .pypirc
