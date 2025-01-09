@@ -399,15 +399,11 @@ class PprHandler:
                                     workflows_platform)
 
             if workflows_platform == 'github':
-                other_files = ['tox.ini', '.pylintrc']
+                other_files = ['tox_github.ini', '.pylintrc']
             else:
-                other_files = [ '.pylintrc']
+                other_files = ['tox_azure.ini', '.pylintrc']
 
             if not os.path.exists(template_path):
-
-                # if workflows_platform == 'azure':
-                #     self.logger.warning(
-                #     "Template for azure devops pipeline will be available in future paa releases!")
 
                 return False
 
@@ -436,6 +432,12 @@ class PprHandler:
                                     "artifacts",
                                     "ppr_workflows",
                                     f)
+
+                if f == "tox_github.ini":
+                    f = "tox.ini"
+
+                if f == "tox_azure.ini":
+                    f = "tox.ini"
 
                 if os.path.exists(artifact_path):
                     if not os.path.exists(f):

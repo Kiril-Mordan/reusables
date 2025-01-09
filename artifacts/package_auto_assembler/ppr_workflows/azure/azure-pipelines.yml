@@ -11,7 +11,7 @@ parameters:
     displayName: Upload Feed
     type: object
     default:
-      -feed: example_feed
+      - example_feed
   - name: package_name
     displayName: Package Name
     type: string
@@ -30,7 +30,7 @@ stages:
       displayName: 'Package-auto-assembler workflow'
       condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'Manual'))
       variables:
-        - template: feeds/${{ lower(stage.feed) }}.yml
+        - template: feeds/${{ lower(stage) }}.yml
       jobs:
         - template: jobs/publish.yml
           parameters:

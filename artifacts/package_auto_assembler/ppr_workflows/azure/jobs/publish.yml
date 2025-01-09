@@ -82,12 +82,14 @@ jobs:
       chmod +x .azure/tools/update_README.sh
       .azure/tools/update_README.sh
     displayName: 'Update README'
+    env:
+      TWINE_PASSWORD: $(TWINE_PASSWORD)
 
   - script: |
       set -x
 
       LABEL_NAME=${{parameters.package_name}}
-      PACKAGE_VERSION=$(paa extract-tracking-version "$package_name_value")
+      PACKAGE_VERSION=$(paa extract-tracking-version "$LABEL_NAME")
       if [ -z "$PACKAGE_VERSION" ]; then
         echo "Failed to get version"
         exit 1
