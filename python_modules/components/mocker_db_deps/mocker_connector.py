@@ -1,14 +1,21 @@
 import logging
-import attr #>=22.2.0
+import attrsx
+import attrs #>=23.1.0
 import httpx
 
-@attr.s
+@attrsx.define
 class MockerConnector:
 
-    connection_details = attr.ib(
+    """
+    Client for connecting to MockerDB api.
+    """
+
+    connection_details = attrs.field(
         default = {
             "base_url" : "http://localhost:8000"
         })
+
+    client = attrs.field(default = None)
 
     def __attrs_post_init__(self):
         self.client = httpx.Client(

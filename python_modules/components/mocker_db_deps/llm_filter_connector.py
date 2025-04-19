@@ -1,51 +1,39 @@
 import logging
-import attr #>=22.2.0
-import requests
-import aiohttp
 import asyncio
 import ast
+import json
+import attrsx
+import attrs #>=23.1.0
+import requests
+import aiohttp
 
-@attr.s
+
+@attrsx.define
 class LlmFilterConnector:
 
-    connection_string = attr.ib(default = None)
-    headers = attr.ib(default={
+    """
+    Filters provided data using LLM connection
+    """
+
+    connection_string = attrs.field(default = None)
+    headers = attrs.field(default={
         "Content-Type": "application/json"
     })
-    payload_extra = attr.ib(default={})
+    payload_extra = attrs.field(default={})
 
-    system_message = attr.ib(
-        default = """You are an advanced language model designed to search for specific content within a text snippet. Your task is to determine whether the provided text snippet contains information relevant to a given query. 
-Your response should be strictly 'true' if the relevant information is present and 'false' if it is not. Do not provide any additional information or explanation. Here is how you should proceed:
+    system_message = attrs.field(
+        default = """You are an advanced language model designed to search for specific content within a text snippet. 
+Your task is to determine whether the provided text snippet contains information relevant to a given query. 
+Your response should be strictly 'true' if the relevant information is present and 'false' if it is not. 
+Do not provide any additional information or explanation. Here is how you should proceed:
 
 1. Carefully read the provided text snippet.
 2. Analyze the given query.
 3. Determine if the text snippet contains information relevant to the query.
 4. Respond only with 'true' or 'false' based on your determination.""")
 
-    template = attr.ib(default = "Query: Does the text mention {query}? \nText Snippet: '''\n {text} \n'''")
+    template = attrs.field(default = "Query: Does the text mention {query}? \nText Snippet: '''\n {text} \n'''")
 
-
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Llm Filter Connector')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
-
-    def __attrs_post_init__(self):
-        self._initialize_logger()
-
-    def _initialize_logger(self):
-
-        """
-        Initialize a logger for the class instance based on the specified logging level and logger name.
-        """
-
-        if self.logger is None:
-            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
-            logger = logging.getLogger(self.logger_name)
-            logger.setLevel(self.loggerLvl)
-
-            self.logger = logger
 
     def _make_inputs(self, query : str, inserts : list, search_key : str, system_message = None, template = None):
 
@@ -75,7 +63,8 @@ Your response should be strictly 'true' if the relevant information is present a
 
         response = requests.post(self.connection_string,
                                  headers = self.headers,
-                                 json=request_body_json)
+                                 json=request_body_json,
+                                 timeout=600)
 
         return response.json()
 
@@ -185,11 +174,11 @@ Your response should be strictly 'true' if the relevant information is present a
                                         system_message = system_message,
                                         template = template)
 
-            requests = [self._call_async_llm(messages = message, 
+            all_requests = [self._call_async_llm(messages = message, 
                                             payload_extra = payload_extra) \
                                                 for message in messages]
 
-            responses = await asyncio.gather(*requests)
+            responses = await asyncio.gather(*all_requests)
 
             filtered = self._filter_data(data = data, responses = responses)
         else:

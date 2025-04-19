@@ -1,6 +1,6 @@
-import psutil
 import gc
 import sys
+import psutil
 from pympler import asizeof #==1.0.1
 
 def obj_size(obj):
@@ -18,6 +18,10 @@ def check_and_offload_handlers(handlers: dict ,
                                allocated_bytes : int,
                                exception_handlers : list,
                                insert_size_bytes : float):
+
+    """
+    Offloads handlers based on memory constraints.
+    """
 
     # Assume larger size
     insert_overhead = insert_size_bytes*3
@@ -57,6 +61,11 @@ def check_and_offload_handlers(handlers: dict ,
         gc.collect()
 
 def select_handlers_to_offload(handlers: dict, exception_handlers: list, insert_overhead : float):
+
+    """
+    Selects handlers to offload based on memory.
+    """
+
     # Calculate scaled memory usage for each handler
     memory_usage = {hn: obj_size(handlers[hn]) for hn in handlers}
 

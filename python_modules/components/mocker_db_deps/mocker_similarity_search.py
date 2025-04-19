@@ -1,28 +1,24 @@
 import logging
-import attr #>=22.2.0
+import attrsx
+import attrs #>=23.1.0
 import numpy as np #==1.26.0
 
 #! import hnswlib #==0.8.0
 #! import torch
 
-@attr.s
+@attrsx.define
 class MockerSimilaritySearch:
 
-    search_results_n = attr.ib(default=10000, type=int)
-    similarity_params = attr.ib(default={'space':'cosine'}, type=dict)
-    similarity_search_type = attr.ib(default='linear')
+    search_results_n = attrs.field(default=10000, type=int)
+    similarity_params = attrs.field(default={'space':'cosine'}, type=dict)
+    similarity_search_type = attrs.field(default='linear')
+
+    torch = attrs.field(default=None)
 
     # output
-    hnsw_index = attr.ib(init=False)
-
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Similarity search')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
-
+    hnsw_index = attrs.field(init=False)
 
     def __attrs_post_init__(self):
-        self._initialize_logger()
 
         if self.similarity_search_type == 'hnsw':
             try:
@@ -38,20 +34,6 @@ class MockerSimilaritySearch:
                 self.torch = t
             except ImportError:
                 print("Please install `pytorch` to use this feature.")
-
-
-    def _initialize_logger(self):
-
-        """
-        Initialize a logger for the class instance based on the specified logging level and logger name.
-        """
-
-        if self.logger is None:
-            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
-            logger = logging.getLogger(self.logger_name)
-            logger.setLevel(self.loggerLvl)
-
-            self.logger = logger
 
     def hnsw_search(self, search_emb, doc_embs, k=1, space='cosine', ef_search=50, M=16, ef_construction=200):
         """

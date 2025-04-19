@@ -1,7 +1,7 @@
 import logging
 import concurrent.futures
 
-#! import sentence_transformers #==2.2.2
+#! import sentence_transformers #>=2.2.2
 
 class SentenceTransformerEmbedder:
 
@@ -10,8 +10,9 @@ class SentenceTransformerEmbedder:
 
         try:
             from sentence_transformers import SentenceTransformer
-        except ImportError:
+        except ImportError as e:
             print("Please install `sentence_transformers` to use this feature.")
+            print(e)
 
         logging.getLogger('sentence_transformers').setLevel(logging.ERROR)
         self.tbatch_size = tbatch_size
