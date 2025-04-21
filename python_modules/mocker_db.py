@@ -13,18 +13,22 @@ import copy
 import hashlib
 from difflib import get_close_matches
 
-import numpy as np  # ==1.26.0
-import dill  # >=0.3.7
-import attrsx
-import attrs  # >=23.1.0
+import nest_asyncio
+import asyncio
 
-from gridlooper import GridLooper  # >=0.0.1
+import numpy as np  #==1.26.0
+import dill  #>=0.3.7
+import attrsx
+import attrs  #>=23.1.0
+
+from gridlooper import GridLooper  #>=0.0.1
 
 # local dependencies
 from .components.mocker_db_deps.sentence_transformer_embedder import SentenceTransformerEmbedder
 from .components.mocker_db_deps.mocker_similarity_search import MockerSimilaritySearch
 from .components.mocker_db_deps.mocker_connector import MockerConnector
 from .components.mocker_db_deps.llm_filter_connector import LlmFilterConnector
+from .components.mocker_db_deps.llm_handler import LlmHandler, BaseLlmHandler
 
 # dependencies for routes
 from .components.mocker_db_deps.data_types import InitializeParams, InsertItem, SearchRequest, DeleteItem, UpdateItem, EmbeddingRequest, RemoveHandlersRequest
@@ -43,19 +47,9 @@ __package_metadata__ = {
     "url": "https://kiril-mordan.github.io/reusables/mocker_db/",
 }
 
-__design_choices__ = {
-    "similarity search": [
-        "similarity search is optional, mocker can be used as normal database",
-        "to perform similarity searches mocker need to embed selected field during input",
-        "on retrieval by not providing query similarity search is not performed, only filters are used",
-    ]
-}
-
 
 @attrsx.define
 class MockerDB:
-    # pylint: disable=too-many-instance-attributes
-    # pylint: disable=no-member
 
     """
     The MockerDB class simulates a vector database environment, primarily for testing and development purposes.
@@ -96,6 +90,9 @@ class MockerDB:
     llm_filter_params = attrs.field(default={})
     llm_filter = attrs.field(default=LlmFilterConnector)
 
+    llm_conn = attrs.field(default=LlmHandler)
+    llm_conn_params = attrs.field(default={})
+
     ## for similarity search
     similarity_params = attrs.field(default={"space": "cosine"}, type=dict)
     similarity_search = attrs.field(default=MockerSimilaritySearch)
@@ -105,6 +102,7 @@ class MockerDB:
     mdbc_class = attrs.field(default=MockerConnector)
 
     ## activate dependencies
+    llm_conn_h = attrs.field(default=None)
     llm_filter_h = attrs.field(default=None)
     embedder_h = attrs.field(default=None)
     similarity_search_h = attrs.field(default=None)
@@ -138,20 +136,33 @@ class MockerDB:
 
     def __attrs_post_init__(self):
         if not self.skip_post_init:
+            self._initialize_llm_connection()
             self._initialize_llm_filter()
             self._initialize_embedder()
             self._initialize_sim_search()
 
         self.data = {}
 
-    def _initialize_llm_filter(self):
+    def _initialize_llm_connection(self):
         """
-        Initializes llm_filter connector with provided parameters.
+        Initializes llm connection with provided parameters.
         """
 
-        if self.llm_filter_h is None:
+        if (self.llm_conn_h is None) and (self.llm_conn_params != {}):
+            self.llm_conn_h = self.llm_conn(
+                **self.llm_conn_params, 
+                logger=self.logger
+            )
+
+    def _initialize_llm_filter(self):
+        """
+        Initializes llm filter with provided parameters.
+        """
+
+        if (self.llm_filter_h is None) and (self.llm_conn_h is not None):
             self.llm_filter_h = self.llm_filter(
                 **self.llm_filter_params, 
+                llm_h = self.llm_conn_h,
                 logger=self.logger
             )
 
@@ -432,17 +443,16 @@ class MockerDB:
 
         if llm_search_keys:
 
+            nest_asyncio.apply() 
+            loop = asyncio.new_event_loop()
+
             filtered_data = self.filtered_data
             if keyword_check_keys == [] and filter_criteria_list == []:
                 filtered_data = self.data
 
-            for key, queries in llm_search_check_dict.items():
-
-                for query in queries:
-
-                    filtered_data = self.llm_filter_h.filter_data(
-                        data=filtered_data, search_key=key, query=query
-                    )
+            filtered_data = loop.run_until_complete(self.llm_filter_h.filter_data_async(
+                data=filtered_data, search_specs = llm_search_check_dict
+            ))
 
             self.filtered_data = filtered_data
 
@@ -460,13 +470,9 @@ class MockerDB:
             if keyword_check_keys == [] and filter_criteria_list == []:
                 filtered_data = self.data
 
-            for key, queries in llm_search_check_dict.items():
-
-                for query in queries:
-
-                    filtered_data = await self.llm_filter_h.filter_data_async(
-                        data=filtered_data, search_key=key, query=query
-                    )
+            filtered_data = await self.llm_filter_h.filter_data_async(
+                data=filtered_data, search_specs = llm_search_check_dict
+            )
 
             self.filtered_data = filtered_data
 

@@ -1,5 +1,6 @@
 import logging
 import asyncio
+import os
 import ast
 import json
 import attrsx
@@ -15,12 +16,10 @@ class LlmFilterConnector:
     Filters provided data using LLM connection
     """
 
-    connection_string = attrs.field(default = None)
-    headers = attrs.field(default={
-        "Content-Type": "application/json"
-    })
-    payload_extra = attrs.field(default={})
-
+    llm_h_class = attrs.field(default=None)
+    llm_h = attrs.field(default=None)
+    llm_h_params = attrs.field(default={})
+    
     system_message = attrs.field(
         default = """You are an advanced language model designed to search for specific content within a text snippet. 
 Your task is to determine whether the provided text snippet contains information relevant to a given query. 
@@ -34,6 +33,15 @@ Do not provide any additional information or explanation. Here is how you should
 
     template = attrs.field(default = "Query: Does the text mention {query}? \nText Snippet: '''\n {text} \n'''")
 
+    max_retries = attrs.field(default=1)
+
+    def __attrs_post_init__(self):
+        self._initialize_llm_h()
+
+    def _initialize_llm_h(self):
+
+        if self.llm_h is None:
+            self.llm_h = self.llm_h_class(**self.llm_h_params)
 
     def _make_inputs(self, query : str, inserts : list, search_key : str, system_message = None, template = None):
 
@@ -48,69 +56,38 @@ Do not provide any additional information or explanation. Here is how you should
                 {'role' : 'user',
                 'content' : template.format(query = query, text = dd[search_key])}] for dd in inserts]
 
-    def _call_sync_llm(self, 
-                       messages : list,
-                       payload_extra : dict):
-
-        """
-        Calls llm sync endpoint.
-        """
-
-        request_body = payload_extra
-        request_body["messages"] = messages
-
-        request_body_json = json.dumps(request_body)
-
-        response = requests.post(self.connection_string,
-                                 headers = self.headers,
-                                 json=request_body_json,
-                                 timeout=600)
-
-        return response.json()
 
     async def _call_async_llm(self, 
-                              payload_extra : dict, 
-                              messages : list,
-                              retry : int = 1):
+                              messages : list):
 
         """
         Calls llm async endpoint.
         """
 
-        request_body = payload_extra
-        request_body["messages"] = messages
-
-        request_body_json = json.dumps(request_body)
+        retry = self.max_retries
 
         retry += 1
         attempt = 0
-        async with aiohttp.ClientSession() as session:
-            while attempt < retry:
-                try:
-                    async with session.post(
-                        url=self.connection_string,
-                        headers=self.headers,
-                        data=request_body_json) as request:
 
-                        response = await request.json()
+        while attempt < retry:
+            try:
+                
+                response = await self.llm_h.chat(messages=messages)
 
-                    if request.status > 200:
-                        raise Exception(f"Request failed: {request.status}")
-
-                    retry = -1
-                except Exception as e:
-                    self.logger.error(e)
-                    attempt += 1
+                retry = -1
+            except Exception as e:
+                self.logger.error(e)
+                attempt += 1
 
         if attempt == retry:
-            self.logger.error(f"Request failed after {attempt} attempts! {request_body_json}")
+            self.logger.error(f"Request failed after {attempt} attempts!")
             response = {}
 
         return response
 
     def _filter_data(self, data : dict, responses : list):
 
-        outputs = [res['message']['content'] for res in responses]
+        outputs = [res['choices'][0]['message']['content'] for res in responses]
 
         output_filter = ['true' in out.lower() for out in outputs]
 
@@ -118,71 +95,46 @@ Do not provide any additional information or explanation. Here is how you should
 
         return filtered
 
-    def filter_data(self,
-                    query : str,
-                    data : list,
-                    search_key : str,
-                    system_message : str = None,
-                    template : str = None,
-                    payload_extra : dict = None):
-
-        """
-        Prompts chat for search.
-        """
-
-        if payload_extra is None:
-            payload_extra = self.payload_extra
-
-        inserts = [value for _, value in data.items()]
-
-        messages = self._make_inputs(query = query,
-                                     inserts = inserts,
-                                     search_key = search_key,
-                                     system_message = system_message,
-                                     template = template)
-
-        responses = self._call_sync_llm(
-            messages = messages,
-            payload_extra = payload_extra)
-
-        filtered = self._filter_data(data = data, responses = responses)
-
-        return filtered
-
     async def filter_data_async(self,
-                    query : str,
+                    search_specs : dict,
                     data : list,
-                    search_key : str,
                     system_message : str = None,
-                    template : str = None,
-                    payload_extra : dict = None):
+                    template : str = None):
 
         """
         Prompts chat for search.
         """
 
-        if self.connection_string:
-
-            if payload_extra is None:
-                payload_extra = self.payload_extra
-
+        try:
             inserts = [value for _, value in data.items()]
 
-            messages = self._make_inputs(query = query,
-                                        inserts = inserts,
-                                        search_key = search_key,
-                                        system_message = system_message,
-                                        template = template)
+            all_messages = []
+            for search_key, queries in search_specs.items():
+                for query in queries:
+                    messages = self._make_inputs(query = query,
+                                                inserts = inserts,
+                                                search_key = search_key,
+                                                system_message = system_message,
+                                                template = template)
+                    all_messages.append(messages)
 
-            all_requests = [self._call_async_llm(messages = message, 
-                                            payload_extra = payload_extra) \
-                                                for message in messages]
+            all_requests = [self._call_async_llm(messages = messages) \
+                for search_messages in all_messages for messages in search_messages]
 
-            responses = await asyncio.gather(*all_requests)
+            all_responses = await asyncio.gather(*all_requests)
 
-            filtered = self._filter_data(data = data, responses = responses)
-        else:
-            self.logger.warning("Provide connection_string in 'llm_filter_params' to use llm filters!")
-            filtered = data
+            all_filtered = {}
 
-        return filtered
+            for m_id in range(len(all_messages)):
+
+                responses = [all_responses[i] for i in range(m_id * len(data), (m_id + 1) * len(data))]
+
+                filtered = self._filter_data(data = data, responses = responses)
+
+                all_filtered.update(filtered)
+
+        except Exception as e:
+            self.logger.error(e)
+            all_filtered = data
+
+        return all_filtered
