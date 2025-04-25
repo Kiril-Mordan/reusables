@@ -1,5 +1,13 @@
 # Release notes
 
+### 0.3.0
+
+    - initial version of cache of llm classification performed during llm filtering step
+
+    - integrating ollama and openai llm handlers for llm filter feature
+
+    - upgrading older version of attrs to attrsx
+
 ### 0.2.7
 
     - minor fixes for initial llm filter
