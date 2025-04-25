@@ -93,6 +93,8 @@ class MockerDB:
     llm_conn = attrs.field(default=LlmHandler)
     llm_conn_params = attrs.field(default={})
 
+    ignore_cats_cache = attrs.field(default=False)
+
     ## for similarity search
     similarity_params = attrs.field(default={"space": "cosine"}, type=dict)
     similarity_search = attrs.field(default=MockerSimilaritySearch)
@@ -111,7 +113,7 @@ class MockerDB:
     ##
     return_keys_list = attrs.field(default=None, type=list)
     ignore_keys_list = attrs.field(
-        default=["embedding", "&distance", "&id", "&embedded_field"], type=list
+        default=["embedding", "&distance", "&id", "&embedded_field", "&cats"], type=list
     )
     search_results_n = attrs.field(default=10000, type=int)
     similarity_search_type = attrs.field(default="linear", type=str)
@@ -120,6 +122,7 @@ class MockerDB:
     ## inputs with defaults
     file_path = attrs.field(default="./mock_persist", type=str)
     embs_file_path = attrs.field(default="./mock_embs_persist", type=str)
+    cats_file_path = attrs.field(default="./mock_cats_persist", type=str)
     persist = attrs.field(default=False, type=bool)
 
     skip_post_init = attrs.field(default=False)
@@ -127,6 +130,7 @@ class MockerDB:
     ## data
     data = attrs.field(default=None, init=False)
     embs = attrs.field(default=None, init=False)
+    cats = attrs.field(default=None, init=False)
 
     ## outputs
     filtered_data = attrs.field(default=None, init=False)
@@ -291,7 +295,7 @@ class MockerDB:
                 else:
                     embedded_list_of_text.append(existing_list_of_embeddings.pop(0))
 
-            # assing embeddings to data
+            # adding embeddings to data
             i = 0
             for insd in values_dicts:
                 values_dicts[insd]["&embedded_field"] = var_for_embedding_name
@@ -413,25 +417,24 @@ class MockerDB:
             "llm_search_check_dict": llm_search_check_dict,
         }
 
-        # if llm_search_keys:
+    def _update_cats_cache(self, cache_update : dict):
 
-        #     filtered_data = self.filtered_data
-        #     if keyword_check_keys == [] and filter_criteria_list == []:
-        #         filtered_data = self.data
+        for text, cats in cache_update.items():
 
-        #     for key, queries in llm_search_check_dict.items():
 
-        #         for query in queries:
+            if text not in self.cats.keys():
+                self.cats[text] = {1 : [], 0 : []}
 
-        #             filtered_data = self.llm_filter_h.filter_data(
-        #                 data = filtered_data,
-        #                 search_key = key,
-        #                 query = query)
+            self.cats[text][1] = list(set(self.cats[text][1] + cats[1]))
+            self.cats[text][0] = list(set(self.cats[text][0] + cats[0]))
 
-        #     self.filtered_data = filtered_data
+    def _update_filtered_cats(self):
 
-        # if len(self.filtered_data) == 0:
-        #     self.logger.warning("No data was found with applied filters!")
+        data_update = {dt : {**self.data[dt], "&cats" : di.get("&cats", {})} \
+            for dt, di in self.filtered_data.items()}
+
+        self.data.update(data_update)
+        self.save_data()
 
     def _filter_llm(
         self,
@@ -439,6 +442,7 @@ class MockerDB:
         keyword_check_keys: list,
         filter_criteria_list: list,
         llm_search_check_dict: dict,
+        ignore_cats_cache : bool,
     ):
 
         if llm_search_keys:
@@ -450,11 +454,17 @@ class MockerDB:
             if keyword_check_keys == [] and filter_criteria_list == []:
                 filtered_data = self.data
 
-            filtered_data = loop.run_until_complete(self.llm_filter_h.filter_data_async(
-                data=filtered_data, search_specs = llm_search_check_dict
+            cats_cache = self.cats if not ignore_cats_cache else {}
+
+            filtered_data, cats_cache_update = loop.run_until_complete(self.llm_filter_h.filter_data_async(
+                data=filtered_data, search_specs = llm_search_check_dict, cats_cache = cats_cache
             ))
 
             self.filtered_data = filtered_data
+
+            self._update_cats_cache(cache_update = cats_cache_update)
+
+            self._update_filtered_cats()
 
     async def _filter_llm_async(
         self,
@@ -462,6 +472,7 @@ class MockerDB:
         keyword_check_keys: list,
         filter_criteria_list: list,
         llm_search_check_dict: dict,
+        ignore_cats_cache : bool,
     ):
 
         if llm_search_keys:
@@ -470,11 +481,18 @@ class MockerDB:
             if keyword_check_keys == [] and filter_criteria_list == []:
                 filtered_data = self.data
 
-            filtered_data = await self.llm_filter_h.filter_data_async(
-                data=filtered_data, search_specs = llm_search_check_dict
+            cats_cache = self.cats if not ignore_cats_cache else {}
+
+            filtered_data, cats_cache_update = await self.llm_filter_h.filter_data_async(
+                data=filtered_data, search_specs = llm_search_check_dict, cats_cache = cats_cache
             )
 
             self.filtered_data = filtered_data
+
+            self._update_cats_cache(cache_update = cats_cache_update)
+
+            self._update_filtered_cats()
+
 
     def _search_database_keys(
         self,
@@ -730,6 +748,7 @@ class MockerDB:
         connection_details: dict = None,
         file_path: str = None,
         embs_file_path: str = None,
+        cats_file_path: str = None,
     ):
         """
         Simulates establishing a connection by loading data from a local file into the 'data' attribute.
@@ -745,6 +764,9 @@ class MockerDB:
 
         if embs_file_path is None:
             embs_file_path = self.embs_file_path
+
+        if cats_file_path is None:
+            cats_file_path = self.cats_file_path
 
         try:
             with open(file_path, "rb") as file:
@@ -762,6 +784,14 @@ class MockerDB:
         except Exception as e:
             self.logger.error("Error loading embeddings storage from file: ", e)
 
+        try:
+            with open(cats_file_path, "rb") as file:
+                self.cats = dill.load(file)
+        except FileNotFoundError:
+            self.cats = {}
+        except Exception as e:
+            self.logger.error("Error loading classifiers storage from file: ", e)
+
     def save_data(self):
         """
         Saves the current state of 'data' back into a local file.
@@ -774,6 +804,8 @@ class MockerDB:
                     dill.dump(self.data, file)
                 with open(self.embs_file_path, "wb") as file:
                     dill.dump(self.embs, file)
+                with open(self.cats_file_path, "wb") as file:
+                    dill.dump(self.cats, file)
             except Exception as e:
                 self.logger.error("Error saving data to file: ", e)
 
@@ -872,6 +904,7 @@ class MockerDB:
         similarity_search_type: str = None,
         similarity_params: dict = None,
         perform_similarity_search: bool = None,
+        ignore_cats_cache : bool = None,
         return_keys_list: list = None,
         database_name: str = None,
     ) -> list:
@@ -882,6 +915,9 @@ class MockerDB:
 
         if query is None:
             perform_similarity_search = False
+
+        if ignore_cats_cache is None:
+            ignore_cats_cache = self.ignore_cats_cache
 
         if self.mdbc_h:
 
@@ -916,7 +952,7 @@ class MockerDB:
                 keyword_check_cutoff=keyword_check_cutoff,
             )
 
-            self._filter_llm(**temp)
+            self._filter_llm(**temp, ignore_cats_cache = ignore_cats_cache)
 
             if len(self.filtered_data) == 0:
                 self.logger.warning("No data was found with applied filters!")
@@ -951,6 +987,7 @@ class MockerDB:
         similarity_search_type: str = None,
         similarity_params: dict = None,
         perform_similarity_search: bool = None,
+        ignore_cats_cache : bool = None,
         return_keys_list: list = None,
         database_name: str = None,
     ) -> list:
@@ -961,6 +998,9 @@ class MockerDB:
 
         if query is None:
             perform_similarity_search = False
+
+        if ignore_cats_cache is None:
+            ignore_cats_cache = self.ignore_cats_cache
 
         if self.mdbc_h:
 
@@ -995,7 +1035,7 @@ class MockerDB:
                 keyword_check_cutoff=keyword_check_cutoff,
             )
 
-            await self._filter_llm_async(**temp)
+            await self._filter_llm_async(**temp, ignore_cats_cache = ignore_cats_cache)
 
             if len(self.filtered_data) == 0:
                 self.logger.warning("No data was found with applied filters!")

@@ -51,10 +51,14 @@ Do not provide any additional information or explanation. Here is how you should
         if template is None:
             template = self.template
 
-        return [[{'role' : 'system',
+        messages = [[{'role' : 'system',
                 'content' : system_message},
                 {'role' : 'user',
                 'content' : template.format(query = query, text = dd[search_key])}] for dd in inserts]
+
+        texts = [dd[search_key] for dd in inserts]
+
+        return messages, texts
 
 
     async def _call_async_llm(self, 
@@ -85,19 +89,63 @@ Do not provide any additional information or explanation. Here is how you should
 
         return response
 
-    def _filter_data(self, data : dict, responses : list):
+    def _add_cats_to_filtered(self, data_item : dict, cats : dict):
+
+        di = data_item
+
+        cats_key = list(cats.keys())[0]
+        
+        if cats_key not in di.keys():
+            di[cats_key] = []
+
+        di[cats_key].append(cats[cats_key])
+
+        return di
+
+    def _extract_class_from_llm_output(self, responses : list):
 
         outputs = [res['choices'][0]['message']['content'] for res in responses]
 
         output_filter = ['true' in out.lower() for out in outputs]
 
-        filtered = {d : data[d] for d,b in zip(data,output_filter) if b}
+        return output_filter
+
+
+    def _filter_data(self, data : dict, output_filter : list, cats : dict):
+
+
+        filtered = {d : {**data[d], "&cats" : self._add_cats_to_filtered(
+            data_item = data[d].get("&cats",{}), cats=cats
+        )  } \
+            for d,b in zip(data,output_filter) if b}
 
         return filtered
+
+    def _update_all_cats_cache(self,
+                    all_cats_cache : dict,
+                    output_filter : list, 
+                    texts : dict):
+
+        category = list(texts.keys())[0]
+
+        for text, add_cat in zip(texts[category], output_filter):
+
+
+            if text not in all_cats_cache.keys():
+                all_cats_cache[text] = {1 : [], 0 : []}
+
+            if add_cat:
+                all_cats_cache[text][1].append(category)
+            else:
+                all_cats_cache[text][0].append(category)
+
+        return all_cats_cache
+
 
     async def filter_data_async(self,
                     search_specs : dict,
                     data : list,
+                    cats_cache : dict,
                     system_message : str = None,
                     template : str = None):
 
@@ -107,34 +155,89 @@ Do not provide any additional information or explanation. Here is how you should
 
         try:
             inserts = [value for _, value in data.items()]
+            data_keys = [key for key, _ in data.items()]
 
+            previously_classified = {}
             all_messages = []
+            all_cats_filtered = []
+            all_texts = []
+        
             for search_key, queries in search_specs.items():
                 for query in queries:
-                    messages = self._make_inputs(query = query,
+                    messages, texts = self._make_inputs(query = query,
                                                 inserts = inserts,
                                                 search_key = search_key,
                                                 system_message = system_message,
                                                 template = template)
-                    all_messages.append(messages)
 
-            all_requests = [self._call_async_llm(messages = messages) \
-                for search_messages in all_messages for messages in search_messages]
+                    # separate previously classified based on cache
 
-            all_responses = await asyncio.gather(*all_requests)
+                    new_messages = []
+                    new_texts = []
 
+                    for t_idx, text in enumerate(texts):
+
+                        if (text in cats_cache.keys()) \
+                            and (query in cats_cache[text][1] \
+                                or query in cats_cache[text][0]):
+
+                            if query in cats_cache[text][1]:
+
+                                di_cats_update = {search_key : cats_cache[text][1]}
+                                di_cats = inserts[t_idx].get("cats", {})
+                                di_cats.update(di_cats_update)
+
+                                previously_classified.update(
+                                    {data_keys[t_idx] : {**inserts[t_idx] , "&cats" : di_cats}})
+                            if query in cats_cache[text][0]:
+                                previously_classified.update(
+                                    {data_keys[t_idx] : inserts[t_idx]})
+                        else:
+                            new_messages.append(messages[t_idx])
+                            new_texts.append(texts[t_idx])
+
+                    if new_messages:
+
+                        all_messages.append(new_messages)
+                        all_cats_filtered.append({search_key : query})
+                        all_texts.append({query : new_texts})
+
+
+            all_cats_cache = {}
             all_filtered = {}
 
-            for m_id in range(len(all_messages)):
+            if all_messages:
 
-                responses = [all_responses[i] for i in range(m_id * len(data), (m_id + 1) * len(data))]
+                # classify texts
+                all_requests = [self._call_async_llm(messages = messages) \
+                    for search_messages in all_messages for messages in search_messages]
 
-                filtered = self._filter_data(data = data, responses = responses)
+                all_responses = await asyncio.gather(*all_requests)
 
-                all_filtered.update(filtered)
+                for m_id, cats in enumerate(all_cats_filtered):
+
+                    responses = [all_responses[i] for i in range(m_id * len(data), (m_id + 1) * len(data))]
+
+                    output_filter = self._extract_class_from_llm_output(responses=responses)
+                    # filter data based on classification
+                    filtered = self._filter_data(
+                        data = data, 
+                        output_filter = output_filter, 
+                        cats = cats)
+                    # prepare update for llm classification cache
+                    all_cats_cache = self._update_all_cats_cache(
+                        all_cats_cache = all_cats_cache,
+                        output_filter = output_filter, 
+                        texts = all_texts[m_id])
+
+                    all_filtered.update(filtered)
+
+            all_filtered.update(previously_classified)
+
 
         except Exception as e:
             self.logger.error(e)
             all_filtered = data
+            all_cats_cache = {}
 
-        return all_filtered
+        return all_filtered, all_cats_cache
