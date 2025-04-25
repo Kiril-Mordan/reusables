@@ -11,7 +11,10 @@ nbconvert
 ipykernel
 tox
 tox-gh-actions
-package-auto-assembler
 setuptools 
 wheel 
 twine
+aiohttp
+attrsx
+sentence-transformers==3.3.1
+package-auto-assembler>=0.5.26
