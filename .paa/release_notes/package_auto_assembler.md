@@ -1,5 +1,17 @@
 # Release notes
 
+### 0.5.26
+
+    - fixes to azure template
+
+    - uv package manager for github template workflows
+
+### 0.5.25
+
+    - resolving a problem with missing search box in mkdocs
+
+    - support for extra docs groupings, using subfolders for tabs
+
 ### 0.5.23
 
     - initial support for mermaid diagrams within mkdocs sites

@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-            fetch-depth: 15  # Fetches prev commits
+          fetch-depth: 15  # Fetches prev commits
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -40,26 +40,29 @@ jobs:
 
       - name: Install dependencies
         if: steps.changed-modules.outputs.files != ''
-        run: pip install -r .paa/requirements_dev.txt
+        run: |
+          pip install uv
+          uv venv .venv
+          uv pip install -r .paa/requirements_dev.txt
 
       - name: Update requirements
         if: steps.changed-modules.outputs.files != ''
         run: |
           chmod +x .github/tools/update_tox_requirements.sh
-          paa extract-module-requirements "${{ steps.changed-modules.outputs.files }}" > ".paa/requirements/requirements_${{ steps.changed-modules.outputs.files }}.txt"
+          uv run paa extract-module-requirements "${{ steps.changed-modules.outputs.files }}" > ".paa/requirements/requirements_${{ steps.changed-modules.outputs.files }}.txt"
           .github/tools/update_tox_requirements.sh "${{ steps.changed-modules.outputs.files }}"
           cat .paa/requirements/requirements_tox.txt 
 
       - name: Check requirements for vulnerabilities
         if: steps.changed-modules.outputs.files != ''
         run: |
-          paa check-vulnerabilities "${{ steps.changed-modules.outputs.files }}"
+          uv run paa check-vulnerabilities "${{ steps.changed-modules.outputs.files }}"
 
 
       - name: Check module licenses
         if: steps.changed-modules.outputs.files != ''
         run: |
-          paa check-licenses "${{ steps.changed-modules.outputs.files }}"
+          uv run paa check-licenses "${{ steps.changed-modules.outputs.files }}"
 
       - name: Prepare temp tests name
         if: steps.changed-modules.outputs.files != ''
@@ -112,25 +115,31 @@ jobs:
 
       - name: Install dependencies
         run: | 
-          pip install -r .paa/requirements_dev.txt
+          pip install uv
+          uv venv .venv
+          uv pip install -r .paa/requirements_dev.txt
 
       - name: Test with tox
         run: |
           TESTS_DIR=$(cat tempdir/temp_test_name.txt)
           if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            #TESTS_DIR=$(yq -r '.tests_dir' .paa.config)
             if [ -d "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}" ]; then
-              tox -- "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}"
+              uv run tox -- "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}"
             else
               echo "No tests for module."
-            paa run-pylint-tests --label-name "${{ needs.update-requirements.outputs.changed-files }}"
             fi
           elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            #TESTS_DIR=tests
             if [ -d "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}" ]; then
-              tox -- "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}"
+              uv run tox -- "$TESTS_DIR/${{ needs.update-requirements.outputs.changed-files }}"
             else
               echo "No tests for module."
             fi
+          fi
+        shell: bash
+
+      - name: Run pylint checks
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            uv run paa run-pylint-tests --label-name "${{ needs.update-requirements.outputs.changed-files }}"
           fi
         shell: bash

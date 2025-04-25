@@ -1,16 +1,18 @@
 import logging
 import os
+import sys
 import subprocess
 import importlib
 import importlib.metadata
 import importlib.resources as pkg_resources
 import csv
 import shutil
-import yaml
 import json
-import attr #>=22.2.0
+import yaml
+import pandas as pd
+import attrs #>=22.2.0
 
-@attr.s
+@attrs.define
 class PprHandler:
 
     """
@@ -18,25 +20,25 @@ class PprHandler:
     """
 
     # inputs
-    paa_dir = attr.ib(default=".paa")
-    paa_config_file = attr.ib(default=".paa.config")
-    paa_config = attr.ib(default=None)
+    paa_dir = attrs.field(default=".paa")
+    paa_config_file = attrs.field(default=".paa.config")
+    paa_config = attrs.field(default=None)
 
-    init_dirs = attr.ib(default=["module_dir", "example_notebooks_path",
+    init_dirs = attrs.field(default=["module_dir", "example_notebooks_path",
             "dependencies_dir", "cli_dir", "api_routes_dir", "streamlit_dir",
             "artifacts_dir", "drawio_dir", "extra_docs_dir", "tests_dir"])
 
-    module_dir = attr.ib(default=None)
-    drawio_dir = attr.ib(default=None)
-    docs_dir = attr.ib(default=None)
+    module_dir = attrs.field(default=None)
+    drawio_dir = attrs.field(default=None)
+    docs_dir = attrs.field(default=None)
 
-    pylint_threshold = attr.ib(default=None)
+    pylint_threshold = attrs.field(default=None)
 
     # processed
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='PPR Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='PPR Handler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()
@@ -69,8 +71,9 @@ class PprHandler:
 
         os.makedirs(os.path.join(paa_dir,'tracking'))
 
-        with open(os.path.join(paa_dir,'tracking','lsts_package_versions.yml'),
-            'w') as file:
+        with open(os.path.join(paa_dir,'tracking',
+        'lsts_package_versions.yml'),
+            'w', encoding = "utf-8") as file:
             file.write("")
 
         log_file = open(os.path.join(paa_dir,'tracking','version_logs.csv'),
@@ -240,7 +243,7 @@ class PprHandler:
         init_dirs = self.init_dirs
 
         if os.path.exists(config):
-            with open(config, 'r') as file:
+            with open(config, 'r', encoding = "utf-8") as file:
                 paa_config = yaml.safe_load(file)
 
             py_ignore = """# Ignore all files
@@ -493,11 +496,11 @@ class PprHandler:
         package_paa_config_path = os.path.join(paa_tracking_dir, ".paa.config")
         repo_paa_config_path = ".paa.config"
 
-        with open(package_paa_config_path, 'r') as file:
+        with open(package_paa_config_path, 'r', encoding = "utf-8") as file:
             paa_config = yaml.safe_load(file)
 
         if os.path.exists(repo_paa_config_path):
-            with open(repo_paa_config_path, 'r') as file:
+            with open(repo_paa_config_path, 'r', encoding = "utf-8") as file:
                 repo_paa_config = yaml.safe_load(file)
 
             paa_config.update(repo_paa_config)
@@ -593,14 +596,14 @@ class PprHandler:
         r_versions_filepath = ".paa/tracking/lsts_package_versions.yml"
 
         if os.path.exists(p_versions_filepath):
-            with open(p_versions_filepath, 'r') as file:
+            with open(p_versions_filepath, 'r', encoding = "utf-8") as file:
                 # Load the contents of the file
                 p_lsts_versions = yaml.safe_load(file) or {}
         else:
             p_lsts_versions = {}
 
         if os.path.exists(r_versions_filepath):
-            with open(r_versions_filepath, 'r') as file:
+            with open(r_versions_filepath, 'r', encoding = "utf-8") as file:
                 # Load the contents of the file
                 r_lsts_versions = yaml.safe_load(file) or {}
         else:
@@ -670,7 +673,7 @@ class PprHandler:
 
             r_mappings.update(p_mappings)
         
-            with open(r_mappings_filepath, "w") as json_file:
+            with open(r_mappings_filepath, "w", encoding = "utf-8") as json_file:
                 json.dump(r_mappings, json_file, indent=4)
         
         except Exception as e:
@@ -704,7 +707,7 @@ class PprHandler:
 
             r_mappings.update(p_mappings)
         
-            with open(r_mappings_filepath, "w") as json_file:
+            with open(r_mappings_filepath, "w", encoding = "utf-8") as json_file:
                 json.dump(r_mappings, json_file, indent=4)
         
         except Exception as e:
@@ -892,7 +895,7 @@ class PprHandler:
         r_versions_filepath = ".paa/tracking/lsts_package_versions.yml"
 
         if os.path.exists(r_versions_filepath):
-            with open(r_versions_filepath, 'r') as file:
+            with open(r_versions_filepath, 'r', encoding = "utf-8") as file:
                 # Load the contents of the file
                 r_lsts_versions = yaml.safe_load(file) or {}
         else:
@@ -941,7 +944,7 @@ class PprHandler:
             paa_config = self.paa_config
 
         if os.path.exists(repo_paa_config_path):
-            with open(repo_paa_config_path, 'r') as file:
+            with open(repo_paa_config_path, 'r', encoding = "utf-8") as file:
                 repo_paa_config = yaml.safe_load(file)
 
             paa_config.update(repo_paa_config)
@@ -1069,8 +1072,6 @@ class PprHandler:
             if os.path.exists(r_module_path) and (not os.path.exists(r_new_module_path)):
                 os.rename(r_module_path, r_new_module_path)
 
-    import os
-
     def _replace_package_name(self, 
                               repo_path : str,
                               package_name : str, 
@@ -1098,7 +1099,7 @@ class PprHandler:
                     new_content.append(line)
 
             if modified:
-                with open(file_path, 'w') as file:
+                with open(file_path, 'w', encoding = "utf-8") as file:
                     file.writelines(new_content)
 
 
@@ -1121,7 +1122,7 @@ class PprHandler:
             paa_config = self.paa_config
 
         if os.path.exists(repo_paa_config_path):
-            with open(repo_paa_config_path, 'r') as file:
+            with open(repo_paa_config_path, 'r', encoding = "utf-8") as file:
                 repo_paa_config = yaml.safe_load(file)
 
             paa_config.update(repo_paa_config)
@@ -1215,4 +1216,3 @@ class PprHandler:
                 new_package_name = new_module_name
             )
     
-
