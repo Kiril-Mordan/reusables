@@ -146,6 +146,43 @@
     
     
     
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
     
   </nav>
   
@@ -236,27 +273,36 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-it-does" class="md-nav__link">
+  <a href="#1-purpose" class="md-nav__link">
     <span class="md-ellipsis">
-      ✨ What It Does:
+      1. Purpose
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-attrsx" class="md-nav__link">
+  <a href="#2-key-features" class="md-nav__link">
     <span class="md-ellipsis">
-      🎯 Why attrsx?
+      2. Key Features
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#features-at-a-glance" class="md-nav__link">
+  <a href="#3-underlying-pattern" class="md-nav__link">
     <span class="md-ellipsis">
-      🚧 Features at a Glance:
+      3. Underlying Pattern
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-when-to-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. When to Use
     </span>
   </a>
   
@@ -346,27 +392,36 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-it-does" class="md-nav__link">
+  <a href="#1-purpose" class="md-nav__link">
     <span class="md-ellipsis">
-      ✨ What It Does:
+      1. Purpose
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-attrsx" class="md-nav__link">
+  <a href="#2-key-features" class="md-nav__link">
     <span class="md-ellipsis">
-      🎯 Why attrsx?
+      2. Key Features
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#features-at-a-glance" class="md-nav__link">
+  <a href="#3-underlying-pattern" class="md-nav__link">
     <span class="md-ellipsis">
-      🚧 Features at a Glance:
+      3. Underlying Pattern
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-when-to-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. When to Use
     </span>
   </a>
   
@@ -398,32 +453,49 @@
 
 <h1 id="intro">Intro</h1>
 <p><a href="https://pypi.org/project/attrsx/"><img alt="PyPiVersion" src="https://img.shields.io/pypi/v/attrsx" /></a> <a href="https://github.com/Kiril-Mordan/reusables/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/Kiril-Mordan/reusables" /></a></p>
-<p><strong><code>attrsx</code> – A Lightweight, Playful Extension to <code>attrs</code></strong>  </p>
-<p>🔧 <strong>What is <code>attrsx</code>?</strong><br />
-<code>attrsx</code> is a minimal, lightweight extension of the popular <code>attrs</code> library, designed to seamlessly add logging capabilities to your <code>attrs</code> classes.  </p>
+<p><strong>attrsx – An Extension to <em>attrs</em> for Declarative Handler Injection &amp; Integrated Logging</strong></p>
 <hr />
-<h3 id="what-it-does"><strong>✨ What It Does:</strong></h3>
+<h3 id="1-purpose">1. Purpose</h3>
+<p><code>attrsx</code> builds on top of the <code>attrs</code> data‑class library and contributes two orthogonal capabilities that are frequently needed in service‑layer and infrastructure code:</p>
+<ol>
+<li><strong>Integrated Logging</strong> – transparent, boilerplate‑free creation of a configured <code>logging.Logger</code> for every instance.</li>
+<li><strong>Declarative Handler Injection</strong> – generation of lazy‑initialised <em>strategy</em> objects (“handlers”) declared via <code>handler_specs</code>.</li>
+</ol>
+<p>Both features are opt‑in; if a class does not request them, <code>attrsx.define</code> behaves exactly like <code>attrs.define</code>.</p>
+<hr />
+<h3 id="2-key-features">2. Key Features</h3>
 <ul>
-<li>🛠️ <strong>Extends <code>attrs.define</code></strong> – Behaves exactly like <code>attrs.define</code>, but with automatic logger initialization.  </li>
-<li>🎛️ <strong>Built-in Logging Fields</strong> – Adds fields for logger name, level, and format – all customizable per class or instance.  </li>
-<li>🔍 <strong>Non-Intrusive</strong> – If you don’t need logging, <code>attrsx</code> functions just like plain old <code>attrs</code>.  </li>
+<li>
+<p><strong>Drop-in replacement for <code>attrs.define</code></strong> – forwards every keyword parameter that <code>attrs.define</code> understands (<code>slots</code>, <code>frozen</code>, <code>kw_only</code>, validators, converters, …).</p>
+</li>
+<li>
+<p><strong>Integrated logging</strong> – injects four fields (<code>logger</code>, <code>loggerLvl</code>, <code>logger_name</code>, <code>logger_format</code>) and wraps <code>__attrs_post_init__</code> to attaches a <code>logging.logger</code> 
+    to the instance if none is present.  The logger’s name defaults to the class name; level and format are configurable per instance.</p>
+</li>
+<li>
+<p><strong>Declarative handler injection</strong> – for each entry in <code>handler_specs={"key": HandlerClass, ...}</code> the decorator adds three fields<br />
+  (<code>&lt;key&gt;_class</code>, <code>&lt;key&gt;_params</code>, <code>&lt;key&gt;_h</code>) plus a lazy factory method <code>_initialize_&lt;key&gt;_h()</code>, which calls<br />
+<code>&lt;key&gt;_class(**&lt;key&gt;_params)</code> the first time it is invoked.</p>
+</li>
+<li>
+<p><strong>Type-hint compliance</strong> – all generated attributes are inserted into <code>__annotations__</code>, so static type-checkers recognise them.</p>
+</li>
+<li>
+<p><strong>Zero runtime overhead</strong> – field and method generation is performed once, at import time; normal instance construction stays on the <code>attrs</code> fast path.</p>
+</li>
 </ul>
 <hr />
-<h3 id="why-attrsx"><strong>🎯 Why <code>attrsx</code>?</strong></h3>
-<ul>
-<li>🚀 You sometimes just want <strong>simple logging</strong> without writing the same boilerplate over and over.  </li>
-<li>😌 <code>attrsx</code> lets you keep things clean – adding just a little "magic" to <code>attrs</code>-based classes.  </li>
-<li>🌱 It’s <code>attrs</code>, but with room for playful future extensions.  </li>
-</ul>
+<h3 id="3-underlying-pattern">3. Underlying Pattern</h3>
+<p>The handler mechanism realises <strong>Declarative Handler Injection</strong> (a variant of the Strategy pattern implemented through composition and a lazy factory method). 
+Configuration is expressed as data, leaving the host class agnostic of concrete strategy classes.</p>
 <hr />
-<h3 id="features-at-a-glance"><strong>🚧 Features at a Glance:</strong></h3>
+<h3 id="4-when-to-use">4. When to Use</h3>
 <ul>
-<li>✅ <strong>Fully compatible</strong> with <code>attrs</code> 22.2.0 and later.  </li>
-<li>🧩 Supports <strong>all <code>attrs.define</code> parameters</strong> – like <code>slots</code>, <code>frozen</code>, and more.  </li>
-<li>🔧 Logger defaults to the class name but can be <strong>overridden effortlessly</strong>.  </li>
+<li>You need consistent, ready‑to‑use logging across many small classes.</li>
+<li>You want to supply interchangeable helper or strategy objects without manual glue code.</li>
+<li>You prefer composition over inheritance but dislike factory boilerplate.</li>
 </ul>
-<hr />
-<p>✨ It’s <code>attrs</code>, but with just a little... <strong>extra</strong>. 😄</p>
+<p>If none of the above apply, simply continue to use <code>attrs.define</code>; the migration path is one import statement.</p>
 <h2 id="installation">Installation</h2>
 <pre><code class="language-bash">pip install attrsx
 </code></pre>
