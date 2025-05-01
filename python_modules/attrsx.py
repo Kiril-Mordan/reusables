@@ -1,37 +1,58 @@
 """
-**`attrsx` – A Lightweight, Playful Extension to `attrs`**  
-
-🔧 **What is `attrsx`?**  
-`attrsx` is a minimal, lightweight extension of the popular `attrs` library, designed to seamlessly add logging capabilities to your `attrs` classes.  
+**attrsx – An Extension to _attrs_ for Declarative Handler Injection & Integrated Logging**
 
 ---
 
-### **✨ What It Does:**  
-- 🛠️ **Extends `attrs.define`** – Behaves exactly like `attrs.define`, but with automatic logger initialization.  
-- 🎛️ **Built-in Logging Fields** – Adds fields for logger name, level, and format – all customizable per class or instance.  
-- 🔍 **Non-Intrusive** – If you don’t need logging, `attrsx` functions just like plain old `attrs`.  
+### 1. Purpose
+
+`attrsx` builds on top of the `attrs` data‑class library and contributes two orthogonal capabilities that are frequently needed in service‑layer and infrastructure code:
+
+1. **Integrated Logging** – transparent, boilerplate‑free creation of a configured `logging.Logger` for every instance.
+2. **Declarative Handler Injection** – generation of lazy‑initialised *strategy* objects (“handlers”) declared via `handler_specs`.
+
+Both features are opt‑in; if a class does not request them, `attrsx.define` behaves exactly like `attrs.define`.
 
 ---
 
-### **🎯 Why `attrsx`?**  
-- 🚀 You sometimes just want **simple logging** without writing the same boilerplate over and over.  
-- 😌 `attrsx` lets you keep things clean – adding just a little "magic" to `attrs`-based classes.  
-- 🌱 It’s `attrs`, but with room for playful future extensions.  
+### 2. Key Features
+
+* **Drop-in replacement for `attrs.define`** – forwards every keyword parameter that `attrs.define` understands (`slots`, `frozen`, `kw_only`, validators, converters, …).
+
+* **Integrated logging** – injects four fields (`logger`, `loggerLvl`, `logger_name`, `logger_format`) and wraps `__attrs_post_init__` to attaches a `logging.logger` 
+    to the instance if none is present.  The logger’s name defaults to the class name; level and format are configurable per instance.
+
+* **Declarative handler injection** – for each entry in `handler_specs={"key": HandlerClass, ...}` the decorator adds three fields  
+  (`<key>_class`, `<key>_params`, `<key>_h`) plus a lazy factory method `_initialize_<key>_h()`, which calls  
+  `<key>_class(**<key>_params)` the first time it is invoked.
+
+* **Type-hint compliance** – all generated attributes are inserted into `__annotations__`, so static type-checkers recognise them.
+
+* **Zero runtime overhead** – field and method generation is performed once, at import time; normal instance construction stays on the `attrs` fast path.
+
 
 ---
 
-### **🚧 Features at a Glance:**  
-- ✅ **Fully compatible** with `attrs` 22.2.0 and later.  
-- 🧩 Supports **all `attrs.define` parameters** – like `slots`, `frozen`, and more.  
-- 🔧 Logger defaults to the class name but can be **overridden effortlessly**.  
+### 3. Underlying Pattern
+
+The handler mechanism realises **Declarative Handler Injection** (a variant of the Strategy pattern implemented through composition and a lazy factory method). 
+Configuration is expressed as data, leaving the host class agnostic of concrete strategy classes.
 
 ---
 
-✨ It’s `attrs`, but with just a little... **extra**. 😄  
+### 4. When to Use
+
+- You need consistent, ready‑to‑use logging across many small classes.
+- You want to supply interchangeable helper or strategy objects without manual glue code.
+- You prefer composition over inheritance but dislike factory boilerplate.
+
+If none of the above apply, simply continue to use `attrs.define`; the migration path is one import statement.
+
+
 """
 
-import attrs #>=22.2.0
 import logging
+import attrs #>=22.2.0
+
 
 
 __package_metadata__ = {
@@ -42,17 +63,104 @@ __package_metadata__ = {
     "url" : 'https://kiril-mordan.github.io/reusables/attrsx/'
 }
 
-def define(cls=None, *args, **kwargs):
+def define(
+    cls=None, 
+    handler_specs:dict=None, 
+    logger_chaining:dict=None, 
+    *args, **kwargs):
     if cls is not None:
-        return _apply_attrs_and_logger(cls, *args, **kwargs)
+        return _apply_attrs_and_logger(
+            cls = cls, 
+            handler_specs = handler_specs, 
+            logger_chaining = logger_chaining,
+            *args, **kwargs)
     
     def wrapper(inner_cls):
-        return _apply_attrs_and_logger(inner_cls, *args, **kwargs)
+        return _apply_attrs_and_logger(
+            cls = inner_cls, 
+            handler_specs = handler_specs, 
+            logger_chaining = logger_chaining, 
+            *args, **kwargs)
     
     return wrapper
 
+def _add_handlers_from_spec(cls, handler_specs : dict, logger_chaining: dict):
 
-def _apply_attrs_and_logger(cls, *args, **kwargs):
+    if logger_chaining is None:
+        logger_chaining = {}
+
+    logger_chaining_default = {
+        'loggerLvl' : True, 
+        'logger' : False, 
+        'logger_format' : True}
+    logger_chaining_default.update(logger_chaining)
+    logger_chaining = logger_chaining_default
+
+    for handler_key, handler_class in handler_specs.items():
+
+        handler_h_name = f"{handler_key}_h"
+        handler_class_name = f"{handler_key}_class"
+        handler_params_name = f"{handler_key}_params"
+
+        if handler_h_name not in cls.__dict__:
+            setattr(cls, handler_h_name, attrs.field(default=None))
+        if handler_class_name not in cls.__dict__:
+            setattr(cls, handler_class_name, attrs.field(default=handler_class))
+        if handler_params_name not in cls.__dict__:
+            setattr(cls, handler_params_name, attrs.field(default={}))
+
+        init_func = f"""
+def _initialize_{handler_h_name}(self, params : dict = None, uparams : dict = None):
+
+    if params is None:
+        params = self.{handler_params_name}
+
+    if uparams is not None:
+        params.update(uparams)
+    """
+
+        if logger_chaining.get("logger"):
+            init_func += f"""
+    if ('logger' in self.{handler_class_name}.__dict__) \
+            and "logger" not in params.keys():
+        params["logger"] = self.logger
+    """
+        if logger_chaining.get("loggerLvl"):
+            init_func += f"""
+    if ('loggerLvl' in self.{handler_class_name}.__dict__) \
+            and "loggerLvl" not in params.keys():
+        params["loggerLvl"] = self.loggerLvl
+    """
+        if logger_chaining.get("logger_format"):
+            init_func += f"""
+    if ('logger_format' in self.{handler_class_name}.__dict__) \
+            and "logger_format" not in params.keys():
+        params["logger_format"] = self.logger_format
+    """
+
+        init_func += f"""
+    if self.{handler_h_name} is None:
+        self.{handler_h_name} = self.{handler_class_name}(**params)
+        """
+
+        ns = {}
+        exec(init_func, ns)
+
+        init_fn = ns[f'_initialize_{handler_h_name}']
+
+        setattr(cls, f'_initialize_{handler_h_name}', init_fn)
+
+    return cls
+
+def _apply_attrs_and_logger(cls, handler_specs, logger_chaining, *args, **kwargs):
+
+    # Inject optional handlers definition
+    if handler_specs:
+        cls = _add_handlers_from_spec(
+            cls = cls, 
+            handler_specs=handler_specs, 
+            logger_chaining = logger_chaining)
+
     # Inject logger fields ONLY if they don't already exist
     if 'logger' not in cls.__dict__:
         cls.logger = attrs.field(default = None, repr=False)
@@ -81,7 +189,7 @@ def _apply_attrs_and_logger(cls, *args, **kwargs):
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
             self.logger.propagate = False  # Prevent log duplication
-
+    
         # Call the original post-init if it exists
         if original_post_init:
             original_post_init(self)
@@ -91,4 +199,3 @@ def _apply_attrs_and_logger(cls, *args, **kwargs):
 
     # Apply attrs.define
     return attrs.define(cls, *args, **kwargs)
-
