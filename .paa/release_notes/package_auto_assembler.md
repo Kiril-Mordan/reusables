@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.5.27
+
+    - updating to patched setuptools==78.1.1 to fix detected vulnerability
+
 ### 0.5.26
 
     - fixes to azure template
