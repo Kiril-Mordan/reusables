@@ -46,7 +46,7 @@ from .components.paa_deps.ppr_handler import PprHandler
 from .components.paa_deps.tests_handler import TestsHandler
 
 #@ numpy==1.26.0
-#@ setuptools==75.1.0
+#@ setuptools>=78.1.1
 #@ wheel>=0.44.0
 #@ twine>=5.1.1
 
