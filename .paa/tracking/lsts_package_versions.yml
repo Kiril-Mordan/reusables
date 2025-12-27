@@ -5,4 +5,4 @@ mocker_db: 0.3.0
 package_auto_assembler: 0.5.27
 parameterframe: 0.1.6
 proompter: 0.0.2
-shouterlog: 0.0.2
+shouterlog: 0.1.0

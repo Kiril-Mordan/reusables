@@ -1,27 +1,8 @@
-# Shouter Usage Examples
-
-The Shouter class is designed for managing and displaying formatted log messages, utilizing Python's logging module. 
-
-
-
 ```python
-import sys
-sys.path.append('../')
-from python_modules.shouterlog import Shouter
+from shouterlog import Shouter
 # optional
 import logging
 ```
-
-## Usage examples
-
-The examples contain: 
-1. initialize Shouter class
-2. basic usage like logging
-3. using different output types
-4. custom logger configuration
-5. backwards compatibility with existing loggers
-6. built-in records from Shouter usage
-7. debugging capabilities of Shouter
 
 ### 1. Initialize Shouter Class
 
@@ -34,12 +15,14 @@ shouter = Shouter(
     ## Formatting settings
     dotline_length = 50,
     auto_output_type_selection = True,
+    show_function = True,
+    show_traceback = False,
     # For saving records
-    tears_persist_path = '../env_spec/log_records.json',
+    tears_persist_path = 'log_records.json',
     datetime_format = "%Y-%m-%d %H:%M:%S",
     # For saving env
     persist_env = False,
-    env_persist_path = '../env_spec/environment.dill',
+    env_persist_path = 'environment.dill',
     ## Logger settings
     logger = None,
     logger_name = 'Shouter',
@@ -64,25 +47,13 @@ shouter.fatal("This is a fatal message!")
 shouter.critical("This is a critical message!")
 ```
 
-    (2024-01-17 19:24:45,319) : Shouter : [DEBUG] : ==============================
-
-
-    (2024-01-17 19:24:45,320) : Shouter : [DEBUG] : This is a debug message!
-
-
-    (2024-01-17 19:24:45,321) : Shouter : [INFO] : This is an info message!
-
-
-    (2024-01-17 19:24:45,322) : Shouter : [WARNING] : This is a warning message!
-
-
-    (2024-01-17 19:24:45,323) : Shouter : [ERROR] : This is an error message!
-
-
-    (2024-01-17 19:24:45,324) : Shouter : [CRITICAL] : This is a fatal message!
-
-
-    (2024-01-17 19:24:45,325) : Shouter : [CRITICAL] : This is a critical message!
+    (2025-12-26 02:51:24,703) : Shouter : [DEBUG] : _format_mess:==============================
+    (2025-12-26 02:51:24,704) : Shouter : [DEBUG] : _format_mess:This is a debug message!
+    (2025-12-26 02:51:24,704) : Shouter : [INFO] : _format_mess:This is an info message!
+    (2025-12-26 02:51:24,704) : Shouter : [WARNING] : _format_mess:This is a warning message!
+    (2025-12-26 02:51:24,705) : Shouter : [ERROR] : _format_mess:This is an error message!
+    (2025-12-26 02:51:24,705) : Shouter : [CRITICAL] : _format_mess:This is a fatal message!
+    (2025-12-26 02:51:24,705) : Shouter : [CRITICAL] : _format_mess:This is a critical message!
 
 
 ### 3. Using different output types
@@ -94,10 +65,8 @@ shouter.info(output_type="dline")
 shouter.info(output_type="HEAD1", mess="Header Message")
 ```
 
-    (2024-01-17 19:24:45,367) : Shouter : [INFO] : ==================================================
-
-
-    (2024-01-17 19:24:45,369) : Shouter : [INFO] : 
+    (2025-12-26 02:51:24,710) : Shouter : [INFO] : _format_mess:==================================================
+    (2025-12-26 02:51:24,710) : Shouter : [INFO] : _format_mess:
     ==================================================
     -----------------Header Message----------------- 
     ==================================================
@@ -117,9 +86,6 @@ custom_logger.setLevel(logging.INFO)
 shouter_with_custom_logger = Shouter(supported_classes=(), logger=custom_logger)
 shouter_with_custom_logger.info(mess="Message with custom logger")
 ```
-
-    (2024-01-17 19:24:45,375) : CustomLogger : [INFO] : Message with custom logger
-
 
 ### 5. Backwards compatibility with existing loggers
 
@@ -204,26 +170,18 @@ ec.print_error()
 ec.print_critical()
 ```
 
-    (2024-01-17 19:24:45,391) : Example Class : [DEBUG] : This is a debug message!
-
-
-    (2024-01-17 19:24:45,392) : Example Class : [INFO] : This is a info message!
-
-
-    (2024-01-17 19:24:45,392) : Example Class : [WARNING] : This is a warning message!
-
-
-    (2024-01-17 19:24:45,393) : Example Class : [ERROR] : This is a error message!
-
-
-    (2024-01-17 19:24:45,393) : Example Class : [CRITICAL] : This is a critical message!
+    (2025-12-26 02:51:24,743) : Example Class : [DEBUG] : This is a debug message!
+    (2025-12-26 02:51:24,744) : Example Class : [INFO] : This is a info message!
+    (2025-12-26 02:51:24,744) : Example Class : [WARNING] : This is a warning message!
+    (2025-12-26 02:51:24,744) : Example Class : [ERROR] : This is a error message!
+    (2025-12-26 02:51:24,744) : Example Class : [CRITICAL] : This is a critical message!
 
 
 
 ```python
 shouter_for_example_class = Shouter(
     supported_classes = (ExampleClass),
-    tears_persist_path = '../env_spec/log_records.json'
+    tears_persist_path = 'log_records.json'
 )
 
 ec = ExampleClass(logger=shouter_for_example_class)
@@ -236,31 +194,11 @@ ec.print_critical()
 ec.perform_action_chain_1()
 ```
 
-    (2024-01-17 19:24:45,400) : Shouter : [DEBUG] : This is a debug message!
-
-
-    (2024-01-17 19:24:45,401) : Shouter : [INFO] : This is a info message!
-
-
-    (2024-01-17 19:24:45,401) : Shouter : [WARNING] : This is a warning message!
-
-
-    (2024-01-17 19:24:45,402) : Shouter : [ERROR] : This is a error message!
-
-
-    (2024-01-17 19:24:45,403) : Shouter : [CRITICAL] : This is a critical message!
-
-
-    (2024-01-17 19:24:45,404) : Shouter : [DEBUG] : Action 1
-
-
-    (2024-01-17 19:24:45,405) : Shouter : [DEBUG] : + This is a debug message!
-
-
-    (2024-01-17 19:24:45,405) : Shouter : [DEBUG] : Action 2
-
-
-    (2024-01-17 19:24:45,406) : Shouter : [ERROR] : + This is a error message!
+    INFO:Shouter:ExampleClass.print_info:This is a info message!
+    WARNING:Shouter:ExampleClass.print_warning:This is a warning message!
+    ERROR:Shouter:ExampleClass.print_error:This is a error message!
+    CRITICAL:Shouter:ExampleClass.print_critical:This is a critical message!
+    ERROR:Shouter:ExampleClass.print_error:+ This is a error message!
 
 
 ### 6. Built-in records from Shouter usage
@@ -269,7 +207,7 @@ ec.perform_action_chain_1()
 ```python
 shouter_for_example_class = Shouter(
     supported_classes = (ExampleClass),
-    tears_persist_path = '../env_spec/log_records.json'
+    tears_persist_path = 'log_records.json'
 )
 
 ec = ExampleClass(logger=shouter_for_example_class)
@@ -278,19 +216,7 @@ ec.print_debug()
 ec.perform_action_chain_1()
 ```
 
-    (2024-01-17 19:24:45,412) : Shouter : [DEBUG] : This is a debug message!
-
-
-    (2024-01-17 19:24:45,413) : Shouter : [DEBUG] : Action 1
-
-
-    (2024-01-17 19:24:45,414) : Shouter : [DEBUG] : + This is a debug message!
-
-
-    (2024-01-17 19:24:45,414) : Shouter : [DEBUG] : Action 2
-
-
-    (2024-01-17 19:24:45,415) : Shouter : [ERROR] : + This is a error message!
+    ERROR:Shouter:ExampleClass.print_error:+ This is a error message!
 
 
 
@@ -301,41 +227,46 @@ ec.logger.return_logged_tears()
 
 
 
-    [{'datetime': '2024-01-17 19:24:45',
+    [{'datetime': '2025-12-26 02:51:24',
       'level': 'debug',
       'function': 'ExampleClass.print_debug',
       'mess': 'This is a debug message!',
       'line': 32,
       'lines': [32],
+      'is_proc': False,
       'traceback': ['ExampleClass.print_debug']},
-     {'datetime': '2024-01-17 19:24:45',
+     {'datetime': '2025-12-26 02:51:24',
       'level': 'debug',
       'function': 'ExampleClass.perform_action_chain_1',
       'mess': 'Action 1',
       'line': 52,
       'lines': [52],
+      'is_proc': False,
       'traceback': ['ExampleClass.perform_action_chain_1']},
-     {'datetime': '2024-01-17 19:24:45',
+     {'datetime': '2025-12-26 02:51:24',
       'level': 'debug',
-      'function': 'ExampleClass.perform_action_chain_1',
+      'function': 'ExampleClass.print_debug',
       'mess': 'This is a debug message!',
-      'line': 53,
+      'line': 32,
       'lines': [32, 53],
+      'is_proc': False,
       'traceback': ['ExampleClass.print_debug',
        'ExampleClass.perform_action_chain_1']},
-     {'datetime': '2024-01-17 19:24:45',
+     {'datetime': '2025-12-26 02:51:24',
       'level': 'debug',
       'function': 'ExampleClass.perform_action_chain_1',
       'mess': 'Action 2',
       'line': 55,
       'lines': [55],
+      'is_proc': False,
       'traceback': ['ExampleClass.perform_action_chain_1']},
-     {'datetime': '2024-01-17 19:24:45',
+     {'datetime': '2025-12-26 02:51:24',
       'level': 'error',
-      'function': 'ExampleClass.perform_action_chain_1',
+      'function': 'ExampleClass.print_error',
       'mess': 'This is a error message!',
-      'line': 56,
+      'line': 44,
       'lines': [44, 56],
+      'is_proc': False,
       'traceback': ['ExampleClass.print_error',
        'ExampleClass.perform_action_chain_1']}]
 
@@ -375,58 +306,64 @@ pd.DataFrame(ec.logger.return_logged_tears())
       <th>mess</th>
       <th>line</th>
       <th>lines</th>
+      <th>is_proc</th>
       <th>traceback</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>2024-01-17 19:24:45</td>
+      <td>2025-12-26 02:51:24</td>
       <td>debug</td>
       <td>ExampleClass.print_debug</td>
       <td>This is a debug message!</td>
       <td>32</td>
       <td>[32]</td>
+      <td>False</td>
       <td>[ExampleClass.print_debug]</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>2024-01-17 19:24:45</td>
+      <td>2025-12-26 02:51:24</td>
       <td>debug</td>
       <td>ExampleClass.perform_action_chain_1</td>
       <td>Action 1</td>
       <td>52</td>
       <td>[52]</td>
+      <td>False</td>
       <td>[ExampleClass.perform_action_chain_1]</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>2024-01-17 19:24:45</td>
+      <td>2025-12-26 02:51:24</td>
       <td>debug</td>
-      <td>ExampleClass.perform_action_chain_1</td>
+      <td>ExampleClass.print_debug</td>
       <td>This is a debug message!</td>
-      <td>53</td>
+      <td>32</td>
       <td>[32, 53]</td>
+      <td>False</td>
       <td>[ExampleClass.print_debug, ExampleClass.perfor...</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>2024-01-17 19:24:45</td>
+      <td>2025-12-26 02:51:24</td>
       <td>debug</td>
       <td>ExampleClass.perform_action_chain_1</td>
       <td>Action 2</td>
       <td>55</td>
       <td>[55]</td>
+      <td>False</td>
       <td>[ExampleClass.perform_action_chain_1]</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>2024-01-17 19:24:45</td>
+      <td>2025-12-26 02:51:24</td>
       <td>error</td>
-      <td>ExampleClass.perform_action_chain_1</td>
+      <td>ExampleClass.print_error</td>
       <td>This is a error message!</td>
-      <td>56</td>
+      <td>44</td>
       <td>[44, 56]</td>
+      <td>False</td>
       <td>[ExampleClass.print_error, ExampleClass.perfor...</td>
     </tr>
   </tbody>
@@ -441,9 +378,9 @@ pd.DataFrame(ec.logger.return_logged_tears())
 ```python
 shouter_for_example_class = Shouter(
     supported_classes = (ExampleClass),
-    tears_persist_path = '../env_spec/log_records.json',
+    tears_persist_path = 'log_records.json',
     persist_env = True,
-    env_persist_path = '../env_spec/environment.dill'
+    env_persist_path = 'environment.dill'
 )
 
 ec = ExampleClass(logger=shouter_for_example_class)
@@ -452,20 +389,15 @@ ec.print_debug()
 ec.perform_action_chain_2()
 ```
 
-    (2024-01-17 19:24:45,769) : Shouter : [DEBUG] : This is a debug message!
-
-
-    (2024-01-17 19:24:45,769) : Shouter : [ERROR] : Saving env
-
-
-    (2024-01-17 19:24:45,802) : Shouter : [WARNING] : Object 'self' could not have been serialized, when saving last words!
+    ERROR:Shouter:ExampleClass.perform_action_chain_2:Saving env
+    WARNING:Shouter:Object 'self' could not have been serialized, when saving last words!
 
 
 
 ```python
 ec.logger.return_last_words(
     # optional
-    env_persist_path = '../env_spec/environment.dill'
+    env_persist_path = 'environment.dill'
 )
 ```
 
@@ -476,6 +408,6 @@ ec.logger.return_last_words(
      'b': 'b',
      'c': ['list'],
      'd': {'key': 'value'},
-     'e': Shouter(supported_classes=(), dotline_length=50, auto_output_type_selection=True, tears_persist_path='log_records.json', env_persist_path='environment.dill', datetime_format='%Y-%m-%d %H:%M:%S', log_records=[], persist_env=False, logger=<Logger Shouter (DEBUG)>, logger_name='Shouter', loggerLvl=10, logger_format='(%(asctime)s) : %(name)s : [%(levelname)s] : %(message)s')}
+     'e': Shouter(supported_classes=(), dotline_length=50, auto_output_type_selection=True, show_function=True, show_traceback=False, tears_persist_path='log_records.json', env_persist_path='environment.dill', datetime_format='%Y-%m-%d %H:%M:%S', log_records=[], persist_env=False, lock=<unlocked _thread.lock object at 0x7669b4bc2400>, last_traceback=[], loggerLvl=20, logger_name=None, logger_format='%(levelname)s:%(name)s:%(message)s')}
 
 
