@@ -1,6 +1,4 @@
 """
-Shouter Log
-
 This class uses the logging module to create and manage a logger for displaying formatted messages.
 It provides a method to output various types of lines and headers, with customizable message and line lengths.
 The purpose is to be integrated into other classes that also use logger.
@@ -10,11 +8,14 @@ The purpose is to be integrated into other classes that also use logger.
 import logging
 import inspect
 from datetime import datetime
-import attr #>=22.2.0
+import attrs
+import attrsx
 import threading
-import dill #==0.3.7
+import asyncio
+import dill #>=0.3.7
 import json
 import os
+from .components.shouterlog.asyncio_patch import patch_asyncio_proc_naming
 
 __design_choices__ = {
     'logger' : ['underneath shouter is a standard logging so a lot of its capabilities were preserved',
@@ -37,6 +38,10 @@ __design_choices__ = {
                        'persisting tears happends in a form of json file',
                        'persisting os.environ happends in a form of dill file',
                        'persisting os.environ is optional and by defaul set to False'],
+    'traceback_of_asyncio' : ['awaited functions would be different that processes spawned by asyncio and contain full traceback',
+                              'to also have traceback for asyncio processes, some assumptions were made',
+                              'each asyncio process is expected to be named and if spawned together should start with Proc-',
+                              'last traceback would be used to augment traceback from asyncio which why it is important to log something before and after'],
     '_perform_action' : ['the method is currently does nothing but in the future could be used for user-defined actions']
 }
 
@@ -50,8 +55,9 @@ __package_metadata__ = {
 }
 
 
+patch_asyncio_proc_naming()
 
-@attr.s
+@attrsx.define
 class Shouter:
 
     """
@@ -63,40 +69,23 @@ class Shouter:
     line lengths.
     """
 
-    supported_classes = attr.ib(default=(), type = tuple)
+    supported_classes = attrs.field(default=(), type = tuple)
     # Formatting settings
-    dotline_length = attr.ib(default = 50, type = int)
-    auto_output_type_selection = attr.ib(default = True, type = bool)
+    dotline_length = attrs.field(default = 50, type = int)
+    auto_output_type_selection = attrs.field(default = True, type = bool)
+    show_function = attrs.field(default = True, type = bool)
+    show_traceback = attrs.field(default = False, type = bool)
     # For saving records
-    tears_persist_path = attr.ib(default='log_records.json')
-    env_persist_path = attr.ib(default='environment.dill')
-    datetime_format = attr.ib(default="%Y-%m-%d %H:%M:%S")
-    log_records = attr.ib(factory=list, init=False)
-    persist_env = attr.ib(default=False, type = bool)
-
-    # Logger settings
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Shouter')
-    loggerLvl = attr.ib(default=logging.DEBUG)
-    logger_format = attr.ib(default='(%(asctime)s) : %(name)s : [%(levelname)s] : %(message)s')
-
+    tears_persist_path = attrs.field(default='log_records.json')
+    env_persist_path = attrs.field(default='environment.dill')
+    datetime_format = attrs.field(default="%Y-%m-%d %H:%M:%S")
+    log_records = attrs.field(factory=list, init=False)
+    persist_env = attrs.field(default=False, type = bool)
+    lock = attrs.field(default = None)
+    last_traceback = attrs.field(default = [])
+   
     def __attrs_post_init__(self):
-        self.initialize_logger()
         self.lock = threading.Lock()
-
-    def initialize_logger(self):
-
-        """
-        Initialize a logger for the class instance based on
-        the specified logging level and logger name.
-        """
-
-        if self.logger is None:
-            logging.basicConfig(level=self.loggerLvl,format=self.logger_format)
-            logger = logging.getLogger(self.logger_name)
-            logger.setLevel(self.loggerLvl)
-
-            self.logger = logger
 
     def _format_mess(self,
                      mess : str,
@@ -139,14 +128,25 @@ class Shouter:
             "warning": lambda: f"!!! {mess}",
         }
 
-        self._log_traceback(mess = mess,
+        tear = self._log_traceback(mess = mess,
                             method = method)
 
         output_type = self._select_output_type(mess = mess,
                                             output_type = output_type,
                                             auto_output_type_selection = auto_output_type_selection)
 
-        return switch[output_type]()
+
+        out_mess = ""
+
+        if self.show_function:
+            out_mess += f"{tear['function']}:"
+
+        if self.show_traceback:
+            out_mess += f"{tear['traceback'][::-1]}:"
+
+        out_mess += switch[output_type]()
+
+        return out_mess
 
 
     def _select_output_type(self,
@@ -236,17 +236,53 @@ class Shouter:
             functions.append(inspect.getframeinfo(caller_frame).function)
             lines.append(caller_frame.f_lineno)
 
+        is_proc = False
+
+        # If process is started by asyncio would be detected here
+        try:
+            task = asyncio.current_task()
+        except RuntimeError:
+            task = None
+
+        task_name = task.get_name() if task else None
+
+        if task_name:
+
+            if task_name.startswith("Task-"):
+                self.last_traceback = [] 
+
+            if task_name.startswith("Proc-"):
+                is_proc = True
+
+            if not task_name.startswith("Task-") and not task_name.startswith("Proc-"):
+                functions = functions + [task_name]
+
+            if functions and self.last_traceback:
+                if functions[0] not in self.last_traceback:
+                    functions += self.last_traceback 
+                else:
+                    idx = [idx for idx, func in enumerate(self.last_traceback) if func == functions[0]][0]
+                    functions = self.last_traceback[idx:]
+            else:
+                if self.last_traceback:
+                    functions = self.last_traceback 
+
+        self.last_traceback = functions
+
         tear = {
             'datetime' : datetime.now().strftime(self.datetime_format),
             'level': method,
-            'function' : functions[-1],
+            'function' : functions[0] if functions else [],
             'mess': mess,
-            'line' : lines[-1],
+            'line' : lines[0] if lines else None,
             'lines' : lines,
-            'traceback': functions
+            'is_proc' : is_proc,
+            'traceback': list(dict.fromkeys(functions))
         }
 
         self.log_records.append(tear)
+
+        return tear
 
     def _persist_log_records(self):
 

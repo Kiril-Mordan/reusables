@@ -1,13 +1,13 @@
 import logging
 from io import StringIO
 import pytest
-from python_modules.shouterlog import Shouter  # Replace 'your_module' with the actual name of the module where Shouter is defined
+from python_modules.shouterlog import Shouter 
 
 def test_initialize_logger():
     # Test initializing the logger
     shouter = Shouter()
     assert shouter.logger is not None
-    assert shouter.logger.level == logging.DEBUG
+    assert shouter.logger.level == logging.INFO
 
 def test_shout_default():
     # Test the default shout behavior
