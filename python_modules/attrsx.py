@@ -63,6 +63,79 @@ __package_metadata__ = {
     "url" : 'https://kiril-mordan.github.io/reusables/attrsx/'
 }
 
+_STD_LOG_KWARGS = {"exc_info", "stack_info", "stacklevel", "extra"}
+
+
+class _LoggerKwargFilter:
+    """
+    Wraps a logger so that extra kwargs are:
+    - passed through if logger declares __log_kwargs__
+    - silently dropped otherwise
+    """
+
+    def __init__(self, logger):
+        if isinstance(logger, _LoggerKwargFilter):
+            logger = logger._logger
+        self._logger = logger
+        self._extra = getattr(logger, "__log_kwargs__", None)
+
+    
+    def __getstate__(self):
+        return {"_logger": self._logger}
+
+    def __setstate__(self, state):
+        self._logger = state["_logger"]
+        self._extra = getattr(self._logger, "__log_kwargs__", None)
+
+    def _filter(self, kwargs):
+        if not kwargs:
+            return kwargs
+
+        if self._extra is None:
+            # standard logger → keep only standard logging kwargs
+            return {k: v for k, v in kwargs.items() if k in _STD_LOG_KWARGS}
+
+        allowed = _STD_LOG_KWARGS | set(self._extra)
+        return {k: v for k, v in kwargs.items() if k in allowed}
+
+    def debug(self, msg = None, *args, **kwargs):
+        if msg is None:
+            msg = ""
+        return self._logger.debug(msg, *args, **self._filter(kwargs))
+
+    def info(self, msg = None, *args, **kwargs):
+        if msg is None:
+            msg = ""
+        return self._logger.info(msg, *args, **self._filter(kwargs))
+
+    def warning(self, msg = None, *args, **kwargs):
+        if msg is None:
+            msg = ""
+        return self._logger.warning(msg, *args, **self._filter(kwargs))
+
+    def error(self, msg = None, *args, **kwargs):
+        if msg is None:
+            msg = ""
+        return self._logger.error(msg, *args, **self._filter(kwargs))
+
+    def critical(self, msg = None, *args, **kwargs):
+        if msg is None:
+            msg = ""
+        return self._logger.critical(msg, *args, **self._filter(kwargs))
+
+    def fatal(self, msg = None, *args, **kwargs):
+        if msg is None:
+            msg = ""
+        return self._logger.fatal(msg, *args, **self._filter(kwargs))
+
+    def exception(self, msg = None, *args, **kwargs):
+        if msg is None:
+            msg = ""
+        return self._logger.exception(msg, *args, **self._filter(kwargs))
+
+    def __getattr__(self, name):
+        return getattr(self._logger, name)
+
 def define(
     cls=None, 
     handler_specs:dict=None, 
@@ -83,6 +156,13 @@ def define(
             *args, **kwargs)
     
     return wrapper
+
+def _unwrap_logger(logger):
+    # unwrap repeatedly if already wrapped
+    while isinstance(logger, _LoggerKwargFilter):
+        logger = logger._logger
+    return logger
+
 
 def _add_handlers_from_spec(cls, handler_specs : dict, logger_chaining: dict):
 
@@ -107,13 +187,15 @@ def _add_handlers_from_spec(cls, handler_specs : dict, logger_chaining: dict):
         if handler_class_name not in cls.__dict__:
             setattr(cls, handler_class_name, attrs.field(default=handler_class))
         if handler_params_name not in cls.__dict__:
-            setattr(cls, handler_params_name, attrs.field(default={}))
+            setattr(cls, handler_params_name, attrs.field(factory=dict))
 
         init_func = f"""
 def _initialize_{handler_h_name}(self, params : dict = None, uparams : dict = None):
 
     if params is None:
         params = self.{handler_params_name}
+    
+    params = dict(params) if params is not None else {{}}
 
     if uparams is not None:
         params.update(uparams)
@@ -178,8 +260,10 @@ def _apply_attrs_and_logger(cls, handler_specs, logger_chaining, *args, **kwargs
     def __attrs_post_init__(self):
         # Logger setup (before custom post-init logic)
         if not hasattr(self, 'logger') or self.logger is None:
-            self.logger = logging.getLogger(self.logger_name or self.__class__.__name__)
-            self.logger.setLevel(self.loggerLvl)
+
+            raw_logger = logging.getLogger(self.logger_name or self.__class__.__name__)
+            raw_logger.setLevel(self.loggerLvl)
+            self.logger = _LoggerKwargFilter(raw_logger)
 
             # Clear existing handlers to avoid duplicates
             self.logger.handlers.clear()
