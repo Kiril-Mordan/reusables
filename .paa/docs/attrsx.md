@@ -66,7 +66,8 @@ class VerboseProcess:
         self.data = "DATA"
 
     def run(self):
-        self.logger.debug("Processing %s", self.data)
+        self.logger.debug(f"Processing {self.data}")
+        self.logger.debug(dline=True)
         return f"Processed: {self.data}"
 
 ```
@@ -76,8 +77,9 @@ class VerboseProcess:
 VerboseProcess(data = "data").run()
 ```
 
-    2025-05-01 16:04:38,304 - VerboseProcess - INFO - Custom post-init logic
-    2025-05-01 16:04:38,305 - VerboseProcess - DEBUG - Processing DATA
+    2025-12-29 20:36:10,019 - VerboseProcess - INFO - Custom post-init logic
+    2025-12-29 20:36:10,020 - VerboseProcess - DEBUG - Processing DATA
+    2025-12-29 20:36:10,020 - VerboseProcess - DEBUG - 
 
 
 
@@ -89,19 +91,38 @@ VerboseProcess(data = "data").run()
 
 #### Using External Loggers
 
+Non standard loggers can enable additional functionality and normally ignored inputs that would not break normal logger, when attrsx is used.
+
+
+```python
+@attrsx.define
+class ExtraLogger:
+
+    def info(self, msg):
+        self.logger.info(msg)
+
+    def debug(self, msg = None, dline = False, *args, **kwargs):
+        if dline is True:
+            msg = "=" * 50
+        self.logger.debug(msg, *args, **kwargs)
+
+```
+
 An external, pre-initialized logger can also be provided to the class using the `logger` attribute.
 
 
 ```python
-shared_logger = ProcessData().logger
+extra_logger = ExtraLogger(loggerLvl=logging.DEBUG)
 
 VerboseProcess(
     data = "data",
-    logger = shared_logger
+    logger = extra_logger
 ).run()
 ```
 
-    INFO:ProcessData:Custom post-init logic
+    INFO:ExtraLogger:Custom post-init logic
+    DEBUG:ExtraLogger:Processing DATA
+    DEBUG:ExtraLogger:==================================================
 
 
 
