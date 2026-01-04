@@ -285,6 +285,7 @@ class PackageAutoAssembler:
         """
 
         self.long_doc_h = self.long_doc_h_class(
+            module_name = self.module_name,
             notebook_path = self.example_notebook_path,
             kernel_name = self.kernel_name,
             logger = self.logger)
@@ -837,6 +838,11 @@ class PackageAutoAssembler:
 
         if output_path_docs:
             shutil.copy(output_path, output_path_docs)
+            additional_docs = [ad for ad in os.listdir(self.setup_directory) if ad.endswith(".png")]
+            for ad in additional_docs:
+                shutil.copy(os.path.join(self.setup_directory,
+                                       ad), os.path.join(self.docs_path,
+                                        ad))
 
     def add_extra_docs(self,
                        extra_docs_dir : str = None):
