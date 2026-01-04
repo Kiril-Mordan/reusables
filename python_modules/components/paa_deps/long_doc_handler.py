@@ -5,10 +5,11 @@ from datetime import datetime
 import re
 import shutil
 import nbformat
-from nbconvert import MarkdownExporter #==7.16.4
+from nbconvert import MarkdownExporter #>=7.16.4
 from nbconvert.preprocessors import ExecutePreprocessor
 import attrs #>=22.2.0
 import requests
+import base64
 
 #@ jupyter>=1.1.1
 
@@ -20,6 +21,7 @@ class LongDocHandler:
     Contains set of tools to prepare package description.
     """
 
+    module_name = attrs.field(default = None)
     notebook_path = attrs.field(default = None)
     markdown_filepath = attrs.field(default = None)
     timeout = attrs.field(default = 600, type = int)
@@ -104,89 +106,132 @@ class LongDocHandler:
 
         return pypi_link
 
-
-    def convert_notebook_to_md(self,
-                               notebook_path : str = None,
-                               output_path : str = None):
-
+    def _extract_pngs_and_patch_md(self, notebook_node, md_text: str, output_path: str) -> str:
         """
-        Convert example notebook to md without executing.
+        Extract image/png outputs from a notebook and save them next to output_path.
+        Patch markdown so any nbconvert-style refs like output_{cell}_{out}.png
+        point to the actual extracted filenames.
         """
+        out_dir = os.path.dirname(output_path)
+        os.makedirs(out_dir, exist_ok=True)
 
+        # Find synthetic refs in markdown produced by MarkdownExporter
+        synthetic_refs = set(re.findall(r"\boutput_\d+_\d+\.png\b", md_text))
+
+        replacements = {}  # synthetic -> actual
+        for cell_i, cell in enumerate(notebook_node.get("cells", [])):
+            for out_i, out in enumerate(cell.get("outputs", [])):
+                data = out.get("data") if isinstance(out, dict) else None
+                if not isinstance(data, dict):
+                    continue
+
+                png_b64 = data.get("image/png")
+                if not png_b64:
+                    continue
+
+                # Deterministic, collision-free filename
+                actual_name = f"{self.module_name}_cell{cell_i}_out{out_i}.png"
+                actual_path = os.path.join(out_dir, actual_name)
+
+                # Write bytes
+                with open(actual_path, "wb") as f:
+                    f.write(base64.b64decode(png_b64))
+
+                # If markdown references the synthetic name, map it
+                synthetic_name = f"output_{cell_i}_{out_i}.png"
+                if synthetic_name in synthetic_refs:
+                    replacements[synthetic_name] = actual_name
+
+        # Patch markdown
+        for old, new in replacements.items():
+            md_text = md_text.replace(old, new)
+
+        return md_text
+
+
+    def _export_md_without_nbconvert_extraction(self, notebook_node, output_path: str) -> str:
+        """
+        Export notebook to markdown using MarkdownExporter (no ExtractOutputPreprocessor).
+        Returns markdown text.
+        """
+        md_exporter = MarkdownExporter()
+        md_text, _ = md_exporter.from_notebook_node(notebook_node)
+        return md_text
+
+
+
+    def convert_notebook_to_md(self, notebook_path: str = None, output_path: str = None):
+        """
+        Convert notebook to markdown WITHOUT executing.
+        Also extracts any image/png outputs as files next to the markdown.
+        """
         if notebook_path is None:
             notebook_path = self.notebook_path
-
         if output_path is None:
             output_path = self.markdown_filepath
 
         if (notebook_path is not None) and os.path.exists(notebook_path):
-
-            # Load the notebook
-            with open(notebook_path, encoding='utf-8') as fh:
+            with open(notebook_path, encoding="utf-8") as fh:
                 notebook_node = nbformat.read(fh, as_version=4)
 
-            # Create a Markdown exporter
-            md_exporter = MarkdownExporter()
+            md_text = self._export_md_without_nbconvert_extraction(notebook_node, output_path)
+            md_text = self._extract_pngs_and_patch_md(notebook_node, md_text, output_path)
 
-            # Process the notebook we loaded earlier
-            (body, _) = md_exporter.from_notebook_node(notebook_node)
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, "w", encoding="utf-8") as fh:
+                fh.write(md_text)
 
-            self.logger.debug(f"Converted {notebook_path} to {output_path}")
-
+            self.logger.debug(f"Converted {notebook_path} to {output_path} (with extracted images)")
         else:
-            body = ""
-
-        # Write to the output markdown file
-        with open(output_path, 'w', encoding='utf-8') as fh:
-            fh.write(body)
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, "w", encoding="utf-8") as fh:
+                fh.write("")
 
 
 
-    def convert_and_execute_notebook_to_md(self,
-                                           notebook_path : str = None,
-                                           output_path : str = None,
-                                           timeout : int = None,
-                                           kernel_name: str = None):
 
+    def convert_and_execute_notebook_to_md(
+        self,
+        notebook_path: str = None,
+        output_path: str = None,
+        timeout: int = None,
+        kernel_name: str = None,
+    ):
         """
-        Convert example notebook to md with executing.
+        Execute notebook, convert to markdown, and extract image/png outputs next to the markdown.
         """
-
         if notebook_path is None:
             notebook_path = self.notebook_path
-
         if output_path is None:
             output_path = self.markdown_filepath
-
         if timeout is None:
             timeout = self.timeout
-
         if kernel_name is None:
             kernel_name = self.kernel_name
 
         if (notebook_path is not None) and os.path.exists(notebook_path):
-
-            # Load the notebook
-            with open(notebook_path, encoding = 'utf-8') as fh:
+            with open(notebook_path, encoding="utf-8") as fh:
                 notebook_node = nbformat.read(fh, as_version=4)
 
-            # Execute the notebook
             execute_preprocessor = ExecutePreprocessor(timeout=timeout, kernel_name=kernel_name)
-            execute_preprocessor.preprocess(notebook_node, {'metadata': {'path': os.path.dirname(notebook_path)}})
+            execute_preprocessor.preprocess(
+                notebook_node,
+                {"metadata": {"path": os.path.dirname(notebook_path)}},
+            )
 
-            # Convert the notebook to Markdown
-            md_exporter = MarkdownExporter()
-            (body, _) = md_exporter.from_notebook_node(notebook_node)
+            md_text = self._export_md_without_nbconvert_extraction(notebook_node, output_path)
+            md_text = self._extract_pngs_and_patch_md(notebook_node, md_text, output_path)
 
-            self.logger.debug(f"Converted and executed {notebook_path} to {output_path}")
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, "w", encoding="utf-8") as fh:
+                fh.write(md_text)
 
+            self.logger.debug(f"Converted+executed {notebook_path} to {output_path} (with extracted images)")
         else:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, "w", encoding="utf-8") as fh:
+                fh.write("")
 
-            body = ""
-
-            # Write to the output markdown file
-            with open(output_path, 'w', encoding='utf-8') as fh:
-                fh.write(body)
 
     def convert_dependacies_notebooks_to_md(self,
                                             dependacies_dir : str,
