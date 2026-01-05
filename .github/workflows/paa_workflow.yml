@@ -6,6 +6,9 @@ on:
       package_name:
         description: 'Name of the package'
         required: false
+      ignore_vulnerabilities_check:
+        description: 'Ignore vulnerabilities check'
+        required: false
   push:
     branches:
       - main
@@ -77,7 +80,12 @@ jobs:
           # echo "Test-installing paa ..."
           # paa test-install package-auto-assembler
           echo "Assembling..."
-          uv run paa make-package ${{ steps.changed-modules.outputs.files }}
+          if [ "${{ github.event.inputs.ignore_vulnerabilities_check }}" != "" ]; then
+            uv run paa make-package ${{ steps.changed-modules.outputs.files }} --ignore-vulnerabilities-check
+          else
+            uv run paa make-package ${{ steps.changed-modules.outputs.files }}
+          fi
+
           ls -la
 
       - name: Publish to PyPI
