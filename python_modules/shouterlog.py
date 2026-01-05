@@ -1,21 +1,34 @@
 """
-This class uses the logging module to create and manage a logger for displaying formatted messages.
-It provides a method to output various types of lines and headers, with customizable message and line lengths.
-The purpose is to be integrated into other classes that also use logger.
+This is an alternative logging module with extra capabilities.
+It provides a method to output various types of lines and headers, with customizable message and line lengths, 
+traces additional information and provides some debug capabilities based on that.
+Its purpose is to be integrated into other classes that also use logger, primerally based on [`attrsx`](https://kiril-mordan.github.io/reusables/attrsx/).
 """
-
 
 import logging
 import inspect
+from typing import List, Dict, Any
 from datetime import datetime
-import attrs
-import attrsx
 import threading
 import asyncio
-import dill #>=0.3.7
 import json
 import os
+import contextvars
+import itertools
+from functools import reduce
+from operator import attrgetter
+import dill #>=0.3.7
+import attrs
+import attrsx
+
 from .components.shouterlog.asyncio_patch import patch_asyncio_proc_naming
+from .components.shouterlog.log_plotter import LogPlotter
+
+_MISSING = object()
+_LOG_ID_COUNTER = itertools.count(1)
+_TRACEBACK_CTX = contextvars.ContextVar("shouter_last_traceback", default=[])
+_LAST_TASK_CTX = contextvars.ContextVar("shouter_last_task_name", default=None)
+
 
 __design_choices__ = {
     'logger' : ['underneath shouter is a standard logging so a lot of its capabilities were preserved',
@@ -39,9 +52,9 @@ __design_choices__ = {
                        'persisting os.environ happends in a form of dill file',
                        'persisting os.environ is optional and by defaul set to False'],
     'traceback_of_asyncio' : ['awaited functions would be different that processes spawned by asyncio and contain full traceback',
-                              'to also have traceback for asyncio processes, some assumptions were made',
-                              'each asyncio process is expected to be named and if spawned together should start with Proc-',
-                              'last traceback would be used to augment traceback from asyncio which why it is important to log something before and after'],
+                    'to also have traceback for asyncio processes, some assumptions were made',
+                    'each asyncio process is expected to be named and if spawned together should start with Proc-',
+                    'last traceback would be used to augment traceback from asyncio which why it is important to log something before and after'],
     '_perform_action' : ['the method is currently does nothing but in the future could be used for user-defined actions']
 }
 
@@ -57,7 +70,12 @@ __package_metadata__ = {
 
 patch_asyncio_proc_naming()
 
-@attrsx.define
+@attrsx.define(
+    handler_specs = {"log_plotter" : LogPlotter},
+    logger_chaining={
+        'logger' : True
+        }
+)
 class Shouter:
 
     """
@@ -75,6 +93,7 @@ class Shouter:
     auto_output_type_selection = attrs.field(default = True, type = bool)
     show_function = attrs.field(default = True, type = bool)
     show_traceback = attrs.field(default = False, type = bool)
+    show_idx = attrs.field(default = False, type = bool)
     # For saving records
     tears_persist_path = attrs.field(default='log_records.json')
     env_persist_path = attrs.field(default='environment.dill')
@@ -82,13 +101,28 @@ class Shouter:
     log_records = attrs.field(factory=list, init=False)
     persist_env = attrs.field(default=False, type = bool)
     lock = attrs.field(default = None)
-    last_traceback = attrs.field(default = [])
+    last_traceback = attrs.field(factory=list)
    
     def __attrs_post_init__(self):
         self.lock = threading.Lock()
+        self._reset_counter()
+
+    __log_kwargs__ = {
+        "output_type",
+        "dotline_length",
+        "auto_output_type_selection",
+        "label",
+        "save_vars"
+    }
+
+    def _reset_counter(self, start=1):
+        global _LOG_ID_COUNTER
+        _LOG_ID_COUNTER = itertools.count(start)
 
     def _format_mess(self,
                      mess : str,
+                     label : str,
+                     save_vars : list,
                      dotline_length : int,
                      output_type : str,
                      method : str,
@@ -129,7 +163,9 @@ class Shouter:
         }
 
         tear = self._log_traceback(mess = mess,
-                            method = method)
+                            label = label,
+                            method = method,
+                            save_vars = save_vars)
 
         output_type = self._select_output_type(mess = mess,
                                             output_type = output_type,
@@ -202,86 +238,115 @@ class Shouter:
         return output_type
 
 
-    def _log_traceback(self,
-                       mess : str,
-                       method : str):
-
+    def _log_traceback(self, mess: str, label : str, save_vars : list, method: str):
         """
-        Keeps records of every use of log statement.
+        Active-stack semantics with explicit Proc handling.
+
+        - Traceback order: LEAF -> ... -> ORIGIN
+        - Non-proc logs define the true call chain.
+        - Proc logs inherit parents because async stacks are incomplete.
+        - Parents are NEVER resurrected after a non-proc step drops them.
         """
 
-        current_frame = inspect.currentframe().f_back
         functions = []
         lines = []
 
-        # Iterate through frames and capture relevant ones
-        while current_frame:
-            if 'self' in current_frame.f_locals:
-                # Instance method
-                instance = current_frame.f_locals['self']
-                class_name = instance.__class__.__name__
-                method_name = current_frame.f_code.co_name
-                full_function_name = f"{class_name}.{method_name}"
+        supported_names = {
+            (c if isinstance(c, type) else c.__class__).__name__
+            for c in (self.supported_classes or ())
+        }
 
-                # Append only if it belongs to your application's classes
-                if isinstance(instance, self.supported_classes):  # Replace with your actual class names
-                    functions.append(full_function_name)
-                    lines.append(current_frame.f_lineno)
+        call_id = None
 
-            current_frame = current_frame.f_back
+        # ---- collect current synchronous stack (leaf -> origin)
+        for frame_info in inspect.stack():
+            frame = frame_info.frame
+            inst = frame.f_locals.get("self")
+            if inst is None:
+                continue
 
-        # If no relevant traceback is found, use the immediate caller
+            cls_name = inst.__class__.__name__
+            if cls_name not in supported_names:
+                continue
+
+            if call_id is None:
+                call_id = id(frame)
+
+            functions.append(f"{cls_name}.{frame.f_code.co_name}")
+            lines.append(frame_info.lineno)
+
+        # fallback if nothing matched
         if not functions:
-            caller_frame = inspect.currentframe().f_back
-            functions.append(inspect.getframeinfo(caller_frame).function)
-            lines.append(caller_frame.f_lineno)
+            caller = inspect.currentframe().f_back
+            call_id = id(caller)
+            functions = [inspect.getframeinfo(caller).function]
+            lines = [caller.f_lineno]
 
+        # ---- asyncio / proc detection
         is_proc = False
-
-        # If process is started by asyncio would be detected here
         try:
             task = asyncio.current_task()
         except RuntimeError:
             task = None
 
         task_name = task.get_name() if task else None
+        is_task = bool(task_name and task_name.startswith("Task-"))
+        is_proc_task = bool(task_name and task_name.startswith("Proc-"))
 
-        if task_name:
+        if is_proc_task:
+            is_proc = True
 
-            if task_name.startswith("Task-"):
-                self.last_traceback = [] 
+        # include custom task name as pseudo-frame
+        if task_name and not is_task and not is_proc_task:
+            functions = functions + [task_name]
 
-            if task_name.startswith("Proc-"):
-                is_proc = True
+        # ---- context propagation (ContextVar-based)
+        last_traceback = list(_TRACEBACK_CTX.get())
 
-            if not task_name.startswith("Task-") and not task_name.startswith("Proc-"):
-                functions = functions + [task_name]
+        if is_proc:
+            # Proc: inherit parents (async stack is incomplete)
+            if last_traceback:
+                leaf = functions[0]
+                parents = [f for f in last_traceback if f != leaf]
+                functions = [leaf] + parents
+        else:
+            # Non-proc: authoritative stack, overwrite context
+            pass
 
-            if functions and self.last_traceback:
-                if functions[0] not in self.last_traceback:
-                    functions += self.last_traceback 
-                else:
-                    idx = [idx for idx, func in enumerate(self.last_traceback) if func == functions[0]][0]
-                    functions = self.last_traceback[idx:]
-            else:
-                if self.last_traceback:
-                    functions = self.last_traceback 
+        # ---- dedupe, preserve order
+        seen = set()
+        out = []
+        for f in functions:
+            if f not in seen:
+                out.append(f)
+                seen.add(f)
+        functions = out
 
-        self.last_traceback = functions
+        # update context ONLY with authoritative chain
+        _TRACEBACK_CTX.set(list(functions))
+        log_idx=next(_LOG_ID_COUNTER)
+
+        env = {}
+        if save_vars:
+            env = self._get_local_vars(save_vars=save_vars, depth = 6)
 
         tear = {
-            'datetime' : datetime.now().strftime(self.datetime_format),
-            'level': method,
-            'function' : functions[0] if functions else [],
-            'mess': mess,
-            'line' : lines[0] if lines else None,
-            'lines' : lines,
-            'is_proc' : is_proc,
-            'traceback': list(dict.fromkeys(functions))
+            "idx" : log_idx,
+            "call_id": call_id,
+            "datetime": datetime.now().strftime(self.datetime_format),
+            "level": method,
+            "function": functions[0] if functions else [],
+            "mess": mess,
+            "line": lines[0] if lines else None,
+            "lines": lines,
+            "is_proc": is_proc,
+            "proc_name" : task_name,
+            "traceback": functions,
+            "label" : label,
+            "env" : env
         }
 
         self.log_records.append(tear)
-
         return tear
 
     def _persist_log_records(self):
@@ -293,7 +358,10 @@ class Shouter:
         with self.lock:
             with open(self.tears_persist_path, 'a') as file:
                 for tear in self.log_records:
-                    file.write(json.dumps(tear) + '\n')
+                    tear_s = tear.copy()
+                    if tear_s.get("env"):
+                        tear_s["env"] = dict(self._filter_serializable(tear_s["env"], stype = "json"))
+                    file.write(json.dumps(tear_s) + '\n')
 
     def _is_serializable(self,key,obj):
 
@@ -305,16 +373,64 @@ class Shouter:
             dill.dumps(obj)
             return True
         except (TypeError, dill.PicklingError):
-            self.logger.warning(f"Object '{key}' could not have been serialized, when saving last words!")
+            return False
+
+    def _is_json_serializable(self,key,obj):
+
+        """
+        Check if object from env can be saved with dill, and if not, issue warning
+        """
+
+        try:
+            json.dumps({key : obj})
+            return True
+        except (TypeError, dill.PicklingError):
             return False
 
 
-    def _filter_serializable(self,locals_dict):
+    def _filter_serializable(self,locals_dict, stype = "env"):
         """
         Filter the local variables dictionary, keeping only serializable objects.
         """
-        return {k: v for k, v in locals_dict.items() if self._is_serializable(k,v)}
+        if stype == "env":
+            return {k: v for k, v in locals_dict.items() if self._is_serializable(k,v)}
+        if stype == "json":
+            return {k: v for k, v in locals_dict.items() if self._is_json_serializable(k,v)}
 
+
+    def _get_local_vars(self, save_vars: list[str] = None, depth: int = 5):
+        frame = inspect.currentframe()
+        for _ in range(depth - 1):
+            frame = frame.f_back
+
+        locals_dict = frame.f_locals
+
+        if not save_vars:
+            return locals_dict
+
+        def resolve(dotted: str):
+            root, *parts = dotted.split(".")
+            if root not in locals_dict:
+                return _MISSING
+
+            cur = locals_dict[root]
+            for p in parts:
+                try:
+                    if isinstance(cur, dict):
+                        cur = cur[p]
+                    else:
+                        cur = getattr(cur, p)
+                except Exception:
+                    return _MISSING
+            return cur
+
+        out = {}
+        for name in save_vars:
+            val = resolve(name)
+            if val is not _MISSING:
+                out[name] = val
+
+        return out
 
     def _persist_environment(self):
 
@@ -324,16 +440,71 @@ class Shouter:
 
         if self.persist_env:
 
-            # using double f_back to get to the level where shouter is called
-            caller_frame = inspect.currentframe().f_back.f_back
-            # extracting local vars
-            local_vars = caller_frame.f_locals
+            local_vars = self._get_local_vars()
             # filtering out local vars that cannot be saved with dill
             serializable_local_vars = dict(self._filter_serializable(local_vars))
-
             with self.lock:  # Ensure thread-safety if called from multiple threads
                 with open(self.env_persist_path, 'wb') as file:
                     dill.dump(serializable_local_vars, file)
+
+
+    def _perform_action(self,
+                        method : str):
+
+        return None
+
+    def _log(self, 
+             method, 
+             mess : str = None,
+             label : str = None,
+             save_vars : list = None,
+             dotline_length : int = None,
+             output_type : str = None,
+             auto_output_type_selection : bool = None,
+             logger : logging.Logger = None,
+             *args, **kwargs):
+
+        if dotline_length is None:
+            dotline_length = self.dotline_length
+
+        if auto_output_type_selection is None:
+            auto_output_type_selection = self.auto_output_type_selection
+
+        if logger is None:
+            logger = self.logger
+
+        formated_mess = self._format_mess(mess = mess,
+                                      label = label,
+                                      dotline_length = dotline_length,
+                                      output_type = output_type,
+                                      method = method,
+                                      save_vars = save_vars,
+                                      auto_output_type_selection = auto_output_type_selection)
+
+        if method == "info":
+            logger.info(formated_mess,
+                    *args, **kwargs)
+        if method == "debug":
+            logger.debug(formated_mess,
+                    *args, **kwargs)
+        if method == "warning":
+            logger.warning(formated_mess,
+                    *args, **kwargs)
+        if method == "error":
+            logger.error(formated_mess,
+                    *args, **kwargs)
+        if method == "fatal":
+            logger.fatal(formated_mess,
+                    *args, **kwargs)
+        if method == "critical":
+            logger.critical(formated_mess,
+                    *args, **kwargs)
+
+        if method in ["error", "fatal", "critical"]:
+
+            self._persist_log_records()
+            self._persist_environment()
+
 
     def persist_state(self,
                       tears_persist_path : str = None,
@@ -391,11 +562,27 @@ class Shouter:
 
         return debug_env
 
+    def show_sequence_diagram(self, 
+                              log_records : List[Dict[str, Any]] = None, 
+                              *args, **kwargs):
 
-    def _perform_action(self,
-                        method : str):
+        if log_records is None:
+            log_records = self.log_records
 
-        return None
+        if log_records:
+
+            self._initialize_log_plotter_h()
+
+            self.log_plotter_h.plot_sequence_diagram_from_tracebacks(
+                log_records = log_records,
+                *args, **kwargs
+            )
+        else:
+            self.warning("No log records were provided!")
+
+    def show_logs_by_id(self, ids : List[int]):
+
+        return [i for i in self.log_records if i.get("idx", 0) in ids ]
 
 
     def info(self,
@@ -403,6 +590,8 @@ class Shouter:
              dotline_length : int = None,
              output_type : str = None,
              auto_output_type_selection : bool = None,
+             label : str = None,
+             save_vars : list = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -410,30 +599,25 @@ class Shouter:
         Prints info message similar to standard logger but with types of output and some additional actions.
         """
 
-
-        if dotline_length is None:
-            dotline_length = self.dotline_length
-
-        if auto_output_type_selection is None:
-            auto_output_type_selection = self.auto_output_type_selection
-
-        if logger is None:
-            logger = self.logger
-
-        formated_mess = self._format_mess(mess = mess,
-                                      dotline_length = dotline_length,
-                                      output_type = output_type,
-                                      method = 'info',
-                                      auto_output_type_selection = auto_output_type_selection)
-
-        logger.info(formated_mess,
-                    *args, **kwargs)
+        self._log(
+            method = "info",
+            mess = mess,
+            dotline_length = dotline_length,
+            output_type = output_type,
+            auto_output_type_selection = auto_output_type_selection,
+            label = label,
+            save_vars = save_vars,
+            logger = logger,
+            *args, **kwargs
+        )
 
     def debug(self,
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
              auto_output_type_selection : bool = None,
+             label : str = None,
+             save_vars : list = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -442,29 +626,25 @@ class Shouter:
         """
 
 
-        if dotline_length is None:
-            dotline_length = self.dotline_length
-
-        if auto_output_type_selection is None:
-            auto_output_type_selection = self.auto_output_type_selection
-
-        if logger is None:
-            logger = self.logger
-
-        formated_mess = self._format_mess(mess = mess,
-                                      dotline_length = dotline_length,
-                                      output_type = output_type,
-                                      method = 'debug',
-                                      auto_output_type_selection = auto_output_type_selection)
-
-        logger.debug(formated_mess,
-                     *args, **kwargs)
+        self._log(
+            method = "debug",
+            mess = mess,
+            dotline_length = dotline_length,
+            output_type = output_type,
+            auto_output_type_selection = auto_output_type_selection,
+            label = label,
+            save_vars = save_vars,
+            logger = logger,
+            *args, **kwargs
+        )
 
     def warning(self,
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
              auto_output_type_selection : bool = None,
+             label : str = None,
+             save_vars : list = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -473,29 +653,25 @@ class Shouter:
         """
 
 
-        if dotline_length is None:
-            dotline_length = self.dotline_length
-
-        if auto_output_type_selection is None:
-            auto_output_type_selection = self.auto_output_type_selection
-
-        if logger is None:
-            logger = self.logger
-
-        formated_mess = self._format_mess(mess = mess,
-                                      dotline_length = dotline_length,
-                                      output_type = output_type,
-                                      method = 'warning',
-                                      auto_output_type_selection = auto_output_type_selection)
-
-        logger.warning(formated_mess,
-                       *args, **kwargs)
+        self._log(
+            method = "warning",
+            mess = mess,
+            dotline_length = dotline_length,
+            output_type = output_type,
+            auto_output_type_selection = auto_output_type_selection,
+            label = label,
+            save_vars = save_vars,
+            logger = logger,
+            *args, **kwargs
+        )
 
     def error(self,
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
              auto_output_type_selection : bool = None,
+             label : str = None,
+             save_vars : list = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -503,33 +679,25 @@ class Shouter:
         Prints error message similar to standard logger but with types of output and some additional actions.
         """
 
-
-        if dotline_length is None:
-            dotline_length = self.dotline_length
-
-        if auto_output_type_selection is None:
-            auto_output_type_selection = self.auto_output_type_selection
-
-        if logger is None:
-            logger = self.logger
-
-        formated_mess = self._format_mess(mess = mess,
-                                      dotline_length = dotline_length,
-                                      output_type = output_type,
-                                      method = 'error',
-                                      auto_output_type_selection = auto_output_type_selection)
-
-        logger.error(formated_mess,
-                     *args, **kwargs)
-
-        self._persist_log_records()
-        self._persist_environment()
+        self._log(
+            method = "error",
+            mess = mess,
+            dotline_length = dotline_length,
+            output_type = output_type,
+            auto_output_type_selection = auto_output_type_selection,
+            label = label,
+            save_vars = save_vars,
+            logger = logger,
+            *args, **kwargs
+        )
 
     def fatal(self,
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
              auto_output_type_selection : bool = None,
+             label : str = None,
+             save_vars : list = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -538,32 +706,25 @@ class Shouter:
         """
 
 
-        if dotline_length is None:
-            dotline_length = self.dotline_length
-
-        if auto_output_type_selection is None:
-            auto_output_type_selection = self.auto_output_type_selection
-
-        if logger is None:
-            logger = self.logger
-
-        formated_mess = self._format_mess(mess = mess,
-                                      dotline_length = dotline_length,
-                                      output_type = output_type,
-                                      method = 'fatal',
-                                      auto_output_type_selection = auto_output_type_selection)
-
-        logger.fatal(formated_mess,
-                     *args, **kwargs)
-
-        self._persist_log_records()
-        self._persist_environment()
+        self._log(
+            method = "fatal",
+            mess = mess,
+            dotline_length = dotline_length,
+            output_type = output_type,
+            auto_output_type_selection = auto_output_type_selection,
+            label = label,
+            save_vars = save_vars,
+            logger = logger,
+            *args, **kwargs
+        )
 
     def critical(self,
              mess : str = None,
              dotline_length : int = None,
              output_type : str = None,
              auto_output_type_selection : bool = None,
+             label : str = None,
+             save_vars : list = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -571,25 +732,14 @@ class Shouter:
         Prints critical message similar to standard logger but with types of output and some additional actions.
         """
 
-
-        if dotline_length is None:
-            dotline_length = self.dotline_length
-
-        if auto_output_type_selection is None:
-            auto_output_type_selection = self.auto_output_type_selection
-
-        if logger is None:
-            logger = self.logger
-
-        formated_mess = self._format_mess(mess = mess,
-                                      dotline_length = dotline_length,
-                                      output_type = output_type,
-                                      method = 'critical',
-                                      auto_output_type_selection = auto_output_type_selection)
-
-        logger.critical(formated_mess,
-                        *args, **kwargs)
-
-        self._persist_log_records()
-        self._persist_environment()
-
+        self._log(
+            method = "critical",
+            mess = mess,
+            dotline_length = dotline_length,
+            output_type = output_type,
+            auto_output_type_selection = auto_output_type_selection,
+            label = label,
+            save_vars = save_vars,
+            logger = logger,
+            *args, **kwargs
+        )
