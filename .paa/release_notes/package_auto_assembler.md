@@ -1,5 +1,9 @@
 # Release notes
 
+### 0.5.28
+
+    - support for some visualizations generated from jupyter notebook to be displayed in mkdocs site
+
 ### 0.5.27
 
     - updating to patched setuptools==78.1.1 to fix detected vulnerability
