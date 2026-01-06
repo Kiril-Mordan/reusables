@@ -1,4 +1,4 @@
-dill>=0.3.7
 attrs
-attrsx
 matplotlib
+dill>=0.3.7
+attrsx

@@ -428,7 +428,7 @@ mec.logger.show_sequence_diagram()
 
 
     
-![png](output_22_0.png)
+![png](shouterlog_cell22_out0.png)
     
 
 
