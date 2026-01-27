@@ -1,13 +1,16 @@
 """
 This is an alternative logging module with extra capabilities.
-It provides a method to output various types of lines and headers, with customizable message and line lengths, 
-traces additional information and provides some debug capabilities based on that.
-Its purpose is to be integrated into other classes that also use logger, primerally based on [`attrsx`](https://kiril-mordan.github.io/reusables/attrsx/).
+It provides a method to output various types of lines and headers, with customizable message and line
+lengths, 
+traces additional information and provides debug capabilities and optional persistence based on that.
+Its purpose is to be integrated into other classes that also use logger, primarily based on
+[`attrsx`](https://kiril-mordan.github.io/reusables/attrsx/),
+including support for injecting any initialized logger.
 """
 
 import logging
 import inspect
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, Type, Callable
 from datetime import datetime
 import threading
 import asyncio
@@ -17,12 +20,14 @@ import contextvars
 import itertools
 from functools import reduce
 from operator import attrgetter
+from pydantic import BaseModel, Field, SkipValidation
 import dill #>=0.3.7
 import attrs
 import attrsx
 
 from .components.shouterlog.asyncio_patch import patch_asyncio_proc_naming
 from .components.shouterlog.log_plotter import LogPlotter
+from .components.shouterlog.langfuse_handler import LangfuseHandler
 
 _MISSING = object()
 _LOG_ID_COUNTER = itertools.count(1)
@@ -31,31 +36,31 @@ _LAST_TASK_CTX = contextvars.ContextVar("shouter_last_task_name", default=None)
 
 
 __design_choices__ = {
-    'logger' : ['underneath shouter is a standard logging so a lot of its capabilities were preserved',
-                'custom loggers can be used within shouter, if not it will define one on its own',
-                'from normal logging only the commands to log are available'],
-    '_format_mess' : ['_format_mess is method where all the predefined custom formats are curretly implemented',
-                      '_format_mess method triggeres _select_output_type',
-                      'any parameters _select_output_type needs should be passed through class def or the method'],
-    '_select_output_type' : ['the type should be selecting automatically in the future based on tracebacks'],
-    'supported_classes' : ['supported classes is a required parameter if shouter is to be used within a class',
-                           'supported classes is a parameter where all the classes that it visits should be listed',
-                           'not listing classes would limit ability of shouter to create readable tracebacks'],
-    'debbuging_capabilities' : ['issuing error, critical or fatal will optionally allow to save local variables',
-                                'local variables will saved on the level of shouter statement',
-                                'object that would be persisted are the ones that could be serialized',
-                                'waring statement will apear for the ones that could not be save will dill'],
-    'persist_state' : ['persist state happends automatically for logger lvls: error, critical/fatal',
-                       'persist state can triggered manually with persist_state funtion',
-                       'persist state can potentially perform two things: save tears (logs) and save os.environ',
-                       'persisting tears happends in a form of json file',
-                       'persisting os.environ happends in a form of dill file',
-                       'persisting os.environ is optional and by defaul set to False'],
-    'traceback_of_asyncio' : ['awaited functions would be different that processes spawned by asyncio and contain full traceback',
-                    'to also have traceback for asyncio processes, some assumptions were made',
-                    'each asyncio process is expected to be named and if spawned together should start with Proc-',
-                    'last traceback would be used to augment traceback from asyncio which why it is important to log something before and after'],
-    '_perform_action' : ['the method is currently does nothing but in the future could be used for user-defined actions']
+    'logger' : ['shouter builds on standard logging so existing logger behavior is preserved',
+                'attrsx logger chaining allows supplying any initialized logging.Logger instance',
+                'only standard log methods are exposed (info/debug/warning/error/critical/fatal)'],
+    '_format_mess' : ['_format_mess implements all predefined output formats (lines, headers, titles, warnings)',
+                      '_format_mess triggers _select_output_type when output_type is not provided',
+                      'format-related parameters can be passed via class defaults or per-call kwargs'],
+    '_select_output_type' : ['auto formatting chooses a style based on traceback depth when output_type is None',
+                             'manual formatting overrides auto selection by passing output_type explicitly'],
+    'supported_classes' : ['supported_classes lists classes that should appear in readable tracebacks',
+                           'when empty, shouter falls back to the immediate caller frame',
+                           'including all participating classes improves traceback clarity'],
+    'debugging_capabilities' : ['log records (tears) always store structured metadata for each log call',
+                                'save_vars can attach selected serializable locals to any log record',
+                                'error/critical/fatal can persist tears and an optional env snapshot for post-mortem debugging'],
+    'persist_state' : ['persist state happens automatically for logger levels: error, critical, fatal',
+                       'persist_state can be triggered manually to dump tears and optional env snapshot',
+                       'tears are saved as JSON lines; env snapshot is saved with dill when persist_env=True'],
+    'traceback_of_asyncio' : ['asyncio tasks have incomplete stacks; Proc-* tasks inherit parents via context',
+                              'custom task names are appended to tracebacks for readability',
+                              'logging before and after proc tasks helps maintain a coherent chain'],
+    'actions' : ['actions are post-log hooks defined by LogAction and executed after a log call',
+                 'actions can validate/prepare inputs and use the current log record (tear)',
+                 'built-ins (e.g., Langfuse) are registered via add_actions() once initialized'],
+    'plotting' : ['LogPlotter can render sequence diagrams from recorded tracebacks',
+                  'show_sequence_diagram initializes the plotter lazily and uses log_records as input']
 }
 
 
@@ -70,9 +75,36 @@ __package_metadata__ = {
 
 patch_asyncio_proc_naming()
 
+class LogAction(BaseModel):
+
+    """
+    Action available from logger
+    """
+
+    name : str = Field(
+        description = "Name of the function, that will be referenced in action params."
+    )
+    func: SkipValidation[Callable[..., Any]] = Field(
+        description = "Sync function that has same inputs as input_model and performs some action based on them."
+    )
+    input_prep_func : SkipValidation[Callable[..., Any]] = Field(
+        default=None,
+        description = "Optional input preprocessing function that combines inputs with log traces."
+    )
+    input_model: Optional[Type[BaseModel]] = Field(
+        default=None,
+        description = "Optional input model for function, if cannot be derived from func definition."
+    )
+    
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
+
 @attrsx.define(
-    handler_specs = {"log_plotter" : LogPlotter},
-    logger_chaining={
+    handler_specs = {
+        "log_plotter" : LogPlotter,
+        "langfuse" : LangfuseHandler},
+    logger_chaining = {
         'logger' : True
         }
 )
@@ -88,6 +120,7 @@ class Shouter:
     """
 
     supported_classes = attrs.field(default=(), type = tuple)
+    available_actions = attrs.field(default=[], type = List[LogAction])
     # Formatting settings
     dotline_length = attrs.field(default = 50, type = int)
     auto_output_type_selection = attrs.field(default = True, type = bool)
@@ -107,6 +140,7 @@ class Shouter:
         self.lock = threading.Lock()
         self._reset_counter()
 
+    
     __log_kwargs__ = {
         "output_type",
         "dotline_length",
@@ -182,7 +216,7 @@ class Shouter:
 
         out_mess += switch[output_type]()
 
-        return out_mess
+        return out_mess, tear
 
 
     def _select_output_type(self,
@@ -449,9 +483,35 @@ class Shouter:
 
 
     def _perform_action(self,
-                        method : str):
+                        name : str,
+                        tear : Optional[dict] = None,
+                        params : Optional[dict] = None):
 
-        return None
+    
+        actions = [action for action in self.available_actions if action.name == name]
+
+        if actions:
+
+            if params is None:
+                params = {}
+
+            action = actions[0]
+
+            input_params = {}
+            if action.input_prep_func:
+                inputs = action.input_prep_func( 
+                    params=params,
+                    log_item=tear)
+                input_params = inputs.model_dump()
+            else:
+                if action.input_model:
+                    inputs = action.input_model(**params)
+                    input_params = inputs.model_dump()
+
+            action.func(
+                **input_params
+            )
+
 
     def _log(self, 
              method, 
@@ -461,6 +521,7 @@ class Shouter:
              dotline_length : int = None,
              output_type : str = None,
              auto_output_type_selection : bool = None,
+             actions : list = None,
              logger : logging.Logger = None,
              *args, **kwargs):
 
@@ -473,7 +534,7 @@ class Shouter:
         if logger is None:
             logger = self.logger
 
-        formated_mess = self._format_mess(mess = mess,
+        formated_mess, tear = self._format_mess(mess = mess,
                                       label = label,
                                       dotline_length = dotline_length,
                                       output_type = output_type,
@@ -504,6 +565,13 @@ class Shouter:
 
             self._persist_log_records()
             self._persist_environment()
+
+        if actions:
+
+            [self._perform_action(name = action["name"],
+                tear = tear, 
+                params = action.get("params")) \
+                for action in actions if action.get("name")]
 
 
     def persist_state(self,
@@ -536,6 +604,33 @@ class Shouter:
             self.tears_persist_path = prev_tears_persist_path
         if prev_env_persist_path:
             self.env_persist_path = prev_env_persist_path
+
+
+    def add_actions(self, actions : List[LogAction] = None):
+
+        """
+        Updates list of available actions.
+        """
+
+        if actions is None:
+            actions = []
+
+        if self.langfuse_h:
+            self.available_actions += [
+                LogAction(
+                    name = "langfuse.log_trace",
+                    func = self.langfuse_h.log_trace,
+                    input_model = self.langfuse_h.input_model,
+                    input_prep_func = self.langfuse_h._prepare_inputs
+                ),
+                LogAction(
+                    name = "langfuse.flush",
+                    func = self.langfuse_h.flush,
+                    input_model = None
+                ),
+            ]
+
+        self.available_actions += actions
 
 
 
@@ -592,6 +687,7 @@ class Shouter:
              auto_output_type_selection : bool = None,
              label : str = None,
              save_vars : list = None,
+             actions : list = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -607,6 +703,7 @@ class Shouter:
             auto_output_type_selection = auto_output_type_selection,
             label = label,
             save_vars = save_vars,
+            actions = actions,
             logger = logger,
             *args, **kwargs
         )
@@ -618,6 +715,7 @@ class Shouter:
              auto_output_type_selection : bool = None,
              label : str = None,
              save_vars : list = None,
+             actions : list = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -634,6 +732,7 @@ class Shouter:
             auto_output_type_selection = auto_output_type_selection,
             label = label,
             save_vars = save_vars,
+            actions = actions,
             logger = logger,
             *args, **kwargs
         )
@@ -645,6 +744,7 @@ class Shouter:
              auto_output_type_selection : bool = None,
              label : str = None,
              save_vars : list = None,
+             actions : list = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -661,6 +761,7 @@ class Shouter:
             auto_output_type_selection = auto_output_type_selection,
             label = label,
             save_vars = save_vars,
+            actions = actions,
             logger = logger,
             *args, **kwargs
         )
@@ -672,6 +773,7 @@ class Shouter:
              auto_output_type_selection : bool = None,
              label : str = None,
              save_vars : list = None,
+             actions : list = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -687,6 +789,7 @@ class Shouter:
             auto_output_type_selection = auto_output_type_selection,
             label = label,
             save_vars = save_vars,
+            actions = actions,
             logger = logger,
             *args, **kwargs
         )
@@ -698,6 +801,7 @@ class Shouter:
              auto_output_type_selection : bool = None,
              label : str = None,
              save_vars : list = None,
+             actions : list = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -714,6 +818,7 @@ class Shouter:
             auto_output_type_selection = auto_output_type_selection,
             label = label,
             save_vars = save_vars,
+            actions = actions,
             logger = logger,
             *args, **kwargs
         )
@@ -725,6 +830,7 @@ class Shouter:
              auto_output_type_selection : bool = None,
              label : str = None,
              save_vars : list = None,
+             actions : list = None,
              logger : logging.Logger = None,
              *args, **kwargs) -> None:
 
@@ -740,6 +846,7 @@ class Shouter:
             auto_output_type_selection = auto_output_type_selection,
             label = label,
             save_vars = save_vars,
+            actions = actions,
             logger = logger,
             *args, **kwargs
         )
