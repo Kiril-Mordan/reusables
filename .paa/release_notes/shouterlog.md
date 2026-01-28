@@ -1,5 +1,11 @@
 # Release notes
 
+### 0.3.1
+
+    - actions hook support
+
+    - initial langfuse default actions in shouter
+
 ### 0.3.0
 
 ### 0.2.0
