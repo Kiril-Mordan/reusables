@@ -4,22 +4,30 @@ import json
 import importlib
 import importlib.metadata
 import importlib.resources as pkg_resources
-import attr #>=22.2.0
+import attrs
+import attrsx
 
-@attr.s
+@attrsx.define
 class ImportMappingHandler:
 
     """
     A tool to access install-import mapping for packages.
+
+    Usage example:
+    ```python
+    imh = ImportMappingHandler(mapping_filepath=".paa/package_mapping.json")
+    package_mappings = imh.load_package_mappings()
+    # example: {"yaml": "pyyaml", "PIL": "Pillow"}
+    ```
     """
 
-    mapping_filepath = attr.ib(default = None)
-    base_mapping_filepath = attr.ib(default = None)
+    mapping_filepath = attrs.field(default = None)
+    base_mapping_filepath = attrs.field(default = None)
 
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Package Import Mapping Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='Package Import Mapping Handler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()

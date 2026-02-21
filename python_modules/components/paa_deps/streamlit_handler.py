@@ -4,11 +4,12 @@ import os
 import sys
 import shutil
 import importlib
-import attr #>=22.2.0
+import attrs
+import attrsx
 
 #@ streamlit>=1.39.0
 
-@attr.s
+@attrsx.define
 class StreamlitHandler:
 
     """
@@ -16,18 +17,18 @@ class StreamlitHandler:
     """
 
     # inputs
-    streamlit_filepath = attr.ib(default = None)
-    setup_directory = attr.ib(default = None)
+    streamlit_filepath = attrs.field(default = None)
+    setup_directory = attrs.field(default = None)
 
-    package_name = attr.ib(default = None)
+    package_name = attrs.field(default = None)
 
-    config_path = attr.ib(default = '.paa.streamlit.config')
+    config_path = attrs.field(default = '.paa.streamlit.config')
 
     # processed
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Streamlit Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='Streamlit Handler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()

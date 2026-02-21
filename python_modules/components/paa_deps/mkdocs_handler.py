@@ -4,16 +4,32 @@ import subprocess
 import shutil
 import re
 import attrs #>=22.2.0
+import attrsx
 
-#@ mkdocs>=1.6.0
+#@ mkdocs>=1.6.0,<2.0
 #@ mkdocs-material>=9.5.30
 #@ mkdocs-mermaid2-plugin>=1.2.1
 
-@attrs.define
+@attrsx.define
 class MkDocsHandler:
 
     """
     Contains set of tools to use mkdocs to prepare package documentation.
+
+    Usage example:
+    ```python
+    mdh = MkDocsHandler(
+        package_name="your_package",
+        docs_file_paths={"README.md": "description.md"},
+        module_docstring="Package intro",
+    )
+    mdh.create_mkdocs_dir()
+    mdh.move_files_to_docs()
+    mdh.generate_markdown_for_images()
+    mdh.create_index()
+    mdh.create_mkdocs_yml()
+    mdh.build_mkdocs_site()
+    ```
     """
 
     # inputs
@@ -23,6 +39,8 @@ class MkDocsHandler:
     module_docstring = attrs.field(default=None, type=str)
     pypi_badge = attrs.field(default='', type=str)
     license_badge = attrs.field(default='', type=str)
+    source_repo_url = attrs.field(default=None, type=str)
+    source_repo_name = attrs.field(default=None, type=str)
 
     project_name = attrs.field(default="temp_project", type=str)
 
@@ -55,7 +73,9 @@ class MkDocsHandler:
         if project_name is None:
             project_name = self.project_name
 
-        subprocess.run(["mkdocs", "new", project_name], check=True)
+        mkdocs_env = os.environ.copy()
+        mkdocs_env["NO_MKDOCS_2_WARNING"] = "1"
+        subprocess.run(["mkdocs", "new", project_name], check=True, env=mkdocs_env)
         self.logger.debug(f"Created new MkDocs project: {project_name}")
 
     def create_mkdocs_dir(self, project_name: str = None):
@@ -295,6 +315,8 @@ pip install {package_name.replace("_", "-")}
 
             # Process files directly in the base directory
             if os.path.isfile(entry_path) and entry.endswith(".md"):
+                if self._is_markdown_empty(entry_path):
+                    continue
                 file_name = os.path.splitext(entry)[0].replace("_", " ").replace("-", " ")
                 file_indent = " " * indent
                 nav_entries.append(f"{file_indent}- {file_name.capitalize()}: {entry}")
@@ -302,13 +324,21 @@ pip install {package_name.replace("_", "-")}
             # Process subdirectories
             elif os.path.isdir(entry_path):
                 md_files = [f for f in os.listdir(entry_path) if f.endswith(".md")]
+                non_empty_md_files = [
+                    md_file for md_file in md_files
+                    if not self._is_markdown_empty(os.path.join(entry_path, md_file))
+                ]
+
+                if not non_empty_md_files:
+                    shutil.rmtree(entry_path)
+                    continue
 
                 # Add subfolder as a section in nav
                 section_indent = " " * indent
                 nav_entries.append(f"{section_indent}- {entry.capitalize()}: ")
 
                 # Copy files from subfolder to base path but structure in nav as if in folder
-                for md_file in md_files:
+                for md_file in non_empty_md_files:
                     src_path = os.path.join(entry_path, md_file)
                     dest_path = os.path.join(base_path, md_file)
                     shutil.copy(src_path, dest_path)
@@ -320,8 +350,17 @@ pip install {package_name.replace("_", "-")}
 
         return "\n".join(nav_entries) if nav_entries else None
 
+    def _is_markdown_empty(self, filepath: str) -> bool:
+        with open(filepath, "r", encoding="utf-8") as file:
+            content = file.read().strip()
+        return content == ""
 
-    def create_mkdocs_yml(self, package_name: str = None, project_name: str = None):
+
+    def create_mkdocs_yml(self,
+                          package_name: str = None,
+                          project_name: str = None,
+                          source_repo_url: str = None,
+                          source_repo_name: str = None):
         """
         Create mkdocs.yml with a given site_name.
         """
@@ -331,6 +370,12 @@ pip install {package_name.replace("_", "-")}
 
         if package_name is None:
             package_name = self.package_name
+
+        if source_repo_url is None:
+            source_repo_url = self.source_repo_url
+
+        if source_repo_name is None:
+            source_repo_name = self.source_repo_name
 
         package_name = package_name.capitalize()
         package_name = package_name.replace("_"," ")
@@ -365,12 +410,20 @@ extra_css:
 
         """
 
+        if source_repo_url:
+            content += f"""
+repo_url: {source_repo_url}
+repo_name: {source_repo_name or 'Source repository'}
+            """
+
         nav_content = self._generate_nav_entries(os.path.join(project_name, "docs"))
 
-        if nav_content:
-            content += f"""
+        content += f"""
 nav:
   - Intro: index.md
+        """
+        if nav_content:
+            content += f"""
 {nav_content}
             """
 
@@ -437,8 +490,10 @@ table {
         if project_name is None:
             project_name = self.project_name
 
+        mkdocs_env = os.environ.copy()
+        mkdocs_env["NO_MKDOCS_2_WARNING"] = "1"
         os.chdir(project_name)
-        subprocess.run(["mkdocs", "build"], check=True)
+        subprocess.run(["mkdocs", "build"], check=True, env=mkdocs_env)
         os.chdir("..")
 
     def serve_mkdocs_site(self, project_name: str = None):
@@ -450,8 +505,10 @@ table {
             project_name = self.project_name
 
         try:
+            mkdocs_env = os.environ.copy()
+            mkdocs_env["NO_MKDOCS_2_WARNING"] = "1"
             os.chdir(project_name)
-            subprocess.run(["mkdocs", "serve"], check=True)
+            subprocess.run(["mkdocs", "serve"], check=True, env=mkdocs_env)
         except Exception as e:
             print(e)
         finally:

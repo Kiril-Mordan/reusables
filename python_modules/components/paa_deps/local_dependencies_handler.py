@@ -2,29 +2,40 @@ import logging
 import os
 import ast
 import re
-import attr #>=22.2.0
+import attrs
+import attrsx
 
-@attr.s
+@attrsx.define
 class LocalDependaciesHandler:
 
     """
     Contains set of tools to extract and combine package dependencies.
+
+    Usage example:
+    ```python
+    ldh = LocalDependaciesHandler(
+        main_module_filepath="python_modules/your_package.py",
+        dependencies_dir="python_modules/components",
+        save_filepath="your_package_temp/your_package.py",
+    )
+    ldh.combine_modules()
+    ```
     """
 
-    main_module_filepath = attr.ib()
-    dependencies_dir = attr.ib()
-    save_filepath = attr.ib(default="./combined_module.py")
-    add_empty_design_choices = attr.ib(default=False, type = bool)
+    main_module_filepath = attrs.field()
+    dependencies_dir = attrs.field()
+    save_filepath = attrs.field(default="./combined_module.py")
+    add_empty_design_choices = attrs.field(default=False, type = bool)
 
     # output
-    filtered_dep_names_list = attr.ib(default=[])
-    dependencies_names_list = attr.ib(init=False)
-    combined_module = attr.ib(init=False)
+    filtered_dep_names_list = attrs.field(default=[])
+    dependencies_names_list = attrs.field(init=False)
+    combined_module = attrs.field(init=False)
 
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Local Dependacies Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='Local Dependacies Handler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()
@@ -70,7 +81,30 @@ class LocalDependaciesHandler:
         Method for extracting import statements from the module.
         """
 
-        return re.findall(r'^(?:from\s+.+\s+)?import\s+.+$', module_content, re.MULTILINE)
+        try:
+            parsed_tree = ast.parse(module_content)
+        except SyntaxError:
+            # Fallback to previous behavior if parsing fails.
+            return re.findall(r'^(?:from\s+.+\s+)?import\s+.+$', module_content, re.MULTILINE)
+
+        lines = module_content.splitlines()
+        imports = []
+
+        # Keep only module-level imports. Do not hoist function-local imports.
+        import_nodes = [
+            node for node in parsed_tree.body
+            if isinstance(node, (ast.Import, ast.ImportFrom))
+        ]
+        import_nodes = sorted(import_nodes, key=lambda node: (node.lineno, getattr(node, "end_lineno", node.lineno)))
+
+        for node in import_nodes:
+            start = node.lineno - 1
+            end = getattr(node, "end_lineno", node.lineno)
+            import_block = "\n".join(lines[start:end]).strip()
+            if import_block:
+                imports.append(import_block)
+
+        return imports
 
     def _remove_module_docstring(self,
                                 module_content : str) -> str:
@@ -88,8 +122,29 @@ class LocalDependaciesHandler:
         Method for removing import statements from the module.
         """
 
-        module_content = re.sub(r'^(?:from\s+.+\s+)?import\s+.+$', '', module_content, flags=re.MULTILINE)
-        return module_content.strip()
+        try:
+            parsed_tree = ast.parse(module_content)
+        except SyntaxError:
+            module_content = re.sub(r'^(?:from\s+.+\s+)?import\s+.+$', '', module_content, flags=re.MULTILINE)
+            return module_content.strip()
+
+        lines = module_content.splitlines()
+        line_mask = [True] * len(lines)
+
+        # Remove only module-level imports. Keep function-local imports in place.
+        import_nodes = [
+            node for node in parsed_tree.body
+            if isinstance(node, (ast.Import, ast.ImportFrom))
+        ]
+
+        for node in import_nodes:
+            start = node.lineno - 1
+            end = getattr(node, "end_lineno", node.lineno)
+            for line_idx in range(start, min(end, len(line_mask))):
+                line_mask[line_idx] = False
+
+        filtered_lines = [line for keep, line in zip(line_mask, lines) if keep]
+        return "\n".join(filtered_lines).strip()
 
     def _remove_metadata(self, module_content: str) -> str:
         """
@@ -226,6 +281,88 @@ class LocalDependaciesHandler:
 
         return file_paths
 
+    def _validate_selected_components_have_no_component_imports(
+        self,
+        dependencies_dir: str,
+        selected_component_paths: list
+    ):
+        """
+        Ensure selected components do not import any local component module.
+        """
+
+        if not selected_component_paths:
+            return
+
+        component_names = set()
+        for root, _, files in os.walk(dependencies_dir):
+            for filename in files:
+                if filename.endswith(".py"):
+                    component_names.add(os.path.splitext(filename)[0])
+        deps_namespace_tokens = {
+            token for token in os.path.normpath(dependencies_dir).split(os.sep)
+            if token and token not in {".", ".."}
+        }
+
+        def _is_local_component_path_import(import_path: str) -> bool:
+            """
+            Detect imports that point back to local components through a dotted path.
+            Uses runtime dependencies_dir tokens (effective config/default path), not hardcoded names.
+            """
+
+            if not import_path:
+                return False
+            segments = [seg for seg in import_path.split(".") if seg]
+            if not segments:
+                return False
+            has_component_segment = any(seg in component_names for seg in segments)
+            has_deps_namespace_segment = any(seg in deps_namespace_tokens for seg in segments)
+            return has_component_segment and has_deps_namespace_segment
+
+        violations = []
+        for rel_path in selected_component_paths:
+            abs_path = os.path.join(dependencies_dir, rel_path)
+            try:
+                with open(abs_path, "r", encoding="utf-8") as file:
+                    parsed = ast.parse(file.read())
+            except (FileNotFoundError, SyntaxError):
+                continue
+
+            for node in ast.walk(parsed):
+                if isinstance(node, ast.ImportFrom):
+                    module_name = node.module or ""
+                    if node.level and node.level > 0:
+                        violations.append((rel_path, f"from {'.' * node.level}{module_name} import ..."))
+                        continue
+
+                    root_name = module_name.split(".")[0] if module_name else ""
+                    if (
+                        root_name == "components"
+                        or root_name in component_names
+                        or ".components." in module_name
+                        or _is_local_component_path_import(module_name)
+                    ):
+                        violations.append((rel_path, f"from {module_name} import ..."))
+
+                elif isinstance(node, ast.Import):
+                    for alias in node.names:
+                        import_name = alias.name
+                        root_name = import_name.split(".")[0]
+                        if (
+                            root_name == "components"
+                            or root_name in component_names
+                            or ".components." in import_name
+                            or _is_local_component_path_import(import_name)
+                        ):
+                            violations.append((rel_path, f"import {import_name}"))
+
+        if violations:
+            details = "; ".join([f"{path}: {stmt}" for path, stmt in violations])
+            raise ValueError(
+                "Selected components must not import local components directly. "
+                "Wire dependency flow through the main module. "
+                f"Violations: {details}"
+            )
+
 
     def combine_modules(self,
                         main_module_filepath : str = None,
@@ -270,6 +407,11 @@ class LocalDependaciesHandler:
             if main_module_imports != main_module_imports0:
                 self.filtered_dep_names_list.append(dep_path)
 
+        selected_component_paths = [f"{dep}.py" for dep in module_local_deps] + [path for path, _ in bundle_deps]
+        self._validate_selected_components_have_no_component_imports(
+            dependencies_dir=dependencies_dir,
+            selected_component_paths=selected_component_paths
+        )
 
         main_module_content = self._remove_imports(main_module_content)
 

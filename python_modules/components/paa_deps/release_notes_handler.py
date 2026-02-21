@@ -2,35 +2,47 @@ import logging
 import os
 import re
 import subprocess
-import attr #>=22.2.0
+import attrs
+import attrsx
 
-@attr.s
+@attrsx.define
 class ReleaseNotesHandler:
 
     """
     Contains set of tools to handle release notes from commit messages.
+
+    Usage example:
+    ```python
+    rnh = ReleaseNotesHandler(
+        filepath=".paa/release_notes/your_package.md",
+        label_name="your_package",
+        version="0.1.0",
+    )
+    notes = rnh.create_release_note_entry()
+    rnh.save_release_notes(notes)
+    ```
     """
 
     # inputs
-    filepath = attr.ib(default='release_notes.md', type=str)
-    label_name = attr.ib(default=None, type=list)
-    version = attr.ib(default='0.0.1', type=str)
-    max_search_depth = attr.ib(default=2, type=int)
+    filepath = attrs.field(default='release_notes.md', type=str)
+    label_name = attrs.field(default=None, type=list)
+    version = attrs.field(default='0.0.1', type=str)
+    max_search_depth = attrs.field(default=2, type=int)
 
     # processed
-    n_last_messages = attr.ib(default=1, type=int)
-    existing_contents = attr.ib(default=None, type=list)
-    commit_messages = attr.ib(default=None, type=list)
-    filtered_messages = attr.ib(default=None, type=list)
-    processed_messages = attr.ib(default=None, type=list)
-    processed_note_entries  = attr.ib(default=None, type=list)
-    version_update_label = attr.ib(default=None, type=str)
+    n_last_messages = attrs.field(default=1, type=int)
+    existing_contents = attrs.field(default=None, type=list)
+    commit_messages = attrs.field(default=None, type=list)
+    filtered_messages = attrs.field(default=None, type=list)
+    processed_messages = attrs.field(default=None, type=list)
+    processed_note_entries  = attrs.field(default=None, type=list)
+    version_update_label = attrs.field(default=None, type=str)
 
 
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Release Notes Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='Release Notes Handler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()

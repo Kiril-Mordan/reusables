@@ -4,17 +4,20 @@ import codecs
 from datetime import datetime
 import re
 import shutil
+import copy
+import json
 import nbformat
 from nbconvert import MarkdownExporter #>=7.16.4
 from nbconvert.preprocessors import ExecutePreprocessor
 import attrs #>=22.2.0
+import attrsx
 import requests
 import base64
 
 #@ jupyter>=1.1.1
 
 
-@attrs.define
+@attrsx.define
 class LongDocHandler:
 
     """
@@ -26,6 +29,7 @@ class LongDocHandler:
     markdown_filepath = attrs.field(default = None)
     timeout = attrs.field(default = 600, type = int)
     kernel_name = attrs.field(default = 'python', type = str)
+    hide_code_cell_prefixes = attrs.field(default=("#| paa-hide-code", "#| hide-code"))
 
     logger = attrs.field(default=None)
     logger_name = attrs.field(default='README Handler')
@@ -129,8 +133,9 @@ class LongDocHandler:
                 if not png_b64:
                     continue
 
-                # Deterministic, collision-free filename
-                actual_name = f"{self.module_name}_cell{cell_i}_out{out_i}.png"
+                # Deterministic, collision-free filename with notebook marker.
+                module_prefix = self.module_name if self.module_name else "notebook"
+                actual_name = f"{module_prefix}_ipynb_cell{cell_i}_out{out_i}.png"
                 actual_path = os.path.join(out_dir, actual_name)
 
                 # Write bytes
@@ -158,6 +163,64 @@ class LongDocHandler:
         md_text, _ = md_exporter.from_notebook_node(notebook_node)
         return md_text
 
+    def _should_hide_code_cell(self, source: str) -> bool:
+
+        if not source:
+            return False
+
+        first_non_empty = None
+        for line in str(source).splitlines():
+            candidate = line.strip()
+            if candidate:
+                first_non_empty = candidate
+                break
+
+        if not first_non_empty:
+            return False
+
+        return any(first_non_empty.startswith(prefix) for prefix in self.hide_code_cell_prefixes)
+
+    def _prepare_notebook_for_markdown(self, notebook_node):
+
+        prepared = copy.deepcopy(notebook_node)
+        filtered_cells = []
+
+        for cell in prepared.get("cells", []):
+            if cell.get("cell_type") != "code":
+                filtered_cells.append(cell)
+                continue
+
+            if self._should_hide_code_cell(cell.get("source", "")):
+                outputs = cell.get("outputs", [])
+                if outputs:
+                    # Keep outputs, hide input code block in markdown output.
+                    cell["source"] = ""
+                    filtered_cells.append(cell)
+                # Drop tagged code cell entirely when there is no output.
+                continue
+
+            filtered_cells.append(cell)
+
+        prepared["cells"] = filtered_cells
+        return prepared
+
+    def _load_notebook_node(self, notebook_path: str):
+        """
+        Load notebook with backward-compat handling for older nbformat schemas
+        that reject cell-level ``id`` fields.
+        """
+        with open(notebook_path, encoding="utf-8") as fh:
+            raw = fh.read()
+
+        try:
+            return nbformat.reads(raw, as_version=4)
+        except Exception:
+            notebook_data = json.loads(raw)
+            if isinstance(notebook_data, dict):
+                for cell in notebook_data.get("cells", []):
+                    if isinstance(cell, dict):
+                        cell.pop("id", None)
+            return nbformat.from_dict(notebook_data)
 
 
     def convert_notebook_to_md(self, notebook_path: str = None, output_path: str = None):
@@ -171,11 +234,12 @@ class LongDocHandler:
             output_path = self.markdown_filepath
 
         if (notebook_path is not None) and os.path.exists(notebook_path):
-            with open(notebook_path, encoding="utf-8") as fh:
-                notebook_node = nbformat.read(fh, as_version=4)
+            notebook_node = self._load_notebook_node(notebook_path)
 
-            md_text = self._export_md_without_nbconvert_extraction(notebook_node, output_path)
-            md_text = self._extract_pngs_and_patch_md(notebook_node, md_text, output_path)
+            notebook_for_export = self._prepare_notebook_for_markdown(notebook_node)
+
+            md_text = self._export_md_without_nbconvert_extraction(notebook_for_export, output_path)
+            md_text = self._extract_pngs_and_patch_md(notebook_for_export, md_text, output_path)
 
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             with open(output_path, "w", encoding="utf-8") as fh:
@@ -210,8 +274,7 @@ class LongDocHandler:
             kernel_name = self.kernel_name
 
         if (notebook_path is not None) and os.path.exists(notebook_path):
-            with open(notebook_path, encoding="utf-8") as fh:
-                notebook_node = nbformat.read(fh, as_version=4)
+            notebook_node = self._load_notebook_node(notebook_path)
 
             execute_preprocessor = ExecutePreprocessor(timeout=timeout, kernel_name=kernel_name)
             execute_preprocessor.preprocess(
@@ -219,8 +282,10 @@ class LongDocHandler:
                 {"metadata": {"path": os.path.dirname(notebook_path)}},
             )
 
-            md_text = self._export_md_without_nbconvert_extraction(notebook_node, output_path)
-            md_text = self._extract_pngs_and_patch_md(notebook_node, md_text, output_path)
+            notebook_for_export = self._prepare_notebook_for_markdown(notebook_node)
+
+            md_text = self._export_md_without_nbconvert_extraction(notebook_for_export, output_path)
+            md_text = self._extract_pngs_and_patch_md(notebook_for_export, md_text, output_path)
 
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             with open(output_path, "w", encoding="utf-8") as fh:
@@ -340,29 +405,120 @@ class LongDocHandler:
 
         if extra_docs_dir and os.path.exists(extra_docs_dir):
 
+            os.makedirs(docs_path, exist_ok=True)
             files = os.listdir(extra_docs_dir)
 
             for f in files:
+                source_path = os.path.join(extra_docs_dir, f)
+                destination_path = os.path.join(docs_path, f"{package_name}-{f}")
 
-                full_path = os.path.join(extra_docs_dir,f)
+                if os.path.exists(destination_path):
+                    if os.path.isdir(destination_path):
+                        shutil.rmtree(destination_path)
+                    else:
+                        os.remove(destination_path)
 
-                if os.path.exists(full_path):
-                    if os.path.isdir(full_path):
+                self._copy_extra_docs_item(
+                    source_path=source_path,
+                    destination_path=destination_path
+                )
 
-                        if os.path.exists(os.path.join(docs_path,f"{package_name}-{f}")):
-                            shutil.rmtree(os.path.join(docs_path,f"{package_name}-{f}"))
+    def _copy_extra_docs_item(self,
+                              source_path: str,
+                              destination_path: str):
 
-                        shutil.copytree(
-                            full_path,
-                            os.path.join(docs_path,f"{package_name}-{f}"))
+        if not os.path.exists(source_path):
+            return
 
-                    if f.endswith(".md") or f.endswith(".png") :
-                        shutil.copy(
-                            full_path,
-                            os.path.join(docs_path,f"{package_name}-{f}"))
+        if os.path.isdir(source_path):
+            os.makedirs(destination_path, exist_ok=True)
+            for item_name in os.listdir(source_path):
+                self._copy_extra_docs_item(
+                    source_path=os.path.join(source_path, item_name),
+                    destination_path=os.path.join(destination_path, item_name)
+                )
+            return
 
-                    if f.endswith(".ipynb"):
-                        self.convert_notebook_to_md(
-                            notebook_path = full_path,
-                            output_path = os.path.join(docs_path,
-                            f"{package_name}-{f.replace('.ipynb', '.md')}"))
+        if source_path.endswith(".ipynb"):
+            output_path = destination_path.replace(".ipynb", ".md")
+            self.convert_notebook_to_md(
+                notebook_path=source_path,
+                output_path=output_path
+            )
+            return
+
+        if source_path.endswith(".md") or source_path.endswith(".png"):
+            os.makedirs(os.path.dirname(destination_path), exist_ok=True)
+            shutil.copy(source_path, destination_path)
+
+    def clear_package_docs(self,
+                           package_name: str,
+                           docs_path: str):
+
+        """
+        Remove package-specific docs from docs_path before rebuilding docs.
+        """
+
+        if not docs_path or not os.path.exists(docs_path):
+            return
+
+        for entry in os.listdir(docs_path):
+            entry_path = os.path.join(docs_path, entry)
+
+            if entry == f"{package_name}.md":
+                if os.path.isfile(entry_path):
+                    os.remove(entry_path)
+                continue
+
+            # Clean only package-prefixed documentation trees/files.
+            if not entry.startswith(f"{package_name}-"):
+                # Also clean notebook-derived images written at docs root.
+                if self._is_notebook_generated_png(entry, package_name):
+                    os.remove(entry_path)
+                continue
+
+            if os.path.isdir(entry_path):
+                for root, _, files in os.walk(entry_path):
+                    for file_name in files:
+                        should_remove = (
+                            file_name.endswith(".md")
+                            or self._is_notebook_generated_png(file_name, package_name)
+                        )
+                        if should_remove:
+                            os.remove(os.path.join(root, file_name))
+
+                self._remove_empty_dirs(entry_path)
+            else:
+                should_remove = (
+                    entry.endswith(".md")
+                    or self._is_notebook_generated_png(entry, package_name)
+                )
+                if should_remove:
+                    os.remove(entry_path)
+
+    def _is_notebook_generated_png(self, filename: str, package_name: str) -> bool:
+
+        """
+        Recognize notebook-generated png files while leaving drawio png files untouched.
+        """
+
+        is_new_pattern = filename.startswith(f"{package_name}_ipynb_cell") and filename.endswith(".png")
+        is_legacy_pattern = filename.startswith(f"{package_name}_cell") and "_out" in filename and filename.endswith(".png")
+        return is_new_pattern or is_legacy_pattern
+
+    def _remove_empty_dirs(self, directory_path: str):
+
+        """
+        Remove empty directories recursively.
+        """
+
+        if not os.path.isdir(directory_path):
+            return
+
+        for item_name in os.listdir(directory_path):
+            item_path = os.path.join(directory_path, item_name)
+            if os.path.isdir(item_path):
+                self._remove_empty_dirs(item_path)
+
+        if not os.listdir(directory_path):
+            os.rmdir(directory_path)

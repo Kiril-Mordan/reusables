@@ -1,9 +1,10 @@
 import logging
 import os
 import shutil
-import attr #>=22.2.0
+import attrs
+import attrsx
 
-@attr.s
+@attrsx.define
 class CliHandler:
 
     """
@@ -11,14 +12,14 @@ class CliHandler:
     """
 
     # inputs
-    cli_module_filepath = attr.ib()
-    setup_directory = attr.ib()
+    cli_module_filepath = attrs.field()
+    setup_directory = attrs.field()
 
     # processed
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Cli Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='Cli Handler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()

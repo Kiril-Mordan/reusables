@@ -14,8 +14,8 @@ check_changes() {
   local commit_range=$1
   local changed_files=""
   for dir in "${directories_to_check[@]}"; do
-    # Ensure we only match files directly in the specified directory
-    files=$(git diff --name-only $commit_range -- $dir | grep -E "^${dir}[^/]+$")
+    # Include files from the directory and nested subdirectories.
+    files=$(git diff --name-only $commit_range -- "$dir" | grep -E "^${dir}.+")
     if [ -n "$files" ]; then
       changed_files+="$files"$'\n'
     fi
@@ -38,12 +38,59 @@ if [ -z "$changed_files" ]; then
 else
     echo "Changed files:"
     echo "$changed_files"
-    # Process files
-    processed_files=$(echo "$changed_files" |
-                      sed 's/.*\///' |       # Remove directory path
-                      sed 's/\.[^.]*$//' |   # Remove file extensions
-                      sort | uniq |         # Sort and deduplicate
-                      awk -v dir="$output_directory" -v ext="$extension_to_add" '{print dir "" $0 ext}')  # Prepend directory and append extension
+    # Process changed file paths to module/package names.
+    while IFS= read -r file; do
+      [ -z "$file" ] && continue
+      file="${file#./}"
+      root="${file%%/*}"
+      label=""
+
+      case "$root" in
+        python_modules)
+          if [[ "$file" == python_modules/components/* ]]; then
+            remainder="${file#python_modules/components/}"
+            candidate_dir="${remainder%%/*}"
+            if [[ -f "python_modules/${candidate_dir}.py" ]]; then
+              label="${candidate_dir}"
+            else
+              stripped="${candidate_dir%_deps}"
+              if [[ "$stripped" != "$candidate_dir" && -f "python_modules/${stripped}.py" ]]; then
+                label="${stripped}"
+              else
+                while IFS= read -r module_path; do
+                  module_name="$(basename "$module_path" .py)"
+                  [ -n "$module_name" ] && echo "$module_name" >> /tmp/paa_changed_modules.$$ 
+                done < <(find python_modules -maxdepth 1 -type f -name '*.py' | sort)
+                continue
+              fi
+            fi
+          else
+            base="$(basename "$file")"
+            label="${base%.*}"
+          fi
+          ;;
+        example_notebooks|cli|mcp|api_routes|streamlit|drawio)
+          base="$(basename "$file")"
+          label="${base%.*}"
+          ;;
+        tests|artifacts|extra_docs|licenses|skills)
+          remainder="${file#${root}/}"
+          label="${remainder%%/*}"
+          ;;
+        *)
+          base="$(basename "$file")"
+          label="${base%.*}"
+          ;;
+      esac
+
+      label="${label//-/_}"
+      if [ -n "$label" ]; then
+        echo "$label" >> /tmp/paa_changed_modules.$$
+      fi
+    done <<< "$changed_files"
+
+    processed_files=$(sort -u /tmp/paa_changed_modules.$$ 2>/dev/null | awk -v dir="$output_directory" -v ext="$extension_to_add" '{print dir "" $0 ext}')
+    rm -f /tmp/paa_changed_modules.$$
     echo "Processed files:"
     echo "$processed_files"
     echo "$processed_files" > changed_files

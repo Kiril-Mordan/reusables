@@ -1,23 +1,31 @@
 import logging
 import ast
-import attr #>=22.2.0
+import attrs
+import attrsx
 
-@attr.s
+@attrsx.define
 class MetadataHandler:
 
     """
     Extracts and checks package metadata.
+
+    Usage example:
+    ```python
+    mh = MetadataHandler(module_filepath="python_modules/your_package.py")
+    if mh.is_metadata_available():
+        package_metadata = mh.get_package_metadata()
+    ```
     """
 
-    module_filepath = attr.ib(default=None)
-    header_name = attr.ib(default="__package_metadata__")
+    module_filepath = attrs.field(default=None)
+    header_name = attrs.field(default="__package_metadata__")
 
-    metadata_status = attr.ib(default={})
+    metadata_status = attrs.field(factory=dict, type=dict)
 
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Package Metadata Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='Package Metadata Handler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()
@@ -35,6 +43,41 @@ class MetadataHandler:
             logger.setLevel(self.loggerLvl)
 
             self.logger = logger
+
+    def _read_metadata_block(self, module_filepath: str, header_name: str) -> str:
+        """
+        Read raw metadata assignment block from module source.
+        """
+
+        metadata_str = ""
+        inside_metadata = False
+        expecting_closing_brackets = 0
+
+        with open(module_filepath, 'r', encoding='utf-8') as file:
+            for line in file:
+
+                if '{' in line:
+                    expecting_closing_brackets += 1
+                if '}' in line:
+                    expecting_closing_brackets -= 1
+
+                if f'{header_name} =' in line:
+                    inside_metadata = True
+                    metadata_str = line.split('#')[0]  # Ignore comments
+                elif inside_metadata:
+                    metadata_str += line.split('#')[0]  # Ignore comments
+                    if ('}' in line) and (expecting_closing_brackets <= 0):
+                        break
+
+        return metadata_str
+
+    def _set_metadata_status(self, header_name: str, value: bool) -> None:
+        """
+        Update metadata presence cache in a pylint-friendly way.
+        """
+        status = dict(self.metadata_status or {})
+        status[header_name] = value
+        self.metadata_status = status
 
 
     def is_metadata_available(self,
@@ -56,16 +99,16 @@ class MetadataHandler:
             raise ValueError("module_filepath is None")
 
         try:
-            with open(module_filepath, 'r') as file:
+            with open(module_filepath, 'r', encoding='utf-8') as file:
                 for line in file:
                     # Check if the line defines __package_metadata__
                     if line.strip().startswith(f"{header_name} ="):
-                        self.metadata_status[header_name] = True
+                        self._set_metadata_status(header_name, True)
                         return True
-            self.metadata_status[header_name] = False
+            self._set_metadata_status(header_name, False)
             return False
         except FileNotFoundError:
-            self.metadata_status[header_name] = False
+            self._set_metadata_status(header_name, False)
             return False
 
     def get_package_metadata(self,
@@ -86,26 +129,11 @@ class MetadataHandler:
             self.logger.error("Provide module_filepath!")
             raise ValueError("module_filepath is None")
 
-        metadata_str = ""
-        inside_metadata = False
-        expecting_closing_brackes = 0
-
         try:
-            with open(module_filepath, 'r') as file:
-                for line in file:
-
-                    if '{' in line:
-                        expecting_closing_brackes += 1
-                    if '}' in line:
-                        expecting_closing_brackes -= 1
-
-                    if f'{header_name} =' in line:
-                        inside_metadata = True
-                        metadata_str = line.split('#')[0]  # Ignore comments
-                    elif inside_metadata:
-                        metadata_str += line.split('#')[0]  # Ignore comments
-                        if ('}' in line) and (expecting_closing_brackes <= 0):
-                            break
+            metadata_str = self._read_metadata_block(
+                module_filepath=module_filepath,
+                header_name=header_name
+            )
 
             if metadata_str:
                 try:
@@ -125,5 +153,5 @@ class MetadataHandler:
 
         except FileNotFoundError:
             return "File not found."
-        except Exception as e:
+        except (OSError, ValueError, TypeError, SyntaxError) as e:
             return f"An error occurred: {e}"

@@ -2,36 +2,43 @@ import logging
 import os
 import ast
 import json
-import attr #>=22.2.0
+import attrs
+import attrsx
 import difflib
 import importlib
 import importlib.metadata
 import importlib.resources as pkg_resources
-import pkg_resources as pkgr #-
 
-@attr.s
+@attrsx.define
 class DependenciesAnalyser:
 
     """
     Contains set of tools to check package dependencies.
+
+    Usage example:
+    ```python
+    da = DependenciesAnalyser(package_name="your-package")
+    tree = da.extract_dependencies_tree(package_name="your-package")
+    licenses = da.add_license_labels_to_dep_tree(dependencies_tree=tree)
+    ```
     """
 
-    package_name = attr.ib(default=True)
-    base_mapping_filepath = attr.ib(default=None)
-    package_licenses_filepath = attr.ib(default=None)
-    allowed_licenses = attr.ib(default=[])
+    package_name = attrs.field(default=True)
+    base_mapping_filepath = attrs.field(default=None)
+    package_licenses_filepath = attrs.field(default=None)
+    allowed_licenses = attrs.field(default=[])
 
-    package_licenses = attr.ib(default=None)
+    package_licenses = attrs.field(default=None)
 
-    standard_licenses = attr.ib(default=[
+    standard_licenses = attrs.field(default=[
             "mit", "bsd-3-clause", "bsd-2-clause", "apache-2.0",
             "gpl-3.0", "lgpl-3.0", "mpl-2.0", "agpl-3.0", "epl-2.0"
         ])
 
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Dependencies Analyser')
-    loggerLvl = attr.ib(default=logging.DEBUG)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='Dependencies Analyser')
+    loggerLvl = attrs.field(default=logging.DEBUG)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()
@@ -366,13 +373,11 @@ class DependenciesAnalyser:
         """
 
         matches = []
-        for dist in pkgr.working_set:
-            try:
-                metadata_lines = dist.get_metadata_lines('METADATA')
-                if all(any(tag in line for line in metadata_lines) for tag in tags):
-                    matches.append((dist.project_name, dist.version))
-            except (FileNotFoundError, KeyError):
-                continue
+        for dist in importlib.metadata.distributions():
+            metadata = dist.metadata
+            metadata_lines = [f"{k}: {v}" for k, v in metadata.items()]
+            if all(any(tag in line for line in metadata_lines) for tag in tags):
+                matches.append((dist.metadata.get("Name"), dist.version))
         return matches
 
 
@@ -399,11 +404,11 @@ class DependenciesAnalyser:
         if package_name is None:
             raise ValueError(f"Provide package_name!")
 
-        dist = pkgr.get_distribution(package_name)
-        metadata = dist.get_metadata_lines('METADATA')
+        metadata_obj = importlib.metadata.metadata(package_name)
+        metadata = [f"{k}: {v}" for k, v in metadata_obj.items()]
 
         try:
-            version = dist.version
+            version = importlib.metadata.version(package_name)
         except Exception as e:
             version = None
 
