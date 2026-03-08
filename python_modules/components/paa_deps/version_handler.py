@@ -2,34 +2,47 @@ import logging
 import os
 import csv
 import yaml
+import subprocess
+import sys
 from datetime import datetime
 import pandas as pd
 import re
-import attr #>=22.2.0
+import attrs
+import attrsx
 
-@attr.s
+@attrsx.define
 class VersionHandler:
 
     """
     Contains set of tools to iterate version of a package.
+
+    Usage example:
+    ```python
+    vh = VersionHandler(
+        versions_filepath=".paa/tracking/lsts_package_versions.yml",
+        log_filepath=".paa/tracking/version_logs.csv",
+    )
+    next_version = vh.increment_version(package_name="your_package", version_increment_type="patch")
+    vh.update_version(package_name="your_package", version=next_version)
+    ```
     """
 
-    versions_filepath = attr.ib()
-    log_filepath = attr.ib()
+    versions_filepath = attrs.field()
+    log_filepath = attrs.field()
 
-    default_version = attr.ib(default="0.0.1")
-    read_files = attr.ib(default=True)
+    default_version = attrs.field(default="0.0.1")
+    read_files = attrs.field(default=True)
 
-    log_file = attr.ib(default=True)
-    csv_writer = attr.ib(default=True)
+    log_file = attrs.field(default=True)
+    csv_writer = attrs.field(default=True)
 
     # output
-    versions = attr.ib(init=False)
+    versions = attrs.field(init=False)
 
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Package Version Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='Package Version Handler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()
@@ -236,13 +249,41 @@ class VersionHandler:
         package_name = package_name.replace('_', '-')
 
         try:
-
-            command = ["pip", "index", "versions", package_name]
+            command = [sys.executable, "-m", "pip", "index", "versions", package_name]
 
             result = subprocess.run(command, capture_output=True, text=True)
 
             if result.returncode != 0:
-                raise Exception(f"Error fetching package versions: {result.stderr.strip()}")
+                stderr = (result.stderr or "").strip()
+                stderr_l = stderr.lower()
+
+                if any(token in stderr_l for token in [
+                    "failed to establish a new connection",
+                    "name or service not known",
+                    "temporary failure in name resolution",
+                    "connection timed out",
+                    "connection error",
+                    "proxyerror",
+                    "ssl",
+                ]):
+                    self.logger.error(
+                        "Could not reach package index from current environment (connectivity issue)."
+                    )
+                elif any(token in stderr_l for token in [
+                    "no matching distribution found",
+                    "could not find a version",
+                ]):
+                    self.logger.error(
+                        f"Package '{package_name}' does not exist on the configured package index (or name mismatch)."
+                    )
+                else:
+                    self.logger.error(
+                        f"Could not fetch latest version for '{package_name}' from pip index in current environment."
+                    )
+
+                if stderr:
+                    self.logger.debug(f"pip index stderr: {stderr}")
+                raise Exception(f"Error fetching package versions: {stderr}")
 
             output = result.stdout.strip()
 
@@ -257,8 +298,7 @@ class VersionHandler:
             else:
                 raise Exception("No versions found for the package.")
 
-        except Exception as e:
-            self.logger.error("Failed to extract latest version with pip!")
+        except Exception:
             self.logger.warning("Using latest version from provided file instead!")
             return None
 

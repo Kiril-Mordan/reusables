@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Require: <dir...> <output_directory> <extension>
+if [ "$#" -lt 3 ]; then
+  echo "Usage: $0 <dir1> [<dir2> ...] <output_directory> <extension>"
+  exit 1
+fi
+
 # Directories to check, passed as arguments before the last two arguments
 directories_to_check=("${@:1:$#-2}")
 
@@ -14,8 +20,13 @@ check_changes() {
   local commit_range=$1
   local changed_files=""
   for dir in "${directories_to_check[@]}"; do
-    # Ensure we only match files directly in the specified directory
-    files=$(git diff --name-only $commit_range -- $dir | grep -E "^${dir}[^/]+$")
+    # For python_modules, include only top-level module files.
+    if [ "$dir" = "python_modules/" ] || [ "$dir" = "python_modules" ]; then
+      files=$(git diff --name-only $commit_range -- "$dir" | grep -E "^python_modules/[^/]+\\.py$")
+    else
+      # Include files from the directory and nested subdirectories.
+      files=$(git diff --name-only $commit_range -- "$dir" | grep -E "^${dir}.+")
+    fi
     if [ -n "$files" ]; then
       changed_files+="$files"$'\n'
     fi
@@ -38,12 +49,8 @@ if [ -z "$changed_files" ]; then
 else
     echo "Changed files:"
     echo "$changed_files"
-    # Process files
-    processed_files=$(echo "$changed_files" |
-                      sed 's/.*\///' |       # Remove directory path
-                      sed 's/\.[^.]*$//' |   # Remove file extensions
-                      sort | uniq |         # Sort and deduplicate
-                      awk -v dir="$output_directory" -v ext="$extension_to_add" '{print dir "" $0 ext}')  # Prepend directory and append extension
+    # Process changed file paths to module/package names.
+    processed_files=$(echo "$changed_files" | awk -F/ '{print $2}' | sed 's/\.[^.]*$//' | tr '-' '_' | sort -u | awk -v dir="$output_directory" -v ext="$extension_to_add" '{print dir "" $0 ext}')
     echo "Processed files:"
     echo "$processed_files"
     echo "$processed_files" > changed_files

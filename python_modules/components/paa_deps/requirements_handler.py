@@ -1,40 +1,54 @@
 import logging
 import os
 import subprocess
+import sys
 import re
 from stdlib_list import stdlib_list
 from packaging import version
+from packaging.requirements import Requirement
+from packaging.version import Version
 import tempfile
-import attr #>=22.2.0
+import attrs
+import attrsx
 
 #@ pip_audit==2.7.3
 
-@attr.s
+@attrsx.define
 class RequirementsHandler:
 
     """
     Contains tools to extract and check requirements of a module.
+
+    Usage example:
+    ```python
+    rh = RequirementsHandler(
+        module_filepath="python_modules/your_package.py",
+        package_mappings={"yaml": "pyyaml"},
+    )
+    requirements = rh.extract_requirements()
+    optional = rh.optional_requirements_list
+    ```
     """
 
-    module_filepath = attr.ib(default=None)
+    module_filepath = attrs.field(default=None)
 
-    package_mappings = attr.ib(default={}, type = dict)
-    requirements_output_path  = attr.ib(default='./')
-    output_requirements_prefix = attr.ib(default="requirements_")
-    custom_modules_filepath = attr.ib(default=None)
-    add_header = attr.ib(default=True, type = bool)
-    python_version = attr.ib(default='3.8')
+    package_mappings = attrs.field(default={}, type = dict)
+    requirements_output_path  = attrs.field(default='./')
+    output_requirements_prefix = attrs.field(default="requirements_")
+    custom_modules_filepath = attrs.field(default=None)
+    add_header = attrs.field(default=True, type = bool)
+    python_version = attrs.field(default='3.8')
 
     # output
-    module_name = attr.ib(init=False)
-    requirements_list = attr.ib(default=[], type = list)
-    optional_requirements_list = attr.ib(default=[], type = list)
-    vulnerabilities = attr.ib(default=[], type = list)
+    module_name = attrs.field(init=False)
+    requirements_list = attrs.field(default=[], type = list)
+    optional_requirements_list = attrs.field(default=[], type = list)
+    vulnerabilities = attrs.field(default=[], type = list)
 
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Package Requirements Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='Package Requirements Handler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()
@@ -156,6 +170,142 @@ class RequirementsHandler:
 
         if vulnerabilities and raise_error:
             raise ValueError("Found vulnerabilities, resolve them or ignore check to move forwards!")
+
+    def check_requirements_compatibility(self,
+                                         requirements_list: list = None,
+                                         raise_error: bool = True):
+
+        """
+        Checks for obvious version constraint conflicts in requirement lines.
+        """
+
+        if requirements_list is None:
+            requirements_list = self.requirements_list + self.optional_requirements_list
+
+        grouped = {}
+        for req_line in requirements_list:
+            req_line = str(req_line).strip()
+            if not req_line or req_line.startswith("#"):
+                continue
+
+            try:
+                req = Requirement(req_line)
+            except Exception:
+                # Keep compatibility check resilient to non-PEP508 lines.
+                continue
+
+            pkg_name = req.name.lower().replace("_", "-")
+            grouped.setdefault(pkg_name, []).append(req)
+
+        conflicts = []
+
+        for pkg_name, reqs in grouped.items():
+            exact_versions = []
+            all_specs = []
+            lower_bound = None  # tuple(Version, inclusive)
+            upper_bound = None  # tuple(Version, inclusive)
+
+            for req in reqs:
+                for spec in req.specifier:
+                    all_specs.append(spec)
+                    op = spec.operator
+                    if op in ("==", "==="):
+                        exact_versions.append(spec.version)
+                    elif op in (">", ">="):
+                        candidate = (Version(spec.version), op == ">=")
+                        if lower_bound is None:
+                            lower_bound = candidate
+                        else:
+                            if candidate[0] > lower_bound[0] or (
+                                candidate[0] == lower_bound[0] and (not candidate[1]) and lower_bound[1]
+                            ):
+                                lower_bound = candidate
+                    elif op in ("<", "<="):
+                        candidate = (Version(spec.version), op == "<=")
+                        if upper_bound is None:
+                            upper_bound = candidate
+                        else:
+                            if candidate[0] < upper_bound[0] or (
+                                candidate[0] == upper_bound[0] and (not candidate[1]) and upper_bound[1]
+                            ):
+                                upper_bound = candidate
+
+            exact_unique = sorted(set(exact_versions))
+
+            if len(exact_unique) > 1:
+                conflicts.append(f"{pkg_name}: incompatible pinned versions {exact_unique}")
+                continue
+
+            if exact_unique:
+                pinned_version = Version(exact_unique[0])
+                if not all(spec.contains(pinned_version, prereleases=True) for spec in all_specs):
+                    conflicts.append(f"{pkg_name}: pinned version {exact_unique[0]} violates other constraints")
+                continue
+
+            if lower_bound and upper_bound:
+                if lower_bound[0] > upper_bound[0]:
+                    conflicts.append(
+                        f"{pkg_name}: lower bound {lower_bound[0]} is greater than upper bound {upper_bound[0]}"
+                    )
+                elif lower_bound[0] == upper_bound[0] and (not lower_bound[1] or not upper_bound[1]):
+                    conflicts.append(f"{pkg_name}: empty interval around version {lower_bound[0]}")
+
+        if conflicts and raise_error:
+            raise ValueError(
+                "Found dependency compatibility conflicts: " + "; ".join(conflicts)
+            )
+
+        return conflicts
+
+    def check_full_requirements_compatibility(self,
+                                              requirements_list: list = None,
+                                              raise_error: bool = True):
+
+        """
+        Runs full dependency resolution check with pip resolver (transitive).
+        """
+
+        if requirements_list is None:
+            requirements_list = self.requirements_list + self.optional_requirements_list
+
+        if not requirements_list:
+            return {"ok": True, "output": "No requirements to resolve."}
+
+        with tempfile.NamedTemporaryFile(delete=True, mode='w', suffix='.txt') as temp_req_file:
+            for dep in requirements_list:
+                dep = str(dep).strip()
+                if dep and (not dep.startswith("#")):
+                    temp_req_file.write(dep + '\n')
+            temp_req_file.flush()
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "--dry-run",
+                    "--ignore-installed",
+                    "--disable-pip-version-check",
+                    "--no-input",
+                    "-r",
+                    temp_req_file.name,
+                ],
+                capture_output=True,
+                text=True,
+            )
+
+        output = (result.stderr or "") + ("\n" + result.stdout if result.stdout else "")
+
+        if result.returncode != 0:
+            if raise_error:
+                raise ValueError(
+                    "Full dependency resolution failed. "
+                    "Resolver output:\n" + output.strip()
+                )
+            return {"ok": False, "output": output.strip()}
+
+        return {"ok": True, "output": output.strip()}
 
     def list_custom_modules(self,
                             custom_modules_filepath : str = None):

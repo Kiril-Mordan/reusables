@@ -8,11 +8,29 @@ import importlib.resources as pkg_resources
 import csv
 import shutil
 import json
+import re
 import yaml
 import pandas as pd
+from pathlib import Path
 import attrs #>=22.2.0
+import attrsx
 
-@attrs.define
+PAA_PATH_DEFAULTS = {
+    "module_dir": "python_modules",
+    "example_notebooks_path": "example_notebooks",
+    "dependencies_dir": "python_modules/components",
+    "licenses_dir": "licenses",
+    "cli_dir": "cli",
+    "mcp_dir": "mcp",
+    "api_routes_dir": "api_routes",
+    "streamlit_dir": "streamlit",
+    "artifacts_dir": "artifacts",
+    "drawio_dir": "drawio",
+    "extra_docs_dir": "extra_docs",
+    "tests_dir": "tests",
+}
+
+@attrsx.define
 class PprHandler:
 
     """
@@ -25,7 +43,7 @@ class PprHandler:
     paa_config = attrs.field(default=None)
 
     init_dirs = attrs.field(default=["module_dir", "example_notebooks_path",
-            "dependencies_dir", "cli_dir", "api_routes_dir", "streamlit_dir",
+            "dependencies_dir", "cli_dir", "mcp_dir", "api_routes_dir", "streamlit_dir",
             "artifacts_dir", "drawio_dir", "extra_docs_dir", "tests_dir"])
 
     module_dir = attrs.field(default=None)
@@ -39,21 +57,6 @@ class PprHandler:
     logger_name = attrs.field(default='PPR Handler')
     loggerLvl = attrs.field(default=logging.INFO)
     logger_format = attrs.field(default=None)
-
-    def __attrs_post_init__(self):
-        self._initialize_logger()
-
-    def _initialize_logger(self):
-        """
-        Initialize a logger for the class instance based on the specified logging level and logger name.
-        """
-
-        if self.logger is None:
-            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
-            logger = logging.getLogger(self.logger_name)
-            logger.setLevel(self.loggerLvl)
-
-            self.logger = logger
 
     def _create_init_paa_dir(self, paa_dir : str):
 
@@ -215,6 +218,14 @@ class PprHandler:
         if docs_dir is None:
             docs_dir = self.docs_dir
 
+        # Remove previously generated drawio PNGs for affected package(s),
+        # while preserving notebook-derived images (e.g., *_cell23_out0.png).
+        self._cleanup_existing_drawio_pngs(
+            module_name=module_name,
+            drawio_dir=drawio_dir,
+            docs_dir=docs_dir
+        )
+
         paa_path = pkg_resources.files('package_auto_assembler')
 
         if not os.path.exists(paa_path):
@@ -237,6 +248,53 @@ class PprHandler:
 
         return 0
 
+    def _cleanup_existing_drawio_pngs(self,
+                                      module_name : str = None,
+                                      drawio_dir : str = None,
+                                      docs_dir : str = None):
+
+        """
+        Remove previously generated drawio PNG files for selected package(s)
+        before conversion, excluding notebook-derived PNG files.
+        """
+
+        if not docs_dir or not os.path.exists(docs_dir):
+            return
+
+        if not drawio_dir or not os.path.exists(drawio_dir):
+            return
+
+        if module_name:
+            drawio_targets = [module_name]
+        else:
+            drawio_targets = [
+                os.path.splitext(filename)[0]
+                for filename in os.listdir(drawio_dir)
+                if filename.endswith(".drawio")
+            ]
+
+        if not drawio_targets:
+            return
+
+        notebook_png_pattern = re.compile(r".*_cell\d+_out\d+\.png$")
+        removed_count = 0
+
+        for filename in os.listdir(docs_dir):
+            if not filename.endswith(".png"):
+                continue
+
+            if notebook_png_pattern.match(filename):
+                continue
+
+            if any(filename.startswith(f"{target}-") for target in drawio_targets):
+                filepath = os.path.join(docs_dir, filename)
+                if os.path.isfile(filepath):
+                    os.remove(filepath)
+                    removed_count += 1
+
+        if removed_count > 0:
+            self.logger.info(f"Removed {removed_count} stale drawio png file(s) from {docs_dir}")
+
     def init_from_paa_config(self, default_config : dict):
 
         config = self.paa_config_file
@@ -245,6 +303,15 @@ class PprHandler:
         if os.path.exists(config):
             with open(config, 'r', encoding = "utf-8") as file:
                 paa_config = yaml.safe_load(file)
+            paa_config = paa_config or {}
+
+            effective_config = (default_config or {}).copy()
+            for key, value in paa_config.items():
+                if value is None:
+                    continue
+                if isinstance(value, str) and value.strip() == "":
+                    continue
+                effective_config[key] = value
 
             py_ignore = """# Ignore all files
 *
@@ -277,6 +344,7 @@ class PprHandler:
                 "example_notebooks_path" : ipynb_ignore,
                 "dependencies_dir" : py_ignore,
                 "cli_dir" : py_ignore,
+                "mcp_dir" : py_ignore,
                 "api_routes_dir" : py_ignore,
                 "streamlit_dir" : py_ignore,
                 "drawio_dir" : drawio_ignore
@@ -285,13 +353,13 @@ class PprHandler:
 
             for d in init_dirs:
 
-                if paa_config.get(d):
-                    if not os.path.exists(paa_config.get(d)):
-                        os.makedirs(paa_config.get(d))
+                if effective_config.get(d):
+                    if not os.path.exists(effective_config.get(d)):
+                        os.makedirs(effective_config.get(d))
                     else:
-                        self.logger.warning(f"{paa_config.get(d)} already exists!")
+                        self.logger.warning(f"{effective_config.get(d)} already exists!")
 
-                    gitignore_path = os.path.join(paa_config.get(d), '.gitignore')
+                    gitignore_path = os.path.join(effective_config.get(d), '.gitignore')
 
                     if gitignore_dict.get(d):
                         gitignore_text = gitignore_dict.get(d)
@@ -306,7 +374,7 @@ class PprHandler:
             
         else:
             with open(config, 'w', encoding='utf-8') as file:
-                yaml.dump(default_config, file, sort_keys=False)
+                yaml.safe_dump(default_config, file, sort_keys=False)
 
         
 
@@ -503,9 +571,21 @@ class PprHandler:
             with open(repo_paa_config_path, 'r', encoding = "utf-8") as file:
                 repo_paa_config = yaml.safe_load(file)
 
-            paa_config.update(repo_paa_config)
+            for key, value in (repo_paa_config or {}).items():
+                if value is None:
+                    continue
+                if isinstance(value, str) and value.strip() == "":
+                    continue
+                paa_config[key] = value
         else:
             shutil.copy(package_paa_config_path, repo_paa_config_path)
+
+        for key, default_value in PAA_PATH_DEFAULTS.items():
+            value = paa_config.get(key)
+            if value is None:
+                paa_config[key] = default_value
+            elif isinstance(value, str) and value.strip() == "":
+                paa_config[key] = default_value
 
         return paa_config
 
@@ -552,8 +632,14 @@ class PprHandler:
                 repo_path = repo_dir
 
             if os.path.exists(p_dir_path):
-                self._copy_missing_files(p_dir_path,
-                                repo_path)
+                if module_name_subdir:
+                    # These directories are package-owned; replace to make unfold idempotent.
+                    if os.path.exists(repo_path):
+                        shutil.rmtree(repo_path)
+                    shutil.copytree(p_dir_path, repo_path)
+                else:
+                    # Shared directories (e.g. components) should merge without deleting others.
+                    self._copy_missing_files(p_dir_path, repo_path)
 
 
     def _unfold_file(self,
@@ -562,28 +648,86 @@ class PprHandler:
                     file_extension : str,
                     packaged_name : str,
                     package_path : str,
-                    module_name : str):
+                    module_name : str,
+                    target_name : str = None):
 
         if repo_path:
 
             self.logger.debug(f"Preparing {file_type} ...")
 
-            p_module_path = os.path.join(
-                os.path.join(package_path, 
-                            packaged_name))
-            r_module_path = os.path.join(
-                repo_path,
-                f"{module_name}{file_extension}"
-            )
+            p_module_path = os.path.join(package_path, packaged_name)
+            if target_name is None:
+                target_name = f"{module_name}{file_extension}"
+
+            r_module_path = os.path.join(repo_path, target_name)
 
             if not os.path.exists(repo_path):
                 os.makedirs(repo_path)
 
-            if (not os.path.exists(r_module_path)) and os.path.exists(p_module_path):
+            if os.path.exists(p_module_path):
                 shutil.copy(p_module_path, r_module_path)
-            else:
-                if os.path.exists(r_module_path):
-                    self.logger.warning(f"{r_module_path} already exists!")
+            elif os.path.exists(r_module_path):
+                self.logger.warning(f"{p_module_path} was not found, keeping existing {r_module_path}.")
+
+    def _remove_unfolded_components(self,
+                                    module_name : str,
+                                    repo_dir : str,
+                                    module_dir : str = None):
+
+        """
+        Remove only component files that are tracked inside the installed package.
+        """
+
+        if not repo_dir:
+            return
+
+        try:
+            package_path = pkg_resources.files(module_name)
+            tracked_components_path = os.path.join(
+                package_path, ".paa.tracking", "python_modules", "components")
+        except Exception as e:
+            self.logger.warning(f"Could not inspect tracked components for {module_name}: {e}")
+            return
+
+        if not os.path.exists(tracked_components_path):
+            return
+
+        # Keep components that are still referenced by other top-level modules.
+        # This uses repository-local source usage to avoid removing shared deps.
+        in_use_component_names = set()
+        if module_dir and os.path.exists(module_dir):
+            for filename in os.listdir(module_dir):
+                if not filename.endswith(".py"):
+                    continue
+                if filename == f"{module_name}.py":
+                    continue
+                module_file = os.path.join(module_dir, filename)
+                if not os.path.isfile(module_file):
+                    continue
+                try:
+                    with open(module_file, "r", encoding="utf-8") as file:
+                        module_content = file.read()
+                except Exception:
+                    continue
+                for token in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", module_content):
+                    in_use_component_names.add(token)
+
+        for root, dirs, files in os.walk(tracked_components_path):
+            rel_root = os.path.relpath(root, tracked_components_path)
+            repo_root = os.path.join(repo_dir, rel_root) if rel_root != "." else repo_dir
+
+            for file_name in files:
+                component_name = Path(file_name).stem
+                if component_name in in_use_component_names:
+                    continue
+                repo_file = os.path.join(repo_root, file_name)
+                if os.path.exists(repo_file):
+                    os.remove(repo_file)
+
+            for dir_name in dirs:
+                repo_subdir = os.path.join(repo_root, dir_name)
+                if os.path.exists(repo_subdir) and not os.listdir(repo_subdir):
+                    os.rmdir(repo_subdir)
 
     def _unfold_lsts_package_version(self, 
                                      paa_tracking_dir : str,
@@ -594,6 +738,7 @@ class PprHandler:
         p_versions_filepath = os.path.join(
             paa_tracking_dir, "lsts_package_versions.yml")
         r_versions_filepath = ".paa/tracking/lsts_package_versions.yml"
+        os.makedirs(os.path.dirname(r_versions_filepath), exist_ok=True)
 
         if os.path.exists(p_versions_filepath):
             with open(p_versions_filepath, 'r', encoding = "utf-8") as file:
@@ -625,6 +770,7 @@ class PprHandler:
             p_versions_filepath = os.path.join(
                 paa_tracking_dir, "version_logs.csv")
             r_versions_filepath = ".paa/tracking/version_logs.csv"
+            os.makedirs(os.path.dirname(r_versions_filepath), exist_ok=True)
 
             if os.path.exists(p_versions_filepath):
                 p_logs = pd.read_csv(p_versions_filepath)
@@ -656,6 +802,7 @@ class PprHandler:
             p_mappings_filepath = os.path.join(
                 paa_tracking_dir, "package_mapping.json")
             r_mappings_filepath = ".paa/package_mapping.json"
+            os.makedirs(os.path.dirname(r_mappings_filepath), exist_ok=True)
 
             if os.path.exists(p_mappings_filepath):
                 with open(p_mappings_filepath, 'r',
@@ -690,6 +837,7 @@ class PprHandler:
             p_mappings_filepath = os.path.join(
                 paa_tracking_dir, "package_licenses.json")
             r_mappings_filepath = ".paa/package_licenses.json"
+            os.makedirs(os.path.dirname(r_mappings_filepath), exist_ok=True)
 
             if os.path.exists(p_mappings_filepath):
                 with open(p_mappings_filepath, 'r',
@@ -712,6 +860,47 @@ class PprHandler:
         
         except Exception as e:
             self.logger.error(f"Merging package licenses for {module_name} failed! {e}")
+
+    def _restore_checkpoint_git_metadata(self, module_name: str, paa_tracking_dir: str):
+        module_history_dir = os.path.join(".paa", "history", module_name)
+        work_tree_dir = os.path.join(module_history_dir, "git")
+        packaged_repo_metadata_dir = os.path.join(paa_tracking_dir, "git_repo")
+        dot_git_dir = os.path.join(work_tree_dir, ".git")
+
+        if not os.path.exists(work_tree_dir):
+            return
+
+        if os.path.exists(dot_git_dir):
+            return
+
+        if os.path.exists(packaged_repo_metadata_dir):
+            os.makedirs(work_tree_dir, exist_ok=True)
+            shutil.copytree(packaged_repo_metadata_dir, dot_git_dir)
+
+    def _unfold_checkpoint_history(self, module_name: str, paa_tracking_dir: str):
+        module_history_dir = os.path.join(".paa", "history", module_name)
+        packaged_history_dir = os.path.join(paa_tracking_dir, "git")
+        target_history_dir = os.path.join(module_history_dir, "git")
+
+        if not os.path.exists(packaged_history_dir):
+            return
+
+        os.makedirs(module_history_dir, exist_ok=True)
+
+        if os.path.exists(target_history_dir):
+            shutil.rmtree(target_history_dir)
+        shutil.copytree(packaged_history_dir, target_history_dir)
+
+        # Cleanup for older unfold behavior that placed history files
+        # directly under .paa/history/<module_name> instead of /git.
+        for entry in os.listdir(module_history_dir):
+            if entry == "git":
+                continue
+            entry_path = os.path.join(module_history_dir, entry)
+            if os.path.isdir(entry_path):
+                shutil.rmtree(entry_path)
+            else:
+                os.remove(entry_path)
 
     def unfold_package(self, 
                        module_name : str = None):
@@ -747,6 +936,11 @@ class PprHandler:
                 "file_extension" : ".py",
                 "packaged_name" : f"cli.py",
             },
+            "mcp" : {
+                "repo_path" : paa_config.get("mcp_dir"),
+                "file_extension" : ".py",
+                "packaged_name" : f"mcp_server.py",
+            },
             "routes" : {
                 "repo_path" : paa_config.get("api_routes_dir"),
                 "file_extension" : ".py",
@@ -777,6 +971,29 @@ class PprHandler:
                 "packaged_name" : os.path.join(
                     ".paa.tracking", 
                     f"release_notes.md"),
+            },
+            "pyproject" : {
+                "repo_path" : ".paa/pyproject",
+                "file_extension" : ".toml",
+                "packaged_name" : os.path.join(
+                    ".paa.tracking",
+                    "pyproject.toml"),
+            },
+            "license" : {
+                "repo_path" : os.path.join(paa_config.get("licenses_dir", "licenses"), module_name),
+                "file_extension" : "",
+                "packaged_name" : os.path.join(
+                    ".paa.tracking",
+                    "LICENSE"),
+                "target_name" : "LICENSE",
+            },
+            "notice" : {
+                "repo_path" : os.path.join(paa_config.get("licenses_dir", "licenses"), module_name),
+                "file_extension" : "",
+                "packaged_name" : os.path.join(
+                    ".paa.tracking",
+                    "NOTICE"),
+                "target_name" : "NOTICE",
             }
         }
 
@@ -808,11 +1025,18 @@ class PprHandler:
                 "packaged_name" : os.path.join(
                     ".paa.tracking", "extra_docs"),
 
+            },
+            "skills" : {
+                "repo_dir" : "skills",
+                "module_name_subdir" : True,
+                "packaged_name" : os.path.join(
+                    ".paa.tracking", "skills"),
+
             }
         }
 
-        if not os.path.exists(".paa"):
-            self.init_paa_dir()
+        # Ensure tracking skeleton exists even in partially initialized folders.
+        self.init_paa_dir()
 
         for file_name, file_spec in files_to_unfold.items():
 
@@ -848,6 +1072,14 @@ class PprHandler:
             paa_tracking_dir = paa_tracking_dir,
             module_name = module_name
         )
+        self._unfold_checkpoint_history(
+            module_name=module_name,
+            paa_tracking_dir=paa_tracking_dir
+        )
+        self._restore_checkpoint_git_metadata(
+            module_name=module_name,
+            paa_tracking_dir=paa_tracking_dir
+        )
 
     def _remove_dirs(self,
                      repo_dir : str,
@@ -872,16 +1104,17 @@ class PprHandler:
                     repo_path : str,
                     file_type : str,
                     file_extension : str,
-                    module_name : str):
+                    module_name : str,
+                    target_name : str = None):
 
         if repo_path:
 
             self.logger.debug(f"Removing {file_type} for {module_name} ...")
 
-            r_module_path = os.path.join(
-                repo_path,
-                f"{module_name}{file_extension}"
-            )
+            if target_name is None:
+                target_name = f"{module_name}{file_extension}"
+
+            r_module_path = os.path.join(repo_path, target_name)
 
             if os.path.exists(r_module_path):
                 os.remove(r_module_path)
@@ -960,6 +1193,10 @@ class PprHandler:
                 "repo_path" : paa_config.get("cli_dir"),
                 "file_extension" : ".py",
             },
+            "mcp" : {
+                "repo_path" : paa_config.get("mcp_dir"),
+                "file_extension" : ".py",
+            },
             "routes" : {
                 "repo_path" : paa_config.get("api_routes_dir"),
                 "file_extension" : ".py",
@@ -979,15 +1216,24 @@ class PprHandler:
             "release_notes" : {
                 "repo_path" : ".paa/release_notes",
                 "file_extension" : ".md"
+            },
+            "pyproject" : {
+                "repo_path" : ".paa/pyproject",
+                "file_extension" : ".toml"
+            },
+            "license" : {
+                "repo_path" : os.path.join(paa_config.get("licenses_dir", "licenses"), module_name),
+                "file_extension" : "",
+                "target_name" : "LICENSE",
+            },
+            "notice" : {
+                "repo_path" : os.path.join(paa_config.get("licenses_dir", "licenses"), module_name),
+                "file_extension" : "",
+                "target_name" : "NOTICE",
             }
         }
 
         dirs_to_remove = {
-            "components" : {
-                "repo_dir" : paa_config.get("dependencies_dir"),
-                "module_name_subdir" : False,
-
-            },
             "tests" : {
                 "repo_dir" : paa_config.get("tests_dir"),
                 "module_name_subdir" : True
@@ -1002,6 +1248,15 @@ class PprHandler:
                 "repo_dir" : paa_config.get("extra_docs_dir"),
                 "module_name_subdir" : True
 
+            },
+            "skills" : {
+                "repo_dir" : "skills",
+                "module_name_subdir" : True
+
+            },
+            "checkpoint_history" : {
+                "repo_dir" : os.path.join(".paa", "history"),
+                "module_name_subdir" : True
             }
         }
 
@@ -1015,6 +1270,16 @@ class PprHandler:
                 module_name = module_name,
                 file_type = file_name
             )
+
+        licenses_package_dir = os.path.join(paa_config.get("licenses_dir", "licenses"), module_name)
+        if os.path.exists(licenses_package_dir) and not os.listdir(licenses_package_dir):
+            os.rmdir(licenses_package_dir)
+
+        self._remove_unfolded_components(
+            module_name=module_name,
+            repo_dir=paa_config.get("dependencies_dir"),
+            module_dir=paa_config.get("module_dir")
+        )
 
         for dir_name, dir_spec in dirs_to_remove.items():
 
@@ -1138,6 +1403,10 @@ class PprHandler:
                 "repo_path" : paa_config.get("cli_dir"),
                 "file_extension" : ".py",
             },
+            "mcp" : {
+                "repo_path" : paa_config.get("mcp_dir"),
+                "file_extension" : ".py",
+            },
             "routes" : {
                 "repo_path" : paa_config.get("api_routes_dir"),
                 "file_extension" : ".py",
@@ -1157,6 +1426,10 @@ class PprHandler:
             "release_notes" : {
                 "repo_path" : ".paa/release_notes",
                 "file_extension" : ".md"
+            },
+            "pyproject" : {
+                "repo_path" : ".paa/pyproject",
+                "file_extension" : ".toml"
             }
         }
 
@@ -1172,12 +1445,22 @@ class PprHandler:
             "extra_docs" : {
                 "repo_dir" : paa_config.get("extra_docs_dir"),
 
+            },
+            "skills" : {
+                "repo_dir" : "skills",
+
+            },
+            "checkpoint_history" : {
+                "repo_dir" : os.path.join(".paa", "history"),
             }
         }
 
         files_to_rename_imports = {
             "cli" : {
                 "repo_path" : paa_config.get("cli_dir"),
+            },
+            "mcp" : {
+                "repo_path" : paa_config.get("mcp_dir"),
             },
             "routes" : {
                 "repo_path" : paa_config.get("api_routes_dir"),

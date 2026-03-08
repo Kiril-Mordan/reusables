@@ -1,5 +1,5 @@
 """
-`package-auto-assembler` is a tool that meant to streamline creation of `single module packages`.
+`package-auto-assembler` is a tool designed to streamline creation of `single module packages`.
 Its primary goal is to automate as many aspects of python package creation as possible,
 thereby shortening the development cycle of reusable components and maintaining a high standard of quality for reusable code.
 
@@ -7,14 +7,14 @@ With `package-auto-assembler`, you can simplify the package creation process to 
 
 ## Key features
 
-- [Set up new Python packaging repositories](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/) for Github and Azure DevOps.
-- [Create new packages dynamically](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#creating-packages), reducing manual effort.
-- [Check module dependencies](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#checking-dependencies) for vulnerabilities and unexpected licenses.
-- [Run FastAPI and Streamlit apps](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#running-apps-from-packages) directly from packages created with this tool.
-- [Extract artifacts and files](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#extracting-files-from-packages) packaged alongside code.
-- [Show detailed information](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#show-modules-info) about installed packages made with the tool.
-- [Automatically assemble release notes](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#other) based on commit messages.
-- [Extract requirements](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#other) automatically from `.py` files without maintaining separate `requirements.txt`.
+- [Set up new Python packaging repositories](https://kiril-mordan.github.io/reusables/package_auto_assembler/concepts/python_packaging_repo/) for Github and Azure DevOps.
+- [Create and validate packages](https://kiril-mordan.github.io/reusables/package_auto_assembler/interfaces/cli/) with `make-package` and `test-install`.
+- [Check module dependencies](https://kiril-mordan.github.io/reusables/package_auto_assembler/concepts/dependency_management/) for vulnerabilities, compatibility, and license constraints.
+- [Run and expose interfaces](https://kiril-mordan.github.io/reusables/package_auto_assembler/interfaces/mcp/) through MCP, and via [FastAPI](https://kiril-mordan.github.io/reusables/package_auto_assembler/interfaces/fastapi/) or [Streamlit](https://kiril-mordan.github.io/reusables/package_auto_assembler/interfaces/streamlit/) integrations.
+- [Extract artifacts and files](https://kiril-mordan.github.io/reusables/package_auto_assembler/components/artifacts/) packaged alongside code.
+- [Show detailed module information](https://kiril-mordan.github.io/reusables/package_auto_assembler/interfaces/cli/) for installed packages built with PAA.
+- [Create and navigate package history checkpoints](https://kiril-mordan.github.io/reusables/package_auto_assembler/concepts/checkpoint_history/) including list/show/prune/checkout flows.
+- [Infer requirements from imports](https://kiril-mordan.github.io/reusables/package_auto_assembler/components/import_mapping/) with mapping overrides and optional compatibility checks.
 
 """
 
@@ -23,9 +23,11 @@ import os
 import sys
 import subprocess
 import shutil
+import copy
 import importlib
 import importlib.metadata
 import attrs #>=22.2.0
+import attrsx
 
 from .components.paa_deps.artifacts_handler import ArtifactsHandler
 from .components.paa_deps.cli_handler import CliHandler
@@ -33,6 +35,7 @@ from .components.paa_deps.drawio_handler import DrawioHandler
 from .components.paa_deps.dependencies_analyzer import DependenciesAnalyser
 from .components.paa_deps.fastapi_handler import FastApiHandler
 from .components.paa_deps.streamlit_handler import StreamlitHandler
+from .components.paa_deps.mcp_handler import McpHandler
 from .components.paa_deps.import_mapping_handler import ImportMappingHandler
 from .components.paa_deps.local_dependencies_handler import LocalDependaciesHandler
 from .components.paa_deps.long_doc_handler import LongDocHandler
@@ -41,8 +44,10 @@ from .components.paa_deps.mkdocs_handler import MkDocsHandler
 from .components.paa_deps.release_notes_handler import ReleaseNotesHandler
 from .components.paa_deps.requirements_handler import RequirementsHandler
 from .components.paa_deps.setup_dir_handler import SetupDirHandler
+from .components.paa_deps.skills_handler import SkillsHandler
+from .components.paa_deps.checkpoint_handler import CheckpointHandler
 from .components.paa_deps.version_handler import VersionHandler
-from .components.paa_deps.ppr_handler import PprHandler
+from .components.paa_deps.ppr_handler import PprHandler, PAA_PATH_DEFAULTS
 from .components.paa_deps.tests_handler import TestsHandler
 
 #@ numpy==1.26.0
@@ -59,8 +64,33 @@ __package_metadata__ = {
     "classifiers" : ["Development Status :: 5 - Production/Stable"]
 }
 
-
-@attrs.define
+@attrsx.define(
+    handler_specs={
+        "setup_dir": SetupDirHandler,
+        "version": VersionHandler,
+        "import_mapping": ImportMappingHandler,
+        "local_dependacies": LocalDependaciesHandler,
+        "requirements": RequirementsHandler,
+        "metadata": MetadataHandler,
+        "long_doc": LongDocHandler,
+        "cli": CliHandler,
+        "release_notes": ReleaseNotesHandler,
+        "dependencies_analyzer": DependenciesAnalyser,
+        "fastapi": FastApiHandler,
+        "artifacts": ArtifactsHandler,
+        "mkdocs": MkDocsHandler,
+        "drawio": DrawioHandler,
+        "ppr": PprHandler,
+        "skills": SkillsHandler,
+        "checkpoint": CheckpointHandler,
+        "tests": TestsHandler,
+        "streamlit": StreamlitHandler,
+        "mcp": McpHandler,
+    },
+    logger_chaining={
+        "logger": True
+    }
+)
 class PackageAutoAssembler:
     # pylint: disable=too-many-instance-attributes
 
@@ -71,6 +101,7 @@ class PackageAutoAssembler:
     ## paths
     cli_module_filepath = attrs.field(default=None)
     fastapi_routes_filepath = attrs.field(default=None)
+    mcp_module_filepath = attrs.field(default=None)
     mapping_filepath = attrs.field(default=".paa/package_mapping.json")
     licenses_filepath = attrs.field(default=".paa/package_licenses.json")
     allowed_licenses = attrs.field(default=['mit', 'apache-2.0', 'lgpl-3.0',
@@ -93,14 +124,18 @@ class PackageAutoAssembler:
     artifacts_dir = attrs.field(default=None)
     dependencies_dir = attrs.field(default=None)
     extra_docs_dir = attrs.field(default=None)
+    pyproject_dir = attrs.field(default="./.paa/pyproject")
 
     # optional parameters
     pylint_threshold = attrs.field(default=None)
     classifiers = attrs.field(default=['Development Status :: 3 - Alpha'])
     license_path = attrs.field(default=None)
+    notice_path = attrs.field(default=None)
     license_label = attrs.field(default=None)
     license_badge = attrs.field(default=None)
     docs_url = attrs.field(default=None)
+    source_repo_url = attrs.field(default=None)
+    source_repo_name = attrs.field(default=None)
     requirements_list = attrs.field(default=[])
     optional_requirements_list = attrs.field(default=[])
     python_version = attrs.field(default="3.10")
@@ -116,50 +151,13 @@ class PackageAutoAssembler:
     remove_temp_files = attrs.field(default=True, type = bool)
     skip_deps_install = attrs.field(default=False, type = bool)
     check_vulnerabilities = attrs.field(default=True, type = bool)
+    check_dependencies_compatibility = attrs.field(default=True, type = bool)
+    check_full_dependencies_compatibility = attrs.field(default=False, type = bool)
     add_requirements_header = attrs.field(default=True, type = bool)
     use_commit_messages = attrs.field(default=True, type = bool)
     check_dependencies_licenses = attrs.field(default=False, type = bool)
     execute_readme_notebook = attrs.field(default=True, type = bool)
     add_mkdocs_site = attrs.field(default=True, type = bool)
-
-
-    ## handler classes
-    setup_dir_h_class = attrs.field(default=SetupDirHandler)
-    version_h_class = attrs.field(default=VersionHandler)
-    import_mapping_h_class = attrs.field(default=ImportMappingHandler)
-    local_dependacies_h_class = attrs.field(default=LocalDependaciesHandler)
-    requirements_h_class = attrs.field(default=RequirementsHandler)
-    metadata_h_class = attrs.field(default=MetadataHandler)
-    long_doc_h_class = attrs.field(default=LongDocHandler)
-    cli_h_class = attrs.field(default=CliHandler)
-    release_notes_h_class = attrs.field(default=ReleaseNotesHandler)
-    dependencies_analyzer_h_class = attrs.field(default=DependenciesAnalyser)
-    fastapi_h_class = attrs.field(default=FastApiHandler)
-    artifacts_h_class = attrs.field(default=ArtifactsHandler)
-    mkdocs_h_class = attrs.field(default=MkDocsHandler)
-    drawio_h_class = attrs.field(default=DrawioHandler)
-    ppr_h_class = attrs.field(default=PprHandler)
-    tests_h_class = attrs.field(default=TestsHandler)
-    streamlit_h_class = attrs.field(default=StreamlitHandler)
-
-    ## handlers
-    setup_dir_h = attrs.field(default = None, type = SetupDirHandler)
-    version_h = attrs.field(default = None, type = VersionHandler)
-    import_mapping_h = attrs.field(default = None, type=ImportMappingHandler)
-    local_dependacies_h = attrs.field(default = None, type=LocalDependaciesHandler)
-    requirements_h = attrs.field(default = None, type=RequirementsHandler)
-    metadata_h = attrs.field(default = None, type=MetadataHandler)
-    long_doc_h = attrs.field(default = None, type=LongDocHandler)
-    cli_h = attrs.field(default = None, type=CliHandler)
-    release_notes_h = attrs.field(default = None, type=ReleaseNotesHandler)
-    dependencies_analyzer_h = attrs.field(default = None, type=DependenciesAnalyser)
-    fastapi_h = attrs.field(default = None, type=FastApiHandler)
-    artifacts_h = attrs.field(default = None, type=ArtifactsHandler)
-    mkdocs_h = attrs.field(default = None, type=MkDocsHandler)
-    drawio_h = attrs.field(default = None, type=DrawioHandler)
-    ppr_h = attrs.field(default = None, type=PprHandler)
-    tests_h = attrs.field(default = None, type=TestsHandler)
-    streamlit_h = attrs.field(default = None, type=StreamlitHandler)
 
     ## output
     original_module_filepath = attrs.field(default = None)
@@ -178,224 +176,34 @@ class PackageAutoAssembler:
     logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
-        self._initialize_logger()
-        self._initialize_metadata_handler()
-        self._initialize_import_mapping_handler()
-
+        self._initialize_metadata_h(params={
+            "module_filepath": self.module_filepath,
+            "logger": self.logger
+        })
+        self._initialize_import_mapping_h(params={
+            "mapping_filepath": self.mapping_filepath,
+            "logger": self.logger
+        })
+        self._initialize_checkpoint_h(params={
+            "path_defaults": copy.deepcopy(PAA_PATH_DEFAULTS),
+            "get_module_deps_paths": (
+                lambda main_module_filepath, dependencies_dir: LocalDependaciesHandler(
+                    main_module_filepath=main_module_filepath,
+                    dependencies_dir=dependencies_dir,
+                    logger=self.logger
+                ).get_module_deps_path()
+            ),
+            "logger": self.logger
+        })
         self.original_module_filepath = self.module_filepath
-
-
-    def _initialize_logger(self):
-
-        """
-        Initialize a logger for the class instance based on the specified logging level and logger name.
-        """
-
-        if self.logger is None:
-            logging.basicConfig(level=self.loggerLvl, format=self.logger_format)
-            logger = logging.getLogger(self.logger_name)
-            logger.setLevel(self.loggerLvl)
-
-            self.logger = logger
-
-    def _initialize_metadata_handler(self):
-
-        """
-        Initialize metadata handler with available parameters.
-        """
-
-        self.metadata_h = self.metadata_h_class(
-            module_filepath = self.module_filepath,
-            logger = self.logger)
-
-    def _initialize_ppr_handler(self):
-
-        """
-        Initialize ppr handler with available parameters.
-        """
-
-        self.ppr_h = self.ppr_h_class(
-            paa_dir = self.paa_dir,
-            drawio_dir = self.drawio_dir,
-            docs_dir = self.docs_path,
-            module_dir = self.module_dir,
-            pylint_threshold = self.pylint_threshold,
-            logger = self.logger)
-
-    def _initialize_tests_handler(self):
-
-        """
-        Initialize tests handler with available parameters.
-        """
-
-        self.ppr_h = self.ppr_h_class(
-            tests_dir = self.tests_dir,
-            setup_directory = self.setup_directory,
-            logger = self.logger)
-
-    def _initialize_version_handler(self):
-
-        """
-        Initialize version handler with available parameters.
-        """
-
-        self.version_h = self.version_h_class(
-            versions_filepath = self.versions_filepath,
-            log_filepath = self.log_filepath,
-            default_version = self.default_version,
-            logger = self.logger)
-
-    def _initialize_requirements_handler(self):
-
-        """
-        Initialize requirements handler with available parameters.
-        """
-
-        self.requirements_h = self.requirements_h_class(
-            module_filepath = self.module_filepath,
-            custom_modules_filepath = self.dependencies_dir,
-            python_version = self.python_version,
-            logger = self.logger)
-
-    def _initialize_import_mapping_handler(self):
-
-        """
-        Initialize import mapping handler with available parameters.
-        """
-
-        self.import_mapping_h = self.import_mapping_h_class(
-            mapping_filepath = self.mapping_filepath,
-            logger = self.logger)
-
-    def _initialize_local_dependacies_handler(self):
-
-        """
-        Initialize local dependanies handler with available parameters.
-        """
-
-        self.local_dependacies_h = self.local_dependacies_h_class(
-            main_module_filepath = self.module_filepath,
-            dependencies_dir = self.dependencies_dir,
-            logger = self.logger)
-
-    def _initialize_long_doc_handler(self):
-
-        """
-        Initialize long doc handler with available parameters.
-        """
-
-        self.long_doc_h = self.long_doc_h_class(
-            module_name = self.module_name,
-            notebook_path = self.example_notebook_path,
-            kernel_name = self.kernel_name,
-            logger = self.logger)
-
-    def _initialize_setup_dir_handler(self):
-
-        """
-        Initialize setup dir handler with available parameters.
-        """
-
-        self.setup_dir_h = self.setup_dir_h_class(
-            module_name = self.module_name,
-            module_filepath = self.module_filepath,
-            setup_directory = self.setup_directory,
-            license_path = self.license_path,
-            license_label = self.license_label,
-            docs_url = self.docs_url,
-            version = self.metadata.get("version"),
-            logger = self.logger)
-
-    def _initialize_cli_handler(self):
-
-        """
-        Initialize cli handler with available parameters.
-        """
-
-        self.cli_h = self.cli_h_class(
-            cli_module_filepath = self.cli_module_filepath,
-            setup_directory = self.setup_directory,
-            logger = self.logger)
-
-    def _initialize_drawio_handler(self):
-
-        """
-        Initialize drawio handler with available parameters.
-        """
-
-        self.drawio_h = self.drawio_h_class(
-            drawio_filepath = self.drawio_filepath,
-            setup_directory = self.setup_directory,
-            logger = self.logger)
-
-
-    def _initialize_fastapi_handler(self):
-
-        """
-        Initialize fastapi handler with available parameters.
-        """
-
-        self.fastapi_h = self.fastapi_h_class(
-            fastapi_routes_filepath = self.fastapi_routes_filepath,
-            setup_directory = self.setup_directory,
-            logger = self.logger)
-
-    def _initialize_streamlit_handler(self):
-
-        """
-        Initialize fastapi handler with available parameters.
-        """
-
-        self.streamlit_h = self.streamlit_h_class(
-            package_name = self.module_name,
-            streamlit_filepath = self.streamlit_filepath,
-            setup_directory = self.setup_directory,
-            logger = self.logger)
-
-    def _initialize_artifacts_handler(self):
-
-        """
-        Initialize artifacts handler with available parameters.
-        """
-
-        self.artifacts_h = self.artifacts_h_class(
-            module_name = self.module_name,
-            setup_directory = self.setup_directory,
-            artifacts_dir = self.artifacts_dir,
-            logger = self.logger)
-
-    def _initialize_dep_analyser_handler(self):
-
-        """
-        Initialize cli handler with available parameters.
-        """
-
-        self.dependencies_analyzer_h = self.dependencies_analyzer_h_class(
-            package_licenses_filepath = self.licenses_filepath,
-            allowed_licenses = self.allowed_licenses,
-            logger = self.logger)
-
-    def _initialize_release_notes_handler(self, version : str = None):
-
-        """
-        Initialize release notes handler with available parameters.
-        """
-
-        if version is None:
-            version = self.default_version
-
-        self.release_notes_h = self.release_notes_h_class(
-            filepath = self.release_notes_filepath,
-            label_name = self.module_name,
-            version = version,
-            max_search_depth = self.max_git_search_depth,
-            logger = self.logger)
 
     def _add_requirements(self,
                             module_filepath : str = None,
                             custom_modules : list = None,
                             import_mappings : str = None,
                             check_vulnerabilities : bool = None,
+                            check_dependencies_compatibility : bool = None,
+                            check_full_dependencies_compatibility : bool = None,
                             check_dependencies_licenses : bool = None,
                             add_header : bool = None):
 
@@ -404,13 +212,23 @@ class PackageAutoAssembler:
         """
 
         if self.requirements_h is None:
-            self._initialize_requirements_handler()
-
+            self._initialize_requirements_h(params={
+                "module_filepath": self.module_filepath,
+                "custom_modules_filepath": self.dependencies_dir,
+                "python_version": self.python_version,
+                "logger": self.logger
+            })
         if module_filepath is None:
             module_filepath = self.module_filepath
 
         if check_vulnerabilities is None:
             check_vulnerabilities = self.check_vulnerabilities
+
+        if check_dependencies_compatibility is None:
+            check_dependencies_compatibility = self.check_dependencies_compatibility
+
+        if check_full_dependencies_compatibility is None:
+            check_full_dependencies_compatibility = self.check_full_dependencies_compatibility
 
         if check_dependencies_licenses is None:
             check_dependencies_licenses = self.check_dependencies_licenses
@@ -438,13 +256,26 @@ class PackageAutoAssembler:
         self.requirements_list = self.requirements_h.requirements_list
         self.optional_requirements_list = self.requirements_h.optional_requirements_list
 
+        if check_dependencies_compatibility:
+            self.requirements_h.check_requirements_compatibility(
+                requirements_list=self.requirements_list + self.optional_requirements_list
+            )
+
+        if check_full_dependencies_compatibility:
+            self.requirements_h.check_full_requirements_compatibility(
+                requirements_list=self.requirements_list + self.optional_requirements_list
+            )
+
         if check_vulnerabilities:
             self.requirements_h.check_vulnerabilities()
 
         if check_dependencies_licenses:
             if self.dependencies_analyzer_h is None:
-                self._initialize_dep_analyser_handler()
-
+                self._initialize_dependencies_analyzer_h(params={
+                    "package_licenses_filepath": self.licenses_filepath,
+                    "allowed_licenses": self.allowed_licenses,
+                    "logger": self.logger
+                })
                 edt = self.dependencies_analyzer_h.extract_dependencies_tree(
                     requirements = self.requirements_list + self.optional_requirements_list
                 )
@@ -466,8 +297,14 @@ class PackageAutoAssembler:
         """
 
         if self.ppr_h is None:
-            self._initialize_ppr_handler()
-
+            self._initialize_ppr_h(params={
+                "paa_dir": self.paa_dir,
+                "drawio_dir": self.drawio_dir,
+                "docs_dir": self.docs_path,
+                "module_dir": self.module_dir,
+                "pylint_threshold": self.pylint_threshold,
+                "logger": self.logger
+            })
         self.ppr_h.init_paa_dir(
             paa_dir = paa_dir)
 
@@ -481,8 +318,10 @@ class PackageAutoAssembler:
         self.logger.debug(f"Adding metadata ...")
 
         if self.metadata_h is None:
-            self._initialize_metadata_handler()
-
+            self._initialize_metadata_h(params={
+                "module_filepath": self.module_filepath,
+                "logger": self.logger
+            })
         if module_filepath is None:
             module_filepath = self.module_filepath
 
@@ -501,8 +340,10 @@ class PackageAutoAssembler:
         self.logger.debug(f"Adding cli metadata ...")
 
         if self.metadata_h is None:
-            self._initialize_metadata_handler()
-
+            self._initialize_metadata_h(params={
+                "module_filepath": self.module_filepath,
+                "logger": self.logger
+            })
         if cli_module_filepath is None:
             cli_module_filepath = self.cli_module_filepath
 
@@ -534,13 +375,23 @@ class PackageAutoAssembler:
         self.logger.debug(f"Incrementing version ...")
 
         if self.version_h is None:
-            self._initialize_version_handler()
-
+            self._initialize_version_h(params={
+                "versions_filepath": self.versions_filepath,
+                "log_filepath": self.log_filepath,
+                "default_version": self.default_version,
+                "logger": self.logger
+            })
         if use_commit_messages is None:
             use_commit_messages = self.use_commit_messages
 
         if use_commit_messages:
-            self._initialize_release_notes_handler(version = version)
+            self._initialize_release_notes_h(params={
+                "filepath": self.release_notes_filepath,
+                "label_name": self.module_name,
+                "version": version if version is not None else self.default_version,
+                "max_search_depth": self.max_git_search_depth,
+                "logger": self.logger
+            })
             self.release_notes_h.extract_version_update()
 
             version_increment_type = self.release_notes_h.version_update_label
@@ -586,8 +437,13 @@ class PackageAutoAssembler:
         self.logger.debug(f"Updating release notes ...")
 
         if self.release_notes_h is None:
-            self._initialize_release_notes_handler()
-
+            self._initialize_release_notes_h(params={
+                "filepath": self.release_notes_filepath,
+                "label_name": self.module_name,
+                "version": self.default_version,
+                "max_search_depth": self.max_git_search_depth,
+                "logger": self.logger
+            })
         if filepath:
             self.release_notes_h.filepath = filepath
             self.release_notes_h._initialize_notes()
@@ -609,16 +465,30 @@ class PackageAutoAssembler:
         self.logger.debug(f"Preparing setup directory ...")
 
         if self.setup_dir_h is None:
-            self._initialize_setup_dir_handler()
-
+            self._initialize_setup_dir_h(params={
+                "module_name": self.module_name,
+                "module_filepath": self.module_filepath,
+                "setup_directory": self.setup_directory,
+                "pyproject_directory": self.pyproject_dir,
+                "license_path": self.license_path,
+                "notice_path": self.notice_path,
+                "license_label": self.license_label,
+                "docs_url": self.docs_url,
+                "version": self.metadata.get("version"),
+                "logger": self.logger
+            })
         if module_filepath is None:
             module_filepath = self.module_filepath
 
         if module_docstring is None:
 
             if self.long_doc_h is None:
-                self._initialize_long_doc_handler()
-
+                self._initialize_long_doc_h(params={
+                    "module_name": self.module_name,
+                    "notebook_path": self.example_notebook_path,
+                    "kernel_name": self.kernel_name,
+                    "logger": self.logger
+                })
             module_content = self.long_doc_h.read_module_content(filepath = module_filepath)
 
             module_docstring = self.long_doc_h.extract_module_docstring(module_content = module_content)
@@ -631,6 +501,8 @@ class PackageAutoAssembler:
         self.setup_dir_h.copy_module_to_setup_dir()
         # copy license to dir
         self.setup_dir_h.copy_license_to_setup_dir()
+        # copy notice to dir
+        self.setup_dir_h.copy_notice_to_setup_dir()
         # create init file for new package
         self.setup_dir_h.create_init_file()
 
@@ -645,8 +517,11 @@ class PackageAutoAssembler:
         """
 
         if self.local_dependacies_h is None:
-            self._initialize_local_dependacies_handler()
-
+            self._initialize_local_dependacies_h(params={
+                "main_module_filepath": self.module_filepath,
+                "dependencies_dir": self.dependencies_dir,
+                "logger": self.logger
+            })
         if main_module_filepath is None:
             main_module_filepath = self.module_filepath
 
@@ -676,6 +551,8 @@ class PackageAutoAssembler:
                                      custom_modules : list = None,
                                      import_mappings : str = None,
                                      check_vulnerabilities : bool = None,
+                                     check_dependencies_compatibility : bool = None,
+                                     check_full_dependencies_compatibility : bool = None,
                                      check_dependencies_licenses : bool = None,
                                      add_header : bool = None):
 
@@ -688,6 +565,8 @@ class PackageAutoAssembler:
             custom_modules = custom_modules,
             import_mappings = import_mappings,
             check_vulnerabilities = check_vulnerabilities,
+            check_dependencies_compatibility = check_dependencies_compatibility,
+            check_full_dependencies_compatibility = check_full_dependencies_compatibility,
             check_dependencies_licenses = check_dependencies_licenses,
             add_header = add_header
         )
@@ -698,6 +577,8 @@ class PackageAutoAssembler:
                                      custom_modules : list = None,
                                      import_mappings : str = None,
                                      check_vulnerabilities : bool = None,
+                                     check_dependencies_compatibility : bool = None,
+                                     check_full_dependencies_compatibility : bool = None,
                                      check_dependencies_licenses : bool = None):
 
         """
@@ -722,6 +603,8 @@ class PackageAutoAssembler:
                 custom_modules = custom_modules + [module_name],
                 import_mappings = import_mappings,
                 check_vulnerabilities = check_vulnerabilities,
+                check_dependencies_compatibility = check_dependencies_compatibility,
+                check_full_dependencies_compatibility = check_full_dependencies_compatibility,
                 check_dependencies_licenses = check_dependencies_licenses,
                 add_header = False
             )
@@ -732,6 +615,8 @@ class PackageAutoAssembler:
                                      custom_modules : list = None,
                                      import_mappings : str = None,
                                      check_vulnerabilities : bool = None,
+                                     check_dependencies_compatibility : bool = None,
+                                     check_full_dependencies_compatibility : bool = None,
                                      check_dependencies_licenses : bool = None):
 
         """
@@ -756,6 +641,8 @@ class PackageAutoAssembler:
                 custom_modules = custom_modules + [module_name],
                 import_mappings = import_mappings,
                 check_vulnerabilities = check_vulnerabilities,
+                check_dependencies_compatibility = check_dependencies_compatibility,
+                check_full_dependencies_compatibility = check_full_dependencies_compatibility,
                 check_dependencies_licenses = check_dependencies_licenses,
                 add_header = False
             )
@@ -766,6 +653,8 @@ class PackageAutoAssembler:
                                      custom_modules : list = None,
                                      import_mappings : str = None,
                                      check_vulnerabilities : bool = None,
+                                     check_dependencies_compatibility : bool = None,
+                                     check_full_dependencies_compatibility : bool = None,
                                      check_dependencies_licenses : bool = None):
 
         """
@@ -790,6 +679,46 @@ class PackageAutoAssembler:
                 custom_modules = custom_modules + [module_name],
                 import_mappings = import_mappings,
                 check_vulnerabilities = check_vulnerabilities,
+                check_dependencies_compatibility = check_dependencies_compatibility,
+                check_full_dependencies_compatibility = check_full_dependencies_compatibility,
+                check_dependencies_licenses = check_dependencies_licenses,
+                add_header = False
+            )
+
+    def add_requirements_from_mcp(self,
+                                  module_name : str = None,
+                                  mcp_module_filepath : str = None,
+                                  custom_modules : list = None,
+                                  import_mappings : str = None,
+                                  check_vulnerabilities : bool = None,
+                                  check_dependencies_compatibility : bool = None,
+                                  check_full_dependencies_compatibility : bool = None,
+                                  check_dependencies_licenses : bool = None):
+
+        """
+        Extract and add requirements from the MCP module.
+        """
+
+        if mcp_module_filepath is None:
+            mcp_module_filepath = self.mcp_module_filepath
+
+        if module_name is None:
+            module_name = self.module_name
+
+        if custom_modules is None:
+            custom_modules = []
+
+        if (mcp_module_filepath is not None) and \
+            os.path.exists(mcp_module_filepath) \
+                and os.path.isfile(mcp_module_filepath):
+
+            self._add_requirements(
+                module_filepath = mcp_module_filepath,
+                custom_modules = custom_modules + [module_name],
+                import_mappings = import_mappings,
+                check_vulnerabilities = check_vulnerabilities,
+                check_dependencies_compatibility = check_dependencies_compatibility,
+                check_full_dependencies_compatibility = check_full_dependencies_compatibility,
                 check_dependencies_licenses = check_dependencies_licenses,
                 add_header = False
             )
@@ -797,7 +726,8 @@ class PackageAutoAssembler:
     def add_readme(self,
                     example_notebook_path : str = None,
                     output_path : str = None,
-                    execute_notebook : bool = None):
+                    execute_notebook : bool = None,
+                    clean_package_docs : bool = True):
 
         """
         Make README file based on usage example.
@@ -805,10 +735,17 @@ class PackageAutoAssembler:
 
 
         if self.long_doc_h is None:
-            self._initialize_long_doc_handler()
-
+            self._initialize_long_doc_h(params={
+                "module_name": self.module_name,
+                "notebook_path": self.example_notebook_path,
+                "kernel_name": self.kernel_name,
+                "logger": self.logger
+            })
         if example_notebook_path is None:
             example_notebook_path = self.example_notebook_path
+
+        if clean_package_docs:
+            self.clear_package_docs()
 
         output_path_docs = None
         if output_path is None:
@@ -852,8 +789,12 @@ class PackageAutoAssembler:
         """
 
         if self.long_doc_h is None:
-            self._initialize_long_doc_handler()
-
+            self._initialize_long_doc_h(params={
+                "module_name": self.module_name,
+                "notebook_path": self.example_notebook_path,
+                "kernel_name": self.kernel_name,
+                "logger": self.logger
+            })
         if extra_docs_dir is None:
             extra_docs_dir = self.extra_docs_dir
 
@@ -862,6 +803,24 @@ class PackageAutoAssembler:
                 package_name = self.module_name,
                 extra_docs_dir = extra_docs_dir,
                 docs_path = self.docs_path)
+
+    def clear_package_docs(self):
+
+        """
+        Remove docs in docs_path that were generated for this package.
+        """
+
+        if self.long_doc_h is None:
+            self._initialize_long_doc_h(params={
+                "module_name": self.module_name,
+                "notebook_path": self.example_notebook_path,
+                "kernel_name": self.kernel_name,
+                "logger": self.logger
+            })
+        self.long_doc_h.clear_package_docs(
+            package_name=self.module_name,
+            docs_path=self.docs_path
+        )
 
 
 
@@ -901,7 +860,9 @@ class PackageAutoAssembler:
                 for package_doc in package_docs:
 
                     if package_doc == f"{package_name}.md":
-                        docs_file_paths[os.path.join(self.docs_path,package_doc)] = "description.md"
+                        package_doc_path = os.path.join(self.docs_path, package_doc)
+                        if os.path.getsize(package_doc_path) > 0:
+                            docs_file_paths[package_doc_path] = "description.md"
                     else:
                         docs_file_paths[os.path.join(self.docs_path,package_doc)] = package_doc
 
@@ -949,13 +910,15 @@ class PackageAutoAssembler:
                 #     docs_file_paths[self.cli_docs_filepath] = "cli.md"
 
 
-                self.mkdocs_h = self.mkdocs_h_class(
+                self.mkdocs_h = self.mkdocs_class(
                     project_name = f"{package_name}_temp_mkdocs",
                     package_name = package_name,
                     docs_file_paths = docs_file_paths,
                     module_docstring = docstring,
                     pypi_badge = pypi_link,
-                    license_badge=self.license_badge)
+                    license_badge=self.license_badge,
+                    source_repo_url=self.source_repo_url,
+                    source_repo_name=self.source_repo_name)
 
             self.mkdocs_h.create_mkdocs_dir()
             self.mkdocs_h.move_files_to_docs(
@@ -978,8 +941,12 @@ class PackageAutoAssembler:
         """
 
         if self.artifacts_h is None:
-            self._initialize_artifacts_handler()
-
+            self._initialize_artifacts_h(params={
+                "module_name": self.module_name,
+                "setup_directory": self.setup_directory,
+                "artifacts_dir": self.artifacts_dir,
+                "logger": self.logger
+            })
         if artifacts_filepaths is None:
             artifacts_filepaths = self.artifacts_filepaths
 
@@ -987,8 +954,11 @@ class PackageAutoAssembler:
             artifacts_filepaths = {}
 
         if self.drawio_h is None:
-            self._initialize_drawio_handler()
-
+            self._initialize_drawio_h(params={
+                "drawio_filepath": self.drawio_filepath,
+                "setup_directory": self.setup_directory,
+                "logger": self.logger
+            })
         self.drawio_h.prepare_drawio()
 
         additional_artifacts_filepaths = self.artifacts_h.load_additional_artifacts()
@@ -1037,6 +1007,10 @@ class PackageAutoAssembler:
                 and os.path.exists(self.extra_docs_dir)):
                 artifacts_filepaths['.paa.tracking/extra_docs'] = self.extra_docs_dir
 
+            skills_dir = os.path.join("skills", self.module_name)
+            if os.path.exists(skills_dir):
+                artifacts_filepaths['.paa.tracking/skills'] = skills_dir
+
             if (self.tests_dir is not None\
                 and os.path.exists(self.tests_dir)):
                 artifacts_filepaths['tests'] = self.tests_dir
@@ -1044,6 +1018,25 @@ class PackageAutoAssembler:
             if (self.config_filepath is not None \
                 and os.path.exists(self.config_filepath)):
                 artifacts_filepaths['.paa.tracking/.paa.config'] = self.config_filepath
+
+            if (self.license_path is not None \
+                and os.path.exists(self.license_path)):
+                artifacts_filepaths['.paa.tracking/LICENSE'] = self.license_path
+
+            if (self.notice_path is not None \
+                and os.path.exists(self.notice_path)):
+                artifacts_filepaths['.paa.tracking/NOTICE'] = self.notice_path
+
+            pyproject_filepath = os.path.join(self.pyproject_dir, f"{self.module_name}.toml")
+            if os.path.exists(pyproject_filepath):
+                artifacts_filepaths['.paa.tracking/pyproject.toml'] = pyproject_filepath
+
+            history_git_dir = os.path.join(".paa", "history", self.module_name, "git")
+            if os.path.exists(history_git_dir) and '.paa.tracking/git' not in artifacts_filepaths:
+                artifacts_filepaths['.paa.tracking/git'] = history_git_dir
+            history_git_metadata_dir = os.path.join(history_git_dir, ".git")
+            if os.path.exists(history_git_metadata_dir) and '.paa.tracking/git_repo' not in artifacts_filepaths:
+                artifacts_filepaths['.paa.tracking/git_repo'] = history_git_metadata_dir
 
             if (self.module_filepath  is not None \
                 and os.path.exists(self.module_filepath)):
@@ -1078,6 +1071,7 @@ class PackageAutoAssembler:
                        cli_module_filepath : str = None,
                        fastapi_routes_filepath : str = None,
                        streamlit_filepath : str = None,
+                       mcp_module_filepath : str = None,
                        metadata : dict = None,
                        cli_metadata : dict = None,
                        requirements : list = None,
@@ -1094,8 +1088,17 @@ class PackageAutoAssembler:
 
 
         if self.setup_dir_h is None:
-            self._initialize_setup_dir_handler()
-
+            self._initialize_setup_dir_h(params={
+                "module_name": self.module_name,
+                "module_filepath": self.module_filepath,
+                "setup_directory": self.setup_directory,
+                "pyproject_directory": self.pyproject_dir,
+                "license_path": self.license_path,
+                "license_label": self.license_label,
+                "docs_url": self.docs_url,
+                "version": self.metadata.get("version"),
+                "logger": self.logger
+            })
         if cli_module_filepath is None:
             cli_module_filepath = self.cli_module_filepath
 
@@ -1104,6 +1107,8 @@ class PackageAutoAssembler:
 
         if streamlit_filepath is None:
             streamlit_filepath = self.streamlit_filepath
+        if mcp_module_filepath is None:
+            mcp_module_filepath = self.mcp_module_filepath
 
         if metadata is None:
             metadata = self.metadata
@@ -1135,8 +1140,12 @@ class PackageAutoAssembler:
         if module_docstring is None:
 
             if self.long_doc_h is None:
-                self._initialize_long_doc_handler()
-
+                self._initialize_long_doc_h(params={
+                    "module_name": self.module_name,
+                    "notebook_path": self.example_notebook_path,
+                    "kernel_name": self.kernel_name,
+                    "logger": self.logger
+                })
             module_content = self.long_doc_h.read_module_content(filepath = module_filepath)
 
             module_docstring = self.long_doc_h.extract_module_docstring(module_content = module_content)
@@ -1147,8 +1156,11 @@ class PackageAutoAssembler:
                 and os.path.isfile(cli_module_filepath):
 
             if self.cli_h is None:
-                self._initialize_cli_handler()
-
+                self._initialize_cli_h(params={
+                    "cli_module_filepath": self.cli_module_filepath,
+                    "setup_directory": self.setup_directory,
+                    "logger": self.logger
+                })
             add_cli_tool = self.cli_h.prepare_script(
                 cli_module_filepath = cli_module_filepath
             )
@@ -1160,8 +1172,11 @@ class PackageAutoAssembler:
                 and os.path.isfile(fastapi_routes_filepath):
 
             if self.fastapi_h is None:
-                self._initialize_fastapi_handler()
-
+                self._initialize_fastapi_h(params={
+                    "fastapi_routes_filepath": self.fastapi_routes_filepath,
+                    "setup_directory": self.setup_directory,
+                    "logger": self.logger
+                })
             add_fastapi = self.fastapi_h.prepare_routes(
                 fastapi_routes_filepath = fastapi_routes_filepath
             )
@@ -1171,26 +1186,57 @@ class PackageAutoAssembler:
                 and os.path.isfile(streamlit_filepath):
 
             if self.streamlit_h is None:
-                self._initialize_streamlit_handler()
-
+                self._initialize_streamlit_h(params={
+                    "package_name": self.module_name,
+                    "streamlit_filepath": self.streamlit_filepath,
+                    "setup_directory": self.setup_directory,
+                    "logger": self.logger
+                })
             add_streamlit = self.streamlit_h.prepare_streamlit(
                 streamlit_filepath = streamlit_filepath
+            )
+
+        if mcp_module_filepath is not None \
+            and os.path.exists(mcp_module_filepath) \
+                and os.path.isfile(mcp_module_filepath):
+
+            if self.mcp_h is None:
+                self._initialize_mcp_h(params={
+                    "mcp_filepath": self.mcp_module_filepath,
+                    "setup_directory": self.setup_directory,
+                    "logger": self.logger
+                })
+            add_mcp = self.mcp_h.prepare_mcp(
+                mcp_filepath = mcp_module_filepath
             )
 
 
         self.logger.info(f"Preparing setup file for {module_name.replace('_','-')} package ...")
 
         # create setup.py
+        metadata_for_files = copy.deepcopy(metadata)
+        cli_metadata_for_files = copy.deepcopy(cli_metadata)
+
         self.setup_dir_h.write_setup_file(module_name = module_name,
                                           module_docstring = module_docstring,
-                                          metadata = metadata,
-                                          cli_metadata = cli_metadata,
+                                          metadata = copy.deepcopy(metadata_for_files),
+                                          cli_metadata = copy.deepcopy(cli_metadata_for_files),
                                           requirements = requirements,
                                           optional_requirements = optional_requirements,
                                           classifiers = classifiers,
                                           add_cli_tool = add_cli_tool,
                                           add_artifacts = add_artifacts,
                                           artifacts_filepaths = artifacts_filepaths)
+
+        self.setup_dir_h.write_pyproject_file(
+            module_name=module_name,
+            metadata=metadata_for_files,
+            cli_metadata=cli_metadata_for_files,
+            requirements=requirements,
+            optional_requirements=optional_requirements,
+            classifiers=classifiers,
+            add_cli_tool=add_cli_tool
+        )
 
         if self.artifacts_h is not None:
             self.artifacts_h.write_mafifest()
@@ -1240,8 +1286,27 @@ class PackageAutoAssembler:
 
         self.logger.info(f"Test installing {module_name} package ...")
 
-        # Reinstall the module from the wheel file
-        wheel_files = [f for f in os.listdir('dist') if f.endswith('-py3-none-any.whl')]
+        # Reinstall only wheel files matching the requested module.
+        # This prevents cross-package installs when dist/ contains leftovers.
+        module_name_candidates = {
+            module_name,
+            module_name.replace("_", "-"),
+            module_name.replace("-", "_")
+        }
+        wheel_files = []
+        available_wheels = []
+        for filename in os.listdir('dist'):
+            if not filename.endswith('-py3-none-any.whl'):
+                continue
+            available_wheels.append(filename)
+            if any(filename.startswith(f"{candidate}-") for candidate in module_name_candidates):
+                wheel_files.append(filename)
+
+        if not wheel_files:
+            raise FileNotFoundError(
+                f"No wheel file for module '{module_name}' was found in dist/. "
+                f"Available wheels: {available_wheels}"
+            )
 
         for wheel_file in wheel_files:
             list_of_cmds = [sys.executable,

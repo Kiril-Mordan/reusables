@@ -1,8 +1,6 @@
 ![](package_auto_assembler-aca_logo.png)
 
 
-*"Thus the task is not so much to see what no one yet has seen, but to think what nobody yet has thought about that which everybody sees."* — Arthur Schopenhauer
-
 
 ## About
 

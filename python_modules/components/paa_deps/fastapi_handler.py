@@ -2,14 +2,15 @@ import logging
 import os
 import sys
 import shutil
-import attr #>=22.2.0
+import attrs
+import attrsx
 import importlib
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
-@attr.s
+@attrsx.define
 class FastApiHandler:
 
     """
@@ -17,16 +18,16 @@ class FastApiHandler:
     """
 
     # inputs
-    fastapi_routes_filepath = attr.ib(default = None)
-    setup_directory = attr.ib(default = None)
+    fastapi_routes_filepath = attrs.field(default = None)
+    setup_directory = attrs.field(default = None)
 
-    docs_prefix = attr.ib(default = "/mkdocs")
+    docs_prefix = attrs.field(default = "/mkdocs")
 
     # processed
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='FastAPI Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='FastAPI Handler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()

@@ -1,14 +1,15 @@
 import logging
 import os
 import shutil
-import attr #>=22.2.0
+import attrs
+import attrsx
 import requests
 import importlib
 import importlib.metadata
 import importlib.resources as pkg_resources
 from pathlib import Path
 
-@attr.s
+@attrsx.define
 class ArtifactsHandler:
 
     """
@@ -16,17 +17,17 @@ class ArtifactsHandler:
     """
 
     # inputs
-    setup_directory = attr.ib(default = None)
-    module_name = attr.ib(default = None)
-    artifacts_filepaths = attr.ib(default = None)
-    artifacts_dir = attr.ib(default = None)
-    manifest_lines = attr.ib(default = [])
+    setup_directory = attrs.field(default = None)
+    module_name = attrs.field(default = None)
+    artifacts_filepaths = attrs.field(default = None)
+    artifacts_dir = attrs.field(default = None)
+    manifest_lines = attrs.field(default = [])
 
     # processed
-    logger = attr.ib(default=None)
-    logger_name = attr.ib(default='Artifacts Handler')
-    loggerLvl = attr.ib(default=logging.INFO)
-    logger_format = attr.ib(default=None)
+    logger = attrs.field(default=None)
+    logger_name = attrs.field(default='Artifacts Handler')
+    loggerLvl = attrs.field(default=logging.INFO)
+    logger_format = attrs.field(default=None)
 
     def __attrs_post_init__(self):
         self._initialize_logger()
@@ -111,8 +112,7 @@ class ArtifactsHandler:
         if module_name is None:
             module_name = self.module_name
 
-        with pkg_resources.path(module_name, 'artifacts') as path:
-            package_path = path
+        package_path = self._resolve_artifacts_dir(module_name=module_name)
 
         if os.path.exists(package_path):
             package_files = os.listdir(package_path)
@@ -123,6 +123,46 @@ class ArtifactsHandler:
             package_artifacts = {}
 
         return package_artifacts
+
+    def _resolve_package_root(self, module_name: str):
+
+        """
+        Resolve installed package/module root directory.
+        """
+
+        try:
+            package_root = Path(pkg_resources.files(module_name))
+            return package_root
+        except Exception:
+            pass
+
+        module = importlib.import_module(module_name)
+        if hasattr(module, "__path__") and module.__path__:
+            return Path(next(iter(module.__path__)))
+
+        if getattr(module, "__file__", None):
+            return Path(module.__file__).parent
+
+        raise FileNotFoundError(f"Cannot resolve installed root for module '{module_name}'")
+
+    def _resolve_artifacts_dir(self, module_name: str):
+
+        """
+        Resolve artifacts directory across package and tracking layouts.
+        """
+
+        package_root = self._resolve_package_root(module_name=module_name)
+
+        candidates = [
+            package_root / "artifacts",
+            package_root / ".paa.tracking" / "git" / "artifacts" / module_name,
+        ]
+
+        for candidate in candidates:
+            if candidate.exists() and candidate.is_dir():
+                return str(candidate)
+
+        return str(candidates[0])
 
     def make_manifest(self,
                     module_name : str = None,
@@ -268,16 +308,17 @@ class ArtifactsHandler:
         if module_name is None:
             module_name = self.module_name
 
-        package_path = pkg_resources.files(module_name)
+        package_path = self._resolve_package_root(module_name=module_name)
+        artifacts_path = self._resolve_artifacts_dir(module_name=module_name)
 
         link_for_artifacts = {}
         link_availability = {}
 
-        if os.path.exists(package_path):
+        if os.path.exists(artifacts_path):
 
             link_artifacts_filepaths = self._get_artifact_links(
                 artifact_name = 'artifacts',
-                artifacts_filepath = os.path.join(package_path, 'artifacts')
+                artifacts_filepath = artifacts_path
             )
 
             for artifact_name, artifacts_filepath in link_artifacts_filepaths.items():
@@ -308,15 +349,16 @@ class ArtifactsHandler:
         if module_name is None:
             module_name = self.module_name
 
-        package_path = pkg_resources.files(module_name)
+        package_path = self._resolve_package_root(module_name=module_name)
+        artifacts_path = self._resolve_artifacts_dir(module_name=module_name)
 
         failed_refreshes = 0
 
-        if os.path.exists(package_path):
+        if os.path.exists(artifacts_path):
 
             link_artifacts_filepaths = self._get_artifact_links(
                 artifact_name = 'artifacts',
-                artifacts_filepath = os.path.join(package_path, 'artifacts'),
+                artifacts_filepath = artifacts_path,
                 use_artifact_name = False
             )
 
@@ -334,7 +376,7 @@ class ArtifactsHandler:
                     response = requests.get(artifacts_url, stream=True)
 
                     # Open the file in binary mode and write the content to it
-                    with open(os.path.join(package_path, artifact_name), 'wb') as file:
+                    with open(os.path.join(artifacts_path, artifact_name), 'wb') as file:
                         for chunk in response.iter_content(chunk_size=8192):
                             if chunk:  # Filter out keep-alive chunks
                                 file.write(chunk)
