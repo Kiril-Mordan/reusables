@@ -1,5 +1,7 @@
 # Release notes
 
+### 1.0.3
+
 ### 1.0.2
 
     - mcp as first-class interface with init/run and tool discovery
