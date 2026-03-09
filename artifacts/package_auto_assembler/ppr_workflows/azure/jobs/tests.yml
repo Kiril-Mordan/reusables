@@ -62,6 +62,9 @@ jobs:
 
   - script: |
       TESTS_DIR=$(yq -r '.tests_dir' .paa.config)
+      if [ -z "$TESTS_DIR" ] || [ "$TESTS_DIR" = "null" ]; then
+        TESTS_DIR="tests"
+      fi
       if [ -f "$TESTS_DIR/$(files)" ]; then
         tox -- "$TESTS_DIR/$(files)"
       else:

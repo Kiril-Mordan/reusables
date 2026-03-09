@@ -68,6 +68,9 @@ jobs:
         if: steps.changed-modules.outputs.files != ''
         run: |
           TESTS_DIR=$(yq -r '.tests_dir' .paa.config)
+          if [ -z "$TESTS_DIR" ] || [ "$TESTS_DIR" = "null" ]; then
+            TESTS_DIR="tests"
+          fi
           mkdir tempdir
           echo "$TESTS_DIR" > tempdir/temp_test_name.txt
 

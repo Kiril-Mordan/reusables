@@ -7,14 +7,13 @@ With `package-auto-assembler`, you can simplify the package creation process to 
 
 ## Key features
 
-- [Set up new Python packaging repositories](https://kiril-mordan.github.io/reusables/package_auto_assembler/concepts/python_packaging_repo/) for Github and Azure DevOps.
-- [Create and validate packages](https://kiril-mordan.github.io/reusables/package_auto_assembler/interfaces/cli/) with `make-package` and `test-install`.
-- [Check module dependencies](https://kiril-mordan.github.io/reusables/package_auto_assembler/concepts/dependency_management/) for vulnerabilities, compatibility, and license constraints.
-- [Run and expose interfaces](https://kiril-mordan.github.io/reusables/package_auto_assembler/interfaces/mcp/) through MCP, and via [FastAPI](https://kiril-mordan.github.io/reusables/package_auto_assembler/interfaces/fastapi/) or [Streamlit](https://kiril-mordan.github.io/reusables/package_auto_assembler/interfaces/streamlit/) integrations.
-- [Extract artifacts and files](https://kiril-mordan.github.io/reusables/package_auto_assembler/components/artifacts/) packaged alongside code.
-- [Show detailed module information](https://kiril-mordan.github.io/reusables/package_auto_assembler/interfaces/cli/) for installed packages built with PAA.
-- [Create and navigate package history checkpoints](https://kiril-mordan.github.io/reusables/package_auto_assembler/concepts/checkpoint_history/) including list/show/prune/checkout flows.
-- [Infer requirements from imports](https://kiril-mordan.github.io/reusables/package_auto_assembler/components/import_mapping/) with mapping overrides and optional compatibility checks.
+- [Set up new Python packaging repositories](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/) for Github and Azure DevOps.
+- [Create and validate packages](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/) with `make-package` and `test-install`.
+- [Check module dependencies](https://kiril-mordan.github.io/reusables/package_auto_assembler/dependency_management/) for vulnerabilities, compatibility, and license constraints.
+- [Run and expose interfaces](https://kiril-mordan.github.io/reusables/package_auto_assembler/mcp/) through MCP, and via [FastAPI](https://kiril-mordan.github.io/reusables/package_auto_assembler/fastapi/) or [Streamlit](https://kiril-mordan.github.io/reusables/package_auto_assembler/interfaces/streamlit/) integrations.
+- [Extract artifacts and files](https://kiril-mordan.github.io/reusables/package_auto_assembler/artifacts/) packaged alongside code.
+- [Show detailed module information](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/) for installed packages built with PAA.
+- [Create and navigate package history checkpoints](https://kiril-mordan.github.io/reusables/package_auto_assembler/checkpoint_history/) including list/show/prune/checkout flows.
 
 """
 
@@ -1009,7 +1008,7 @@ class PackageAutoAssembler:
 
             skills_dir = os.path.join("skills", self.module_name)
             if os.path.exists(skills_dir):
-                artifacts_filepaths['.paa.tracking/skills'] = skills_dir
+                artifacts_filepaths['.paa.tracking/skills'] = f"skills/{self.module_name}"
 
             if (self.tests_dir is not None\
                 and os.path.exists(self.tests_dir)):
@@ -1315,7 +1314,8 @@ class PackageAutoAssembler:
             if skip_deps_install:
                 list_of_cmds.append("--no-deps")
 
-            list_of_cmds.append(os.path.join('dist', wheel_file))
+            # Use POSIX-style wheel path for stable cross-platform command args.
+            list_of_cmds.append(f"dist/{wheel_file}")
 
             subprocess.run(list_of_cmds, check=True)
 

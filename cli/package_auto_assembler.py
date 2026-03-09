@@ -60,13 +60,13 @@ def cli(ctx):
 def _resolve_package_license_path(config_data: dict, module_name: str):
     explicit_license_path = config_data.get("license_path")
     if explicit_license_path and os.path.exists(explicit_license_path):
-        return explicit_license_path
+        return explicit_license_path.replace("\\", "/")
 
     licenses_dir = config_data.get("licenses_dir")
     if licenses_dir:
         candidate = os.path.join(licenses_dir, module_name, "LICENSE")
         if os.path.exists(candidate):
-            return candidate
+            return candidate.replace("\\", "/")
 
     return None
 
@@ -74,13 +74,13 @@ def _resolve_package_license_path(config_data: dict, module_name: str):
 def _resolve_package_notice_path(config_data: dict, module_name: str):
     explicit_notice_path = config_data.get("notice_path")
     if explicit_notice_path and os.path.exists(explicit_notice_path):
-        return explicit_notice_path
+        return explicit_notice_path.replace("\\", "/")
 
     licenses_dir = config_data.get("licenses_dir")
     if licenses_dir:
         candidate = os.path.join(licenses_dir, module_name, "NOTICE")
         if os.path.exists(candidate):
-            return candidate
+            return candidate.replace("\\", "/")
 
     return None
 
@@ -1291,13 +1291,25 @@ def test_install(ctx,
         config = ".paa.config"
 
     if os.path.exists(config):
-        with open(config, 'r') as file:
-            test_install_config_up = yaml.safe_load(file)
+        with open(config, 'r', encoding='utf-8') as file:
+            test_install_config_up = yaml.safe_load(file) or {}
 
         test_install_config.update(test_install_config_up)
 
     resolved_module_dir = test_install_config.get(
         "module_dir", PAA_PATH_DEFAULTS.get("module_dir", "python_modules")
+    )
+    resolved_dependencies_dir = test_install_config.get(
+        "dependencies_dir", PAA_PATH_DEFAULTS.get("dependencies_dir", "python_modules/components")
+    )
+    resolved_cli_dir = test_install_config.get(
+        "cli_dir", PAA_PATH_DEFAULTS.get("cli_dir", "cli")
+    )
+    resolved_api_routes_dir = test_install_config.get(
+        "api_routes_dir", PAA_PATH_DEFAULTS.get("api_routes_dir", "api_routes")
+    )
+    resolved_streamlit_dir = test_install_config.get(
+        "streamlit_dir", PAA_PATH_DEFAULTS.get("streamlit_dir", "streamlit")
     )
 
     test_install_config["loggerLvl"] = logging.INFO
@@ -1308,7 +1320,7 @@ def test_install(ctx,
         "module_filepath" : os.path.join(resolved_module_dir, f"{module_name}.py"),
         #"mapping_filepath" : test_install_config.get("mapping_filepath"),
         #"licenses_filepath" : test_install_config.get("licenses_filepath"),
-        "dependencies_dir" : test_install_config.get("dependencies_dir"),
+        "dependencies_dir" : resolved_dependencies_dir,
         "setup_directory" : f"./{module_name}",
         "add_artifacts" : test_install_config.get("add_artifacts"),
         "artifacts_filepaths" : test_install_config.get("artifacts_filepaths"),
@@ -1357,20 +1369,20 @@ def test_install(ctx,
     if test_install_config.get("allowed_licenses"):
         paa_params["allowed_licenses"] = test_install_config["allowed_licenses"]
 
-    if test_install_config.get("cli_dir"):
-        paa_params["cli_module_filepath"] = os.path.join(
-            test_install_config['cli_dir'], f"{module_name}.py")
+    paa_params["cli_module_filepath"] = os.path.join(
+        resolved_cli_dir, f"{module_name}.py")
 
-    if test_install_config.get("api_routes_dir"):
-        paa_params["fastapi_routes_filepath"] = os.path.join(
-            test_install_config['api_routes_dir'], f"{module_name}.py")
+    paa_params["fastapi_routes_filepath"] = os.path.join(
+        resolved_api_routes_dir, f"{module_name}.py")
 
-    if test_install_config.get("streamlit_dir"):
-        paa_params["streamlit_filepath"] = os.path.join(
-            test_install_config['streamlit_dir'], f"{module_name}.py")
-    if test_install_config.get("mcp_dir"):
-        paa_params["mcp_module_filepath"] = os.path.join(
-            test_install_config['mcp_dir'], f"{module_name}.py")
+    paa_params["streamlit_filepath"] = os.path.join(
+        resolved_streamlit_dir, f"{module_name}.py")
+    resolved_mcp_dir = test_install_config.get(
+        "mcp_dir",
+        PAA_PATH_DEFAULTS.get("mcp_dir", "mcp")
+    )
+    paa_params["mcp_module_filepath"] = os.path.join(
+        resolved_mcp_dir, f"{module_name}.py")
 
     if test_install_config.get("artifacts_dir"):
         paa_params["artifacts_dir"] = os.path.join(
@@ -1514,13 +1526,25 @@ def make_package(ctx,
         config = ".paa.config"
 
     if os.path.exists(config):
-        with open(config, 'r') as file:
-            test_install_config_up = yaml.safe_load(file)
+        with open(config, 'r', encoding='utf-8') as file:
+            test_install_config_up = yaml.safe_load(file) or {}
 
         test_install_config.update(test_install_config_up)
 
     resolved_module_dir = test_install_config.get(
         "module_dir", PAA_PATH_DEFAULTS.get("module_dir", "python_modules")
+    )
+    resolved_dependencies_dir = test_install_config.get(
+        "dependencies_dir", PAA_PATH_DEFAULTS.get("dependencies_dir", "python_modules/components")
+    )
+    resolved_cli_dir = test_install_config.get(
+        "cli_dir", PAA_PATH_DEFAULTS.get("cli_dir", "cli")
+    )
+    resolved_api_routes_dir = test_install_config.get(
+        "api_routes_dir", PAA_PATH_DEFAULTS.get("api_routes_dir", "api_routes")
+    )
+    resolved_streamlit_dir = test_install_config.get(
+        "streamlit_dir", PAA_PATH_DEFAULTS.get("streamlit_dir", "streamlit")
     )
     resolved_use_commit_messages = test_install_config.get("use_commit_messages", True)
 
@@ -1532,7 +1556,7 @@ def make_package(ctx,
         "module_filepath" : os.path.join(resolved_module_dir, f"{module_name}.py"),
         #"mapping_filepath" : test_install_config.get("mapping_filepath"),
         #"licenses_filepath" : test_install_config.get("licenses_filepath"),
-        "dependencies_dir" : test_install_config.get("dependencies_dir"),
+        "dependencies_dir" : resolved_dependencies_dir,
         "setup_directory" : f"./{module_name}",
         #"versions_filepath" : test_install_config["versions_filepath"],
         #"log_filepath" : test_install_config["log_filepath"],
@@ -1589,20 +1613,20 @@ def make_package(ctx,
     if test_install_config.get("allowed_licenses"):
         paa_params["allowed_licenses"] = test_install_config["allowed_licenses"]
 
-    if test_install_config.get("cli_dir"):
-        paa_params["cli_module_filepath"] = os.path.join(
-            test_install_config['cli_dir'], f"{module_name}.py")
+    paa_params["cli_module_filepath"] = os.path.join(
+        resolved_cli_dir, f"{module_name}.py")
 
-    if test_install_config.get("api_routes_dir"):
-        paa_params["fastapi_routes_filepath"] = os.path.join(
-            test_install_config['api_routes_dir'], f"{module_name}.py")
+    paa_params["fastapi_routes_filepath"] = os.path.join(
+        resolved_api_routes_dir, f"{module_name}.py")
 
-    if test_install_config.get("streamlit_dir"):
-        paa_params["streamlit_filepath"] = os.path.join(
-            test_install_config['streamlit_dir'], f"{module_name}.py")
-    if test_install_config.get("mcp_dir"):
-        paa_params["mcp_module_filepath"] = os.path.join(
-            test_install_config['mcp_dir'], f"{module_name}.py")
+    paa_params["streamlit_filepath"] = os.path.join(
+        resolved_streamlit_dir, f"{module_name}.py")
+    resolved_mcp_dir = test_install_config.get(
+        "mcp_dir",
+        PAA_PATH_DEFAULTS.get("mcp_dir", "mcp")
+    )
+    paa_params["mcp_module_filepath"] = os.path.join(
+        resolved_mcp_dir, f"{module_name}.py")
 
     if test_install_config.get("artifacts_dir"):
         paa_params["artifacts_dir"] = os.path.join(
@@ -1739,8 +1763,8 @@ def check_vulnerabilities(ctx,
         config = ".paa.config"
 
     if os.path.exists(config):
-        with open(config, 'r') as file:
-            test_install_config_up = yaml.safe_load(file)
+        with open(config, 'r', encoding='utf-8') as file:
+            test_install_config_up = yaml.safe_load(file) or {}
 
         test_install_config.update(test_install_config_up)
 
@@ -1848,8 +1872,8 @@ def check_licenses(ctx,
         config = ".paa.config"
 
     if os.path.exists(config):
-        with open(config, 'r') as file:
-            test_install_config_up = yaml.safe_load(file)
+        with open(config, 'r', encoding='utf-8') as file:
+            test_install_config_up = yaml.safe_load(file) or {}
 
         test_install_config.update(test_install_config_up)
 
@@ -1956,8 +1980,8 @@ def check_deps_compat(ctx,
         config = ".paa.config"
 
     if os.path.exists(config):
-        with open(config, 'r') as file:
-            test_install_config_up = yaml.safe_load(file)
+        with open(config, 'r', encoding='utf-8') as file:
+            test_install_config_up = yaml.safe_load(file) or {}
 
         test_install_config.update(test_install_config_up)
 
@@ -2190,8 +2214,8 @@ def show_ref_local_deps(ctx,
         config = ".paa.config"
 
     if os.path.exists(config):
-        with open(config, 'r') as file:
-            test_install_config_up = yaml.safe_load(file)
+        with open(config, 'r', encoding='utf-8') as file:
+            test_install_config_up = yaml.safe_load(file) or {}
 
         test_install_config.update(test_install_config_up)
 
@@ -2210,7 +2234,10 @@ def show_ref_local_deps(ctx,
 
     ld_params = {
         "main_module_filepath" : os.path.join(module_dir or resolved_module_dir, f"{module_name}.py"),
-        "dependencies_dir" : test_install_config.get("dependencies_dir")
+        "dependencies_dir" : test_install_config.get(
+            "dependencies_dir",
+            PAA_PATH_DEFAULTS.get("dependencies_dir", "python_modules/components")
+        )
     }
 
     ldh = LocalDependaciesHandler(
@@ -3217,10 +3244,26 @@ def extract_module_requirements(ctx,
         config = ".paa.config"
 
     if os.path.exists(config):
-        with open(config, 'r') as file:
-            test_install_config_up = yaml.safe_load(file)
+        with open(config, 'r', encoding='utf-8') as file:
+            test_install_config_up = yaml.safe_load(file) or {}
 
         test_install_config.update(test_install_config_up)
+
+    resolved_module_dir = test_install_config.get(
+        "module_dir", PAA_PATH_DEFAULTS.get("module_dir", "python_modules")
+    )
+    resolved_dependencies_dir = test_install_config.get(
+        "dependencies_dir", PAA_PATH_DEFAULTS.get("dependencies_dir", "python_modules/components")
+    )
+    resolved_cli_dir = test_install_config.get(
+        "cli_dir", PAA_PATH_DEFAULTS.get("cli_dir", "cli")
+    )
+    resolved_api_routes_dir = test_install_config.get(
+        "api_routes_dir", PAA_PATH_DEFAULTS.get("api_routes_dir", "api_routes")
+    )
+    resolved_streamlit_dir = test_install_config.get(
+        "streamlit_dir", PAA_PATH_DEFAULTS.get("streamlit_dir", "streamlit")
+    )
 
     test_install_config["loggerLvl"] = logging.INFO
 
@@ -3231,11 +3274,10 @@ def extract_module_requirements(ctx,
         "add_artifacts" : False
     }
 
-    if test_install_config.get("module_dir"):
-        paa_params["module_filepath"] = os.path.join(test_install_config['module_dir'], f"{module_name}.py")
+    paa_params["module_filepath"] = os.path.join(
+        resolved_module_dir, f"{module_name}.py")
 
-    if test_install_config.get("dependencies_dir"):
-        paa_params["dependencies_dir"] = test_install_config["dependencies_dir"]
+    paa_params["dependencies_dir"] = resolved_dependencies_dir
 
     if test_install_config.get("default_version"):
         paa_params["default_version"] = test_install_config["default_version"]
@@ -3249,14 +3291,18 @@ def extract_module_requirements(ctx,
     if test_install_config.get("kernel_name"):
         paa_params["kernel_name"] = test_install_config["kernel_name"]
 
-    if test_install_config.get("cli_dir"):
-        paa_params["cli_module_filepath"] = os.path.join(test_install_config.get("cli_dir"), f"{module_name}.py")
-    if test_install_config.get("api_routes_dir"):
-        paa_params["fastapi_routes_filepath"] = os.path.join(test_install_config.get("api_routes_dir"), f"{module_name}.py")
-    if test_install_config.get("streamlit_dir"):
-        paa_params["streamlit_filepath"] = os.path.join(test_install_config.get("streamlit_dir"), f"{module_name}.py")
-    if test_install_config.get("mcp_dir"):
-        paa_params["mcp_module_filepath"] = os.path.join(test_install_config.get("mcp_dir"), f"{module_name}.py")
+    paa_params["cli_module_filepath"] = os.path.join(
+        resolved_cli_dir, f"{module_name}.py")
+    paa_params["fastapi_routes_filepath"] = os.path.join(
+        resolved_api_routes_dir, f"{module_name}.py")
+    paa_params["streamlit_filepath"] = os.path.join(
+        resolved_streamlit_dir, f"{module_name}.py")
+    resolved_mcp_dir = test_install_config.get(
+        "mcp_dir",
+        PAA_PATH_DEFAULTS.get("mcp_dir", "mcp")
+    )
+    paa_params["mcp_module_filepath"] = os.path.join(
+        resolved_mcp_dir, f"{module_name}.py")
 
     if cli_module_filepath:
         paa_params["cli_module_filepath"] = cli_module_filepath
@@ -3388,8 +3434,8 @@ def extract_tracking_version(ctx,
 
     test_install_config = {}
     if os.path.exists(config):
-        with open(config, 'r') as file:
-            test_install_config_up = yaml.safe_load(file)
+        with open(config, 'r', encoding='utf-8') as file:
+            test_install_config_up = yaml.safe_load(file) or {}
 
         test_install_config.update(test_install_config_up)
 
@@ -3497,8 +3543,8 @@ def run_pylint_tests(ctx,
 
     test_install_config = {}
     if os.path.exists(config):
-        with open(config, 'r') as file:
-            test_install_config_up = yaml.safe_load(file)
+        with open(config, 'r', encoding='utf-8') as file:
+            test_install_config_up = yaml.safe_load(file) or {}
 
         test_install_config.update(test_install_config_up)
 
