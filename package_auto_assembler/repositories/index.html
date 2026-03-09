@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../python_packaging_repo/">
+        <link rel="prev" href="../cli_tools/">
       
       
-        <link rel="next" href="../dependency_management/">
+        <link rel="next" href="../import_mapping/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Code management - Package auto assembler</title>
+        <title>Repositories - Package auto assembler</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#about" class="md-skip">
+        <a href="#repositories-and-cicd-publishing" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Code management
+              Repositories
             
           </span>
         </div>
@@ -270,17 +270,19 @@
       
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -294,7 +296,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Components
@@ -368,10 +370,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../repositories/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Repositories
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -380,6 +402,89 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#supported-repository-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Supported Repository Modes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#init-behavior-config-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Init Behavior (Config + Structure)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-cicd-chooses-package-and-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      How CI/CD Chooses Package and Version
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#versioning-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Versioning Model
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automatic-release-notes-from-commit-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automatic Release Notes from Commit Messages
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#github-template-extras" class="md-nav__link">
+    <span class="md-ellipsis">
+      GitHub Template Extras
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commit-message-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Commit Message Examples
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -459,19 +564,17 @@
       
   
   
-    
   
   
-  
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -485,7 +588,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             Concepts
@@ -580,28 +683,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Code management
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../code_management/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -610,171 +695,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#about" class="md-nav__link">
-    <span class="md-ellipsis">
-      About
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#benefits-of-aca" class="md-nav__link">
-    <span class="md-ellipsis">
-      Benefits of ACA
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#core-assumptions-of-aca" class="md-nav__link">
-    <span class="md-ellipsis">
-      Core Assumptions of ACA
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#aca-applied-to-python-development" class="md-nav__link">
-    <span class="md-ellipsis">
-      ACA Applied to Python Development
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="ACA Applied to Python Development">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#code-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Code Storage
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#code-representation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Code Representation
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#package-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      Package Structure
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#possible-package-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      Possible Package Types
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Possible Package Types">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#basic-module" class="md-nav__link">
-    <span class="md-ellipsis">
-      Basic Module
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unintegrated-multi-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Unintegrated Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integrated-multi-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Integrated Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#command-line-interface-monolithmulti-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Command Line Interface + Monolith/Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#application-interfaces-monolithmulti-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Application Interfaces + Monolith/Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#static-documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Static Documentation
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#basic-artifact-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Basic Artifact Storage
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1013,6 +933,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1021,149 +943,65 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#about" class="md-nav__link">
+  <a href="#supported-repository-modes" class="md-nav__link">
     <span class="md-ellipsis">
-      About
+      Supported Repository Modes
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#benefits-of-aca" class="md-nav__link">
+  <a href="#init-behavior-config-structure" class="md-nav__link">
     <span class="md-ellipsis">
-      Benefits of ACA
+      Init Behavior (Config + Structure)
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-assumptions-of-aca" class="md-nav__link">
+  <a href="#how-cicd-chooses-package-and-version" class="md-nav__link">
     <span class="md-ellipsis">
-      Core Assumptions of ACA
+      How CI/CD Chooses Package and Version
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#aca-applied-to-python-development" class="md-nav__link">
+  <a href="#versioning-model" class="md-nav__link">
     <span class="md-ellipsis">
-      ACA Applied to Python Development
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="ACA Applied to Python Development">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#code-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Code Storage
+      Versioning Model
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#code-representation" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#automatic-release-notes-from-commit-messages" class="md-nav__link">
     <span class="md-ellipsis">
-      Code Representation
+      Automatic Release Notes from Commit Messages
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#package-structure" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#github-template-extras" class="md-nav__link">
     <span class="md-ellipsis">
-      Package Structure
+      GitHub Template Extras
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#possible-package-types" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#commit-message-examples" class="md-nav__link">
     <span class="md-ellipsis">
-      Possible Package Types
+      Commit Message Examples
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Possible Package Types">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#basic-module" class="md-nav__link">
-    <span class="md-ellipsis">
-      Basic Module
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unintegrated-multi-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Unintegrated Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integrated-multi-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Integrated Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#command-line-interface-monolithmulti-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Command Line Interface + Monolith/Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#application-interfaces-monolithmulti-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Application Interfaces + Monolith/Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#static-documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Static Documentation
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#basic-artifact-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Basic Artifact Storage
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1185,103 +1023,91 @@
   
 
 
-  <h1>Code management</h1>
-
-<p><img alt="" src="../images/package_auto_assembler-aca_logo.png" /></p>
-<h2 id="about">About</h2>
-<p>Every way of thinking is shaped by its base assumptions. These assumptions act as the foundation, determining the structures we build and the methods we adopt. In software development, assumptions about collaboration, modularity, and progress shape the tools we use and the workflows we follow.</p>
-<p>The artifact-centric approach begins by revisiting these fundamental assumptions to unlock untapped potential — not just of our tools, but of ourselves as creators.</p>
-<p><img alt="" src="../images/package_auto_assembler-aca_flow.png" /></p>
-<h2 id="benefits-of-aca">Benefits of ACA</h2>
-<p>The artifact-centric approach (ACA) focuses on producing well-defined, versioned, self-contained artifacts. In this approach, a single developer is responsible for creating each artifact, which can then be used as a building block in larger systems. Each artifact is a self-contained system with unique attributes and capabilities.</p>
-<p>Problem-solving becomes a process with outcomes of known shape but unknown substance and specification, where the latter must be discovered, and the former developed. This shift in thinking about code management enables:</p>
+<h1 id="repositories-and-cicd-publishing">Repositories and CI/CD Publishing</h1>
+<p><code>package-auto-assembler</code> supports repository templates for automated package publishing.</p>
+<p>For agent-oriented package guidance and extraction behavior, see <code>components/skills.md</code>.
+For low-duplication docs strategy across README, MkDocs, and release notes, see <code>concepts/documentation_flow.md</code>.</p>
+<h2 id="supported-repository-modes">Supported Repository Modes</h2>
 <ul>
-<li>
-<p><code>Incremental Progress</code>:  Build complex systems one brick at a time, focusing on small, manageable pieces that integrate seamlessly.</p>
-</li>
-<li>
-<p><code>Flexible Structure</code>: Adapt to projects of any size, from personal experiments to large-scale systems, without fundamentally changing the way work is structured.</p>
-</li>
-<li>
-<p><code>Grassroots innovation</code> : Empower individual contributors to make a substantial impact, incentivizing skill development and personalized workflows.</p>
-</li>
-<li>
-<p><code>Collaboration with boundaries</code>: Prevent burnout and stress by clearly assigning responsibilities and minimizing the need for constant alignment.</p>
-</li>
+<li><strong>GitHub template</strong>: CI/CD pipeline for packaging and publishing to <strong>PyPI</strong>.</li>
+<li><strong>Azure DevOps template</strong>: CI/CD pipeline for packaging and publishing to <strong>Azure Artifacts</strong>.</li>
 </ul>
-<h2 id="core-assumptions-of-aca">Core Assumptions of ACA</h2>
+<p>Initialize templates with:</p>
+<pre><code class="language-bash">paa init-ppr --github
+# or
+paa init-ppr --azure
+</code></pre>
+<p>Use <code>--full</code> if you want full <code>.paa.config</code> template with all optional fields visible.</p>
+<h2 id="init-behavior-config-structure">Init Behavior (Config + Structure)</h2>
+<p>Current initialization flow is intentionally staged:</p>
 <ol>
-<li>
-<p><code>Reusability</code> - A process that can be executed collaboratively by many can also be executed sequentially by one, given enough time. By making reusability an inherent property of artifacts, the work becomes "cached" for future use, ensuring that progress is always feasible and builds upon itself.</p>
-</li>
-<li>
-<p><code>Modularity</code> - Complex systems can be built as aggregations of small, independent, and self-contained components. Modularity ensures that artifacts are adaptable building blocks, enabling integration with diverse code from different sources. This fosters systems that grow and evolve naturally while retaining coherence.</p>
-</li>
-<li>
-<p><code>Autonomy</code> - Communicating with others is inherently slower than thinking because the former ideally involves the latter. By focusing on smaller, independent artifacts as system components and treating their releases as units of progress, responsibilities and requirements become clear without constant back-and-forth. Autonomy empowers individuals to innovate at their own pace while removing unnecessary barriers and leveraging broader collective brainpower.</p>
-</li>
+<li><code>paa init-ppr --&lt;platform&gt;</code> initializes workflow template files (<code>.github</code> or <code>.azure</code>).</li>
+<li>If <code>.paa.config</code> is missing, it is created on that first run.</li>
+<li>To initialize directories from config, run either:</li>
+<li><code>paa init-ppr --&lt;platform&gt;</code> again, or</li>
+<li><code>paa init-paa</code>.</li>
 </ol>
-<h2 id="aca-applied-to-python-development">ACA Applied to Python Development</h2>
-<p>The artifact-centric approach can be applied to Python development by treating Python packages as artifacts and making them the central element of the development process. To simplify and streamline Python packaging into an easy and straightforward workflow, specialized tooling is required.</p>
-<p><code>package-auto-assembler</code> provides the necessary tools and instructions to <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#inputs-and-outputs-of-ppr">set up a packaging repository</a>. With its highly automated package creation process, it enables developers to create Python packages from as little as a single <code>.py</code> file, ensuring efficiency and scalability.</p>
-<h3 id="code-storage">Code Storage</h3>
-<p><img alt="" src="../images/package_auto_assembler-code_movement.png" /></p>
-<p>The diagram illustrates the possible storage locations for Python code in the form of Python packages. Self-contained packages, which can be unfolded for editing, can be stored in any of the four shown locations.</p>
+<p>This allows config to appear first and then be used to build directory structure.</p>
+<h2 id="how-cicd-chooses-package-and-version">How CI/CD Chooses Package and Version</h2>
+<p>Publishing flow takes package context from commit messages.</p>
+<p>Required package tag format:</p>
 <ul>
-<li>Local Directory and Git Repository: Suitable for traditional code storage and version control, become optional with this style of Python Packaging.</li>
-<li>Local Environment Storage and Remote Package Storages: By using Python packages, you can store and manage different versions in one place, making it easier to use across local systems and distribute through familiar channels, with ability to go back to a repository repsentation of code at any moment for editing.</li>
+<li><code>[package_name] ...</code></li>
 </ul>
-<p>This setup allows local development to occur seamlessly while maintaining version control and enabling easy distribution through remote storages.</p>
-<h3 id="code-representation">Code Representation</h3>
-<p>Highly automated package creation is achieved by decoupling the code representation used for editing from the one stored in the final package. This decoupling enables automation in the packaging pipeline, allowing flexible transformations between the two states. For more details, see <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#inputs-and-outputs-of-ppr">Inputs and Outputs of PPR</a>.</p>
-<p><img alt="" src="../images/package_auto_assembler-modular_design.png" /></p>
-<p>The diagram above showcases how Python code can be structured for modularity, as well as the distinctions between editable code and its packaged form when using <code>package-auto-assembler</code>.</p>
-<h3 id="package-structure">Package Structure</h3>
-<p>This diagram demonstrates the internal wiring of a package, enabling a combination of design patterns for maximum flexibility, reusability, and ease of use. It supports both the creation and consumption of packages with <code>package-auto-assembler</code>.</p>
-<p><img alt="" src="../images/package_auto_assembler-package_structure.png" /></p>
-<h3 id="possible-package-types">Possible Package Types</h3>
-<h4 id="basic-module">Basic Module</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_1.png" /></p>
+<p>Only one package context per merge is recommended, because pipeline logic assumes a single package target.</p>
+<h2 id="versioning-model">Versioning Model</h2>
+<p>PAA uses semantic versioning:</p>
 <ul>
-<li><code>Definition</code>: A single package_name.py file with no local dependencies or a single dependency wired for packaging.</li>
-<li><code>Best Use Case</code>: Simple packages or selectively bundling one local dependency.</li>
+<li><code>major.minor.patch</code></li>
 </ul>
-<h4 id="unintegrated-multi-component">Unintegrated Multi-Component</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_2.png" /></p>
+<p>Default increment behavior is <strong>patch</strong> unless commit message signals otherwise.</p>
+<p>Version control tags:</p>
 <ul>
-<li><code>Definition</code>: Multiple components bundled into a single package, but package_name.py does not integrate them or contain additional code.</li>
-<li><code>Best Use Case</code>: Bundling multiple components without internal integration.</li>
+<li><code>[&lt;package name&gt;][..+]</code> -&gt; patch</li>
+<li><code>[&lt;package name&gt;][.+.]</code> -&gt; minor</li>
+<li><code>[&lt;package name&gt;][+..]</code> -&gt; major</li>
+<li><code>[&lt;package name&gt;][1.2.3]</code> -&gt; force exact version</li>
 </ul>
-<h4 id="integrated-multi-component">Integrated Multi-Component</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_3.png" /></p>
+<p>Version source behavior:</p>
 <ul>
-<li><code>Definition</code>: Multiple independent components integrated into a tool that manages data flow and provides a single interface, allowing for post-packaging overwrites.</li>
-<li><code>Best Use Case</code>: Complex packages requiring modularity and flexibility.</li>
+<li>PAA attempts to read latest version from package storage.</li>
+<li>If unavailable, it falls back to tracking logs in <code>.paa/tracking</code>.</li>
 </ul>
-<h4 id="command-line-interface-monolithmulti-component">Command Line Interface + Monolith/Multi-Component</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_4.png" /></p>
+<h2 id="automatic-release-notes-from-commit-messages">Automatic Release Notes from Commit Messages</h2>
+<p>Release notes are generated automatically as part of packaging/release flow.
+PAA assembles notes from commit history using package tags:</p>
 <ul>
-<li><code>Definition</code>: Code is reshaped into CLI for interaction beyond direct imports.</li>
-<li><code>Best Use Case</code>: Applications where CLI is preferred for easier testing, debugging, and usage.</li>
+<li>Commit messages with <code>[&lt;package name&gt;]</code> are collected.</li>
+<li><code>;</code> splits one commit message into multiple note items.</li>
+<li>Previous release notes are used as boundary so only new relevant history is included.</li>
 </ul>
-<h4 id="application-interfaces-monolithmulti-component">Application Interfaces + Monolith/Multi-Component</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_5.png" /></p>
+<p>First-release caveat:</p>
 <ul>
-<li><code>Definition</code>: Decoupled route definitions stored within a package, enabling external application logic to use these routes to extend capabilities as well as application definitions.</li>
-<li><code>Best Use Case</code>: Simplified API deployment using packages as application extensions or storage for application code.</li>
+<li>In a fresh repository, release-note extraction may be limited if merge-history context is sparse.</li>
 </ul>
-<h4 id="static-documentation">Static Documentation</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_6.png" /></p>
+<h2 id="github-template-extras">GitHub Template Extras</h2>
+<p>Compared to the base publish flow, the GitHub template typically includes:</p>
 <ul>
-<li><code>Definition</code>: Documentation stored alongside code, viewable through a generated MkDocs static site.</li>
-<li><code>Best Use Case</code>: Easily accessible, structured documentation for users and developers.</li>
+<li><strong>GitHub Pages docs support</strong> via <code>gh-pages</code> workflow path and <code>gh_pages_base_url</code> config usage.</li>
+<li><strong>Tox-oriented PR validation flow</strong> for test/lint checks before merge.</li>
 </ul>
-<h4 id="basic-artifact-storage">Basic Artifact Storage</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_7.png" /></p>
-<ul>
-<li><code>Definition</code>: Packages that store files or link to files, allowing them to be downloaded with the package or post-installation for easy system integration.</li>
-<li><code>Best Use Case</code>: Managing and distributing additional resources or configuration files.</li>
-</ul>
+<p>These extras are part of why <code>init-ppr --github</code> can be useful even before package publishing is enabled.</p>
+<h2 id="commit-message-examples">Commit Message Examples</h2>
+<p>Patch (default style):</p>
+<pre><code class="language-text">[my_package][..+] fix parser edge case; improve log message
+</code></pre>
+<p>Minor:</p>
+<pre><code class="language-text">[my_package][.+.] add new extraction mode; expose cli flag
+</code></pre>
+<p>Major:</p>
+<pre><code class="language-text">[my_package][+..] refactor public API; remove deprecated route helpers
+</code></pre>
+<p>Explicit version:</p>
+<pre><code class="language-text">[my_package][2.3.0] align release with external service rollout
+</code></pre>
+<p>Package-only tag (still valid package targeting, default patch behavior):</p>
+<pre><code class="language-text">[my_package] fix docs typo; add missing test note
+</code></pre>
 
 
 

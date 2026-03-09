@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../python_packaging_repo/">
+        <link rel="prev" href="../documentation_flow/">
       
       
-        <link rel="next" href="../dependency_management/">
+        <link rel="next" href="../python_packaging_repo/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Code management - Package auto assembler</title>
+        <title>Packaging process - Package auto assembler</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#about" class="md-skip">
+        <a href="#packaging-process" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Code management
+              Packaging process
             
           </span>
         </div>
@@ -538,10 +538,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../packaging_process/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Packaging process
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -550,6 +570,182 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#about" class="md-nav__link">
+    <span class="md-ellipsis">
+      About
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#high-level-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      High-Level Flow
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#main-commands-and-what-they-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      Main Commands And What They Do
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Main Commands And What They Do">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#paa-test-install-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      paa test-install &lt;package&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#paa-make-package-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      paa make-package &lt;package&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#paa-unfold-package-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      paa unfold-package &lt;package&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#temporary-packaging-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      Temporary Packaging State
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#from-unfolded-state-to-packaged-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      From Unfolded State To Packaged State
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#structure-comparison-unfolded-vs-packaged" class="md-nav__link">
+    <span class="md-ellipsis">
+      Structure Comparison: Unfolded vs Packaged
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Structure Comparison: Unfolded vs Packaged">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unfolded-structure-ppr-workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unfolded Structure (PPR workspace)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packaged-structure-installed-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      Packaged Structure (installed package)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#merging-local-dependencies-into-one-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      Merging Local Dependencies Into One Module
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-single-module-packaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Single-Module Packaging
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#underlying-python-tooling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Underlying Python Tooling
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checkpoints-and-packaged-history-brief" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checkpoints And Packaged History (Brief)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-docs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related Docs
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -580,28 +776,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Code management
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../code_management/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -610,171 +788,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#about" class="md-nav__link">
-    <span class="md-ellipsis">
-      About
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#benefits-of-aca" class="md-nav__link">
-    <span class="md-ellipsis">
-      Benefits of ACA
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#core-assumptions-of-aca" class="md-nav__link">
-    <span class="md-ellipsis">
-      Core Assumptions of ACA
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#aca-applied-to-python-development" class="md-nav__link">
-    <span class="md-ellipsis">
-      ACA Applied to Python Development
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="ACA Applied to Python Development">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#code-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Code Storage
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#code-representation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Code Representation
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#package-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      Package Structure
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#possible-package-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      Possible Package Types
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Possible Package Types">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#basic-module" class="md-nav__link">
-    <span class="md-ellipsis">
-      Basic Module
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unintegrated-multi-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Unintegrated Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integrated-multi-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Integrated Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#command-line-interface-monolithmulti-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Command Line Interface + Monolith/Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#application-interfaces-monolithmulti-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Application Interfaces + Monolith/Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#static-documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Static Documentation
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#basic-artifact-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Basic Artifact Storage
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1013,6 +1026,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1030,128 +1045,46 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#benefits-of-aca" class="md-nav__link">
+  <a href="#high-level-flow" class="md-nav__link">
     <span class="md-ellipsis">
-      Benefits of ACA
+      High-Level Flow
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-assumptions-of-aca" class="md-nav__link">
+  <a href="#main-commands-and-what-they-do" class="md-nav__link">
     <span class="md-ellipsis">
-      Core Assumptions of ACA
+      Main Commands And What They Do
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#aca-applied-to-python-development" class="md-nav__link">
-    <span class="md-ellipsis">
-      ACA Applied to Python Development
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="ACA Applied to Python Development">
+    <nav class="md-nav" aria-label="Main Commands And What They Do">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#code-storage" class="md-nav__link">
+  <a href="#paa-test-install-package" class="md-nav__link">
     <span class="md-ellipsis">
-      Code Storage
+      paa test-install &lt;package&gt;
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#code-representation" class="md-nav__link">
+  <a href="#paa-make-package-package" class="md-nav__link">
     <span class="md-ellipsis">
-      Code Representation
+      paa make-package &lt;package&gt;
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#package-structure" class="md-nav__link">
+  <a href="#paa-unfold-package-package" class="md-nav__link">
     <span class="md-ellipsis">
-      Package Structure
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#possible-package-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      Possible Package Types
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Possible Package Types">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#basic-module" class="md-nav__link">
-    <span class="md-ellipsis">
-      Basic Module
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unintegrated-multi-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Unintegrated Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integrated-multi-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Integrated Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#command-line-interface-monolithmulti-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Command Line Interface + Monolith/Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#application-interfaces-monolithmulti-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      Application Interfaces + Monolith/Multi-Component
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#static-documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Static Documentation
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#basic-artifact-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Basic Artifact Storage
+      paa unfold-package &lt;package&gt;
     </span>
   </a>
   
@@ -1161,9 +1094,100 @@
     </nav>
   
 </li>
+      
+        <li class="md-nav__item">
+  <a href="#temporary-packaging-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      Temporary Packaging State
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#from-unfolded-state-to-packaged-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      From Unfolded State To Packaged State
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#structure-comparison-unfolded-vs-packaged" class="md-nav__link">
+    <span class="md-ellipsis">
+      Structure Comparison: Unfolded vs Packaged
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Structure Comparison: Unfolded vs Packaged">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unfolded-structure-ppr-workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unfolded Structure (PPR workspace)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packaged-structure-installed-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      Packaged Structure (installed package)
+    </span>
+  </a>
+  
+</li>
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#merging-local-dependencies-into-one-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      Merging Local Dependencies Into One Module
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-single-module-packaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Single-Module Packaging
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#underlying-python-tooling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Underlying Python Tooling
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checkpoints-and-packaged-history-brief" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checkpoints And Packaged History (Brief)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-docs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related Docs
+    </span>
+  </a>
   
 </li>
       
@@ -1185,102 +1209,235 @@
   
 
 
-  <h1>Code management</h1>
-
-<p><img alt="" src="../images/package_auto_assembler-aca_logo.png" /></p>
+<h1 id="packaging-process">Packaging Process</h1>
 <h2 id="about">About</h2>
-<p>Every way of thinking is shaped by its base assumptions. These assumptions act as the foundation, determining the structures we build and the methods we adopt. In software development, assumptions about collaboration, modularity, and progress shape the tools we use and the workflows we follow.</p>
-<p>The artifact-centric approach begins by revisiting these fundamental assumptions to unlock untapped potential — not just of our tools, but of ourselves as creators.</p>
-<p><img alt="" src="../images/package_auto_assembler-aca_flow.png" /></p>
-<h2 id="benefits-of-aca">Benefits of ACA</h2>
-<p>The artifact-centric approach (ACA) focuses on producing well-defined, versioned, self-contained artifacts. In this approach, a single developer is responsible for creating each artifact, which can then be used as a building block in larger systems. Each artifact is a self-contained system with unique attributes and capabilities.</p>
-<p>Problem-solving becomes a process with outcomes of known shape but unknown substance and specification, where the latter must be discovered, and the former developed. This shift in thinking about code management enables:</p>
-<ul>
-<li>
-<p><code>Incremental Progress</code>:  Build complex systems one brick at a time, focusing on small, manageable pieces that integrate seamlessly.</p>
-</li>
-<li>
-<p><code>Flexible Structure</code>: Adapt to projects of any size, from personal experiments to large-scale systems, without fundamentally changing the way work is structured.</p>
-</li>
-<li>
-<p><code>Grassroots innovation</code> : Empower individual contributors to make a substantial impact, incentivizing skill development and personalized workflows.</p>
-</li>
-<li>
-<p><code>Collaboration with boundaries</code>: Prevent burnout and stress by clearly assigning responsibilities and minimizing the need for constant alignment.</p>
-</li>
-</ul>
-<h2 id="core-assumptions-of-aca">Core Assumptions of ACA</h2>
+<p>This page explains how PAA turns editable repository state into installable package artifacts.
+It focuses on user-visible flow, key commands, and what happens in temporary packaging state.</p>
+<p>For checkpoint semantics and history operations, see <code>concepts/checkpoint_history.md</code>.</p>
+<h2 id="high-level-flow">High-Level Flow</h2>
+<p>PAA packaging works as a staged transformation:</p>
 <ol>
-<li>
-<p><code>Reusability</code> - A process that can be executed collaboratively by many can also be executed sequentially by one, given enough time. By making reusability an inherent property of artifacts, the work becomes "cached" for future use, ensuring that progress is always feasible and builds upon itself.</p>
-</li>
-<li>
-<p><code>Modularity</code> - Complex systems can be built as aggregations of small, independent, and self-contained components. Modularity ensures that artifacts are adaptable building blocks, enabling integration with diverse code from different sources. This fosters systems that grow and evolve naturally while retaining coherence.</p>
-</li>
-<li>
-<p><code>Autonomy</code> - Communicating with others is inherently slower than thinking because the former ideally involves the latter. By focusing on smaller, independent artifacts as system components and treating their releases as units of progress, responsibilities and requirements become clear without constant back-and-forth. Autonomy empowers individuals to innovate at their own pace while removing unnecessary barriers and leveraging broader collective brainpower.</p>
-</li>
+<li>Start from unfolded PPR inputs (module, components, interfaces, docs, artifacts, tests, config).</li>
+<li>Build temporary packaging state (setup directory + assembled files).</li>
+<li>Build distribution artifacts (wheel/sdist).</li>
+<li>Optionally install locally (<code>test-install</code>) or prepare release output (<code>make-package</code>).</li>
 </ol>
-<h2 id="aca-applied-to-python-development">ACA Applied to Python Development</h2>
-<p>The artifact-centric approach can be applied to Python development by treating Python packages as artifacts and making them the central element of the development process. To simplify and streamline Python packaging into an easy and straightforward workflow, specialized tooling is required.</p>
-<p><code>package-auto-assembler</code> provides the necessary tools and instructions to <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#inputs-and-outputs-of-ppr">set up a packaging repository</a>. With its highly automated package creation process, it enables developers to create Python packages from as little as a single <code>.py</code> file, ensuring efficiency and scalability.</p>
-<h3 id="code-storage">Code Storage</h3>
-<p><img alt="" src="../images/package_auto_assembler-code_movement.png" /></p>
-<p>The diagram illustrates the possible storage locations for Python code in the form of Python packages. Self-contained packages, which can be unfolded for editing, can be stored in any of the four shown locations.</p>
+<p>The development layout and packaged layout are intentionally different.
+This allows modular development while still producing consistent package outputs.</p>
+<h2 id="main-commands-and-what-they-do">Main Commands And What They Do</h2>
+<h3 id="paa-test-install-package"><code>paa test-install &lt;package&gt;</code></h3>
+<p>Primary local validation command.</p>
+<p>What it does:
+- reads <code>.paa.config</code> and resolves paths
+- assembles temporary packaging state
+- extracts/merges requirements from module and enabled interfaces
+- optionally builds docs (<code>--build-mkdocs</code>)
+- builds package artifacts and installs into current environment
+- cleans temporary setup directory unless <code>--keep-temp-files</code> is used</p>
+<h3 id="paa-make-package-package"><code>paa make-package &lt;package&gt;</code></h3>
+<p>Primary build command for release preparation.</p>
+<p>What it does:
+- runs the same core assembly/build steps as <code>test-install</code>
+- applies release/version flow
+- prepares distributable artifacts without local install step
+- includes packaging tracking payload used by unfold/checkpoint workflows</p>
+<h3 id="paa-unfold-package-package"><code>paa unfold-package &lt;package&gt;</code></h3>
+<p>State reconstruction command.</p>
+<p>What it does:
+- reads packaged tracking payload from installed package
+- restores editable PPR-like structure in current repo
+- rehydrates paths according to current <code>.paa.config</code></p>
+<h2 id="temporary-packaging-state">Temporary Packaging State</h2>
+<p>During packaging, PAA creates a temporary setup directory that acts as build staging area.
+Typical staged content includes:</p>
 <ul>
-<li>Local Directory and Git Repository: Suitable for traditional code storage and version control, become optional with this style of Python Packaging.</li>
-<li>Local Environment Storage and Remote Package Storages: By using Python packages, you can store and manage different versions in one place, making it easier to use across local systems and distribute through familiar channels, with ability to go back to a repository repsentation of code at any moment for editing.</li>
+<li>assembled main module (with merged local dependencies when configured)</li>
+<li>generated <code>__init__.py</code></li>
+<li>interface files (<code>cli.py</code>, <code>routes.py</code>, <code>streamlit.py</code>, <code>mcp_server.py</code>) when present</li>
+<li><code>setup.py</code> and generated pyproject metadata snapshot</li>
+<li>README/docs/artifacts/tests payload intended for package distribution</li>
 </ul>
-<p>This setup allows local development to occur seamlessly while maintaining version control and enabling easy distribution through remote storages.</p>
-<h3 id="code-representation">Code Representation</h3>
-<p>Highly automated package creation is achieved by decoupling the code representation used for editing from the one stored in the final package. This decoupling enables automation in the packaging pipeline, allowing flexible transformations between the two states. For more details, see <a href="https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#inputs-and-outputs-of-ppr">Inputs and Outputs of PPR</a>.</p>
-<p><img alt="" src="../images/package_auto_assembler-modular_design.png" /></p>
-<p>The diagram above showcases how Python code can be structured for modularity, as well as the distinctions between editable code and its packaged form when using <code>package-auto-assembler</code>.</p>
-<h3 id="package-structure">Package Structure</h3>
-<p>This diagram demonstrates the internal wiring of a package, enabling a combination of design patterns for maximum flexibility, reusability, and ease of use. It supports both the creation and consumption of packages with <code>package-auto-assembler</code>.</p>
-<p><img alt="" src="../images/package_auto_assembler-package_structure.png" /></p>
-<h3 id="possible-package-types">Possible Package Types</h3>
-<h4 id="basic-module">Basic Module</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_1.png" /></p>
+<p>Why this exists:
+- isolate packaging from editable source layout
+- ensure deterministic build inputs
+- provide inspectable intermediate state for debugging</p>
+<p>Debug tip:
+- use <code>--keep-temp-files</code> with <code>test-install</code> to inspect staged files before cleanup.</p>
+<h2 id="from-unfolded-state-to-packaged-state">From Unfolded State To Packaged State</h2>
+<p>In unfolded repo state, package data is distributed across multiple directories (<code>python_modules</code>, <code>components</code>, <code>cli</code>, <code>api_routes</code>, <code>streamlit</code>, <code>mcp</code>, <code>extra_docs</code>, <code>artifacts</code>, <code>tests</code>, <code>.paa</code>).</p>
+<p>Packaging converts this into package-internal structure:</p>
 <ul>
-<li><code>Definition</code>: A single package_name.py file with no local dependencies or a single dependency wired for packaging.</li>
-<li><code>Best Use Case</code>: Simple packages or selectively bundling one local dependency.</li>
+<li>runtime package code</li>
+<li>optional interface entry modules</li>
+<li>optional docs site and artifacts</li>
+<li>tracking payload under <code>.paa.tracking</code> for reconstructing/editing later</li>
 </ul>
-<h4 id="unintegrated-multi-component">Unintegrated Multi-Component</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_2.png" /></p>
+<p>This conversion is the core “assembly” step that bridges development ergonomics and distribution ergonomics.</p>
+<h2 id="structure-comparison-unfolded-vs-packaged">Structure Comparison: Unfolded vs Packaged</h2>
+<h3 id="unfolded-structure-ppr-workspace">Unfolded Structure (PPR workspace)</h3>
+<pre><code class="language-text">.
+├── .paa.config
+├── .paa/
+│   ├── tracking/
+│   │   ├── lsts_package_versions.yml
+│   │   └── version_logs.csv
+│   ├── release_notes/
+│   │   └── &lt;package_name&gt;.md
+│   ├── requirements/
+│   │   └── requirements_&lt;package_name&gt;.txt
+│   ├── pyproject/
+│   │   └── &lt;package_name&gt;.toml
+│   └── docs/
+│       └── &lt;package_name&gt;*.md
+├── python_modules/
+│   ├── &lt;package_name&gt;.py
+│   └── components/
+│       └── &lt;package_name&gt;/
+│           ├── dep_1.py
+│           └── subdir/
+│               └── dep_2.py
+├── cli/
+│   └── &lt;package_name&gt;.py
+├── api_routes/
+│   └── &lt;package_name&gt;.py
+├── streamlit/
+│   └── &lt;package_name&gt;.py
+├── mcp/
+│   └── &lt;package_name&gt;.py
+├── example_notebooks/
+│   └── &lt;package_name&gt;.ipynb
+├── extra_docs/
+│   └── &lt;package_name&gt;/
+│       ├── *.md / *.ipynb
+│       └── subfolders...
+├── artifacts/
+│   └── &lt;package_name&gt;/
+├── drawio/
+│   └── &lt;package_name&gt;.drawio
+├── skills/
+│   └── &lt;package_name&gt;/
+│       └── &lt;skill_name&gt;/SKILL.md
+└── tests/
+    └── &lt;package_name&gt;/
+</code></pre>
+<h3 id="packaged-structure-installed-package">Packaged Structure (installed package)</h3>
+<pre><code class="language-text">&lt;package_name&gt;/
+├── __init__.py
+├── &lt;package_name&gt;.py
+├── cli.py
+├── routes.py
+├── streamlit.py
+├── mcp_server.py
+├── README.md
+├── LICENSE
+├── NOTICE
+├── artifacts/
+│   └── ...
+├── tests/
+│   └── ...
+└── .paa/
+    └── tracking/
+        ├── .paa.config
+        ├── notebook.ipynb
+        ├── pyproject.toml
+        ├── release_notes.md
+        ├── package_mapping.json
+        ├── package_licenses.json
+        ├── lsts_package_versions.yml
+        ├── version_logs.csv
+        ├── extra_docs/
+        ├── skills/
+        ├── git/
+        └── git_repo/
+</code></pre>
+<h2 id="merging-local-dependencies-into-one-module">Merging Local Dependencies Into One Module</h2>
+<p>One of the core packaging transformations is merging local dependency components into the package module before build.</p>
+<p>Why this exists:
+- development can stay modular in unfolded repo state
+- packaged output remains a single-module package shape expected by PAA assembly rules
+- dependency extraction and packaging become more deterministic at build time</p>
+<p>How it is used conceptually:
+- source module comes from <code>module_dir/&lt;package&gt;.py</code>
+- local components come from <code>dependencies_dir</code> when referenced by the package module
+- packaging step composes these into one staged module in temporary setup state</p>
+<p>Minimal example:</p>
+<p><code>python_modules/my_package.py</code> (before merge)</p>
+<pre><code class="language-python">&quot;&quot;&quot;
+Simple package example.
+&quot;&quot;&quot;
+
+import requests
+from .components.local_dependency_1 import normalize_name
+
+def build_payload(name: str) -&gt; dict:
+    return {&quot;name&quot;: normalize_name(name)}
+</code></pre>
+<p><code>python_modules/components/local_dependency_1.py</code> (before merge)</p>
+<pre><code class="language-python">import requests
+import re
+
+def normalize_name(name: str) -&gt; str:
+    _ = requests.__name__
+    cleaned = re.sub(r&quot;\s+&quot;, &quot; &quot;, name.strip())
+    return cleaned.lower()
+</code></pre>
+<p><code>setup_dir/my_package.py</code> (after merge into one file)</p>
+<pre><code class="language-python">&quot;&quot;&quot;
+Simple package example.
+&quot;&quot;&quot;
+
+import requests
+import re
+
+def normalize_name(name: str) -&gt; str:
+    _ = requests.__name__
+    cleaned = re.sub(r&quot;\s+&quot;, &quot; &quot;, name.strip())
+    return cleaned.lower()
+
+def build_payload(name: str) -&gt; dict:
+    return {&quot;name&quot;: normalize_name(name)}
+</code></pre>
+<p>Merge assumptions shown above:
+- component import lines are removed from the main module
+- overlapping imports from main module and components are deduplicated
+- module docstring from main module is preserved in assembled output</p>
+<h2 id="why-single-module-packaging">Why Single-Module Packaging</h2>
+<p>PAA uses single-module packaged output to keep packaging behavior deterministic and operationally simple.</p>
+<p>Practical benefits:
+- one canonical packaged code boundary (assembled module)
+- stable import surface for package interfaces
+- deterministic dependency extraction from assembled module plus interface files
+- fewer internal import-graph failure modes in packaged state
+- clearer unfold/checkpoint reconstruction from packaged artifacts</p>
+<p>Important constraints:
+- component modules are intended as development-time building blocks
+- cross-component wiring should be routed through the main module
+- interface files should import from packaged module namespace, not component file paths
+- selected components are validated during merge and packaging fails if they import other local components</p>
+<p>Practical effect:
+- unfolded structure stays readable and maintainable for development
+- packaged structure remains consistent and portable for distribution/install</p>
+<h2 id="underlying-python-tooling">Underlying Python Tooling</h2>
+<p>PAA orchestrates existing Python tooling rather than replacing build standards:</p>
 <ul>
-<li><code>Definition</code>: Multiple components bundled into a single package, but package_name.py does not integrate them or contain additional code.</li>
-<li><code>Best Use Case</code>: Bundling multiple components without internal integration.</li>
+<li><code>setuptools</code> for package build definitions (<code>setup.py</code>)</li>
+<li><code>wheel</code>/sdist build process for distributable artifacts</li>
+<li><code>pip</code> for local installation in <code>test-install</code></li>
+<li><code>mkdocs</code> (and material/plugins) for docs-site build when enabled</li>
+<li>dependency/security/license validation tooling integrated into packaging flow</li>
 </ul>
-<h4 id="integrated-multi-component">Integrated Multi-Component</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_3.png" /></p>
+<p>PAA’s value is orchestration and automation around these tools in a multi-package repository workflow.</p>
+<h2 id="checkpoints-and-packaged-history-brief">Checkpoints And Packaged History (Brief)</h2>
+<p>Packaging can include checkpoint history payload used for later restore/checkout workflows.
+<code>make-package</code> applies packaged-history sanitization rules (for example excluding local <code>0.0.0</code> history in packaged output).</p>
+<p>For details, workflows, and prune/checkout semantics, see:
+- <code>concepts/checkpoint_history.md</code></p>
+<h2 id="related-docs">Related Docs</h2>
 <ul>
-<li><code>Definition</code>: Multiple independent components integrated into a tool that manages data flow and provides a single interface, allowing for post-packaging overwrites.</li>
-<li><code>Best Use Case</code>: Complex packages requiring modularity and flexibility.</li>
-</ul>
-<h4 id="command-line-interface-monolithmulti-component">Command Line Interface + Monolith/Multi-Component</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_4.png" /></p>
-<ul>
-<li><code>Definition</code>: Code is reshaped into CLI for interaction beyond direct imports.</li>
-<li><code>Best Use Case</code>: Applications where CLI is preferred for easier testing, debugging, and usage.</li>
-</ul>
-<h4 id="application-interfaces-monolithmulti-component">Application Interfaces + Monolith/Multi-Component</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_5.png" /></p>
-<ul>
-<li><code>Definition</code>: Decoupled route definitions stored within a package, enabling external application logic to use these routes to extend capabilities as well as application definitions.</li>
-<li><code>Best Use Case</code>: Simplified API deployment using packages as application extensions or storage for application code.</li>
-</ul>
-<h4 id="static-documentation">Static Documentation</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_6.png" /></p>
-<ul>
-<li><code>Definition</code>: Documentation stored alongside code, viewable through a generated MkDocs static site.</li>
-<li><code>Best Use Case</code>: Easily accessible, structured documentation for users and developers.</li>
-</ul>
-<h4 id="basic-artifact-storage">Basic Artifact Storage</h4>
-<p><img alt="" src="../images/package_auto_assembler-pattern_7.png" /></p>
-<ul>
-<li><code>Definition</code>: Packages that store files or link to files, allowing them to be downloaded with the package or post-installation for easy system integration.</li>
-<li><code>Best Use Case</code>: Managing and distributing additional resources or configuration files.</li>
+<li>PPR onboarding and repository setup: <code>concepts/python_packaging_repo.md</code></li>
+<li>Preflight checks before build: <code>concepts/prepackaging_todo.md</code></li>
+<li>Metadata mapping: <code>components/package_metadata.md</code></li>
+<li>Artifacts behavior: <code>components/artifacts.md</code></li>
 </ul>
 
 
