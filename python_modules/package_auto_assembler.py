@@ -1009,7 +1009,7 @@ class PackageAutoAssembler:
 
             skills_dir = os.path.join("skills", self.module_name)
             if os.path.exists(skills_dir):
-                artifacts_filepaths['.paa.tracking/skills'] = skills_dir
+                artifacts_filepaths['.paa.tracking/skills'] = f"skills/{self.module_name}"
 
             if (self.tests_dir is not None\
                 and os.path.exists(self.tests_dir)):
@@ -1315,7 +1315,8 @@ class PackageAutoAssembler:
             if skip_deps_install:
                 list_of_cmds.append("--no-deps")
 
-            list_of_cmds.append(os.path.join('dist', wheel_file))
+            # Use POSIX-style wheel path for stable cross-platform command args.
+            list_of_cmds.append(f"dist/{wheel_file}")
 
             subprocess.run(list_of_cmds, check=True)
 

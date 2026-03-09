@@ -565,7 +565,7 @@ class PprHandler:
         repo_paa_config_path = ".paa.config"
 
         with open(package_paa_config_path, 'r', encoding = "utf-8") as file:
-            paa_config = yaml.safe_load(file)
+            paa_config = yaml.safe_load(file) or {}
 
         if os.path.exists(repo_paa_config_path):
             with open(repo_paa_config_path, 'r', encoding = "utf-8") as file:
@@ -1178,11 +1178,18 @@ class PprHandler:
 
         if os.path.exists(repo_paa_config_path):
             with open(repo_paa_config_path, 'r', encoding = "utf-8") as file:
-                repo_paa_config = yaml.safe_load(file)
+                repo_paa_config = yaml.safe_load(file) or {}
 
             paa_config.update(repo_paa_config)
         else:
             return 1
+
+        for key, default_value in PAA_PATH_DEFAULTS.items():
+            value = paa_config.get(key)
+            if value is None:
+                paa_config[key] = default_value
+            elif isinstance(value, str) and value.strip() == "":
+                paa_config[key] = default_value
 
         files_to_remove = {
             "main_module" : {
@@ -1388,11 +1395,18 @@ class PprHandler:
 
         if os.path.exists(repo_paa_config_path):
             with open(repo_paa_config_path, 'r', encoding = "utf-8") as file:
-                repo_paa_config = yaml.safe_load(file)
+                repo_paa_config = yaml.safe_load(file) or {}
 
             paa_config.update(repo_paa_config)
         else:
             return 1
+
+        for key, default_value in PAA_PATH_DEFAULTS.items():
+            value = paa_config.get(key)
+            if value is None:
+                paa_config[key] = default_value
+            elif isinstance(value, str) and value.strip() == "":
+                paa_config[key] = default_value
 
         files_to_rename = {
             "main_module" : {

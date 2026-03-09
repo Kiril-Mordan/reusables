@@ -1,5 +1,6 @@
 import logging
 import shutil
+import os
 from pathlib import Path
 import importlib.resources as pkg_resources
 import yaml
@@ -41,7 +42,12 @@ class SkillsHandler:
         return None
 
     def _codex_user_skills_root(self) -> Path:
-        return (Path.home() / ".agents" / "skills").resolve()
+        home_override = os.environ.get("HOME")
+        if home_override:
+            home_path = Path(home_override)
+        else:
+            home_path = Path.home()
+        return (home_path / ".agents" / "skills").resolve()
 
     def _detect_available_targets(self) -> list:
         targets = []
