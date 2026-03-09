@@ -8,22 +8,6 @@ In its simplest form, adding a new `.py` file (or modifying an existing one) tri
 
 *Diagram: Automated flow for packaging and publishing Python packages using PPR.*
 
-### Inputs and Outputs of PPR
-
-PPR produces Python packages with the structure shown below when all optional files are present. You can find more details about these files [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#7-assembling-setup-directory).
-
-Each package can include optional features:
-
-- [Store files](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#13-adding-artifacts-to-packages) - Include files or links to files within the package.
-- [CLI interface](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#10-adding-cli-interfaces) - Add command-line utilities to the package.
-- [FastAPI routes](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#11-adding-routes-and-running-fastapi-application) - Embed API routes to run FastAPI applications from packages.
-- [Streamlit apps](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#12-adding-ui-and-running-streamlit-application) - Include interactive UIs.
-- [MkDocs pages](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#16-making-simple-mkdocs-site) - Generate simple static documentation websites for each package.
-
-![Publishing Repo Input/Output](package_auto_assembler-input_output_files.png)
-
-*Diagram: The structure includes core package files and additional optional components such as CLI interfaces, FastAPI routes, or documentation.*
-
 
 ## Basic usage
 
@@ -44,8 +28,10 @@ To prepare your code for packaging:
 1. Create/find a `.py` file in `module_dir` with a name of the package (use underscores (`_`) instead of hyphens (`-`) and spaces)
 
 2. Make sure the module you're trying to create/edit follows basic requirements, described [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#1-preparing-code-for-packaging)
+   (or use `concepts/prepackaging_todo.md` as local preflight checklist)
 
 3. Add/edit [optional files](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#3-preparing-files-for-packaging) and [additional documentation](https://kiril-mordan.github.io/reusables/package_auto_assembler/description/#2-preparing-documentation-for-packaging). 
+4. Define package metadata in module-level `__package_metadata__` as needed (see `components/package_metadata.md`).
 
 
 **Note**: Relevant names of the directories, like `module_dir`, could be checked in `.paa.config` file from your instance of a packaging repository. This and the following steps assume that an instance of a packaging repository was already created or pulled. If not, to setup a new ppr take a look [here](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#setting-up-new-ppr). 
@@ -90,6 +76,7 @@ paa --help
 ```
 
 Or visit [`package-auto-assembler` documentation](https://kiril-mordan.github.io/reusables/package_auto_assembler/).
+For documentation strategy across README, MkDocs, and release notes, see `concepts/documentation_flow.md`.
 
 ---
 
@@ -201,4 +188,3 @@ To trigger the workflow:
 3. Specify the package name in the `Package Name` field (use underscores (`_`) instead of hyphens (`-`)).
 
 ---
-

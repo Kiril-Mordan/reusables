@@ -1,5 +1,27 @@
 # Release notes
 
+### 1.0.2
+
+    - mcp as first-class interface with init/run and tool discovery
+
+    - git-backed checkpoint history with create/list/show/prune/checkout and packaging integration
+
+    - dependency compatibility checks expanded (static + full resolver) with improved make-package/test-install defaults
+
+    - per-package LICENSE/NOTICE handling improved across package/unfold flows
+
+    - pyproject snapshots under .paa/pyproject with extraction support
+
+    - safer unfold/remove behavior in multi-package repos with better default-path restoration
+
+    - enforced component assembly rule to block component-to-component imports
+
+    - replaced pkg_resources usage with importlib.metadata for setuptools 82+ compatibility
+
+    - docs pipeline fixes for package-scoped cleanup, extra_docs notebook/subfolder handling, empty mkdocs pages, and stale description suppression
+
+    - documentation overhaul across interfaces/components/concepts including packaging process and prepackaging checklist.
+
 ### 0.5.29
 
     - support for some visualizations generated from jupyter notebook to be displayed in mkdocs site
