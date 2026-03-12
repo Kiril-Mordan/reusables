@@ -1,5 +1,6 @@
 import nbformat
 import json
+from pathlib import Path
 
 from python_modules.components.paa_deps.long_doc_handler import LongDocHandler
 
@@ -120,3 +121,66 @@ def test_long_doc_handler_accepts_notebook_cells_with_id_field(tmp_path):
 
     rendered = md_path.read_text(encoding="utf-8")
     assert "Title" in rendered
+
+
+def test_prep_extra_docs_keeps_notebook_plot_images_in_docs_root(tmp_path):
+    extra_docs_dir = tmp_path / "extra_docs" / "mypkg" / "subfolder"
+    extra_docs_dir.mkdir(parents=True)
+    docs_dir = tmp_path / ".paa" / "docs"
+
+    notebook_path = extra_docs_dir / "myfile.ipynb"
+    notebook = nbformat.v4.new_notebook(
+        cells=[
+            nbformat.v4.new_code_cell("print('plot')"),
+        ]
+    )
+    notebook.cells[0]["outputs"] = [
+        nbformat.v4.new_output(
+            "display_data",
+            data={"image/png": "YQ=="},
+            metadata={},
+        )
+    ]
+    notebook.cells[0]["execution_count"] = 1
+    notebook_path.write_text(nbformat.writes(notebook), encoding="utf-8")
+
+    handler = LongDocHandler(module_name="mypkg")
+    handler.prep_extra_docs(
+        package_name="mypkg",
+        extra_docs_dir=str(tmp_path / "extra_docs" / "mypkg"),
+        docs_path=str(docs_dir),
+    )
+
+    markdown_path = docs_dir / "mypkg-subfolder" / "myfile.md"
+    image_path = docs_dir / "mypkg_ipynb_cell0_out0.png"
+
+    assert markdown_path.exists()
+    assert image_path.exists()
+    assert not (docs_dir / "mypkg-subfolder" / "mypkg_ipynb_cell0_out0.png").exists()
+
+    rendered = markdown_path.read_text(encoding="utf-8")
+    expected_ref = f"../{image_path.name}"
+    assert str(expected_ref) in rendered
+
+
+def test_prep_extra_docs_rewrites_nested_markdown_refs_to_root_images(tmp_path):
+    extra_docs_dir = tmp_path / "extra_docs" / "mypkg" / "concepts"
+    extra_docs_dir.mkdir(parents=True)
+    docs_dir = tmp_path / ".paa" / "docs"
+    docs_dir.mkdir(parents=True)
+
+    (docs_dir / "mypkg-usage.png").write_bytes(b"png")
+    (extra_docs_dir / "guide.md").write_text(
+        "![plot](mypkg-usage.png)\n",
+        encoding="utf-8",
+    )
+
+    handler = LongDocHandler(module_name="mypkg")
+    handler.prep_extra_docs(
+        package_name="mypkg",
+        extra_docs_dir=str(tmp_path / "extra_docs" / "mypkg"),
+        docs_path=str(docs_dir),
+    )
+
+    rendered = (docs_dir / "mypkg-concepts" / "guide.md").read_text(encoding="utf-8")
+    assert "../mypkg-usage.png" in rendered

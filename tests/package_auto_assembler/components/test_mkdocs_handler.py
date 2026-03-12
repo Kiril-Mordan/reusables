@@ -49,3 +49,23 @@ def test_mkdocs_handler_always_writes_nav_intro(tmp_path):
     mkdocs_yml = (project_dir / "mkdocs.yml").read_text(encoding="utf-8")
     assert "nav:" in mkdocs_yml
     assert "- Intro: index.md" in mkdocs_yml
+
+
+def test_generate_markdown_for_images_skips_referenced_images(tmp_path):
+    project_dir = tmp_path / "project"
+    docs_dir = project_dir / "docs"
+    docs_dir.mkdir(parents=True)
+    (docs_dir / "index.md").write_text("intro", encoding="utf-8")
+    (docs_dir / "referenced.png").write_bytes(b"x")
+    (docs_dir / "standalone.png").write_bytes(b"y")
+
+    handler = MkDocsHandler(
+        package_name="m",
+        docs_file_paths={},
+        project_name=str(project_dir),
+        referenced_image_names={"referenced.png"},
+    )
+    handler.generate_markdown_for_images()
+
+    assert not (docs_dir / "referenced.md").exists()
+    assert (docs_dir / "standalone.md").exists()

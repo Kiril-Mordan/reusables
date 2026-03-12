@@ -110,13 +110,27 @@ class LongDocHandler:
 
         return pypi_link
 
-    def _extract_pngs_and_patch_md(self, notebook_node, md_text: str, output_path: str) -> str:
+    def _to_markdown_path(self, path: str) -> str:
+        """
+        Normalize generated markdown paths to POSIX separators.
+        """
+
+        return path.replace("\\", "/")
+
+    def _extract_pngs_and_patch_md(self,
+                                   notebook_node,
+                                   md_text: str,
+                                   output_path: str,
+                                   image_output_dir: str = None) -> str:
         """
         Extract image/png outputs from a notebook and save them next to output_path.
         Patch markdown so any nbconvert-style refs like output_{cell}_{out}.png
         point to the actual extracted filenames.
         """
-        out_dir = os.path.dirname(output_path)
+        markdown_dir = os.path.dirname(output_path)
+        out_dir = image_output_dir or markdown_dir
+        out_dir = os.path.abspath(out_dir)
+        markdown_dir = os.path.abspath(markdown_dir)
         os.makedirs(out_dir, exist_ok=True)
 
         # Find synthetic refs in markdown produced by MarkdownExporter
@@ -145,7 +159,9 @@ class LongDocHandler:
                 # If markdown references the synthetic name, map it
                 synthetic_name = f"output_{cell_i}_{out_i}.png"
                 if synthetic_name in synthetic_refs:
-                    replacements[synthetic_name] = actual_name
+                    replacements[synthetic_name] = self._to_markdown_path(
+                        os.path.relpath(actual_path, start=markdown_dir)
+                    )
 
         # Patch markdown
         for old, new in replacements.items():
@@ -223,7 +239,10 @@ class LongDocHandler:
             return nbformat.from_dict(notebook_data)
 
 
-    def convert_notebook_to_md(self, notebook_path: str = None, output_path: str = None):
+    def convert_notebook_to_md(self,
+                               notebook_path: str = None,
+                               output_path: str = None,
+                               image_output_dir: str = None):
         """
         Convert notebook to markdown WITHOUT executing.
         Also extracts any image/png outputs as files next to the markdown.
@@ -239,7 +258,12 @@ class LongDocHandler:
             notebook_for_export = self._prepare_notebook_for_markdown(notebook_node)
 
             md_text = self._export_md_without_nbconvert_extraction(notebook_for_export, output_path)
-            md_text = self._extract_pngs_and_patch_md(notebook_for_export, md_text, output_path)
+            md_text = self._extract_pngs_and_patch_md(
+                notebook_for_export,
+                md_text,
+                output_path,
+                image_output_dir=image_output_dir
+            )
 
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             with open(output_path, "w", encoding="utf-8") as fh:
@@ -258,6 +282,7 @@ class LongDocHandler:
         self,
         notebook_path: str = None,
         output_path: str = None,
+        image_output_dir: str = None,
         timeout: int = None,
         kernel_name: str = None,
     ):
@@ -285,7 +310,12 @@ class LongDocHandler:
             notebook_for_export = self._prepare_notebook_for_markdown(notebook_node)
 
             md_text = self._export_md_without_nbconvert_extraction(notebook_for_export, output_path)
-            md_text = self._extract_pngs_and_patch_md(notebook_for_export, md_text, output_path)
+            md_text = self._extract_pngs_and_patch_md(
+                notebook_for_export,
+                md_text,
+                output_path,
+                image_output_dir=image_output_dir
+            )
 
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             with open(output_path, "w", encoding="utf-8") as fh:
@@ -425,17 +455,22 @@ class LongDocHandler:
 
     def _copy_extra_docs_item(self,
                               source_path: str,
-                              destination_path: str):
+                              destination_path: str,
+                              docs_root_path: str = None):
 
         if not os.path.exists(source_path):
             return
+
+        if docs_root_path is None:
+            docs_root_path = destination_path if os.path.isdir(destination_path) else os.path.dirname(destination_path)
 
         if os.path.isdir(source_path):
             os.makedirs(destination_path, exist_ok=True)
             for item_name in os.listdir(source_path):
                 self._copy_extra_docs_item(
                     source_path=os.path.join(source_path, item_name),
-                    destination_path=os.path.join(destination_path, item_name)
+                    destination_path=os.path.join(destination_path, item_name),
+                    docs_root_path=docs_root_path
                 )
             return
 
@@ -443,13 +478,55 @@ class LongDocHandler:
             output_path = destination_path.replace(".ipynb", ".md")
             self.convert_notebook_to_md(
                 notebook_path=source_path,
-                output_path=output_path
+                output_path=output_path,
+                image_output_dir=os.path.dirname(os.path.dirname(destination_path))
             )
             return
 
         if source_path.endswith(".md") or source_path.endswith(".png"):
             os.makedirs(os.path.dirname(destination_path), exist_ok=True)
-            shutil.copy(source_path, destination_path)
+            if source_path.endswith(".md"):
+                self._copy_markdown_with_root_image_refs(
+                    source_path=source_path,
+                    destination_path=destination_path,
+                    docs_root_path=docs_root_path
+                )
+            else:
+                shutil.copy(source_path, destination_path)
+
+    def _copy_markdown_with_root_image_refs(self,
+                                            source_path: str,
+                                            destination_path: str,
+                                            docs_root_path: str):
+
+        with open(source_path, "r", encoding="utf-8") as md_file:
+            content = md_file.read()
+
+        image_pattern = re.compile(r"(!\[.*?\]\()(.*?)(\))")
+        destination_dir = os.path.dirname(os.path.abspath(destination_path))
+        docs_root_path = os.path.abspath(docs_root_path)
+
+        def replace_match(match):
+            original_path = match.group(2)
+
+            if os.path.isabs(original_path) or "://" in original_path:
+                return match.group(0)
+
+            candidate_in_destination = os.path.normpath(os.path.join(destination_dir, original_path))
+            candidate_in_root = os.path.normpath(os.path.join(docs_root_path, os.path.basename(original_path)))
+
+            if os.path.exists(candidate_in_destination) or not os.path.exists(candidate_in_root):
+                return match.group(0)
+
+            rewritten_path = self._to_markdown_path(
+                os.path.relpath(candidate_in_root, start=destination_dir)
+            )
+            return f"{match.group(1)}{rewritten_path}{match.group(3)}"
+
+        updated_content = image_pattern.sub(replace_match, content)
+
+        with open(destination_path, "w", encoding="utf-8") as md_file:
+            md_file.write(updated_content)
 
     def clear_package_docs(self,
                            package_name: str,

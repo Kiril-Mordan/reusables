@@ -2,6 +2,8 @@
 
 ### 1.0.3
 
+    - fix defaults for config paths across cli, ppr handler, and ci workflows
+
 ### 1.0.2
 
     - mcp as first-class interface with init/run and tool discovery

@@ -7,13 +7,13 @@ With `package-auto-assembler`, you can simplify the package creation process to 
 
 ## Key features
 
-- [Set up new Python packaging repositories](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/) for Github and Azure DevOps.
-- [Create and validate packages](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/) with `make-package` and `test-install`.
-- [Check module dependencies](https://kiril-mordan.github.io/reusables/package_auto_assembler/dependency_management/) for vulnerabilities, compatibility, and license constraints.
+- [Set up new Python packaging repositories](https://kiril-mordan.github.io/reusables/package_auto_assembler/python_packaging_repo/#setting-up-new-ppr) for Github and Azure DevOps.
+- [Create and validate packages](https://kiril-mordan.github.io/reusables/package_auto_assembler/packaging_process/#main-commands-and-what-they-do) with `make-package` and `test-install`.
+- [Check module dependencies](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#checking-dependencies) for vulnerabilities, compatibility, and license constraints.
 - [Run and expose interfaces](https://kiril-mordan.github.io/reusables/package_auto_assembler/mcp/) through MCP, and via [FastAPI](https://kiril-mordan.github.io/reusables/package_auto_assembler/fastapi/) or [Streamlit](https://kiril-mordan.github.io/reusables/package_auto_assembler/interfaces/streamlit/) integrations.
-- [Extract artifacts and files](https://kiril-mordan.github.io/reusables/package_auto_assembler/artifacts/) packaged alongside code.
-- [Show detailed module information](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli/) for installed packages built with PAA.
-- [Create and navigate package history checkpoints](https://kiril-mordan.github.io/reusables/package_auto_assembler/checkpoint_history/) including list/show/prune/checkout flows.
+- [Extract artifacts and files](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#extracting-files-from-packages) packaged alongside code.
+- [Show detailed module information](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#show-modules-info) for installed packages built with PAA.
+- [Create and navigate package history checkpoints](https://kiril-mordan.github.io/reusables/package_auto_assembler/cli_tools/#history-flow) including list/show/prune/checkout flows.
 
 """
 
@@ -850,6 +850,12 @@ class PackageAutoAssembler:
                     doc_files = []
 
                 docs_file_paths = {}
+                image_path_replacements = {}
+                referenced_image_paths = set()
+                referenced_image_names = set()
+
+                def _markdown_image_target(image_name: str) -> str:
+                    return f"images/{os.path.basename(image_name)}"
 
                 package_docs = [doc_file for doc_file in doc_files \
                     if doc_file.startswith(package_name)]
@@ -872,30 +878,55 @@ class PackageAutoAssembler:
                         for package_doc_f in package_docs:
 
                             if package_doc_f.endswith(".md"):
-                                additional_images += LongDocHandler().get_referenced_images(
-                                    md_file_path = os.path.join(self.docs_path,
-                                        package_doc, package_doc_f)
+                                md_file_path = os.path.join(self.docs_path, package_doc, package_doc_f)
+                                referenced_images = LongDocHandler().get_referenced_images(
+                                    md_file_path = md_file_path
                                 )
+                                image_path_replacements.update({
+                                    img: _markdown_image_target(img)
+                                    for img in referenced_images
+                                })
+                                for img in referenced_images:
+                                    referenced_image_path = os.path.normpath(
+                                        os.path.join(os.path.dirname(md_file_path), img)
+                                    )
+                                    referenced_image_paths.add(referenced_image_path)
+                                    referenced_image_basename = os.path.basename(referenced_image_path)
+                                    referenced_image_names.add(referenced_image_basename)
+                                    if referenced_image_basename.startswith(f"{package_name}-"):
+                                        referenced_image_names.add(referenced_image_basename[len(package_name) + 1:])
+                                    docs_file_paths[referenced_image_path] = _markdown_image_target(img)
                     else:
 
                         if package_doc.endswith(".md"):
-                            additional_images += LongDocHandler().get_referenced_images(
-                                md_file_path = os.path.join(self.docs_path,
-                                    package_doc)
+                            md_file_path = os.path.join(self.docs_path, package_doc)
+                            referenced_images = LongDocHandler().get_referenced_images(
+                                md_file_path=md_file_path
                             )
+                            additional_images += referenced_images
+                            image_path_replacements.update({
+                                img: _markdown_image_target(img)
+                                for img in referenced_images
+                            })
+                            for img in referenced_images:
+                                referenced_image_path = os.path.normpath(
+                                    os.path.join(os.path.dirname(md_file_path), img)
+                                )
+                                referenced_image_paths.add(referenced_image_path)
+                                referenced_image_basename = os.path.basename(referenced_image_path)
+                                referenced_image_names.add(referenced_image_basename)
+                                if referenced_image_basename.startswith(f"{package_name}-"):
+                                    referenced_image_names.add(referenced_image_basename[len(package_name) + 1:])
+                                docs_file_paths[referenced_image_path] = _markdown_image_target(img)
 
-                # remove docs path from images path
-                #additional_images = [os.path.relpath(p, self.docs_path) for p in additional_images]
-
-                image_path_replacements = {}
                 for img in additional_images:
-                    docs_file_paths[os.path.join(self.docs_path,img)] = os.path.join(
-                        "images",
-                        os.path.basename(img))
-                    image_path_replacements[
-                        img] = os.path.join(
-                        "images",
-                        os.path.basename(img))
+                    docs_file_paths[os.path.join(self.docs_path, img)] = _markdown_image_target(img)
+                    image_path_replacements[img] = _markdown_image_target(img)
+
+                for referenced_image_path in referenced_image_paths:
+                    docs_file_paths[referenced_image_path] = _markdown_image_target(
+                        referenced_image_path
+                    )
 
                 if self.docs_file_paths:
                     docs_file_paths.update(self.docs_file_paths)
@@ -913,6 +944,7 @@ class PackageAutoAssembler:
                     project_name = f"{package_name}_temp_mkdocs",
                     package_name = package_name,
                     docs_file_paths = docs_file_paths,
+                    referenced_image_names = referenced_image_names,
                     module_docstring = docstring,
                     pypi_badge = pypi_link,
                     license_badge=self.license_badge,

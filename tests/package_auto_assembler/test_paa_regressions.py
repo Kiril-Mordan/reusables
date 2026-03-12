@@ -2,6 +2,7 @@ from pathlib import Path
 
 import yaml
 
+from python_modules.package_auto_assembler import PackageAutoAssembler
 from python_modules.components.paa_deps.local_dependencies_handler import LocalDependaciesHandler
 from python_modules.components.paa_deps.long_doc_handler import LongDocHandler
 from python_modules.components.paa_deps.mkdocs_handler import MkDocsHandler
@@ -101,6 +102,123 @@ def test_mkdocs_nav_skips_empty_markdown(tmp_path):
     assert "Guides:" in nav
     assert "B: b.md" in nav
     assert "A: a.md" not in nav
+
+
+def test_make_mkdocs_site_resolves_nested_extra_docs_image_paths(tmp_path, monkeypatch):
+    docs_dir = tmp_path / ".paa" / "docs"
+    nested_dir = docs_dir / "mypkg-guides"
+    nested_dir.mkdir(parents=True)
+
+    image_path = docs_dir / "mypkg_ipynb_cell12_out0.png"
+    image_path.write_bytes(b"png")
+    (nested_dir / "benchmark_25_example_functions.md").write_text(
+        "![plot](../mypkg_ipynb_cell12_out0.png)\n",
+        encoding="utf-8",
+    )
+
+    captured = {}
+
+    class FakeMkDocsHandler:
+        def __init__(self, **kwargs):
+            captured["docs_file_paths"] = dict(kwargs["docs_file_paths"])
+            captured["project_name"] = kwargs["project_name"]
+
+        def create_mkdocs_dir(self):
+            pass
+
+        def move_files_to_docs(self, image_path_replacements=None):
+            captured["image_path_replacements"] = dict(image_path_replacements or {})
+
+        def generate_markdown_for_images(self):
+            pass
+
+        def create_index(self):
+            pass
+
+        def create_mkdocs_yml(self):
+            pass
+
+        def build_mkdocs_site(self):
+            pass
+
+    paa = PackageAutoAssembler(
+        module_name="mypkg",
+        module_filepath=str(tmp_path / "python_modules" / "mypkg.py"),
+        docs_path=str(docs_dir),
+        setup_directory=str(tmp_path / "pkg"),
+        add_mkdocs_site=True,
+        mkdocs_class=FakeMkDocsHandler,
+    )
+
+    (tmp_path / "python_modules").mkdir()
+    (tmp_path / "python_modules" / "mypkg.py").write_text('"""Docstring."""\n', encoding="utf-8")
+
+    monkeypatch.setattr(LongDocHandler, "get_pypi_badge", lambda self, module_name: "")
+
+    paa.make_mkdocs_site()
+
+    assert str(image_path) in captured["docs_file_paths"]
+    assert captured["docs_file_paths"][str(image_path)] == "images/mypkg_ipynb_cell12_out0.png"
+    assert captured["image_path_replacements"]["../mypkg_ipynb_cell12_out0.png"] == "images/mypkg_ipynb_cell12_out0.png"
+
+
+def test_make_mkdocs_site_marks_top_level_markdown_images_as_referenced(tmp_path, monkeypatch):
+    docs_dir = tmp_path / ".paa" / "docs"
+    docs_dir.mkdir(parents=True)
+
+    image_path = docs_dir / "mypkg-usage.png"
+    image_path.write_bytes(b"png")
+    (docs_dir / "mypkg-guide.md").write_text(
+        "![plot](mypkg-usage.png)\n",
+        encoding="utf-8",
+    )
+
+    captured = {}
+
+    class FakeMkDocsHandler:
+        def __init__(self, **kwargs):
+            captured["docs_file_paths"] = dict(kwargs["docs_file_paths"])
+            captured["referenced_image_names"] = set(kwargs["referenced_image_names"])
+
+        def create_mkdocs_dir(self):
+            pass
+
+        def move_files_to_docs(self, image_path_replacements=None):
+            captured["image_path_replacements"] = dict(image_path_replacements or {})
+
+        def generate_markdown_for_images(self):
+            pass
+
+        def create_index(self):
+            pass
+
+        def create_mkdocs_yml(self):
+            pass
+
+        def build_mkdocs_site(self):
+            pass
+
+    paa = PackageAutoAssembler(
+        module_name="mypkg",
+        module_filepath=str(tmp_path / "python_modules" / "mypkg.py"),
+        docs_path=str(docs_dir),
+        setup_directory=str(tmp_path / "pkg"),
+        add_mkdocs_site=True,
+        mkdocs_class=FakeMkDocsHandler,
+    )
+
+    (tmp_path / "python_modules").mkdir()
+    (tmp_path / "python_modules" / "mypkg.py").write_text('"""Docstring."""\n', encoding="utf-8")
+
+    monkeypatch.setattr(LongDocHandler, "get_pypi_badge", lambda self, module_name: "")
+
+    paa.make_mkdocs_site()
+
+    assert str(image_path) in captured["docs_file_paths"]
+    assert captured["docs_file_paths"][str(image_path)] == "images/mypkg-usage.png"
+    assert captured["image_path_replacements"]["mypkg-usage.png"] == "images/mypkg-usage.png"
+    assert "mypkg-usage.png" in captured["referenced_image_names"]
+    assert "usage.png" in captured["referenced_image_names"]
 
 
 def test_unfold_package_restores_pyproject_to_dot_paa(tmp_path, monkeypatch):
