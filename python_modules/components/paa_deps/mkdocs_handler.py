@@ -41,6 +41,7 @@ class MkDocsHandler:
     license_badge = attrs.field(default='', type=str)
     source_repo_url = attrs.field(default=None, type=str)
     source_repo_name = attrs.field(default=None, type=str)
+    referenced_image_names = attrs.field(factory=set)
 
     project_name = attrs.field(default="temp_project", type=str)
 
@@ -267,7 +268,8 @@ pip install {package_name.replace("_", "-")}
 
     def generate_markdown_for_images(self,
         package_name: str = None,
-        project_name: str = None):
+        project_name: str = None,
+        referenced_image_names: set = None):
         """
         Generate .md files for each .png file in the specified directory based on naming rules.
 
@@ -282,6 +284,9 @@ pip install {package_name.replace("_", "-")}
         if project_name is None:
             project_name = self.project_name
 
+        if referenced_image_names is None:
+            referenced_image_names = self.referenced_image_names
+
         directory = os.path.join(project_name, "docs")
 
         if not os.path.exists(directory):
@@ -291,6 +296,8 @@ pip install {package_name.replace("_", "-")}
         for filename in os.listdir(directory):
 
             if filename.endswith('.png'):
+                if filename in referenced_image_names:
+                    continue
                 cleaned_name = self._clean_filename(filename, package_name)
                 md_filename = f"{os.path.splitext(cleaned_name)[0]}.md"
 

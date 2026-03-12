@@ -115,6 +115,10 @@ $1 == "feedName:" feed {getline; if ($1 ~ "latestVersion:") {split($1, a, ":"); 
 
 for file in "$PY_FILES_DIR"/*.py; do
     if [ -f "$file" ]; then
+        if ! grep -Eq '^[[:space:]]*__package_metadata__[[:space:]]*=' "$file"; then
+            continue
+        fi
+
         # Extract package name
         package_name=$(basename "$file" .py | sed 's/_/-/g')
         generate_package_links "$package_name"

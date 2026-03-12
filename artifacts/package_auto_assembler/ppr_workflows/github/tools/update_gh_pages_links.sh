@@ -39,6 +39,10 @@ do
         exit 0
     fi
 
+    if ! grep -Eq '^[[:space:]]*__package_metadata__[[:space:]]*=' "$file"; then
+        continue
+    fi
+
     # Extract the base name of the file (without extension)
     base_name=$(basename "$file" .py)
 
@@ -70,4 +74,3 @@ do
 
     echo "- [![MkDocs]($mkdocs_badge)]($url) $pypi_badge $docker_hub_badge"
 done
-

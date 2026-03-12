@@ -170,11 +170,16 @@ class ReleaseNotesHandler:
         if label_name is None:
             label_name = self.label_name
 
-        modified_label_name = label_name.replace("-", "_")
+        accepted_labels = {
+            label_name,
+            label_name.replace("-", "_"),
+            label_name.replace("_", "-"),
+        }
 
-        # This pattern will match messages that start with optional spaces, followed by [<package_name>],
-        # possibly surrounded by spaces, and then any text. It is case-sensitive.
-        pattern = re.compile(rf'\s*\[\s*(?:{re.escape(label_name)}|{re.escape(modified_label_name)})\s*\].*')
+        # Accept either hyphenated or underscored package tags in commit messages.
+        pattern = re.compile(
+            rf'\s*\[\s*(?:{"|".join(re.escape(label) for label in accepted_labels)})\s*\].*'
+        )
 
         # Filter messages that match the pattern
         filtered_messages = [msg for msg in commit_messages if pattern.search(msg)]
