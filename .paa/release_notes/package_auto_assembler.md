@@ -1,5 +1,9 @@
 # Release notes
 
+### 1.0.4
+
+    - fix to a bug that caused diagrams generated in notebook cells to be missed from mkdocs page, if notebook was nested in extra docs
+
 ### 1.0.3
 
     - fix defaults for config paths across cli, ppr handler, and ci workflows
