@@ -857,8 +857,11 @@ class PackageAutoAssembler:
                 def _markdown_image_target(image_name: str) -> str:
                     return f"images/{os.path.basename(image_name)}"
 
-                package_docs = [doc_file for doc_file in doc_files \
-                    if doc_file.startswith(package_name)]
+                package_docs = [
+                    doc_file for doc_file in doc_files
+                    if doc_file == f"{package_name}.md"
+                    or doc_file.startswith(f"{package_name}-")
+                ]
 
                 additional_images = []
 

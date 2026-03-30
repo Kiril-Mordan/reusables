@@ -71,6 +71,12 @@ jobs:
         if: steps.changed-modules.outputs.files != ''
         run: git pull origin main
 
+      - name: Restore checkpoint history repos
+        if: steps.changed-modules.outputs.files != ''
+        run: |
+          chmod +x .github/tools/restore_checkpoint_history.sh
+          .github/tools/restore_checkpoint_history.sh
+
       - name: Assemble and build package
         if: steps.changed-modules.outputs.files != ''
         run: |
@@ -124,6 +130,9 @@ jobs:
 
           git pull origin HEAD:main
 
+          chmod +x .github/tools/snapshot_checkpoint_history.sh
+          .github/tools/snapshot_checkpoint_history.sh
+
           git add .paa README.md
 
           # Check if there are any changes in the working directory
@@ -154,4 +163,3 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./temp_project/site
           destination_dir: "${{ env.LABEL_NAME }}"
-
