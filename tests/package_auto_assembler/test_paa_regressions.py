@@ -218,7 +218,61 @@ def test_make_mkdocs_site_marks_top_level_markdown_images_as_referenced(tmp_path
     assert captured["docs_file_paths"][str(image_path)] == "images/mypkg-usage.png"
     assert captured["image_path_replacements"]["mypkg-usage.png"] == "images/mypkg-usage.png"
     assert "mypkg-usage.png" in captured["referenced_image_names"]
-    assert "usage.png" in captured["referenced_image_names"]
+
+
+def test_make_mkdocs_site_ignores_non_prefixed_package_name_collisions(tmp_path, monkeypatch):
+    docs_dir = tmp_path / ".paa" / "docs"
+    docs_dir.mkdir(parents=True)
+
+    own_doc = docs_dir / "pkg_alpha.md"
+    own_doc.write_text("primary docs\n", encoding="utf-8")
+    colliding_doc = docs_dir / "pkg_alpha_extra.md"
+    colliding_doc.write_text("should stay out\n", encoding="utf-8")
+
+    captured = {}
+
+    class FakeMkDocsHandler:
+        def __init__(self, **kwargs):
+            captured["docs_file_paths"] = dict(kwargs["docs_file_paths"])
+
+        def create_mkdocs_dir(self):
+            pass
+
+        def move_files_to_docs(self, image_path_replacements=None):
+            pass
+
+        def generate_markdown_for_images(self):
+            pass
+
+        def create_index(self):
+            pass
+
+        def create_mkdocs_yml(self):
+            pass
+
+        def build_mkdocs_site(self):
+            pass
+
+    paa = PackageAutoAssembler(
+        module_name="pkg_alpha",
+        module_filepath=str(tmp_path / "python_modules" / "pkg_alpha.py"),
+        docs_path=str(docs_dir),
+        setup_directory=str(tmp_path / "pkg"),
+        add_mkdocs_site=True,
+        mkdocs_class=FakeMkDocsHandler,
+    )
+
+    (tmp_path / "python_modules").mkdir()
+    (tmp_path / "python_modules" / "pkg_alpha.py").write_text('"""Docstring."""\n', encoding="utf-8")
+
+    monkeypatch.setattr(LongDocHandler, "get_pypi_badge", lambda self, module_name: "")
+
+    paa.make_mkdocs_site()
+
+    docs_file_paths = captured["docs_file_paths"]
+    assert str(own_doc) in docs_file_paths
+    assert docs_file_paths[str(own_doc)] == "description.md"
+    assert str(colliding_doc) not in docs_file_paths
 
 
 def test_unfold_package_restores_pyproject_to_dot_paa(tmp_path, monkeypatch):

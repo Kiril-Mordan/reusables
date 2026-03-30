@@ -120,7 +120,7 @@ jobs:
         run: | 
           pip install uv
           uv venv .venv
-          uv pip install -r .paa/requirements_dev.txt
+          uv pip install -r .paa/requirements/requirements_tox.txt
 
       - name: Test with tox
         run: |
