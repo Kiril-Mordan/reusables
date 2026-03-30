@@ -1,0 +1,2 @@
+### example_module.py
+attrs>=22.2.0

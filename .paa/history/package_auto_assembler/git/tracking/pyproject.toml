@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "package-auto-assembler"
+version = "1.0.4"
+description = "A tool to automate package creation within ci based on just .py and optionally .ipynb file."
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["aa-paa-tool", "packaging", "python"]
+classifiers = [
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering",
+  "Development Status :: 5 - Production/Stable"
+]
+dependencies = [
+  "attrs>=22.2.0",
+  "attrsx",
+  "click==8.1.7",
+  "fastapi",
+  "jupyter>=1.1.1",
+  "mcp",
+  "mkdocs-material>=9.5.30",
+  "mkdocs-mermaid2-plugin>=1.2.1",
+  "mkdocs>=1.6.0,<2.0",
+  "nbconvert>=7.16.4",
+  "nbformat",
+  "numpy==1.26.0",
+  "packaging",
+  "pandas",
+  "pip_audit==2.7.3",
+  "pyyaml",
+  "requests",
+  "setuptools>=78.1.1",
+  "stdlib-list",
+  "streamlit>=1.39.0",
+  "twine>=5.1.1",
+  "uvicorn",
+  "wheel>=0.44.0"
+]
+authors = [{ name = "Kyrylo Mordan", email = "parachute.repo@gmail.com" }]
+license = { text = "mit" }
+
+[project.urls]
+"Homepage" = "https://kiril-mordan.github.io/reusables/package_auto_assembler/"
+
+[project.scripts]
+paa = "package_auto_assembler.cli:cli"
+
+[tool.setuptools]
+license-files = ["LICENSE", "NOTICE"]
